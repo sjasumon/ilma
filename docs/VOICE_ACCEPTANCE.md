@@ -1,6 +1,6 @@
 # APP_SPEC_02: implementation and acceptance record
 
-Authority: [APP_SPEC_02_voice.md](../APP_SPEC_02_voice.md). This record distinguishes
+Authority: [APP_SPEC_02_voice.md](specs/APP_SPEC_02_voice.md). This record distinguishes
 implemented code from checks that require the deployment host or real people.
 It does not claim that unexecuted live or human checks passed.
 
@@ -126,7 +126,7 @@ PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" -m ilma_api.replay_voice --audio-dir
 ```
 
 Real replay refuses to pass insufficient role/condition/prompt coverage. If clean
-real bank accuracy is below 90%, the report sets requires_claude_review=true:
+real bank accuracy is below 90%, the report sets requires_manual_review=true:
 send that report to the designated reviewer before proceeding with deployment.
 The agent has not messaged another person or represented itself as a reviewer.
 

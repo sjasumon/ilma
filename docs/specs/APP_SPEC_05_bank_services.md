@@ -163,5 +163,5 @@ The server never takes an amount. All calculators run in the app.
 
 ## 10. When later data arrives
 
-- **v5.3 services export:** re-run `convert_services.py` and the loader. Remove items from `services_hidden.csv` only after Claude's review and Sumon's OK.
+- **v5.3 services export:** re-run `convert_services.py` and the loader. Remove items from `services_hidden.csv` only after manual review and Sumon's OK.
 - **v6 incidents export:** loads into `event`/`event_source` for the Bank tab's History (spec 03, B3-History). Bank services is not affected.

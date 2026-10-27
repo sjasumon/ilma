@@ -1,7 +1,8 @@
 # Bank and Bank Services — implementation record
 
-Authority: supplied APP_SPEC_03_bank_tab.md and APP_SPEC_05_bank_services.md.
-Input: `bank and bank service menu/ilma_seed_input_v5.2`. Runtime database: **ilma**.
+Authority: [bank specification](specs/APP_SPEC_03_bank_tab.md) and
+[service specification](specs/APP_SPEC_05_bank_services.md).
+Input: Sumon's private v5.2 CSV export. Runtime database: **ilma**.
 
 ## Implemented
 

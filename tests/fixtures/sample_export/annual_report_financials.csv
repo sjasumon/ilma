@@ -1,0 +1,10 @@
+id,bank_id,year,is_rejected,metric_name,metric_value,document_id,page_no,quote,basis
+1CRAR,1,2025,0,CRAR,12,1a,1,SYNTHETIC TEST ONLY: CRAR 12; not a published bank figure.,solo
+1NPL_RATIO,1,2025,0,NPL_RATIO,1,1a,1,SYNTHETIC TEST ONLY: NPL_RATIO 1; not a published bank figure.,solo
+1PROFIT_AFTER_TAX,1,2025,0,PROFIT_AFTER_TAX,100,1a,1,SYNTHETIC TEST ONLY: PROFIT_AFTER_TAX 100; not a published bank figure.,solo
+2CRAR,2,2025,0,CRAR,13,2a,1,SYNTHETIC TEST ONLY: CRAR 13; not a published bank figure.,solo
+2NPL_RATIO,2,2025,0,NPL_RATIO,2,2a,1,SYNTHETIC TEST ONLY: NPL_RATIO 2; not a published bank figure.,solo
+2PROFIT_AFTER_TAX,2,2025,0,PROFIT_AFTER_TAX,200,2a,1,SYNTHETIC TEST ONLY: PROFIT_AFTER_TAX 200; not a published bank figure.,solo
+3CRAR,3,2025,0,CRAR,14,3a,1,SYNTHETIC TEST ONLY: CRAR 14; not a published bank figure.,solo
+3NPL_RATIO,3,2025,0,NPL_RATIO,3,3a,1,SYNTHETIC TEST ONLY: NPL_RATIO 3; not a published bank figure.,solo
+3PROFIT_AFTER_TAX,3,2025,0,PROFIT_AFTER_TAX,300,3a,1,SYNTHETIC TEST ONLY: PROFIT_AFTER_TAX 300; not a published bank figure.,solo

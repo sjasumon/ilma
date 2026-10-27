@@ -192,7 +192,7 @@ event: speech      {"audio_url": "...", "text": "..."}   (only if speak=true)
 
 1. **Unit:** transcript cleaner (every example in 3.3), language rule (every example in 7), number normaliser, and the alias matcher. Every mishearing in the section 4 table must match the right bank. Also check the intent JSON schema.
 2. **Replay:** reuse H:\Projects\ilma-test\audio with `references_tts.csv`, `references_noisy.csv` and `references_en*.csv`, run every clip through `/v1/voice`, and print the transcript, matched bank, language and time for each. Pass levels, from the 25 Oct baseline: clean Bangla bank ≥ 98%, fan noise ≥ 95%, English language right ≥ 98%, median ≤ 4 s end to end.
-3. **Real voices (must do before the demo):** about 20 phone recordings. Use Sumon, one woman, and one person over 60. Say the 9 demo banks plus 5 questions, half in a quiet room and half with a TV or fan on. Add them to `audio/` with a `references_real.csv` and rerun test 2. If clean real voices fall below 90% bank found, send the results to Claude before going further.
+3. **Real voices (must do before the demo):** about 20 phone recordings. Use Sumon, one woman, and one person over 60. Say the 9 demo banks plus 5 questions, half in a quiet room and half with a TV or fan on. Add them to `audio/` with a `references_real.csv` and rerun test 2. If clean real voices fall below 90% bank found, send the results to manual review before going further.
 4. **Phone:** on a cheap Android over mobile data, say "ইস্টার্ন ব্যাংক", "ব্র্যাক ব্যাংকের এফডিআর রেট কত" and "Is City Bank safe?", and check each lands right.
 5. **Privacy:** no audio file on disk after a request, and no PIN, amount or account number in the logs.
 

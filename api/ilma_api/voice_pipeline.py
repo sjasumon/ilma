@@ -59,6 +59,7 @@ async def understand(text, candidates, context, client=None):
     ids = [candidate['id'] for candidate in candidates]
     if bank_name_only(text, candidates) and len(ids) == 1:
         return VoiceIntent(intent='bank_status', institution_ids=ids)
+    # Standard mode keeps users' questions out of model-training contributions.
     if not settings.META_MODEL_API_KEY or 'contributor' in settings.MUSE_SPARK_MODEL.lower():
         raise VoiceError('voice_unconfigured', 503, 'ভয়েস সেবা প্রস্তুত নয়।', 'Configure Muse Spark in Standard mode.')
     prompt = {

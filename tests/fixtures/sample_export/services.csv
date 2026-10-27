@@ -1,0 +1,7 @@
+id,bank_id,bank,category,product,network,tier,attribute,value,unit,condition,column_header,source_url,page,quote,doc_date,fetched_at,basis
+1-6,1,EBL,deposit,Fixed Deposit 6 Months,,,rate,5,pct_year,SYNTHETIC TEST ONLY,Example,https://www.ebl.com.bd/,1,SYNTHETIC TEST ONLY: 6 Months rate 5 percent; not a bank offer.,2026-10-01,2026-10-27T00:00:00,conventional
+1-12,1,EBL,deposit,Fixed Deposit 12 Months,,,rate,6,pct_year,SYNTHETIC TEST ONLY,Example,https://www.ebl.com.bd/,1,SYNTHETIC TEST ONLY: 12 Months rate 6 percent; not a bank offer.,2026-10-01,2026-10-27T00:00:00,conventional
+2-6,2,BRACBANK,deposit,Fixed Deposit 6 Months,,,rate,5,pct_year,SYNTHETIC TEST ONLY,Example,https://www.bracbank.com/,1,SYNTHETIC TEST ONLY: 6 Months rate 5 percent; not a bank offer.,2026-10-01,2026-10-27T00:00:00,conventional
+2-12,2,BRACBANK,deposit,Fixed Deposit 12 Months,,,rate,6,pct_year,SYNTHETIC TEST ONLY,Example,https://www.bracbank.com/,1,SYNTHETIC TEST ONLY: 12 Months rate 6 percent; not a bank offer.,2026-10-01,2026-10-27T00:00:00,conventional
+3-6,3,CITYBANK,deposit,Fixed Deposit 6 Months,,,rate,5,pct_year,SYNTHETIC TEST ONLY,Example,https://www.citybankplc.com/,1,SYNTHETIC TEST ONLY: 6 Months rate 5 percent; not a bank offer.,2026-10-01,2026-10-27T00:00:00,conventional
+3-12,3,CITYBANK,deposit,Fixed Deposit 12 Months,,,rate,6,pct_year,SYNTHETIC TEST ONLY,Example,https://www.citybankplc.com/,1,SYNTHETIC TEST ONLY: 12 Months rate 6 percent; not a bank offer.,2026-10-01,2026-10-27T00:00:00,conventional

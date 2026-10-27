@@ -37,8 +37,12 @@ def tenor(row):
     return int(match[1]) * (12 if match and match[2].lower().startswith('year') else 1) if match else None
 
 
-def bank_rows(directory):
+def bank_rows(directory, bank_codes=None):
     names = {row['code']: row for row in read(CONFIG / 'bank_names.csv')}
+    if bank_codes is not None:
+        if not bank_codes or not set(bank_codes) <= names.keys():
+            raise ValueError('Unknown bank codes in converter test selection.')
+        names = {code: row for code, row in names.items() if code in bank_codes}
     result = []
     for row in read(directory / 'banks.csv'):
         code = row['short_code'] or row['dse_code']
@@ -46,14 +50,15 @@ def bank_rows(directory):
         result.append(dict(id=int(row['id']), slug=code.lower(), name_bn=names[code]['name_bn'],
             name_en=names[code]['name_en'], type='bank', islamic=False, licensed=True,
             listed=True, coverage='full'))
-    if len(result) != len(names): raise ValueError('Export must contain exactly the nine configured demo banks.')
+    if len(result) != len(names): raise ValueError('Export must contain exactly the configured demo banks (nine by default).')
     return result
 
 
-def convert(directory, output, services=False):
+def convert(directory, output, services=False, *, bank_codes=None):
     directory, output = Path(directory), Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    banks = bank_rows(directory)
+    # Tests explicitly select three banks; public CLI/runtime defaults stay nine.
+    banks = bank_rows(directory, bank_codes)
     by_id = {str(row['id']): row for row in banks}
     exported = max(row['fetched_at'][:10] for row in read(directory / 'services.csv'))
     result = {}

@@ -204,4 +204,4 @@ Plus these:
 
 ## 8. Hand back
 
-Push to branch `screen/data-core` in ilma-private and tell Sumon. Claude reviews it before the merge. Include the `pytest` output and the loader output for the fixtures.
+Push a normal new commit to the ILMA repository and tell Sumon. Obtain manual review before the merge. Include the `pytest` output and the loader output for the fixtures.

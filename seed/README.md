@@ -6,8 +6,8 @@ uses blank `short_code` values, so the adapter explicitly falls back to `dse_cod
 Bank names are the manual names specified in APP_SPEC_03.
 
 ```sh
-/home/ubuntu/venv/bin/python seed/convert_v4_export.py 'bank and bank service menu/ilma_seed_input_v5.2'
-/home/ubuntu/venv/bin/python seed/convert_services.py 'bank and bank service menu/ilma_seed_input_v5.2'
+/home/ubuntu/venv/bin/python seed/convert_v4_export.py /path/to/private/export
+/home/ubuntu/venv/bin/python seed/convert_services.py /path/to/private/export
 DB_NAME=ilma PYTHONPATH=api /home/ubuntu/venv/bin/python -m ilma_api.seed_loader seed
 DB_NAME=ilma PYTHONPATH=api /home/ubuntu/venv/bin/python -m ilma_api.migrate_voice
 ```
@@ -20,9 +20,12 @@ thresholds are never changed to make a load pass. DDL setup is non-destructive
 and precedes the transaction. Reimporting the same files is idempotent. Managed
 service rows absent from a later snapshot are removed transactionally.
 
-The generated seed CSVs are committed for reproducible setup. A converter regression fixture also includes the supplied input CSVs, with
-newspaper article bodies removed. The original export remains local input; full newspaper article text is not copied into seed
-files, the app or GitHub. Only linked headlines and source URLs are imported.
+The normalized seed CSVs are committed for reproducible setup. Converter tests
+use three-bank handwritten synthetic examples in `tests/fixtures/sample_export/`,
+not raw collection output. The original export stays outside the current public
+tree. Earlier public-export fixtures remain in old commits; history is preserved.
+Full newspaper article text is not copied into seed files or the app. Only linked
+headlines and source URLs are imported.
 Single-source newspaper headlines are never treated as incident evidence or
 official status-changing events. No official actions, fines, DSE API data or
 scrape-report numbers are imported.

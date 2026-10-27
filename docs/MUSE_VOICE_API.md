@@ -1,6 +1,18 @@
 # Voice setup — APP_SPEC_02
 
-Authoritative behavior: [APP_SPEC_02_voice.md](../APP_SPEC_02_voice.md).
+Authoritative behavior: [APP_SPEC_02_voice.md](specs/APP_SPEC_02_voice.md).
+
+## Provider settings verified — 27 October 2026
+
+The configured `muse-voice-transcribe-1.0` model and
+`https://api.meta.ai/v1/asr/transcribe` URL match Meta's official
+[recording transcription reference](https://dev.meta.ai/docs/api-reference/voice/transcribe).
+The `muse-spark-1.3` model and `https://api.meta.ai/v1/chat/completions` URL
+match Meta's [chat reference](https://dev.meta.ai/docs/protocols/chat-completions).
+Meta's [model catalog](https://dev.meta.ai/docs/models) distinguishes Standard
+mode from Contributor mode: Standard content is not used for model training.
+The guards in intent/wording code intentionally require Standard mode for user
+questions; this is a privacy policy, not a claim that other model IDs do not exist.
 
 ## Private configuration
 

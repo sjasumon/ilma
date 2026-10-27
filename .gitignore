@@ -13,3 +13,15 @@ voice-drafts/
 voice-diagnostics/
 *.sql.gz
 voice-backups/
+# Private pre-event inputs/reviews are kept on the share, never published.
+bank and bank service menu/
+ilma-agent/
+private-reference/
+REPO_REVIEW_*.md
+ilma_waveform_agent_handoff/
+tests/fixtures/export_v5_2/
+design/error.png
+design/error1.png
+design/e1.png
+design/search.png
+.tools/

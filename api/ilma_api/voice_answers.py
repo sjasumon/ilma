@@ -39,6 +39,7 @@ def verified(answer, facts):
 async def write_answer(question, facts, language, client=None):
     fallback = ' '.join(fact['text'] for fact in facts[:4])
     if not facts: return None
+    # Standard mode keeps users' questions out of model-training contributions.
     if not settings.META_MODEL_API_KEY or 'contributor' in settings.MUSE_SPARK_MODEL.lower(): return fallback
     async def send(http, retry):
         return await http.post(settings.MUSE_SPARK_API_URL,

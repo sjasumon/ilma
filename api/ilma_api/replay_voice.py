@@ -94,7 +94,7 @@ def summarize(results, suite, rows):
     return {'suite': suite, 'count': len(results), 'bank_accuracy': bank, 'language_accuracy': language,
             'median_result_ms': median, 'coverage_complete': coverage, 'clean_real_bank_accuracy': quiet_accuracy if suite == 'real' else None, 'transport_errors': sum(bool(row.get('error')) for row in results),
             'passed': coverage and rate >= TARGETS[suite] and median is not None and median <= 4000,
-            'requires_claude_review': suite == 'real' and quiet_accuracy is not None and quiet_accuracy < .9}
+            'requires_manual_review': suite == 'real' and quiet_accuracy is not None and quiet_accuracy < .9}
 
 
 async def main(args):

@@ -1,13 +1,13 @@
 # ILMA design: build-ready checklist (26 Oct 2026)
 
-> **Updated 26 Oct, 09:15 UTC:** Home and the theme are settled (teal, see S-01 and §2). D1, D2 and D4 are answered. Where the four bottom tabs put each FRD screen is still open: https://claude.ai/artifact/AmnpuyR1LcmVzSgZhmixuY
+> **Updated 26 Oct, 09:15 UTC:** Home and the theme are settled (teal, see S-01 and §2). D1, D2 and D4 are answered. Where the four bottom tabs put each FRD screen is still open: (private planning reference omitted)
 
 For whoever builds the app tonight. Where this file and the FRD (`ILma.md`) disagree on looks, motion or copy, **this file wins** until the FRD is updated. The FRD still wins on rules, data, privacy and status logic.
 
 Visual references, in order of authority:
-1. Teal Home: https://claude.ai/artifact/4xWqoafhMDSkUGzrD4mK3t (code: `design/home-options/ilma_home_teal_prototype.html`)
-2. Clay-bank prototype (layout of Start, Listening, Report, Source sheet; it is still navy, so swap in the teal tokens): https://claude.ai/artifact/1Qaa8syq3gRxo2Gy1wwNv4
-3. Tokens: [tokens.css](tokens.css). Mascot: `design/ilma-character/claybank.png` (883×1059, transparent).
+1. Teal Home: (private planning reference omitted) (code: `design/home-options/ilma_home_teal_prototype.html`)
+2. Clay-bank prototype (layout of Start, Listening, Report, Source sheet; it is still navy, so swap in the teal tokens): (private planning reference omitted)
+3. Tokens: [tokens.css](../tokens.css). Mascot: `design/ilma-character/claybank.png` (883×1059, transparent).
 
 **Do not use:** `ILMA_Gemini_Design_Brief.md` Parts 0–2, 4–5 (white theme), FRD §20.1/§20.4–20.6 colours and components, the grandma images (`nani_*.png`), the older prototype HABy7pf9….
 

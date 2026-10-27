@@ -1,0 +1,4 @@
+id,bank_id,is_current,target_type,document_id,page_no,rating_agency,long_term_rating,short_term_rating,outlook,rating_date,valid_until,quote
+1,1,1,entity,1r,1,Synthetic Test Agency,AAA,ST-1,stable,2026-10-01,2027-10-01,"SYNTHETIC TEST ONLY: AAA ST-1, not a bank rating."
+2,2,1,entity,2r,1,Synthetic Test Agency,AAA,ST-1,stable,2026-10-01,2027-10-01,"SYNTHETIC TEST ONLY: AAA ST-1, not a bank rating."
+3,3,1,entity,3r,1,Synthetic Test Agency,AAA,ST-1,stable,2026-10-01,2027-10-01,"SYNTHETIC TEST ONLY: AAA ST-1, not a bank rating."

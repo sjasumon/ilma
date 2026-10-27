@@ -1,7 +1,7 @@
 # Code review and layout fixes — 27 October 2026
 
-Reference: docs/FRD ILma.md, BUILD_PLAN.md, ILMA_design_build_checklist.md,
-APP_SPEC_01_database_and_status.md, tokens.css and design/S01-Home.html.
+Historical implementation log. Current references: `docs/FRD.md`,
+`docs/BUILD_PLAN.md`, `docs/specs/`, `docs/tokens.css` and `design/S01-Home.html`.
 The user's four-tab decision overrides the older checklist: Home, Bank services,
 Bank detail, News. Settings remains deferred.
 

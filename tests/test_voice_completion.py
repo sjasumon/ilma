@@ -87,7 +87,7 @@ class TestVoiceCompletion(unittest.TestCase):
         self.assertTrue(summarize(good, 'clean_bn', [{}] * 20)['passed'])
         self.assertFalse(summarize(good, 'real', [{}] * 20)['passed'], 'missing real-voice coverage must fail')
         bad = [{'bank_ok':False, 'language_ok':True, 'result_ms':3000, 'error':None}]
-        self.assertTrue(summarize(bad, 'real', [{'condition':'quiet'}])['requires_claude_review'])
+        self.assertTrue(summarize(bad, 'real', [{'condition':'quiet'}])['requires_manual_review'])
         self.assertNotIn('123456', public_transcript('account 123456 পাঁচ লাখ টাকা'))
         self.assertNotIn('500000', public_transcript('account 123456 পাঁচ লাখ টাকা'))
         with tempfile.TemporaryDirectory() as directory:
