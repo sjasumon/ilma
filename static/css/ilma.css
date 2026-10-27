@@ -980,3 +980,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 }
 .catalog-answer { width:calc(100% - 40px); margin:12px 20px; padding:16px; border-radius:16px; background:var(--ivory-2); }
 .catalog-answer #service-heard { color:var(--ink-2); font-size:16px; }
+
+/* Phone rotation follows the same teal/gold theme; desktop stays a portrait column. */
+.orientation-panel { position:fixed; inset:0; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; background:var(--stage-lo); color:var(--on-stage); text-align:center; }
+.orientation-panel h1 { margin:0; font:600 clamp(22px,4vw,32px)/1.5 var(--body); color:var(--gold); }
+.orientation-panel p { margin:0; max-width:500px; }
+.orientation-panel svg { width:64px; height:64px; color:var(--gold); }
+.orientation-brand { color:var(--gold); }
+.scr.orientation-blocked { display:none; }
+.catalog-search svg { width:26px; height:26px; vertical-align:middle; }
+.catalog-unverified { padding:12px; border:2px solid var(--watch); border-radius:12px; color:var(--ink); background:var(--ivory-2); font-weight:700; }

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ILMA · Your trusted savings companion</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans:wght@400;600;700&family=Tiro+Bangla&display=swap">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-29">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261027-32">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-32">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -13,6 +13,12 @@
   </style>
 </head>
 <body>
+  <section id="orientation-panel" class="orientation-panel" hidden aria-labelledby="orientation-title" tabindex="-1">
+    <strong class="orientation-brand">ইলমা · ILMA</strong>
+    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="23" y="12" width="24" height="40" rx="5"/><path d="M14 36a23 23 0 0 1 0-25M5 15l9-5 5 9"/></svg>
+    <h1 id="orientation-title">ফোনটি সোজা করে ধরুন</h1>
+    <p id="orientation-description">সোজা করে ধরলে আগের পাতায় ফিরে যাবেন।</p>
+  </section>
   <a href="#main-content" class="skip-link">মূল বিষয়ে যান (Skip to content)</a>
   <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
 
@@ -332,8 +338,8 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-29"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261027-29"></script>
-  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261027-29"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-32"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261027-32"></script>
+  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261027-32"></script>
 </body>
 </html>

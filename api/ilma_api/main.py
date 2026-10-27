@@ -16,6 +16,7 @@ from ilma_api.report_card import get_institution_report_card
 from ilma_api.voice import MAX_UPLOAD_BYTES, VoiceError
 from ilma_api import settings
 from ilma_api.admission import ProviderAdmissionMiddleware
+from ilma_api.security_headers import SecurityHeadersMiddleware
 
 app = FastAPI(
     title="ILMA Banking API",
@@ -31,6 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 
 def get_db():
     db = SessionLocal()
@@ -48,7 +50,7 @@ if STATIC_DIR.exists():
 def serve_index():
     index_file = STATIC_DIR / "index.html"
     if index_file.exists():
-        return FileResponse(index_file, headers={"Cache-Control": "no-store"})
+        return FileResponse(index_file, headers={"Cache-Control": "no-store, no-transform"})
     return {"message": "ILMA App API is running."}
 
 @app.get("/v1/health")

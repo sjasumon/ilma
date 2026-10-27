@@ -27,7 +27,17 @@
   const percent = value => digits(Number(value).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}));
   const bankName = bank => currentLang==='bn'?bank.name_bn:bank.name_en;
   const statusChip = bank => `<span class="catalog-status ${E(bank.status?.code||'no_data')}">${({strong:'✓',watch:'⚠',high:'✕',no_data:'?'})[bank.status?.code||'no_data']} ${E(currentLang==='bn'?bank.status?.label_bn:bank.status?.label_en)}</span>`;
-  const bankNames = bank => `<strong>${E(bankName(bank))}</strong><small lang="en">${E(bank.name_en)}</small>`;
+  const bankNames = bank => `<strong>${E(bankName(bank))}</strong>${currentLang==='bn'?`<small lang="en">${E(bank.name_en)}</small>`:''}`;
+  const productText = row => currentLang==='en'?row.product:[label(row.product_type||choice.product_type),row.tenor_months?`${digits(row.tenor_months)} মাস`:''].filter(Boolean).join(' · ');
+  function conditionText(row) {
+    if(currentLang==='en')return row.condition;
+    if(!row.condition)return '';
+    const text=row.condition.trim().replace(/^\d+\s+months?\s+/i,'');
+    const match=text.match(/^(?:amount\s+)?(?:less\s+than|below|under)\s*(?:bdt|tk\.?)?\s*([\d.,]+)\s*(crore|lac|lakh|million)?\.?$/i);
+    if(match)return `${digits(match[1])} ${{crore:'কোটি',lac:'লাখ',lakh:'লাখ',million:'মিলিয়ন'}[match[2]?.toLowerCase()]||''} টাকার কম`;
+    return 'বিশেষ শর্ত প্রযোজ্য। মূল সূত্রে বিস্তারিত দেখুন।';
+  }
+  const offerStatus = bank => bank.status?.code==='no_data'?`<p class="catalog-unverified" role="note">${tr('ব্যাংকের অবস্থা যাচাই হয়নি — বেশি হার মানেই নিরাপদ নয়।','Bank condition is unverified — a higher rate does not mean safer.')}</p>`:statusChip(bank);
   const empty = text => `<p class="catalog-empty" role="status">${E(text||tr('এই তথ্য আমাদের কাছে নেই।','We do not have this information.'))}</p>`;
   const back = (id,text) => `<button type="button" class="catalog-back" id="${id}">← ${E(text)}</button>`;
   async function json(url) {
@@ -37,14 +47,15 @@
     if(response.headers?.get('X-ILMA-Offline')==='1')data._offline=true;
     return data;
   }
-  function sourceButton(source) {
-    return `<button class="catalog-source" type="button" aria-label="${E(tr('সূত্র দেখুন: ','Show source: ')+(source.product||source.source_title||source.metric||''))}" data-source="${E(source.fact_id||source.offer_id||'')}">${tr('সূত্র ›','Source ›')}${source.checked?' ✓':''}</button>`;
+  function sourceButton(source,bank=null) {
+    const subject=currentLang==='bn'?(source.product?productText(source):({crar:'মূলধন অনুপাত',npl_ratio:'খেলাপি ঋণ',net_profit:'মুনাফা'})[source.metric]||'মূল নথি'):(source.product||source.source_title||source.metric||'');
+    return `<button class="catalog-source" type="button" aria-label="${E(tr('সূত্র দেখুন: ','Show source: ')+(bank?bankName(bank)+' · ':'')+subject)}" data-source="${E(source.fact_id||source.offer_id||'')}">${tr('সূত্র ›','Source ›')}${source.checked?' ✓':''}</button>`;
   }
   function wireSources(root,rows) {
     root.querySelectorAll('[data-source]').forEach(button => button.addEventListener('click',()=>{
       const row=rows.find(row=>(row.fact_id||row.offer_id||'')===button.dataset.source);
       if(row)openProofModal(row.source_title||row.product,row.quote,row.source_url,row.page,row.published_at||row.doc_date,
-        row.metric==='net_profit'?tr('মূল নথির মিলিয়ন টাকা প্রদর্শনে কোটি টাকায় রূপান্তর করা হয়েছে।','Source amounts in million BDT are displayed in crore BDT.'):'');
+        row.metric==='net_profit'?tr('মূল নথির মিলিয়ন টাকা প্রদর্শনে কোটি টাকায় রূপান্তর করা হয়েছে।','Source amounts in million BDT are displayed in crore BDT.'):(row.condition||''));
     }));
   }
   function voice(tab,bank=null) { switchTab('home'); activeVoiceContext={tab,bank_id:bank}; startListening(); }
@@ -65,7 +76,7 @@
   function renderBankList() {
     const root=$('bank-list-view');
     root.innerHTML=`<div class="screen-header"><h1>${tr('ব্যাংক','Banks')}</h1><p>${tr('কোন ব্যাংকের অবস্থা জানতে চান?','Which bank do you want to check?')}</p>
-      <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}">◉</button></div></div>
+      <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div></div>
       <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr('ডেমোতে ৯টি ব্যাংক আছে। আরও ব্যাংক শিগগির।','9 banks in the demo. More banks coming soon.')}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
     function rows(){const query=$('bank-list-search').value.trim().toLowerCase();
       $('bank-list-rows').innerHTML=banks.filter(b=>`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query)).sort((a,b)=>a.name_bn.localeCompare(b.name_bn,'bn')).map(bank=>
@@ -81,8 +92,11 @@
   function reportReady(data) {
     const bn=currentLang==='bn', bank=data.institution;
     $('bank-list-back').textContent='← '+tr('ব্যাংক','Banks');$('bank-list-back').onclick=showBankList;
-    $('card-bank-meta').textContent=`${bank.name_en} · ${tr('ব্যাংক','Bank')} · ${tr('তথ্যের তারিখ','Figures as of')}: ${dateText(data.data_date)} · ${tr('হালনাগাদ','Updated')}: ${dateText(data.updated_at)}${data._offline?tr(' · অফলাইন কপি',' · Offline copy'):''}`;
+    $('card-bank-meta').textContent=`${bn?bank.name_en+' · ':''}${tr('ব্যাংক','Bank')} · ${tr('তথ্যের তারিখ','Figures as of')}: ${dateText(data.data_date)} · ${tr('হালনাগাদ','Updated')}: ${dateText(data.updated_at)}${data._offline?tr(' · অফলাইন কপি',' · Offline copy'):''}`;
     $('card-insurance-line').textContent=(bn?data.insurance?.text_bn:data.insurance?.text_en)||tr('বীমার যাচাইকৃত সূত্র এখনও যোগ করা হয়নি।','A verified insurance source has not been loaded yet.');
+    if(data.insurance?.source_url){const source=document.createElement('a');source.className='catalog-source';source.href=data.insurance.source_url;source.target='_blank';source.rel='noopener noreferrer';source.textContent=tr('আইনের সূত্র ↗','Legal source ↗');$('card-insurance-line').appendChild(document.createElement('br'));$('card-insurance-line').appendChild(source);}
+    let watchNotice=$('watch-notice');if(!watchNotice){watchNotice=document.createElement('p');watchNotice.id='watch-notice';watchNotice.className='catalog-note';watchNotice.setAttribute('role','status');$('btn-watch-bank').parentElement.after(watchNotice);}
+    watchNotice.textContent=tr('নজরে রাখলে শুধু তালিকায় সংরক্ষিত হবে। SMS/WhatsApp বিজ্ঞপ্তি শিগগির আসছে।','Watch saves this bank to your list. SMS/WhatsApp alerts are coming soon.');
     $('card-why-heading').textContent=tr('কেন?','Why?');
     $('bank-not-checked').textContent=bn?data.not_checked_bn:data.not_checked_en;
     $('bank-detail-links').innerHTML=[['health','আর্থিক অবস্থা','Financial health'],['rating','রেটিং','Rating'],['history','জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'],['news','খবর','News about this bank'],['services','এই ব্যাংকের সেবা ও হার','Services and rates'],['ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank']].map(([key,b,e])=>`<button type="button" class="catalog-detail-row" data-bank-detail="${key}">${tr(b,e)} <span aria-hidden="true">›</span></button>`).join('');
@@ -97,6 +111,7 @@
       if(!response.ok)throw Error();const state=await response.json();if(currentBankId!==bank)return;
       button.setAttribute('aria-pressed',String(state.watching));$('lbl-watch-rpt').textContent=state.watching?tr('নজরে রাখা হচ্ছে','Watching'):tr('নজরে রাখুন','Watch');
       $('sr-announcer').textContent=state.watching?tr('নজরে রাখার তালিকায় যোগ হয়েছে। বিজ্ঞপ্তি এখনও চালু নয়।','Added to your watch list. Notifications are not active yet.'):tr('নজরে রাখার তালিকা থেকে সরানো হয়েছে।','Removed from your watch list.');
+      if($('watch-notice'))$('watch-notice').textContent=state.watching?tr('তালিকায় সংরক্ষিত। SMS/WhatsApp বিজ্ঞপ্তি শিগগির আসছে; এখন পাঠানো হবে না।','Saved to your list. SMS/WhatsApp alerts are coming soon; none will be sent now.'):tr('তালিকা থেকে সরানো হয়েছে। বিজ্ঞপ্তি এখনও চালু নয়।','Removed from the list. Alerts are not active yet.');
     }catch{$('sr-announcer').textContent=tr('নজরে রাখার পরিবর্তন সংরক্ষণ করা যায়নি।','Could not save the watch change.');}finally{button.disabled=false;}
   }
   async function showBankDetail(kind) {
@@ -126,7 +141,7 @@
       } else if(kind==='rating') {
         body.innerHTML=rows.map(r=>`<article class="catalog-card"><h2>${E(r.agency)} · ${E(r.long_term)}</h2><p>${E(r.short_term||'—')} · ${E(r.outlook||'—')}</p><p>${dateText(r.rated_on)} → ${dateText(r.valid_to)} ${r.expired?tr(' · মেয়াদ শেষ',' · Expired'):''}</p><p>${tr('এজেন্সির ঋণ পরিশোধের সক্ষমতা সম্পর্কে মতামত; আমানতের নিশ্চয়তা নয়।','The agency’s opinion of repayment capacity; not a deposit guarantee.')}</p>${sourceButton(r)}</article>`).join('');wireSources(body,rows);
       } else {
-        body.innerHTML=rows.map(r=>`<article class="catalog-card"><h2>${E(currentLang==='bn'?r.title_bn:r.title_en)}</h2><p>${dateText(r.date)}</p><p class="catalog-note">${tr('খবরে প্রকাশিত, নিশ্চিত নয়','Reported in the news, not confirmed')}</p>${r.sources.filter(s=>/^https?:\/\//.test(s.source_url)).map(s=>`<a class="catalog-source" href="${E(s.source_url)}" target="_blank" rel="noopener noreferrer">${E(s.source_title)}</a>`).join('')}</article>`).join('');
+        body.innerHTML=rows.map(r=>`<article class="catalog-card"><h2>${E(currentLang==='bn'?r.title_bn:r.title_en)}</h2>${currentLang==='bn'&&!/[\u0980-\u09ff]/.test(r.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}<p>${dateText(r.date)}</p><p class="catalog-note">${tr('খবরে প্রকাশিত, নিশ্চিত নয়','Reported in the news, not confirmed')}</p>${r.sources.filter(s=>/^https?:\/\//.test(s.source_url)).map(s=>`<a class="catalog-source" href="${E(s.source_url)}" target="_blank" rel="noopener noreferrer">${tr('মূল সূত্র ↗','Original source ↗')}</a>`).join('')}</article>`).join('');
       }
     }catch(e){if(request===epoch)error(body,e);}
   }
@@ -166,7 +181,7 @@
       ${category==='card'?`<label>${tr('নেটওয়ার্ক','Network')}<select id="compare-network">${options(data.networks||[],choice.network)}</select></label><label>${tr('স্তর','Tier')}<select id="compare-tier">${options((data.choices||[]).filter(pair=>pair[0]===choice.network).map(pair=>pair[1]),choice.tier)}</select></label>`:''}
       ${category==='account_fee'?`<label>${tr('খরচের ধরন','Charge')}<select id="compare-attribute">${options(data.attributes||[],choice.attribute||'maintenance_fee_half_yearly',label)}</select></label>`:''}
       <label>${tr('হিসাবের ধরন','Basis')}<select id="compare-basis">${options(['conventional','islamic'],choice.basis,v=>v==='islamic'?tr('ইসলামী','Islamic'):tr('প্রচলিত','Conventional'))}</select></label></div>
-      ${isDeposit||isLoan?`<div class="catalog-calculator"><label for="comparison-amount">${tr('পরিমাণ (শুধু এই ফোনে)','Amount (on this device only)')}</label><input id="comparison-amount" type="number" min="0" max="1000000000000" value="${Number.isFinite(calculatorPrefill.amount)?Math.min(1e12,Math.max(0,calculatorPrefill.amount)):(isLoan?'2000000':'100000')}" class="calc-field">${isLoan?`<label for="comparison-term">${tr('ঋণের মেয়াদ (মাস)','Loan term (months)')}</label><input id="comparison-term" class="calc-field" type="number" min="1" max="600" value="${Number.isFinite(calculatorPrefill.term)?Math.min(600,Math.max(1,calculatorPrefill.term)):240}">`:''}</div>`:''}
+      ${isDeposit||isLoan?`<div class="catalog-calculator"><label for="comparison-example">${tr('একটি উদাহরণ দেখুন — আপনার টাকার পরিমাণ নয়','Choose an example — not your own balance')}</label><select id="comparison-example" class="calc-field">${options([100000,200000,500000,1000000],isLoan?500000:100000,value=>number(value/100000)+' '+tr('লাখ টাকা','lakh BDT'))}</select><p class="catalog-note">${tr('নির্দিষ্ট উদাহরণের হিসাব। ব্যক্তিগত পরিমাণ চাওয়া বা সংরক্ষণ করা হয় না।','Fixed examples only. Your personal amount is neither requested nor stored.')}</p>${isLoan?`<label for="comparison-term">${tr('ঋণের মেয়াদ (মাস)','Loan term (months)')}</label><input id="comparison-term" class="calc-field" type="number" min="1" max="600" value="${Number.isFinite(calculatorPrefill.term)?Math.min(600,Math.max(1,calculatorPrefill.term)):240}">`:''}</div>`:''}
       <p>${comparison.sort==='higher_rate_first'?tr('বেশি হার আগে','Higher rate first'):tr('কম খরচ আগে','Lower cost first')} · ${tr('প্রকাশিত সংখ্যার ক্রম, ব্যাংকের র‌্যাঙ্কিং নয়','Sorted by published number, not a bank ranking')}</p><p id="service-savings" class="catalog-saving" role="status"></p><button type="button" id="compare-listen" class="catalog-action btn-primary-listen">${tr('শুনুন','Listen')}</button><div id="comparison-rows"></div>${comparison.insurance?`<p class="catalog-note">${E(currentLang==='bn'?comparison.insurance.text_bn:comparison.insurance.text_en)}</p>`:isDeposit?`<p class="catalog-note">${tr('বীমার যাচাইকৃত সূত্র এখনও যোগ করা হয়নি।','A verified insurance source has not been loaded yet.')}</p>`:''}`;
     $('services-back').onclick=enterServices;
     $('compare-product').onchange=e=>openComparison({product_type:e.target.value,tenor_months:['fdr','dps'].includes(e.target.value)?12:undefined,basis:choice.basis});
@@ -175,14 +190,14 @@
     if($('compare-tier'))$('compare-tier').onchange=e=>openComparison({...choice,tier:e.target.value});
     if($('compare-attribute'))$('compare-attribute').onchange=e=>openComparison({...choice,attribute:e.target.value});
     $('compare-basis').onchange=e=>openComparison({...choice,basis:e.target.value});
-    if($('comparison-amount'))$('comparison-amount').oninput=renderRows;
+    if($('comparison-example'))$('comparison-example').onchange=renderRows;
     if($('comparison-term'))$('comparison-term').oninput=renderRows;
     $('compare-listen').onclick=listenComparison;
     renderRows();
   }
   function renderRows(){
     const root=$('comparison-rows');
-    const amount=Math.min(1e12,Math.max(0,Number($('comparison-amount')?.value)||0));
+    const amount=Number($('comparison-example')?.value)||100000;
     const months=Math.min(600,Math.max(1,Number($('comparison-term')?.value)||1));
     const deposit=['fdr','dps','savings'].includes(choice.product_type), loan=choice.product_type.endsWith('_loan')||choice.product_type==='loan_against_fdr';
     root.innerHTML=comparison.rows.map(bank=>{const row=bank.offer;
@@ -193,7 +208,7 @@
         if(loan){const rate=row.value_num/1200,emi=rate===0?amount/months:amount*rate/(1-Math.pow(1+rate,-months));calculation=`${tr('আনুমানিক কিস্তি','Estimated installment')}: ${number(emi)} ${tr('টাকা/মাস','BDT/month')}`;}
       }
       const year3=choice.product_type==='card'&&row.attribute==='annual_fee'&&!row.stale&&!bank.renewal_offer?.stale&&row.value_num!=null&&bank.renewal_offer?.value_num!=null?`${tr('৩ বছরে মোট','Total over 3 years')}: ${number(row.value_num+2*bank.renewal_offer.value_num)} ${tr('টাকা','BDT')}`:'';
-      return `<article class="catalog-offer-row"><button class="catalog-open-offer" type="button" data-offer="${E(row.offer_id)}">${bankNames(bank)}<span class="catalog-note">${E(label(row.attribute))}</span><span class="catalog-value">${valueText(row)}</span><span>${E(row.product)}</span></button><p>${E(row.condition)}</p><p>${dateText(row.doc_date)} ${row.stale?`<span class="catalog-stale">${tr('পুরনো তথ্য','Old data')}</span>`:''}</p>${row.basis==='islamic'?`<p>${tr('মুনাফার হার (আনুমানিক)','Profit rate (provisional)')}</p>`:''}${statusChip(bank)}${sourceButton(row)}${bank.range_max?`<p>${tr('সর্বনিম্ন–সর্বোচ্চ','Minimum–maximum')}: ${valueText(row)} – ${valueText(bank.range_max)} ${sourceButton(bank.range_max)}</p>`:''}<p class="catalog-note">${E(calculation)}</p><p>${E(year3)}</p>${(bank.alternatives||[]).length?`<p class="catalog-note">${tr('অন্য স্ল্যাব ও পণ্যের শর্ত বিস্তারিত পাতায় দেখুন।','Other slabs/products have different conditions; inspect the product details.')}</p>`:''}</article>`;
+      return `<article class="catalog-offer-row"><button class="catalog-open-offer" type="button" data-offer="${E(row.offer_id)}">${bankNames(bank)}<span class="catalog-note">${E(label(row.attribute))}</span><span class="catalog-value">${valueText(row)}</span><span>${E(productText(row))}</span></button><p>${E(conditionText(row))}</p><p>${dateText(row.doc_date)} ${row.stale?`<span class="catalog-stale">${tr('পুরনো তথ্য','Old data')}</span>`:''}</p>${row.basis==='islamic'?`<p>${tr('মুনাফার হার (আনুমানিক)','Profit rate (provisional)')}</p>`:''}${offerStatus(bank)}${sourceButton(row,bank)}${bank.range_max?`<p>${tr('সর্বনিম্ন–সর্বোচ্চ','Minimum–maximum')}: ${valueText(row)} – ${valueText(bank.range_max)} ${sourceButton(bank.range_max,bank)}</p>`:''}<p class="catalog-note">${E(calculation)}</p><p>${E(year3)}</p>${(bank.alternatives||[]).length?`<p class="catalog-note">${tr('অন্য স্ল্যাব ও পণ্যের শর্ত বিস্তারিত পাতায় দেখুন।','Other slabs/products have different conditions; inspect the product details.')}</p>`:''}</article>`;
     }).join('');
     root.querySelectorAll('[data-offer]').forEach(button=>button.onclick=()=>openOffer(button.dataset.offer));
     wireSources(root,comparison.rows.flatMap(bank=>[bank.offer,bank.range_max].filter(Boolean)));
@@ -208,7 +223,7 @@
   }
   function renderOffer(){const root=$('services-catalog'),data=offerDetail;
     serviceHeader();
-    root.innerHTML=`${back('offer-back',tr('ফিরুন','Back'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}<h3>${E(data.product)}</h3>${data.offers.map(row=>`<article class="catalog-card"><h3>${E(label(row.attribute))}</h3><p class="catalog-value">${valueText(row)}</p><p>${E(row.condition)}</p><p>${dateText(row.doc_date)} ${row.stale?tr('· পুরনো তথ্য','· Old data'):''}</p>${sourceButton(row)}</article>`).join('')}<p class="catalog-note">${tr('ব্যাংকের প্রকাশিত তালিকা থেকে। আবেদন করার আগে ব্যাংকের সাথে নিশ্চিত হোন।','From the bank’s published schedule. Confirm with the bank before applying.')}</p><button class="catalog-action" id="offer-bank-report" type="button">${tr('এই ব্যাংকের অবস্থা দেখুন','See this bank’s condition')}</button>`;
+    root.innerHTML=`${back('offer-back',tr('ফিরুন','Back'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}<h3>${E(productText(data.offers[0]||{product:data.product}))}</h3>${data.offers.map(row=>`<article class="catalog-card"><h3>${E(label(row.attribute))}</h3><p class="catalog-value">${valueText(row)}</p><p>${E(conditionText(row))}</p><p>${dateText(row.doc_date)} ${row.stale?tr('· পুরনো তথ্য','· Old data'):''}</p>${sourceButton(row)}</article>`).join('')}<p class="catalog-note">${tr('ব্যাংকের প্রকাশিত তালিকা থেকে। আবেদন করার আগে ব্যাংকের সাথে নিশ্চিত হোন।','From the bank’s published schedule. Confirm with the bank before applying.')}</p><button class="catalog-action" id="offer-bank-report" type="button">${tr('এই ব্যাংকের অবস্থা দেখুন','See this bank’s condition')}</button>`;
     wireSources(root,data.offers);$('offer-bank-report').onclick=()=>openBank(data.institution.id);$('offer-back').onclick=()=>bankFilter?openBankServices(bankFilter):openComparison(choice);
   }
   async function openBankServices(id){if(currentTab!=='services')switchTab('services');bankFilter=id;servicePage='bank';const request=++epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
@@ -216,7 +231,7 @@
   }
   function renderBankServices(){const data=bankOffers,root=$('services-catalog'),groups=new Map();data.offers.forEach(r=>{if(!groups.has(r.group_key))groups.set(r.group_key,r);});
     serviceHeader();
-    root.innerHTML=`${back('bank-services-back',tr('ব্যাংক সেবা','Bank services'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}${['deposit','card','loan','account_fee'].map(category=>`<h3>${E(({deposit:tr('জমা ও সঞ্চয়','Deposits and savings'),card:tr('কার্ড','Cards'),loan:tr('ঋণ','Loans'),account_fee:tr('অ্যাকাউন্টের খরচ','Account charges')})[category])}</h3>${[...groups.values()].filter(r=>r.category===category).map(r=>`<button class="catalog-detail-row" data-bank-offer="${E(r.offer_id)}" type="button">${E(r.product)} ›</button>`).join('')||empty()}`).join('')}`;
+    root.innerHTML=`${back('bank-services-back',tr('ব্যাংক সেবা','Bank services'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}${['deposit','card','loan','account_fee'].map(category=>`<h3>${E(({deposit:tr('জমা ও সঞ্চয়','Deposits and savings'),card:tr('কার্ড','Cards'),loan:tr('ঋণ','Loans'),account_fee:tr('অ্যাকাউন্টের খরচ','Account charges')})[category])}</h3>${[...groups.values()].filter(r=>r.category===category).map(r=>`<button class="catalog-detail-row" data-bank-offer="${E(r.offer_id)}" type="button">${E(productText(r))} ›</button>`).join('')||empty()}`).join('')}`;
     $('bank-services-back').onclick=enterServices;root.querySelectorAll('[data-bank-offer]').forEach(b=>b.onclick=()=>openOffer(b.dataset.bankOffer));
   }
   async function listenComparison(){

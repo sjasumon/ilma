@@ -1,5 +1,9 @@
 # Release hardening progress
 
+Latest website/insurance changes and live browser evidence are recorded in
+[WEBSITE_FIXES_2026-10-27.md](WEBSITE_FIXES_2026-10-27.md). Historical missing-
+insurance-source statements below are superseded by that sourced rule.
+
 ## Stage 1 — deployed 27 October 2026
 
 All provider-producing POST routes (`voice`, `ask`, `speech`, service `readout`)

@@ -18,13 +18,13 @@ before the event is separate prior work and is not part of this app repository.
 | Work | Status / next step |
 | --- | --- |
 | Financial source review | Complete `seed/TO_CHECK.md`; never manufacture approval badges. |
-| Official insurance rule | Input missing; keep unavailable until sourced. |
+| Official insurance rule | Sourced bank rule deployed from Act 75/2026; retain human wording/native-audio review and qualified payment stages. |
 | Approved v6.1 incidents / high-risk example | Referenced archive is not present in the shared project or checked export locations. Obtain it, validate sources/status windows and import without changing thresholds or fabricating a warning. |
 | Proof Snap | Modal shell only. Muse Spark vision and SAM 3.1 source highlighting are not implemented. |
 | WhatsApp voice notes | Not started; planned Day 5, 31 October. |
 | Watch SMS alerts | Watch selections persist, but SMS notifications are not implemented; planned Day 5. |
 | Android APK | Decide with Sumon by 1 November. Current web app has no Capacitor packaging. |
-| Offline audio | 20 private drafts generated; native review and source-dependent insurance clips remain. |
+| Offline audio | 22 private drafts generated, including sourced insurance; native review/publication remain. |
 | Voice/accessibility acceptance | Labelled quiet/noisy speech corpus and physical Android/iOS/TalkBack/VoiceOver tests remain. |
 | Production operations | External alerts, encrypted off-host recovery and sustained capacity/traffic-switch testing remain. |
 | Demo submission | Record video and replace its README placeholder before submission. |

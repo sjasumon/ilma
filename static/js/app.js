@@ -77,7 +77,7 @@ const T = {
     ],
     tabs: {
       home: "Home",
-      services: "Bank services",
+      services: "Services",
       detail: "Banks",
       news: "News"
     },
@@ -346,13 +346,16 @@ function setupLanguageSwipe(target) {
 function updateLocalizedText() {
   const t = T[currentLang];
   document.documentElement.lang = currentLang;
+  const rotationTitle=document.getElementById('orientation-title'), rotationDescription=document.getElementById('orientation-description');
+  if(rotationTitle)rotationTitle.textContent=currentLang==='bn'?'ফোনটি সোজা করে ধরুন':'Please hold your phone upright';
+  if(rotationDescription)rotationDescription.textContent=currentLang==='bn'?'সোজা করে ধরলে আগের পাতায় ফিরে যাবেন।':'Turn upright to return to the same page.';
   const languageButton = document.getElementById("lang-btn");
   languageButton.textContent = t.langBtn;
   languageButton.setAttribute("aria-pressed", String(currentLang === "en"));
   languageButton.setAttribute("aria-label", currentLang === "bn" ? "ইংরেজি ভাষায় বদলান" : "Switch to Bangla");
   updateSettingsText();
   syncConnectivity();
-  loadBankOptions();
+  if (currentTab === 'detail' && !window.IlmaCatalog) loadBankOptions();
   stopGreetingCycle();
 
   document.querySelector("[data-tab='home'] span").textContent = t.tabs.home;
@@ -832,10 +835,10 @@ async function handleVoiceEvent(name, data, audioRequest) {
     document.getElementById("home-idle-view").hidden = false;
     document.getElementById("voice-feedback-message").textContent = (data.privacy_notice ? data.privacy_notice + " " : "") + data.text;
     const allSources = document.getElementById("voice-answer-sources"); allSources.replaceChildren();
-    (data.sources || []).forEach(source => {
+    (data.sources || []).forEach((source, index) => {
       if (!/^https?:\/\//i.test(source.source_url || "")) return;
       const link = document.createElement("a"); link.href = source.source_url; link.target = "_blank"; link.rel = "noopener noreferrer";
-      link.textContent = (currentLang === "bn" ? "সূত্র: " : "Source: ") + (source.source_title || source.fact_id || ""); allSources.appendChild(link);
+      link.textContent = (currentLang === "bn" ? "সূত্র: " : "Source: ") + (currentLang==='bn'?(source.source_title_bn||`মূল নথি ${toBnDigits(index+1)}`):(source.source_title_en||source.source_title||source.fact_id||'')); allSources.appendChild(link);
     });
     const list = document.getElementById("voice-matches"); list.replaceChildren();
     (data.candidates || []).forEach(bank => {
@@ -1138,10 +1141,10 @@ async function loadNews() {
           ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
         </span>
         <h3 style="font-family: var(--display); font-size: 20px; font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h3>
-        <p style="font-size: 16px; color: var(--ink-2); margin: 0 0 8px;">${escapeHTML(isBn ? n.summary_bn : n.summary_en)}</p>
+        ${isBn&&!/[\u0980-\u09ff]/.test(n.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}
         <div style="font-size: 14px; color: #666; display: flex; justify-content: space-between;">
           <span>${escapeHTML(n.publisher || '—')}</span>
-          <span>${escapeHTML(n.date)}</span>
+          <span>${escapeHTML(new Intl.DateTimeFormat(isBn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(n.date+'T00:00:00')))}</span>
         </div>
         ${/^https?:\/\//i.test(n.source_url || "") ? `<a class="catalog-source" href="${escapeHTML(n.source_url)}" target="_blank" rel="noopener noreferrer">${isBn ? "উৎস খুলুন ↗" : "Open source ↗"}</a>` : ""}
       `;
@@ -1154,9 +1157,30 @@ async function loadNews() {
 
 function speakNews() { return requestReadout("news"); }
 
+let phoneLandscape = false;
+function syncOrientation() {
+  const touch=Boolean(window.matchMedia?.('(pointer: coarse)').matches||navigator.maxTouchPoints>0);
+  const type=window.screen?.orientation?.type;
+  // Device orientation avoids mistaking a portrait software keyboard for rotation.
+  const sideways=type?type.startsWith('landscape'):typeof window.orientation==='number'?Math.abs(window.orientation)===90:Boolean(window.matchMedia?.('(orientation: landscape)').matches);
+  const phone=Math.min(window.screen?.width||window.innerWidth||1000,window.screen?.height||window.innerHeight||1000)<=600;
+  const active=touch&&sideways&&phone;
+  const panel=document.getElementById('orientation-panel');
+  if(!panel)return;
+  panel.hidden=!active;
+  document.querySelector('.scr').inert=active;
+  document.querySelector('.scr').classList.toggle('orientation-blocked',active);
+  if(active&&!phoneLandscape){document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeProofModal();stopListening();stopAudio();pauseGreetingCycle();panel.focus();}
+  if(!active&&phoneLandscape){startExampleCycle();document.querySelector('.dock-item.on')?.focus();}
+  phoneLandscape=active;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   updateLocalizedText();
   startExampleCycle();
+  syncOrientation();
+  window.addEventListener?.('orientationchange',syncOrientation);
+  window.addEventListener?.('resize',syncOrientation);
   window.addEventListener?.("resize", fitGreetingLine);
   document.fonts?.ready.then(fitGreetingLine);
   document.addEventListener("visibilitychange", () => {

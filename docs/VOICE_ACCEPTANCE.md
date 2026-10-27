@@ -242,10 +242,10 @@ installation are no longer blockers; the following work remains:
 
 - **Manual source review:** all nine banks are present from the supplied export.
   Complete `seed/TO_CHECK.md`; agent-imported rows are not marked as personally
-  checked by Sumon. An official insurance source and v6 incident data remain
-  absent; those answers stay unavailable.
-- **Offline voice bundle:** 20 private drafts are generated. Supply the insurance
-  source for the two missing clips, obtain actual native-speaker review, and
+  checked by Sumon. The official bank-insurance rule is now sourced; approved v6
+  incidents remain absent and history answers stay unavailable.
+- **Offline voice bundle:** all 22 private drafts are generated, including the
+  sourced insurance clips. Obtain actual native-speaker review and
   publish the approved bundle. `reviewed_offline_clips` remains false.
 - **Synthetic and real speech acceptance:** replay the referenced corpora and
   consented participant recordings; accuracy and latency thresholds have not

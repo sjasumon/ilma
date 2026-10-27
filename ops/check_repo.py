@@ -31,7 +31,7 @@ def tree_errors(files):
     for name, content in files.items():
         path = Path(name)
         if (name.startswith(PRIVATE_PREFIXES) or name in DEBUG_ASSETS or
-            path.name.startswith('REPO_REVIEW_') or (path.name.startswith('.env') and path.name != '.env.example') or
+            path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_')) or (path.name.startswith('.env') and path.name != '.env.example') or
             name.endswith(('.sql', '.sql.gz'))):
             errors.append(f'Private/unwanted path tracked: {name}')
         try:

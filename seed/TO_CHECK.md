@@ -25,9 +25,10 @@ Nothing on this list has been marked as a completed personal review.
 6. **Unknown publication dates/pages:** `documents.csv` does not provide
    publication dates. Entity rating rows have blank page numbers. These are
    shown as unknown; fetch timestamps have not been relabelled as publication.
-7. **Official insurance source:** no official insurance-rule source is supplied
-   in this export. Provide the source before enabling the deposit insurance
-   line. The old hard-coded calculator is hidden from the new services UI.
+7. **Official insurance source:** added Ministry of Law Act 75/2026, sections
+   12 and 21–23, verified during the website review. The bank rule is sourced;
+   retain human wording review, exclusions and the qualified 10+7-day stages.
+   Do not describe the payout as an unconditional 17-day guarantee.
 8. **History/news:** v6 incidents and its search window have not been supplied.
    The history page says it was not checked. Newspaper titles remain in their
    original language and are labelled reported/unconfirmed; no article bodies

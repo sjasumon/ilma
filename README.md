@@ -39,8 +39,8 @@ Built for the **Meta hackathon, Indie track, 27 October–4 November 2026**.
 - Working: public-report offline caching, local calculators, private Watch
   selections, API budgets, retention and local backup/restore checks.
 - In progress: representative voice accuracy/latency and physical accessibility
-  acceptance, native review of offline audio, financial source review, verified
-  insurance input and approved incident history.
+  acceptance, native review of offline audio, financial source review and approved
+  incident history. The bank insurance rule now links to the official Act.
 - Planned: Proof Snap image understanding/highlighting, WhatsApp voice notes and
   Watch SMS notifications. Android packaging is a decision due 1 November.
 
@@ -169,8 +169,10 @@ Imported financial/service rows remain labelled `agent-v4`/`agent-v5`; manual
 checks are pending in [TO_CHECK.md](seed/TO_CHECK.md). They are not described as
 personally verified by Sumon. Only his completed reviews receive a checked badge.
 Full newspaper articles are not published; single-source headlines are not
-promoted into status-changing incidents. Insurance remains unavailable without
-an official source.
+promoted into status-changing incidents. The official bank-insurance rule was
+verified separately during the event; exclusions and payment stages are qualified.
+Local theme-font copies are third-party assets under their bundled SIL Open Font
+Licenses in `static/fonts/`, not newly authored font designs.
 
 ## Project documents
 

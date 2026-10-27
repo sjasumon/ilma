@@ -18,6 +18,7 @@ bank and bank service menu/
 ilma-agent/
 private-reference/
 REPO_REVIEW_*.md
+WEBSITE_REVIEW_*.md
 ilma_waveform_agent_handoff/
 tests/fixtures/export_v5_2/
 design/error.png

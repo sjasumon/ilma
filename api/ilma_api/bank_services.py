@@ -202,7 +202,7 @@ def make_router(get_db):
         def spoken_name(bank):
             aliases=[a.alias for a in db.get(Institution,bank['id']).aliases if bool(re.search('[\u0980-\u09ff]',a.alias))==bn]
             return min(aliases,key=len,default=bank['name_bn' if bn else 'name_en'])
-        lines=[f"{spoken_name(bank)}: {bank['offer']['value_num']:g} {('শতাংশ' if bn else 'percent per year') if bank['offer']['unit']=='pct_year' else ('টাকা' if bn else 'taka') if bank['offer']['unit']=='bdt' else bank['offer']['unit']}, {format_date(bank['offer']['doc_date'],bn=bn)}"+(' পুরনো তথ্য।' if bn else ' Old data.')*int(bank['offer']['stale']) for bank in visible[:3]]
+        lines=[f"{spoken_name(bank)}: {bank['offer']['value_num']:g} {('শতাংশ' if bn else 'percent per year') if bank['offer']['unit']=='pct_year' else ('টাকা' if bn else 'taka') if bank['offer']['unit']=='bdt' else bank['offer']['unit']}, {format_date(bank['offer']['doc_date'],bn=bn)}"+(' পুরনো তথ্য।' if bn else ' Old data.')*int(bank['offer']['stale'])+((' ব্যাংকের অবস্থা যাচাই হয়নি।' if bn else ' Bank condition is unverified.') if bank['status']['code']=='no_data' else '') for bank in visible[:3]]
         fresh=[bank for bank in visible if not bank['offer']['stale']]
         if payload.product_type=='card' and result['choice']['attribute'] in {'annual_fee','renewal_fee'} and len(fresh)>1:
             cheapest,expensive=min(fresh,key=lambda b:b['offer']['value_num']),max(fresh,key=lambda b:b['offer']['value_num'])
@@ -218,6 +218,7 @@ def make_router(get_db):
 def voice_service_result(question,intent,context,db,language):
     """Deterministic navigation/fact templates after intent; no invented offers."""
     text=question.lower()
+    from ilma_api.rules.reasons import format_date, to_bn_digits
     product=intent.product
     account_attribute=intent.service_attribute
     if product is None:
@@ -247,12 +248,14 @@ def voice_service_result(question,intent,context,db,language):
     sources=[];lines=[];spoken=[]
     for bank in rows[:3]:
         row=bank['offer'];value=f"{row['value_num']:g}" if row['value_num'] is not None else row['value_text']
-        lines.append(f"{bank['name_bn' if language=='bn' else 'name_en']}: {value}{'%' if row['unit']=='pct_year' else ' BDT' if row['unit']=='bdt' else ''} ({row['doc_date']})"+(' · '+('পুরনো তথ্য' if language=='bn' else 'old data') if row['stale'] else ''))
+        display_value=to_bn_digits(value) if language=='bn' else value
+        warning=(' · ব্যাংকের অবস্থা যাচাই হয়নি' if language=='bn' else ' · Bank condition is unverified') if bank['status']['code']=='no_data' else ''
+        lines.append(f"{bank['name_bn' if language=='bn' else 'name_en']}: {display_value}{'%' if row['unit']=='pct_year' else (' টাকা' if language=='bn' else ' BDT') if row['unit']=='bdt' else ''} ({format_date(row['doc_date'],bn=language=='bn')})"+(' · '+('পুরনো তথ্য' if language=='bn' else 'old data') if row['stale'] else '')+warning)
         aliases=[a.alias for a in db.get(Institution,bank['id']).aliases if bool(re.search('[\u0980-\u09ff]',a.alias))==(language=='bn')]
         short_name=min(aliases,key=len,default=bank['name_bn' if language=='bn' else 'name_en'])
         unit=(' শতাংশ' if language=='bn' else ' percent per year') if row['unit']=='pct_year' else (' টাকা' if language=='bn' else ' taka') if row['unit']=='bdt' else ' '+row['unit']
-        spoken.append(f'{short_name}: {value}{unit}'+((' পুরনো তথ্য' if language=='bn' else ' old data') if row['stale'] else ''))
-        sources.append(dict(fact_id=row['offer_id'],source_url=row['source_url'],source_title=row['product'],page=row['page'],quote=row['quote']))
+        spoken.append(f'{short_name}: {value}{unit}'+((' পুরনো তথ্য' if language=='bn' else ' old data') if row['stale'] else '')+warning)
+        sources.append(dict(fact_id=row['offer_id'],source_url=row['source_url'],source_title=row['product'],source_title_bn=bank['name_bn'],source_title_en=bank['name_en']+' · '+row['product'],page=row['page'],quote=row['quote']))
     speech_text='। '.join(spoken)+('। উৎসের তারিখ ও শর্ত পর্দায় আছে।' if language=='bn' else '. Source dates and conditions are on screen.') if spoken else ('এই তথ্য আমাদের কাছে নেই।' if language=='bn' else 'We do not have this information.')
     return dict(type='service_answer',text='; '.join(lines) if lines else ('এই তথ্য আমাদের কাছে নেই।' if language=='bn' else 'We do not have this information.'),speech_text=speech_text,
                 comparison=choice,sources=sources,calculator_amount=intent.amount_bdt,

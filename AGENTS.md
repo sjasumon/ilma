@@ -29,3 +29,10 @@ These instructions record Sumon's repository-review requirements of 27 October
 - Push completed updates to GitHub as requested by Sumon, using fast-forward
   pushes. Report remaining source/device/accessibility acceptance honestly.
 - Ask Sumon for the license choice; do not assign a public license silently.
+- Website changes must keep personal amounts out of forms/requests/storage: use
+  fixed examples. Localize displayed Bangla numbers/dates/product labels; retain
+  original bank wording in source sheets. Make unverified-bank and unavailable-
+  alert states explicit. Never create a high-risk example without approved data.
+- Verify security headers against the live Cloudflare site, not only localhost.
+  Keep the app CSP strict, preserve streaming responses, and test API docs too.
+  Test portrait/phone rotation, keyboard resize, desktop, 200% text and cold load.

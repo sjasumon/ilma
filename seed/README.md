@@ -34,7 +34,7 @@ scrape-report numbers are imported.
 
 - 9 institutions, 56 exported aliases (voice migration adds required aliases).
 - 43 financial facts, including available 2024 history; 9 entity ratings.
-- 57 page-specific sources and 5 bank-linked news headlines.
+- 58 sources (including the official legal rule) and 5 linked news headlines.
 - 470 service attributes: 383 visible and 87 withheld under the current policy.
 - Baseline: 8 `strong`, SBAC `no_data`, using the existing plan-A rules.
 
@@ -57,6 +57,9 @@ Imported rows use `agent-v4` or `agent-v5`; none is represented as personally
 checked by Sumon. The checked badge appears only for a `Sumon` review. A review
 survives a reimport only if the material content is unchanged.
 
-The supplied files do not include an official insurance rule or a v6 incidents
-export/search window. These remain explicitly unavailable; there are no
-invented insurance facts, “no incidents” claims or fabricated timeline dates.
+The original export did not supply insurance. The website review added a sourced
+bank rule from the Ministry of Law's Deposit Protection Act 2026 (Act 75),
+sections 12 and 21–23. This is additional event-time verification, not a claim
+that the original collector or Sumon had checked it. Release suffix: `-law75`.
+Approved v6 incidents/search-window input is still absent; history remains
+unavailable without invented incidents or fabricated dates.

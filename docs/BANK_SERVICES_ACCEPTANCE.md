@@ -66,7 +66,8 @@ Input: Sumon's private v5.2 CSV export. Runtime database: **ilma**.
 See [seed/TO_CHECK.md](../seed/TO_CHECK.md). Imported rows are agent-labelled,
 not personally checked by Sumon. Unknown publication dates are not invented.
 87 service rows are withheld (mandatory hide rules plus unreadable/unproven
-quotes). Insurance needs an official source; v6 incident history needs input.
+quotes). The website review added the official bank-insurance rule; v6 incident
+history still needs approved input. See `WEBSITE_FIXES_2026-10-27.md`.
 
 Screenshots: [Bank tab](../design/reviews/bank-tab/) and
 [Bank services](../design/reviews/bank-services/). Reproduce with:
