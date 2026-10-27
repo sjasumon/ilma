@@ -5,11 +5,26 @@ cleanup, matching, intent, MySQL queries, SSE parsing, speech playback, diagnost
 capture and the actual systemd deployment. This is an implementation audit, not
 a claim of measured speech accuracy or complete physical-device acceptance.
 
+## Database correction (user clarification)
+
+The user confirmed that **`ilma` is the ILMA database** and `project_db` belongs
+ to other work. The earlier switch to `project_db` was incorrect and has been
+reverted. The service override and default URL now select `ilma`. Created ILMA's
+own schema there, preserving its existing diagnostics, and added authored glossary
+entries only. No bank records or financial facts were imported from `project_db`.
+The canonical database currently has no institutions; the pipeline now returns
+an explicit data-not-loaded result after displaying the transcript.
+
+Earlier replay evidence below describes the temporary configuration and must
+not be interpreted as acceptance of data from `project_db`. That database is
+no longer used by the service. Diagnostic copies previously placed there have
+not been deleted as part of this correction.
+
 ## Findings fixed
 
 | Finding | Result |
 |---|---|
-| Service used database `ilma`, containing only diagnostics, while bank data lived in `project_db` | Installed `ops/ilma-database.conf` as a systemd drop-in selecting `project_db`. Existing bank records were read, not replaced or seeded. Preserved five diagnostic samples in the corrected database. |
+| Database selection was inferred from table names | User confirmed `ilma` is canonical. Reverted the temporary `project_db` selection and initialized ILMA tables in `ilma`, without importing unrelated records. |
 | A transcript could wait on database/matching work | Transcript now streams immediately after cleanup, before querying the index; unexpected-script text remains visible on rejection. |
 | Empty provider `choices` could raise an uncaught IndexError | Intent returns a controlled error; fact-grounded answer generation falls back to its database facts. |
 | Unexpected backend exception could abruptly end SSE | Sanitized error event and transaction rollback; logs contain exception type only. Cancellation still propagates. |
@@ -78,6 +93,6 @@ host/database context as the service; an agent-context connection alone is not
 proof that the service sees the same schema.
 
 On this host, CLI setup/doctor/diagnostic commands should explicitly use
-`DB_NAME=project_db` to match the service drop-in. The live doctor still fails
-overall acceptance because six demo banks and reviewed offline clips are missing;
+`DB_NAME=ilma` to match the service drop-in. The live doctor still fails
+overall acceptance because ILMA bank records and reviewed offline clips are missing;
 database connectivity, voice tables and both provider-access probes pass.

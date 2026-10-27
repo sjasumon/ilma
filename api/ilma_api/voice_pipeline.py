@@ -245,6 +245,14 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         if callable(banks):
             trace_stage(diagnostic, 'bank_index_started', started)
             banks = banks()
+        if not banks:
+            yield event('result', {
+                'type': 'no_data', 'reason': 'bank_dataset_empty', 'omit_history': True,
+                'text': 'আপনার প্রশ্ন পাওয়া গেছে, কিন্তু ব্যাংকের তথ্য এখনও লোড করা হয়নি।' if context.ui_lang == 'bn'
+                    else 'Your question was received, but bank data has not been loaded yet.',
+                'sources': [], 'language': context.ui_lang})
+            outcome = 'no_data'
+            return
         from ilma_api.voice_answers import numbers
         sensitive_numbers = bool(numbers(text))
         candidates = match_candidates(text, banks)

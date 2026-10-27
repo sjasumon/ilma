@@ -89,7 +89,8 @@ The current host runs `ilma-app.service` as `ubuntu`, using
 `/home/ubuntu/venv/bin/python3 -m uvicorn ilma_api.main:app` from this project's
 directory. It listens on `127.0.0.1:8001` behind the public HTTPS endpoint. The
 service is enabled at boot and uses `Restart=always` for process recovery.
-The host-specific database override is documented in
+The service uses the `ilma` database. Its bank dataset still needs loading;
+records from unrelated databases must not be used. The database override is documented in
 [the voice pipeline audit](docs/VOICE_PIPELINE_AUDIT.md).
 Restart it after deploying Python changes; updating static files does not reload
 the running backend:
@@ -152,11 +153,11 @@ live service. No diagnostic recordings or transcripts are pushed to GitHub.
 
 ## Acceptance status
 
-The latest recorded checks include 48 passing Python tests, five passing
+The latest recorded checks include 50 passing Python tests, five passing
 frontend suites, successful MySQL voice migration, Meta authentication and
 ElevenLabs configured-voice access. Full acceptance is still pending:
 
-- Verified records for six demo banks: City, MTB, NCC, Prime, Bank Asia and SBAC.
+- Load the verified bank dataset into `ilma`; it currently has no institution records.
 - Fixed offline audio generation, native-speaker review and publication.
 - Synthetic and real-person speech accuracy/latency measurements.
 - Physical phone, TalkBack, 200% text and offline validation.

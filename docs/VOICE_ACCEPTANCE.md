@@ -132,7 +132,15 @@ services answer, source links, language chip, stop/slow/mute, and typing fallbac
 
 ## Current evidence
 
-Full pipeline follow-up: see [VOICE_PIPELINE_AUDIT.md](VOICE_PIPELINE_AUDIT.md).
+User database clarification: `ilma` is canonical; `project_db` is unrelated. The
+previous switch was incorrect and has been reverted. The service now uses
+`DB_NAME=ilma`; ILMA tables and authored glossary were initialized there without
+importing bank facts. No institution dataset is loaded yet, so health readiness
+is false and recognized questions receive an explicit data-not-loaded response.
+Earlier results using `project_db` are historical, not valid data acceptance.
+
+
+Historical pipeline follow-up, before the database clarification: see [VOICE_PIPELINE_AUDIT.md](VOICE_PIPELINE_AUDIT.md).
 The host service's wrong database selection is corrected using the systemd
 override in `ops/ilma-database.conf`; public bank lookup and a typed report-card
 request now work. Forty-eight Python checks and five Node suites pass. Three

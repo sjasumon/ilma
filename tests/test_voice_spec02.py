@@ -98,6 +98,16 @@ class TestVoiceText(unittest.TestCase):
 
 
 class TestVoiceProviders(unittest.IsolatedAsyncioTestCase):
+    async def test_empty_dataset_is_not_a_transcription_failure(self):
+        from ilma_api.voice_pipeline import run_pipeline
+        with patch('ilma_api.voice_pipeline.understand') as classifier:
+            chunks = [chunk async for chunk in run_pipeline(None, 'EBL', '', VoiceContext(), [], MagicMock(), mode='text')]
+        classifier.assert_not_called()
+        combined = ''.join(chunks)
+        self.assertIn('event: transcript', combined)
+        self.assertIn('bank_dataset_empty', combined)
+        self.assertNotIn('event: error', combined)
+
     async def test_speech_uses_separate_bounded_timeout(self):
         import httpx
         from ilma_api import settings

@@ -24,7 +24,7 @@ database. Configure its private `.env`, then in that development terminal only:
 export ILMA_ENV=development
 export VOICE_DIAGNOSTICS_ENABLED=true
 export PYTHONPATH="$PWD/api"
-export DB_NAME=project_db  # current host: match the service database override
+export DB_NAME=ilma  # ILMA's database; do not use other projects' databases
 export ILMA_VENV_PATH=/home/ubuntu/venv
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.voice_diagnostics setup
 "$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 127.0.0.1 --port 8002

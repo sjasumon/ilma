@@ -25,7 +25,7 @@ def build_database_url(environment):
                           host=fields.get('DB_HOST') or '127.0.0.1', port=port,
                           database=database, query={'charset': 'utf8mb4'})
     try:
-        url = make_url(fields.get('DATABASE_URL') or 'mysql+pymysql://localhost/ilma_app?charset=utf8mb4')
+        url = make_url(fields.get('DATABASE_URL') or 'mysql+pymysql://localhost/ilma?charset=utf8mb4')
     except (ArgumentError, ValueError):
         raise ValueError('Fill DB_HOST, DB_PORT, DB_NAME, DB_USERNAME and DB_PASSWORD in the private .env.') from None
     if url.get_backend_name() != 'mysql':

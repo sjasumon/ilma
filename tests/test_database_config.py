@@ -2,6 +2,9 @@ import unittest
 from ilma_api.database_config import build_database_url
 
 class TestDatabaseConfiguration(unittest.TestCase):
+    def test_default_database_belongs_to_ilma(self):
+        self.assertEqual(build_database_url({}).database, 'ilma')
+
     def test_separate_fields_reserved_password(self):
         password = 'p@ss:/#?% word'
         url = build_database_url({'DB_HOST':'db.internal', 'DB_PORT':'3306', 'DB_NAME':'ilma', 'DB_USERNAME':'builder', 'DB_PASSWORD':password})
