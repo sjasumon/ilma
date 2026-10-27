@@ -55,6 +55,9 @@ def backup(directory):
     if directory.is_symlink() or directory.stat().st_mode & 0o077:
         raise ValueError('Backup directory must be private (0700), without a symlink.')
     destination = directory / ('ilma-' + datetime.utcnow().strftime('%Y%m%dT%H%M%SZ') + '-' + uuid.uuid4().hex[:8] + '.sql.gz')
+    manifest = destination.with_suffix(destination.suffix + '.json')
+    pending_manifest = destination.with_suffix(destination.suffix + '.json.part')
+    completed = False
     try:
         with credentials(engine.url) as config, tempfile.TemporaryFile() as raw:
             # Ignore unrelated ~/.my.cnf/global defaults (including database=...).
@@ -69,18 +72,28 @@ def backup(directory):
                 os.fsync(compressed.fileno())
         metadata = {'database': 'ilma', 'file': destination.name,
             'sha256': hashlib.sha256(destination.read_bytes()).hexdigest(), 'created_at': datetime.utcnow().isoformat()}
-        manifest = destination.with_suffix(destination.suffix + '.json')
-        with manifest.open('x') as handle:
-            os.chmod(manifest, 0o600)
+        with pending_manifest.open('x') as handle:
+            os.chmod(pending_manifest, 0o600)
             json.dump(metadata, handle)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(pending_manifest, manifest)
+        completed = True
         # Seven completed snapshots. Off-host/encrypted backups are a separate gate.
-        for old in sorted(directory.glob('ilma-*.sql.gz'), reverse=True)[7:]:
+        # UUID suffixes do not order creation time when backups share a second.
+        # Always keep this completed snapshot; retain six other recent completed
+        # snapshots and leave any concurrent, unfinished dump alone.
+        previous = [p for p in directory.glob('ilma-*.sql.gz') if p != destination
+            and p.with_suffix(p.suffix + '.json').is_file()]
+        for old in sorted(previous, key=lambda p: (p.stat().st_mtime_ns, p.name), reverse=True)[6:]:
             old.unlink()
             old.with_suffix(old.suffix + '.json').unlink(missing_ok=True)
         return destination
     except BaseException:
-        destination.unlink(missing_ok=True)
-        destination.with_suffix(destination.suffix + '.json').unlink(missing_ok=True)
+        if not completed:
+            destination.unlink(missing_ok=True)
+            manifest.unlink(missing_ok=True)
+        pending_manifest.unlink(missing_ok=True)
         raise
 
 

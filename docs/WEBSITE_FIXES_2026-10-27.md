@@ -62,6 +62,12 @@ none has been marked reviewed or published.
 - Real-phone microphone, TalkBack/VoiceOver, true text enlargement and offline
   field acceptance remain required. Browser emulation does not replace them.
 
+CI follow-up caught and corrected an operations bug: backups with identical
+second timestamps could be pruned by random UUID filename order. Retention now
+always keeps the newly completed snapshot and uses modification time for older
+completed snapshots. A fixed-clock/descending-ID regression reproduces the old
+failure deterministically; unfinished concurrent dumps are excluded from pruning.
+
 Run against the controlled demo (creates/removes one anonymous Watch entry):
 
 ```sh
