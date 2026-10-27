@@ -179,6 +179,15 @@ Updated 2026-10-27 after the workspace access change:
 
 ## Remaining acceptance gates
 
+Host diagnostic follow-up, 2026-10-27: the latest saved user sample decoded to
+11.99 seconds, had a non-empty Meta transcript and ended in
+`bank_data_unavailable`; this was not the 15-second recording limit. Running the
+existing migration in the systemd service's host context stopped with
+"Create/load the verified bank schema first" because its required institution
+tables were unavailable there. Earlier agent-context MySQL checks do not prove
+the host service has the verified bank schema/data. Do not create sample bank
+facts to bypass this gate; reconcile the host database configuration/import.
+
 Deployment incident, 2026-10-27: `https://app.sumon.me` served frontend asset
 version 15, but its published OpenAPI document omitted `/v1/voice`, `/v1/ask`,
 `/v1/speech` and `/v1/voice/config`. Empty POST probes to voice/ask and GET config
