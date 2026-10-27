@@ -1,0 +1,1223 @@
+// ILMA Web Frontend Logic (27 Oct 2026)
+// Provides clean S-01 Home, S-02 Listening, Bank Services, Bank Detail (Report Card & 7 Checks), News
+
+const T = {
+  bn: {
+    langBtn: "EN",
+    wordmarkSub: "ILMA",
+    homeIdle: "কথা বলতে যেকোনো জায়গায় ট্যাপ করুন",
+    homeIdle2: "Tap anywhere to speak",
+    listeningText: "শুনছি…",
+    listeningPrompt: "ব্যাংকের নাম বা প্রশ্ন বলুন। থামিয়ে খুঁজতে দুইবার ট্যাপ করুন।",
+    checkingText: "ইলমা খুঁজে দেখছেন…",
+    tryExamples: [
+      "যেমন বলুন: “ইস্টার্ন ব্যাংক কেমন আছে?”",
+      "যেমন বলুন: “ডাচ-বাংলা ব্যাংকের খেলাপি ঋণ কত?”",
+      "যেমন বলুন: “পূবালী ব্যাংকে ৫ লাখ টাকা রাখলে কতটা নিরাপদ?”",
+      "যেমন বলুন: “ব্র্যাক ব্যাংকের ক্রেডিট রেটিং কী?”"
+    ],
+    tabs: {
+      home: "হোম",
+      services: "ব্যাংক সেবা",
+      detail: "ব্যাংক বিবরণী",
+      news: "খবর"
+    },
+    services: {
+      title: "ব্যাংক সেবা ও সঞ্চয় সুরক্ষা",
+      subtitle: "আমানত বীমা আইন ২০২৬ ও প্রকৃত মুনাফা নির্দেশিকা",
+      listenBtn: "নিয়ম পড়ে শুনুন",
+      insHeading: "আমানত সুরক্ষা হিসাব (Insurance Explainer)",
+      insDesc: "“Tk 2 lakh of your Tk 5 lakh is covered” — কোনো অ্যাকাউন্ট বা ব্যক্তিগত তথ্য ছাড়াই হিসাব করুন।",
+      amtLabel: "জমা টাকার পরিমাণ (BDT):",
+      typeLabel: "প্রতিষ্ঠানের ধরন:",
+      optBank: "বাণিজ্যিক ব্যাংক (আইন ২০২৬ প্রযোজ্য)",
+      optNbfi: "আর্থিক প্রতিষ্ঠান - NBFI (বীমা কার্যকর ১ জুলাই ২০২৮)",
+      insuredPart: "বীমা দ্বারা ১০০% সুরক্ষিত: ",
+      uninsuredPart: "বীমাহীন সাধারণ দাবি: ",
+      payoutNote: "আমানত সুরক্ষা আইন ২০২৬ অনুযায়ী বাংলাদেশ ব্যাংক ট্রাস্ট তহবিল ১৭ কর্মদিবসের মধ্যে এই অর্থ প্রদান করবে।",
+      nbfiNote: "আর্থিক প্রতিষ্ঠানের (NBFI) আমানত বর্তমানে বীমা সুবিধার আওতাভুক্ত নয়। ১ জুলাই ২০২৮ থেকে কার্যকর হবে।",
+      retHeading: "এফডিআর ও প্রকৃত মুনাফা ক্যালকুলেটর (Real Return)",
+      retDesc: "উৎস কর (AIT) ও বর্তমান মুদ্রাস্ফীতি (৯.৮%) সমন্বয়ের পর আপনার কত টাকা লাভ থাকবে?",
+      retAmtLabel: "আমানত বা এফডিআর (টাকা):",
+      retRateLabel: "বার্ষিক মুনাফার হার (%):",
+      retTenorLabel: "মেয়াদ:",
+      tinLabel: "টিআইএন (TIN) সার্টিফিকেট আছে (১০% কর, না থাকলে ১৫%)",
+      grossProfit: "মোট মুনাফা: ",
+      taxDeducted: "উৎস কর (AIT): ",
+      netProfit: "কর-পরবর্তী মুনাফা: ",
+      realReturn: "প্রকৃত লাভ (মুদ্রাস্ফীতি ৯.৮% সমন্বয়): "
+    },
+    detail: {
+      whyHeading: "কেন এই অবস্থা? (৩টি প্রধান কারণ)",
+      checksHeading: "৭টি মূল স্বাস্থ্য পরীক্ষা (7 Health Checks)",
+      listenReport: "রিপোর্ট শুনুন",
+      watchReport: "নজরে রাখুন",
+      sourceBtn: "সূত্র ›",
+      disclaimer: "এটি তথ্য, পরামর্শ নয়। টাকা রাখার আগে ব্যাংকে হার ও নিয়ম নিশ্চিত হয়ে নিন।"
+    },
+    news: {
+      title: "ব্যাংকিং সংবাদ ও নোটিশ",
+      subtitle: "বাংলাদেশ ব্যাংক সার্কুলার ও নিয়ন্ত্রক আপডেট",
+      listenNews: "সংবাদ শুনুন"
+    }
+  },
+  en: {
+    langBtn: "BN",
+    wordmarkSub: "ILMA",
+    homeIdle: "Tap anywhere to speak",
+    homeIdle2: "You can also speak Bangla",
+    listeningText: "Listening…",
+    listeningPrompt: "Say a bank name or ask a question. Double-tap to stop and search.",
+    checkingText: "Ilma is looking up the facts…",
+    tryExamples: [
+      "Try: “How is Eastern Bank doing?”",
+      "Try: “What is Dutch-Bangla Bank's bad loan ratio?”",
+      "Try: “Is Tk 5 Lakh safe in Pubali Bank?”",
+      "Try: “What is BRAC Bank's credit rating?”"
+    ],
+    tabs: {
+      home: "Home",
+      services: "Bank services",
+      detail: "Bank detail",
+      news: "News"
+    },
+    services: {
+      title: "Bank Services & Savings Protection",
+      subtitle: "Deposit Protection Act 2026 & Real Return Guide",
+      listenBtn: "Listen to guide",
+      insHeading: "Deposit Insurance Breakdown",
+      insDesc: "“Tk 2 lakh of your Tk 5 lakh is covered” — calculate without account or personal details.",
+      amtLabel: "Deposit Amount (BDT):",
+      typeLabel: "Institution Type:",
+      optBank: "Commercial Bank (Act 2026 applicable)",
+      optNbfi: "NBFI - Financial Institution (Coverage starts 1 July 2028)",
+      insuredPart: "100% Insured portion: ",
+      uninsuredPart: "Uninsured general claim: ",
+      payoutNote: "Under Deposit Protection Act 2026, Bangladesh Bank Trust Fund pays within 17 working days.",
+      nbfiNote: "NBFI deposits are currently not insured; coverage begins 1 July 2028.",
+      retHeading: "FDR & Real Return Calculator",
+      retDesc: "What purchasing power remains after withholding tax (AIT) and 9.8% inflation?",
+      retAmtLabel: "Deposit / FDR (BDT):",
+      retRateLabel: "Annual Interest / Profit Rate (%):",
+      retTenorLabel: "Tenor:",
+      tinLabel: "Has TIN certificate (10% tax, otherwise 15%)",
+      grossProfit: "Gross Profit: ",
+      taxDeducted: "Withholding Tax (AIT): ",
+      netProfit: "Net Profit: ",
+      realReturn: "Real Return (Adjusted for 9.8% inflation): "
+    },
+    detail: {
+      whyHeading: "Why this status? (Top 3 reasons)",
+      checksHeading: "7 Key Health Checks",
+      listenReport: "Listen",
+      watchReport: "Watch Bank",
+      sourceBtn: "Source ›",
+      disclaimer: "This is factual information, not financial advice. Verify terms directly with the bank."
+    },
+    news: {
+      title: "Banking News & Notices",
+      subtitle: "Bangladesh Bank circulars & regulatory directives",
+      listenNews: "Listen to news"
+    }
+  }
+};
+
+const defaultSettings = { language: "bn", motion: true, swipe: true, speak: true, slow: false, micExplained: false };
+let appSettings = { ...defaultSettings };
+try {
+  const saved = JSON.parse(window.localStorage?.getItem("ilma-settings") || "null");
+  if (saved) {
+    if (["en", "bn"].includes(saved.language)) appSettings.language = saved.language;
+    if (typeof saved.motion === "boolean") appSettings.motion = saved.motion;
+    for (const key of ["swipe", "speak", "slow", "micExplained"]) if (typeof saved[key] === "boolean") appSettings[key] = saved[key];
+  }
+} catch { /* Preferences still work when storage is unavailable. */ }
+let currentLang = appSettings.language;
+let suppressHomeClick = false;
+let swipeClickTimer = null;
+let currentTab = "home";
+let currentBankId = null;
+let reportCardData = null;
+let audioRecorder = null;
+let voiceAbort = null;
+let isListening = false;
+let recognitionStarting = false;
+let isSearching = false;
+let voiceRequest = 0;
+let exampleTimer = null;
+let greetingIndex = 0;
+let greetingAnimation = null;
+let reportRequest = 0;
+let modalOpener = null;
+let voiceConfig = { silence_ms: 1500, no_speech_ms: 6000 };
+let activeVoiceContext = { tab: "home", bank_id: null };
+let voiceHistory = [];
+let lastVoiceTranscript = "";
+let voiceFailures = 0;
+let playbackRequest = 0;
+let fixedClips = {};
+let suppressReadoutClick = false;
+let anonymousDevice = "";
+try {
+  anonymousDevice = window.localStorage?.getItem("ilma-device-id") || window.crypto?.randomUUID?.() || "";
+  if (anonymousDevice) window.localStorage?.setItem("ilma-device-id", anonymousDevice);
+} catch {}
+
+function playTone(freq = 600, duration = 0.08) {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+    osc.onended = () => audioCtx.close();
+  } catch (e) {}
+}
+
+function toBnDigits(num) {
+  const bn = "০১২৩৪৫৬৭৮৯.";
+  return String(num).replace(/[0-9.]/g, c => bn["0123456789.".indexOf(c)] || c);
+}
+
+function formatTaka(val) {
+  const formatted = Math.round(Number(val)).toLocaleString("en-IN");
+  return currentLang === "bn" ? toBnDigits(formatted) : formatted;
+}
+
+async function requestReadout(kind, institutionId = null) {
+  if (suppressReadoutClick) { suppressReadoutClick = false; return; }
+  const player = document.getElementById("ilma-player");
+  if (player.src && !player.paused) { stopAudio(); return; }
+  stopAudio(); const request = playbackRequest;
+  try {
+    const response = await fetch("/v1/speech", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, institution_id: institutionId, language: currentLang }) });
+    if (!response.ok) throw new Error("speech_unavailable");
+    const result = await response.json(); playVoiceAudio(result.audio_url, request, true);
+  } catch { document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "পড়ে শোনানোর সেবা এখন চালু নেই।" : "Spoken playback is not available."; }
+}
+
+function switchTab(tabName, keepVoiceStream = false) {
+  currentTab = tabName;
+  document.querySelector(".scr").classList.toggle("home-open", tabName === "home");
+  document.querySelector(".scr").classList.toggle("report-open", tabName === "detail");
+  if (!keepVoiceStream) stopAudio();
+  if (!keepVoiceStream) stopListening();
+
+  document.querySelectorAll(".dock button.dock-item").forEach(btn => {
+    const isTarget = btn.getAttribute("data-tab") === tabName;
+    btn.classList.toggle("on", isTarget);
+    btn.setAttribute("aria-current", isTarget ? "page" : "false");
+  });
+
+  document.querySelectorAll(".tab-content").forEach(el => {
+    el.classList.remove("active");
+  });
+
+  const targetPanel = document.getElementById(`tab-${tabName}`);
+  if (targetPanel) {
+    targetPanel.classList.add("active");
+    if (tabName === "home") fitGreetingLine();
+    window.scrollTo(0, 0);
+    const srAnnounce = document.getElementById("sr-announcer");
+    if (srAnnounce) {
+      srAnnounce.textContent = currentLang === "bn" ? `${T[currentLang].tabs[tabName]} ট্যাব খোলা হয়েছে` : `${T[currentLang].tabs[tabName]} opened`;
+    }
+  }
+
+  if (tabName === "detail") {
+    loadReportCard(currentBankId);
+  } else if (tabName === "news") {
+    loadNews();
+  }
+}
+
+function saveSettings() {
+  try { window.localStorage?.setItem("ilma-settings", JSON.stringify(appSettings)); } catch {}
+}
+
+function setLanguage(language, announce = true) {
+  if (!["bn", "en"].includes(language)) return;
+  if (isListening || recognitionStarting || isSearching) stopListening();
+  stopAudio();
+  currentLang = language;
+  appSettings.language = language;
+  saveSettings();
+  updateLocalizedText();
+  startExampleCycle();
+  if (currentTab === "detail" && reportCardData) renderReportCard();
+  if (announce) document.getElementById("sr-announcer").textContent = currentLang === "bn"
+    ? "ভাষা বাংলা করা হয়েছে।" : "Language changed to English.";
+}
+
+function toggleLanguage() {
+  setLanguage(currentLang === "bn" ? "en" : "bn");
+}
+
+function updateSettingsText() {
+  const bn = currentLang === "bn";
+  const labels = {
+    "settings-title": bn ? "সেটিংস" : "Settings",
+    "settings-language-label": bn ? "অ্যাপের ভাষা" : "App language",
+    "settings-motion-label": bn ? "অ্যানিমেশন দেখান" : "Show animations",
+    "settings-speak-label": bn ? "উত্তর পড়ে শোনান" : "Speak answers",
+    "settings-slow-label": bn ? "ধীরে পড়ুন" : "Read slowly",
+    "settings-swipe-label": bn ? "বামে সোয়াইপ করে ভাষা বদলান" : "Swipe left to change language",
+    "settings-help": bn ? "হোমে বামে সোয়াইপ করে ভাষা বদলান। স্ক্রিন রিডার ব্যবহার করলে ভাষার বোতাম বা এই তালিকা ব্যবহার করুন।" : "Swipe left on Home to switch language. With a screen reader, use the language button or this list."
+  };
+  Object.entries(labels).forEach(([id, text]) => document.getElementById(id).textContent = text);
+  document.getElementById("settings-btn").setAttribute("aria-label", bn ? "সেটিংস" : "Settings");
+  document.getElementById("settings-close").setAttribute("aria-label", bn ? "বন্ধ করুন" : "Close settings");
+  document.getElementById("settings-language").value = currentLang;
+  document.getElementById("settings-motion").checked = appSettings.motion;
+  for (const key of ["swipe", "speak", "slow"]) document.getElementById(`settings-${key}`).checked = appSettings[key];
+  document.querySelector(".scr").classList.toggle("motion-disabled", !appSettings.motion);
+}
+
+function setupLanguageSwipe(target) {
+  let origin = null;
+  function suppressGestureClick() {
+    suppressHomeClick = true;
+    clearTimeout(swipeClickTimer);
+    swipeClickTimer = setTimeout(() => { suppressHomeClick = false; }, 600);
+  }
+  function begin(x, y, id) {
+    clearTimeout(swipeClickTimer);
+    suppressHomeClick = false;
+    origin = { x, y, id, time: Date.now() };
+  }
+  function cancel() {
+    if (origin) suppressGestureClick();
+    origin = null;
+  }
+  function finish(x, y, id, event) {
+    const start = origin;
+    origin = null;
+    if (!start || id !== start.id) return;
+    const dx = x - start.x, dy = y - start.y;
+    // A drag/scroll must never become a microphone click, even if not a left swipe.
+    if (Math.hypot(dx, dy) >= 12) suppressGestureClick();
+    if (!appSettings.swipe || isListening || currentTab !== "home") return;
+    if (dx <= -56 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - start.time < 1500) {
+      suppressGestureClick();
+      if (event.cancelable) event.preventDefault();
+      toggleLanguage();
+      if ("vibrate" in navigator) navigator.vibrate(30);
+    }
+  }
+  if (window.PointerEvent) {
+    target.addEventListener("pointerdown", event => {
+      if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) {
+        cancel();
+        return;
+      }
+      begin(event.clientX, event.clientY, event.pointerId);
+      // Keep receiving the release if the finger/mouse leaves the button.
+      try { target.setPointerCapture(event.pointerId); } catch {}
+    });
+    target.addEventListener("pointerup", event => finish(event.clientX, event.clientY, event.pointerId, event));
+    target.addEventListener("pointercancel", cancel);
+    target.addEventListener("lostpointercapture", cancel);
+  } else {
+    // Older mobile webviews may send Touch Events without Pointer Events.
+    target.addEventListener("touchstart", event => {
+      if (event.touches.length !== 1) { cancel(); return; }
+      const touch = event.touches[0];
+      begin(touch.clientX, touch.clientY, touch.identifier);
+    }, { passive: true });
+    target.addEventListener("touchend", event => {
+      if (event.touches.length) { cancel(); return; }
+      const touch = Array.from(event.changedTouches).find(item => item.identifier === origin?.id);
+      if (touch) finish(touch.clientX, touch.clientY, touch.identifier, event);
+    }, { passive: false });
+    target.addEventListener("touchcancel", cancel);
+  }
+}
+
+function updateLocalizedText() {
+  const t = T[currentLang];
+  document.documentElement.lang = currentLang;
+  const languageButton = document.getElementById("lang-btn");
+  languageButton.textContent = t.langBtn;
+  languageButton.setAttribute("aria-pressed", String(currentLang === "en"));
+  languageButton.setAttribute("aria-label", currentLang === "bn" ? "ইংরেজি ভাষায় বদলান" : "Switch to Bangla");
+  updateSettingsText();
+  syncConnectivity();
+  loadBankOptions();
+  stopGreetingCycle();
+
+  document.querySelector("[data-tab='home'] span").textContent = t.tabs.home;
+  document.querySelector("[data-tab='services'] span").textContent = t.tabs.services;
+  document.querySelector("[data-tab='detail'] span").textContent = t.tabs.detail;
+  document.querySelector("[data-tab='news'] span").textContent = t.tabs.news;
+
+  document.getElementById("srv-title").textContent = t.services.title;
+  document.getElementById("srv-subtitle").textContent = t.services.subtitle;
+  document.getElementById("lbl-listen-srv").textContent = t.services.listenBtn;
+  document.getElementById("srv-ins-heading").textContent = t.services.insHeading;
+  document.getElementById("srv-ins-desc").textContent = t.services.insDesc;
+  document.getElementById("srv-amt-label").textContent = t.services.amtLabel;
+  document.getElementById("srv-type-label").textContent = t.services.typeLabel;
+  document.getElementById("opt-bank").textContent = t.services.optBank;
+  document.getElementById("opt-nbfi").textContent = t.services.optNbfi;
+  document.getElementById("srv-ret-heading").textContent = t.services.retHeading;
+  document.getElementById("srv-ret-desc").textContent = t.services.retDesc;
+  document.getElementById("srv-ret-amt-lbl").textContent = t.services.retAmtLabel;
+  document.getElementById("srv-ret-rate-lbl").textContent = t.services.retRateLabel;
+  document.getElementById("srv-ret-tenor-lbl").textContent = t.services.retTenorLabel;
+  document.getElementById("lbl-tin").textContent = t.services.tinLabel;
+
+  document.getElementById("card-why-heading").textContent = t.detail.whyHeading;
+  document.getElementById("card-checks-heading").textContent = t.detail.checksHeading;
+  document.getElementById("lbl-listen-rpt").textContent = t.detail.listenReport;
+  document.getElementById("lbl-watch-rpt").textContent = t.detail.watchReport;
+  document.getElementById("card-disclaimer").textContent = t.detail.disclaimer;
+
+  document.getElementById("news-title").textContent = t.news.title;
+  document.getElementById("news-sub").textContent = t.news.subtitle;
+  document.getElementById("lbl-listen-news").textContent = t.news.listenNews;
+
+  document.querySelectorAll(".dock-item").forEach(btn => btn.setAttribute("aria-label", t.tabs[btn.dataset.tab]));
+  document.getElementById("voice-type").textContent = currentLang === "bn" ? "⌨ লিখে খুঁজুন" : "⌨ Type to search";
+  document.getElementById("voice-text-label").textContent = currentLang === "bn" ? "ব্যাংকের নাম বা প্রশ্ন লিখুন" : "Type a bank name or question";
+  document.getElementById("voice-text-submit").textContent = currentLang === "bn" ? "খুঁজুন" : "Search";
+  for (const id of ["bank-voice-btn", "services-voice-btn"]) document.getElementById(id).textContent = currentLang === "bn" ? "প্রশ্ন বলুন" : "Ask by voice";
+  document.getElementById("home-tap-target").setAttribute("aria-label", currentLang === "bn" ? "কথা বলুন। ব্যাংকের নাম বলুন।" : "Speak. Say a bank name.");
+  document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "থামুন" : "Stop";
+  document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "থামুন" : "Stop");
+  if (currentTab === "news") loadNews();
+  calculateInsuranceSplit();
+  calculateRealReturn();
+}
+
+// One bilingual line; never split Bengali conjuncts into individual characters.
+const greetingFrames = [
+  { lang: "bn", text: T.bn.homeIdle, example: false },
+  { lang: "en", text: T.en.homeIdle, example: false },
+  { lang: "bn", text: "ইস্টার্ন ব্যাংক কেমন আছে?", example: true },
+  { lang: "en", text: "How is Eastern Bank doing?", example: true }
+];
+
+function fitGreetingLine() {
+  const line = document.getElementById("home-greeting-line");
+  if (!line || !line.getBoundingClientRect) return;
+  // Use rem so browser font-size preferences are preserved. At enlarged text
+  // sizes allow wrapping rather than shrinking below the 16px design minimum.
+  line.style.whiteSpace = "nowrap";
+  let size = 1.375;
+  line.style.fontSize = `${size}rem`;
+  while (line.scrollWidth > line.clientWidth + 1 && size > 1) {
+    size = Math.max(1, size - 0.025);
+    line.style.fontSize = `${size}rem`;
+  }
+  if (line.scrollWidth > line.clientWidth + 1) line.style.whiteSpace = "normal";
+}
+
+function showGreetingFrame(frame, animate = false) {
+  const line = document.getElementById("home-greeting-line");
+  if (!line) return;
+  greetingAnimation?.cancel();
+  line.textContent = frame.text;
+  line.lang = frame.lang;
+  line.classList.toggle("is-example", frame.example);
+  fitGreetingLine();
+  if (animate && !greetingMotionReduced() && line.animate) {
+    try {
+      greetingAnimation = line.animate([
+      { opacity: 0, transform: "translateY(6px)", clipPath: "inset(0 100% 0 0)" },
+      { opacity: 1, transform: "translateY(0)", clipPath: "inset(0 0% 0 0)" }
+      ], { duration: 700, easing: "cubic-bezier(.22,1,.36,1)" });
+    } catch {
+      // Text rotation still works when the reveal animation is unsupported.
+      greetingAnimation = null;
+    }
+  }
+}
+
+function greetingMotionReduced() {
+  return !appSettings.motion || Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+}
+
+function pauseGreetingCycle() {
+  clearInterval(exampleTimer);
+  exampleTimer = null;
+  greetingAnimation?.cancel();
+  greetingAnimation = null;
+}
+
+function stopGreetingCycle() {
+  pauseGreetingCycle();
+  showGreetingFrame({ lang: currentLang, text: T[currentLang].homeIdle, example: false });
+}
+
+function startExampleCycle() {
+  pauseGreetingCycle();
+  if (currentTab !== "home" || isListening || recognitionStarting || isSearching || document.hidden || document.getElementById("settings-dialog").open) return;
+  const frames = greetingFrames.filter(frame => frame.lang === currentLang);
+  greetingIndex = 0;
+  showGreetingFrame(frames[0], true);
+  exampleTimer = setInterval(() => {
+    greetingIndex = (greetingIndex + 1) % frames.length;
+    showGreetingFrame(frames[greetingIndex], true);
+  }, 3800);
+}
+
+// S-02: Record locally, upload only to ILMA; Meta credentials stay on the server.
+function setupSpeech() { /* Audio capture is initialized only after a user tap. */ }
+
+function setVoiceState(text) {
+  document.getElementById("home-idle-view").hidden = true;
+  document.getElementById("home-listening-view").hidden = false;
+  document.getElementById("listening-state-text").textContent = text;
+}
+
+async function startListening() {
+  if (isListening || recognitionStarting || isSearching) return;
+  stopAudio();
+  if (navigator.onLine === false) { showVoiceFallback("offline"); return; }
+  if (!appSettings.micExplained) {
+    const bn = currentLang === "bn";
+    document.getElementById("mic-permission-title").textContent = bn ? "কথা বলতে মাইক্রোফোন লাগবে" : "Use your microphone to speak";
+    document.getElementById("mic-permission-copy").textContent = bn ? "আপনার কথা লিখে ব্যাংক খুঁজব। লেখা হওয়ার পর রেকর্ডিং মুছে ফেলা হয়। পিন বা অ্যাকাউন্ট নম্বর বলবেন না।" : "We transcribe your voice to find bank information, then delete the recording. Never say your PIN or account number.";
+    document.getElementById("mic-permission-allow").textContent = bn ? "অনুমতি দিন" : "Continue to microphone permission";
+    document.getElementById("mic-permission-later").textContent = bn ? "এখন না — লিখে খুঁজুন" : "Not now — type instead";
+    pauseGreetingCycle();
+    document.getElementById("mic-permission-dialog").showModal();
+    return;
+  }
+  document.getElementById("voice-feedback").hidden = true;
+  document.getElementById("voice-matches").replaceChildren();
+  document.getElementById("voice-answer-sources").replaceChildren();
+  document.getElementById("voice-transcript").hidden = true;
+  if (window.isSecureContext === false) { showVoiceFallback("insecure"); return; }
+  if (!window.IlmaVoiceRecorder?.supported()) { showVoiceFallback("unsupported"); return; }
+  const request = ++voiceRequest;
+  recognitionStarting = true;
+  pauseGreetingCycle();
+  setVoiceState(currentLang === "bn" ? "মাইক্রোফোন চালু হচ্ছে…" : "Starting microphone…");
+  document.getElementById("listening-transcript").textContent = "";
+  document.getElementById("listening-prompt").textContent = T[currentLang].listeningPrompt;
+  const recorder = new window.IlmaVoiceRecorder();
+  audioRecorder = recorder;
+  try {
+    await recorder.start({
+      silenceMs: voiceConfig.silence_ms,
+      onLevel: level => {
+        if (!greetingMotionReduced()) document.getElementById("home-orb").style.setProperty("--voice-scale", String(1 + Math.min(.16, level * 3)));
+      },
+      onNoise: () => { document.getElementById("listening-prompt").textContent = currentLang === "bn" ? "চারপাশে শব্দ বেশি, একটু শান্ত জায়গায় বলুন" : "It is noisy. Try speaking somewhere quieter."; },
+      onComplete: finishRecording,
+      onError: code => {
+        if (request !== voiceRequest) return;
+        stopListening();
+        showVoiceFallback(code);
+      }
+    });
+    if (request !== voiceRequest) { recorder.cancel(); return; }
+    recognitionStarting = false;
+    isListening = true;
+    setVoiceState(T[currentLang].listeningText);
+    document.getElementById("home-orb").classList.add("listening");
+    document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "থামুন ও খুঁজুন" : "Stop and search";
+    document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "রেকর্ডিং থামিয়ে খুঁজুন" : "Stop recording and search");
+    document.getElementById("sr-announcer").textContent = T[currentLang].listeningText;
+    playTone(660, 0.08);
+    if ("vibrate" in navigator) navigator.vibrate(30);
+  } catch (error) {
+    if (request !== voiceRequest) return;
+    stopListening();
+    showVoiceFallback(error.name === "NotAllowedError" ? "not-allowed" : error.name === "NotFoundError" ? "audio-capture" : "unavailable");
+  }
+}
+
+async function finishRecording() {
+  if (!isListening || !audioRecorder || isSearching) return;
+  const recorder = audioRecorder, request = voiceRequest;
+  isListening = false;
+  isSearching = true;
+  document.getElementById("home-orb").classList.remove("listening");
+  setVoiceState(T[currentLang].checkingText);
+  document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "বাতিল করুন" : "Cancel";
+  document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "বাতিল করুন" : "Cancel transcription");
+  try {
+    let audio = await recorder.finish();
+    playTone(440, .08);
+    if ("vibrate" in navigator) navigator.vibrate(30);
+    if (request !== voiceRequest) return;
+    if (audioRecorder === recorder) audioRecorder = null;
+    if (audio.size > 1024 * 1024) throw new Error("audio_too_large");
+    await sendVoiceInput(audio, null, request);
+
+  } catch (error) {
+    if (request !== voiceRequest) return;
+    stopListening();
+    showVoiceFallback(error.name === "AbortError" ? "voice_timeout" : error.message);
+  }
+}
+
+function showVoiceFallback(code = "unmatched") {
+  if (code === "no_speech") code = "no-speech";
+  document.getElementById("voice-answer-sources").replaceChildren();
+  document.getElementById("voice-matches").replaceChildren();
+  const bn = currentLang === "bn";
+  voiceFailures++;
+  const messages = {
+    offline: bn ? "ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আবার চেষ্টা করুন।" : "You are offline. Reconnect to use voice search.",
+    unclear: bn ? "বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Not understood. Please speak again or type.",
+    intent_unavailable: bn ? "প্রশ্নটি বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Could not understand the question. Speak again or type.",
+    voice_dependency_missing: bn ? "ভয়েস সেবা প্রস্তুত নয়। লিখে খুঁজুন।" : "Voice service is not ready. Try typing.",
+    bank_data_unavailable: bn ? "ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।" : "Bank data is currently unavailable. Please try again.",
+    voice_unconfigured: bn ? "ভয়েস সেবা এখনও চালু হয়নি।" : "Voice service is not configured yet.",
+    voice_timeout: bn ? "ভয়েস সেবায় সময় বেশি লাগছে। আবার চেষ্টা করুন।" : "Transcription timed out. Try again.",
+    voice_rate_limited: bn ? "একটু পরে আবার চেষ্টা করুন।" : "Voice service is busy. Try again shortly.",
+    voice_unavailable: bn ? "ভয়েস সেবায় সংযোগ করা যায়নি। আবার চেষ্টা করুন।" : "Could not transcribe the recording. Try again.",
+    audio_too_large: bn ? "রেকর্ডিংটি খুব বড়। ছোট করে আবার বলুন।" : "Recording is too large. Try a shorter recording.",
+    invalid_audio: bn ? "রেকর্ডিংটি পড়া যায়নি। আবার চেষ্টা করুন।" : "Could not read the recording. Try again.",
+    unsupported: bn ? "এই ব্রাউজারে অডিও রেকর্ডিং চালু নেই। সমর্থিত ব্রাউজারে খুলুন।" : "Audio recording is unavailable in this browser. Open the app in a supported browser.",
+    insecure: bn ? "মাইক্রোফোন ব্যবহার করতে অ্যাপটি HTTPS ঠিকানায় খুলুন।" : "Open the app over HTTPS to use the microphone.",
+    "not-allowed": bn ? "মাইক্রোফোনের অনুমতি বন্ধ আছে। ব্রাউজারের সাইট সেটিংসে অনুমতি দিয়ে আবার চেষ্টা করুন।" : "Microphone access is blocked. Allow it in your browser’s site settings, then try again.",
+    "audio-capture": bn ? "মাইক্রোফোন পাওয়া যায়নি। মাইক্রোফোন সংযোগ পরীক্ষা করুন।" : "No microphone is available. Check your microphone connection.",
+    "no-speech": bn ? "কথা শোনা যায়নি। আবার ট্যাপ করে ব্যাংকের নাম বলুন।" : "No speech was heard. Tap again and say a bank name.",
+    network: bn ? "ভয়েস সেবায় সংযোগ করা যায়নি। ইন্টারনেট পরীক্ষা করে আবার চেষ্টা করুন।" : "Could not reach the voice service. Check your internet connection and try again.",
+    "service-not-allowed": bn ? "ব্রাউজার ভয়েস সেবা চালু করতে পারছে না। অন্য সমর্থিত ব্রাউজারে চেষ্টা করুন।" : "The browser cannot use its voice service. Try another supported browser.",
+    "language-not-supported": bn ? "এই ব্রাউজারের ভয়েস সেবায় বাংলা সমর্থিত নয়।" : "The selected language is not supported by this browser’s voice service.",
+    search: bn ? "ব্যাংকের তথ্য খোঁজা যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।" : "Could not search bank information. Check the connection and try again.",
+    unmatched: bn ? "ব্যাংকের নাম বোঝা যায়নি। আবার ট্যাপ করে শুধু ব্যাংকের নাম বলুন।" : "No matching bank was found. Tap again and say just the bank name.",
+    multiple: bn ? "একাধিক ব্যাংকের নাম পাওয়া গেছে। নিচে একটি বেছে নিন।" : "More than one bank was found. Choose one below."
+  };
+  document.getElementById("voice-feedback-message").textContent = messages[code] || (bn ? "ভয়েস চালু করা যায়নি। আবার চেষ্টা করুন।" : "Could not start voice recognition. Try again.");
+  document.getElementById("voice-feedback").hidden = false;
+  document.getElementById("voice-retry").textContent = bn ? "আবার চেষ্টা করুন" : "Try again";
+  if (voiceFailures >= 2) document.getElementById("voice-feedback-message").textContent += bn ? " চারপাশে শব্দ বেশি হলে লিখে খুঁজুন।" : "If it is noisy, try typing instead.";
+  if (voiceFailures >= 2 || ["not-allowed", "audio-capture", "unsupported"].includes(code)) showTyping();
+  playFixedClip(code === "offline" ? "E-01" : ["not-allowed", "audio-capture"].includes(code) ? "E-03" : "E-04");
+  startExampleCycle();
+}
+
+function stopListening() {
+  voiceRequest++;
+  audioRecorder?.cancel();
+  audioRecorder = null;
+  voiceAbort?.abort();
+  voiceAbort = null;
+  recognitionStarting = false;
+  isSearching = false;
+  if (isListening) {
+    isListening = false;
+    playTone(440, 0.08);
+    if ("vibrate" in navigator) navigator.vibrate(30);
+  }
+  document.getElementById("voice-feedback").hidden = true;
+  document.getElementById("home-orb").classList.remove("listening");
+  const listeningView = document.getElementById("home-listening-view");
+  if (listeningView) {
+    listeningView.hidden = true;
+    listeningView.classList.remove("active");
+  }
+  const idleView = document.getElementById("home-idle-view");
+  if (idleView) {
+    idleView.hidden = false;
+  }
+  startExampleCycle();
+}
+
+function showTyping() {
+  document.getElementById("voice-feedback").hidden = false;
+  document.getElementById("voice-text-form").hidden = false;
+  document.getElementById("voice-text-input").focus();
+}
+
+function stopAudio() {
+  playbackRequest++;
+  const player = document.getElementById("ilma-player");
+  player.pause?.();
+  player.removeAttribute?.("src");
+  player.load?.();
+  const labels = { "lbl-listen-rpt": T[currentLang].detail.listenReport, "lbl-listen-srv": T[currentLang].services.listenBtn, "lbl-listen-news": T[currentLang].news.listenNews };
+  Object.entries(labels).forEach(([id, text]) => document.getElementById(id).textContent = text);
+}
+
+function playVoiceAudio(url, request = playbackRequest, manual = false) {
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || /^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || ""))) return;
+  const player = document.getElementById("ilma-player");
+  player.src = url;
+  player.playbackRate = appSettings.slow ? .85 : 1;
+  const label = currentTab === "detail" ? "lbl-listen-rpt" : currentTab === "services" ? "lbl-listen-srv" : currentTab === "news" ? "lbl-listen-news" : null;
+  if (label) document.getElementById(label).textContent = currentLang === "bn" ? "থামুন" : "Stop";
+  player.play?.().catch(() => { stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; });
+}
+
+function playFixedClip(key) {
+  const clip = fixedClips[`${currentLang}:${key}`];
+  if (!clip || !appSettings.speak) return;
+  stopAudio();
+  const player = document.getElementById("ilma-player");
+  const url = player.canPlayType?.('audio/ogg; codecs="opus"') ? clip.url : clip.fallback_url;
+  playVoiceAudio(url);
+}
+
+function syncConnectivity() {
+  const offline = navigator.onLine === false;
+  for (const id of ["home-tap-target", "bank-voice-btn", "services-voice-btn"]) document.getElementById(id).setAttribute("aria-disabled", String(offline));
+  const note = document.getElementById("offline-note");
+  note.textContent = currentLang === "bn" ? "অফলাইন — আগের ব্যাংকের তথ্য দেখা যাবে" : "Offline — saved bank reports are available";
+  note.hidden = !offline;
+  if (offline && (isListening || recognitionStarting || isSearching)) { stopListening(); showVoiceFallback("offline"); }
+}
+
+async function loadBankOptions() {
+  try {
+    const response = await fetch("/v1/institutions/index");
+    if (!response.ok) return;
+    const banks = await response.json();
+    const select = document.getElementById("bank-select");
+    const placeholder = document.createElement("option"); placeholder.value = "";
+    placeholder.textContent = currentLang === "bn" ? "ব্যাংক বেছে নিন" : "Choose a bank";
+    select.replaceChildren(placeholder);
+    banks.forEach(bank => { const option = document.createElement("option"); option.value = String(bank.id); option.textContent = currentLang === "bn" ? bank.name_bn : bank.name_en; select.appendChild(option); });
+    select.value = currentBankId == null ? "" : String(currentBankId);
+  } catch { /* Existing cached selector/report stays usable offline. */ }
+}
+
+async function sendVoiceInput(audio, text, request) {
+  const form = new FormData();
+  if (audio) form.append("audio", audio, audio.type.includes("mp4") ? "recording.mp4" : "recording.webm");
+  else form.append("text", text);
+  form.append("context", JSON.stringify({ ...activeVoiceContext, ui_lang: currentLang, history: voiceHistory.slice(-3), speak: Boolean(audio && appSettings.speak) }));
+  const controller = new AbortController();
+  voiceAbort = controller;
+  const audioRequest = playbackRequest;
+  let timeout;
+  const armTimeout = ms => { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), ms); };
+  armTimeout(40000); // bounded ASR retries/conversion can precede the first event
+  try {
+    const response = await fetch(audio ? "/v1/voice" : "/v1/ask", { method: "POST", body: form, signal: controller.signal, headers: { "Accept-Language": currentLang, "X-ILMA-Device": anonymousDevice } });
+    if (!response.ok) { const result = await response.json(); throw new Error(result.error?.code || "voice_unavailable"); }
+    const reader = response.body.getReader(), decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (request !== voiceRequest) { await reader.cancel(); return; }
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      let end;
+      while ((end = buffer.indexOf("\n\n")) >= 0) {
+        const block = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+        const name = block.match(/^event: (.+)$/m)?.[1];
+        const data = block.match(/^data: (.+)$/m)?.[1];
+        if (request !== voiceRequest) { await reader.cancel(); return; }
+        if (data) { armTimeout(30000); await handleVoiceEvent(name, JSON.parse(data), audioRequest); }
+      }
+      if (done) break;
+    }
+    if (request === voiceRequest) { isSearching = false; voiceAbort = null; startExampleCycle(); }
+  } finally { clearTimeout(timeout); form.delete("audio"); }
+}
+
+async function handleVoiceEvent(name, data, audioRequest) {
+  if (name === "error") throw new Error(data.code);
+  if (name === "transcript") {
+    lastVoiceTranscript = data.text;
+    if (data.language === "en" && currentLang !== "en") {
+      currentLang = "en"; appSettings.language = "en"; saveSettings(); updateLocalizedText();
+      document.getElementById("voice-language-chip").hidden = false;
+    }
+    document.getElementById("listening-transcript").textContent = `“${data.text}”`;
+    const words = document.getElementById("voice-transcript");
+    words.textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + `“${data.text}”`; words.hidden = false;
+    document.getElementById("sr-announcer").textContent = currentLang === "bn" ? `আপনি বলেছেন: ${data.text}` : `You said: ${data.text}`;
+    if (window.requestAnimationFrame) await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
+  }
+  if (name === "result") {
+    voiceFailures = ["clarify", "no_data"].includes(data.type) ? voiceFailures + 1 : 0;
+    document.getElementById("home-listening-view").hidden = true;
+    document.getElementById("home-idle-view").hidden = false;
+    document.getElementById("voice-feedback-message").textContent = (data.privacy_notice ? data.privacy_notice + " " : "") + data.text;
+    document.getElementById("voice-feedback").hidden = false;
+    const allSources = document.getElementById("voice-answer-sources"); allSources.replaceChildren();
+    (data.sources || []).forEach(source => {
+      if (!/^https?:\/\//i.test(source.source_url || "")) return;
+      const link = document.createElement("a"); link.href = source.source_url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      link.textContent = (currentLang === "bn" ? "সূত্র: " : "Source: ") + (source.source_title || source.fact_id || ""); allSources.appendChild(link);
+    });
+    const list = document.getElementById("voice-matches"); list.replaceChildren();
+    (data.candidates || []).forEach(bank => {
+      const button = document.createElement("button"); button.type = "button"; button.className = "voice-bank-choice";
+      button.textContent = currentLang === "bn" ? bank.name_bn : bank.name_en;
+      button.addEventListener("click", () => { activeVoiceContext = {tab: "bank", bank_id: bank.id}; submitTextQuestion(lastVoiceTranscript); });
+      list.appendChild(button);
+    });
+    if (!data.omit_history && !data.privacy_notice && data.amount_bdt == null && !/[0-9০-৯]|লাখ|হাজার|টাকা|পিন|অ্যাকাউন্ট|\b(?:pin|account|lakh|taka|crore)\b/i.test(lastVoiceTranscript)) {
+      voiceHistory.push({ question: lastVoiceTranscript, answer: data.text }); voiceHistory = voiceHistory.slice(-3);
+    } else if (data.type === "clarify") {
+      voiceHistory.push({ question: "[input omitted]", answer: data.text }); voiceHistory = voiceHistory.slice(-3);
+    }
+    if (data.type === "report_card") {
+      document.getElementById("bank-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + lastVoiceTranscript;
+      document.getElementById("bank-heard").hidden = false;
+      openBank(data.institution_id, true);
+    }
+    else if (["service_answer", "services"].includes(data.type)) {
+      switchTab("services", true);
+      document.getElementById("service-voice-answer").hidden = false;
+      document.getElementById("service-voice-text").textContent = data.text;
+      const sources = document.getElementById("service-voice-sources"); sources.replaceChildren();
+      (data.sources || []).forEach(source => {
+        const url = source.source_url;
+        if (!/^https?:\/\//i.test(url || "")) return;
+        const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";
+        link.textContent = source.source_title || (currentLang === "bn" ? "সূত্র" : "Source"); sources.appendChild(link);
+      });
+      if (data.amount_bdt != null) { document.getElementById("ret-amt-input").value = data.amount_bdt; calculateRealReturn(); }
+    } else if (["clarify", "no_data", "not_licensed"].includes(data.type)) showTyping();
+  }
+  if (name === "speech") playVoiceAudio(data.audio_url, audioRequest);
+  if (name === "speech_unavailable") document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "পড়ে শোনানোর সেবা এখন চালু নেই। উত্তরটি পর্দায় আছে।" : "Spoken playback is unavailable. The answer is shown on screen.";
+}
+
+async function submitTextQuestion(text = document.getElementById("voice-text-input").value) {
+  if (!text.trim()) return;
+  stopListening();
+  const request = ++voiceRequest; isSearching = true; pauseGreetingCycle();
+  setVoiceState(T[currentLang].checkingText);
+  try { await sendVoiceInput(null, text, request); }
+  catch (error) { if (request === voiceRequest) { stopListening(); showVoiceFallback(error.message); } }
+}
+
+function openBank(bankId, keepVoiceStream = false) {
+  currentBankId = bankId;
+  const select = document.getElementById("bank-select");
+  if (select) select.value = String(bankId);
+  switchTab("detail", keepVoiceStream);
+}
+
+async function loadReportCard(bankId) {
+  const request = ++reportRequest;
+  reportCardData = null;
+  document.getElementById("card-bank-name").textContent = bankId ? (currentLang === "bn" ? "একটু অপেক্ষা করুন…" : "Loading…") : (currentLang === "bn" ? "ব্যাংক বেছে নিন" : "Choose a bank");
+  document.getElementById("card-bank-meta").textContent = "";
+  document.getElementById("card-status-word").textContent = "";
+  document.getElementById("card-status-mark").textContent = "?";
+  document.getElementById("card-status-meaning").textContent = "";
+  document.getElementById("scale-marker").className = "scale-marker hidden";
+  ["reasons-list", "checks-list", "card-insurance-line"].forEach(id => document.getElementById(id).replaceChildren());
+  if (!bankId) return;
+  try {
+    const res = await fetch(`/v1/institutions/${bankId}/report-card`);
+    if (!res.ok) throw new Error("Report card load error");
+    const data = await res.json();
+    if (request !== reportRequest) return;
+    reportCardData = data;
+    reportCardData._offline = res.headers?.get("X-ILMA-Offline") === "1";
+    renderReportCard();
+  } catch (err) {
+    if (request !== reportRequest) return;
+    const message = currentLang === "bn" ? "তথ্য লোড করা যায়নি। ব্যাংক বেছে নিয়ে আবার চেষ্টা করুন।" : "Could not load data. Select a bank to try again.";
+    document.getElementById("card-bank-name").textContent = message;
+    document.getElementById("sr-announcer").textContent = message;
+  }
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]));
+}
+
+function renderReportCard() {
+  if (!reportCardData) return;
+  const data = reportCardData;
+  const noData = { code: "no_data", label_bn: "তথ্য কম", label_en: "Not enough data" };
+  const status = data.status || noData;
+  const isBn = currentLang === "bn";
+
+  document.getElementById("card-bank-name").textContent = isBn ? data.institution.name_bn : data.institution.name_en;
+  document.getElementById("card-bank-meta").textContent = isBn
+    ? `${data.institution.islamic ? "ইসলামী" : "বাণিজ্যিক"} ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: ${toBnDigits((data.data_date || "—"))}`
+    : `${data.institution.islamic ? "Islamic" : "Commercial"} Bank · Licensed · Full Coverage · Data date: ${data.data_date || "—"}`;
+
+  if (data._offline) document.getElementById("card-bank-meta").textContent += isBn ? " · অফলাইন কপি" : " · Offline copy";
+  const statusCode = data.status ? data.status.code : "no_data";
+  const markEl = document.getElementById("card-status-mark");
+  const wordEl = document.getElementById("card-status-word");
+  const meaningEl = document.getElementById("card-status-meaning");
+
+  const marks = { strong: "✓", watch: "⚠", high: "✕", no_data: "?" };
+  markEl.textContent = marks[statusCode] || "?";
+  wordEl.textContent = isBn ? status.label_bn : status.label_en;
+  wordEl.className = `status-word ${statusCode}`;
+
+  if (statusCode === "strong") {
+    meaningEl.textContent = isBn ? "আইনি মূলধন পর্যাপ্ত ও খেলাপি ঋণ স্বাভাবিক সীমার মধ্যে রয়েছে।" : "Capital is sound and non-performing loans are well-controlled.";
+  } else if (statusCode === "watch") {
+    meaningEl.textContent = isBn ? "কিছু সূচকে সতর্কতা লক্ষ্য করা গেছে, নিয়মিত নজর রাখা প্রয়োজন।" : "Caution indicated in certain metrics; monitoring recommended.";
+  } else if (statusCode === "high") {
+    meaningEl.textContent = isBn ? "উচ্চ খেলাপি ঋণ বা নিয়ন্ত্রক পদক্ষেপ রয়েছে।" : "High bad loans or critical regulatory intervention recorded.";
+  } else {
+    meaningEl.textContent = isBn ? "নিরীক্ষিত আর্থিক তথ্য এখনও পর্যাপ্ত নয়।" : "Audited financial reports are not yet fully available.";
+  }
+
+  const marker = document.getElementById("scale-marker");
+  marker.className = "scale-marker";
+  if (statusCode === "no_data") {
+    marker.classList.add("hidden");
+  } else {
+    marker.classList.add(`pos-${statusCode}`);
+  }
+
+  document.getElementById("card-insurance-line").textContent = data.insurance
+    ? (isBn ? data.insurance.text_bn : data.insurance.text_en)
+    : (isBn ? data.message_bn : data.message_en) || "";
+
+  const reasonsDiv = document.getElementById("reasons-list");
+  reasonsDiv.innerHTML = "";
+  (data.reasons || []).forEach(r => {
+    const card = document.createElement("div");
+    card.className = "reason-card";
+    card.setAttribute("role", "listitem");
+    card.innerHTML = `
+      <p class="reason-text">${escapeHTML(isBn ? r.text_bn : r.text_en)}</p>
+      <button class="reason-source-link" data-title="${escapeHTML(r.source_title || (isBn ? 'সূত্র পাওয়া যায়নি' : 'Source unavailable'))}" data-quote="${escapeHTML(r.quote || '')}" data-url="${escapeHTML(r.source_url || '')}" data-page="${escapeHTML(r.page || '')}" data-pub="${escapeHTML(r.published_at || '')}">
+        ${T[currentLang].detail.sourceBtn} ${escapeHTML(r.source_title || (isBn ? 'সূত্র পাওয়া যায়নি' : 'Source unavailable'))}
+      </button>
+    `;
+    reasonsDiv.appendChild(card);
+  });
+
+  reasonsDiv.querySelectorAll(".reason-source-link").forEach(btn => {
+    btn.addEventListener("click", () => {
+      openProofModal(
+        btn.getAttribute("data-title"),
+        btn.getAttribute("data-quote"),
+        btn.getAttribute("data-url"),
+        btn.getAttribute("data-page"),
+        btn.getAttribute("data-pub")
+      );
+    });
+  });
+
+  const checksDiv = document.getElementById("checks-list");
+  checksDiv.innerHTML = "";
+  (data.checks || []).forEach(c => {
+    const item = document.createElement("div");
+    item.className = "check-item";
+    const statusSign = c.status === "pass" ? "✓" : c.status === "watch" ? "⚠" : c.status === "fail" ? "✕" : "?";
+    item.innerHTML = `
+      <div class="check-info">
+        <span class="check-name">${escapeHTML(isBn ? c.name_bn : c.name_en)}</span>
+        <span class="check-desc">${escapeHTML(isBn ? c.desc_bn : c.desc_en)}</span>
+      </div>
+      <span class="check-badge ${escapeHTML(c.status)}">${statusSign} ${escapeHTML(c.value_text)}</span>
+    `;
+    checksDiv.appendChild(item);
+  });
+
+  const sr = document.getElementById("sr-announcer");
+  if (sr) {
+    sr.textContent = isBn
+      ? `রিপোর্ট কার্ড: ${data.institution.name_bn}। অবস্থা: ${status.label_bn}। কারণ ${(data.reasons || []).length}টি।`
+      : `Report card: ${data.institution.name_en}. Status: ${status.label_en}. ${(data.reasons || []).length} reasons available.`;
+  }
+}
+
+function openProofModal(title, quote, url, page, pubDate) {
+  const modal = document.getElementById("proof-modal");
+  document.getElementById("modal-title").textContent = title || "নথি ও প্রমাণের তথ্য";
+  document.getElementById("modal-meta").textContent = currentLang === "bn" ? `পৃষ্ঠা: ${page || "—"} · প্রকাশের তারিখ: ${pubDate || "—"}` : `Page: ${page || "—"} · Published: ${pubDate || "—"}`;
+  
+  const quoteDiv = document.getElementById("modal-quote");
+  quoteDiv.innerHTML = quote
+    ? `“…<span class="quote-highlight">${escapeHTML(quote)}</span>…”`
+    : (currentLang === "bn" ? "এই তথ্যের উদ্ধৃতি পাওয়া যায়নি।" : "No source quotation is available.");
+
+  const link = document.getElementById("modal-link");
+  if (/^https?:\/\//i.test(url || "")) {
+    link.href = url;
+    link.style.display = "inline-flex";
+  } else {
+    link.style.display = "none";
+  }
+  modalOpener = document.activeElement;
+  modal.classList.add("open");
+  document.querySelector("header").inert = true;
+  document.querySelectorAll(".tab-content, .dock").forEach(el => el.inert = true);
+  document.getElementById("proof-modal-close").focus();
+}
+
+function closeProofModal() {
+  document.getElementById("proof-modal").classList.remove("open");
+  document.querySelectorAll("header, .tab-content, .dock").forEach(el => el.inert = false);
+  modalOpener?.focus();
+}
+
+function speakReportCard() {
+  if (currentBankId) return requestReadout("report_card", currentBankId);
+}
+
+function calculateInsuranceSplit() {
+  const amtInput = document.getElementById("ins-amt-input");
+  const typeSelect = document.getElementById("ins-type-select");
+  const amt = Math.max(0, parseFloat(amtInput ? amtInput.value : 500000) || 0);
+  const type = typeSelect ? typeSelect.value : "bank";
+
+  const resDiv = document.getElementById("ins-result-box");
+  if (type === "bank") {
+    const insured = Math.min(amt, 200000);
+    const uninsured = Math.max(0, amt - 200000);
+    resDiv.innerHTML = `
+      <div style="font-size: 18px; font-weight: 700; color: #1B5E20; margin-bottom: 6px;">
+        ${T[currentLang].services.insuredPart} ${formatTaka(insured)} টাকা (১০০% বীমাযুক্ত)
+      </div>
+      ${uninsured > 0 ? `
+      <div style="font-size: 16px; color: #8A4B00; margin-bottom: 6px;">
+        ${T[currentLang].services.uninsuredPart} ${formatTaka(uninsured)} টাকা
+      </div>` : ''}
+      <div style="font-size: 14px; color: #555;">${T[currentLang].services.payoutNote}</div>
+    `;
+  } else {
+    resDiv.innerHTML = `
+      <div style="font-size: 17px; font-weight: 700; color: #8A4B00; margin-bottom: 6px;">
+        ${T[currentLang].services.insuredPart} ${formatTaka(0)} টাকা
+      </div>
+      <div style="font-size: 14px; color: #555;">${T[currentLang].services.nbfiNote}</div>
+    `;
+  }
+}
+
+function calculateRealReturn() {
+  const amt = Math.max(0, parseFloat(document.getElementById("ret-amt-input").value) || 0);
+  const ratePct = Math.min(25, Math.max(0, parseFloat(document.getElementById("ret-rate-input").value) || 0));
+  const tenorMonths = parseInt(document.getElementById("ret-tenor-select").value) || 12;
+  const hasTin = document.getElementById("tin-check").checked;
+
+  const grossProfit = amt * (ratePct / 100) * (tenorMonths / 12);
+  const taxRate = hasTin ? 0.10 : 0.15;
+  const tax = grossProfit * taxRate;
+  const netProfit = grossProfit - tax;
+
+  const inflationRate = 0.098;
+  const inflationLoss = amt * inflationRate * (tenorMonths / 12);
+  const realReturn = netProfit - inflationLoss;
+
+  const resDiv = document.getElementById("ret-result-box");
+  resDiv.innerHTML = `
+    <div><strong>${T[currentLang].services.grossProfit}</strong> ${formatTaka(grossProfit)} টাকা</div>
+    <div><strong>${T[currentLang].services.taxDeducted}</strong> ${formatTaka(tax)} টাকা (${hasTin ? '১০%' : '১৫%'})</div>
+    <div><strong>${T[currentLang].services.netProfit}</strong> ${formatTaka(netProfit)} টাকা</div>
+    <div style="margin-top: 8px; font-weight: 700; color: ${realReturn >= 0 ? '#1B5E20' : '#B71C1C'};">
+      ${T[currentLang].services.realReturn} ${formatTaka(realReturn)} টাকা
+      <span style="font-size: 13px; font-weight: normal; display: block; color: #555; margin-top: 2px;">
+        ${realReturn >= 0 ? 'মুদ্রাস্ফীতির চেয়ে বেশি ক্রয়ক্ষমতা অর্জিত হচ্ছে।' : 'মুদ্রাস্ফীতির কারণে প্রকৃত ক্রয়ক্ষমতা হ্রাস পাচ্ছে।'}
+      </span>
+    </div>
+  `;
+}
+
+async function loadNews() {
+  try {
+    const res = await fetch("/v1/news");
+    if (!res.ok) throw new Error("News load error");
+    const newsItems = await res.json();
+    const feed = document.getElementById("news-feed");
+    feed.innerHTML = "";
+    const isBn = currentLang === "bn";
+
+    if (!newsItems.length) feed.textContent = isBn ? "এখন কোনো সংবাদ নেই।" : "No news available.";
+    newsItems.forEach(n => {
+      const card = document.createElement("div");
+      card.setAttribute("role", "listitem");
+      card.style.cssText = "background: #FFF; border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px;";
+      card.innerHTML = `
+        <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
+          ${n.official ? (isBn ? 'অফিসিয়াল সার্কুলার' : 'Official Circular') : (isBn ? 'সংবাদ' : 'News')}
+        </span>
+        <h3 style="font-family: var(--display); font-size: 20px; font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h3>
+        <p style="font-size: 16px; color: var(--ink-2); margin: 0 0 8px;">${escapeHTML(isBn ? n.summary_bn : n.summary_en)}</p>
+        <div style="font-size: 14px; color: #666; display: flex; justify-content: space-between;">
+          <span>${escapeHTML(n.publisher || 'বাংলাদেশ ব্যাংক')}</span>
+          <span>${escapeHTML(n.date)}</span>
+        </div>
+      `;
+      feed.appendChild(card);
+    });
+  } catch (e) {
+    document.getElementById("news-feed").textContent = currentLang === "bn" ? "সংবাদ লোড করা যায়নি। আবার চেষ্টা করুন।" : "Could not load news. Try again.";
+  }
+}
+
+function speakNews() { return requestReadout("news"); }
+
+document.addEventListener("DOMContentLoaded", () => {
+  updateLocalizedText();
+  startExampleCycle();
+  window.addEventListener?.("resize", fitGreetingLine);
+  document.fonts?.ready.then(fitGreetingLine);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { stopListening(); pauseGreetingCycle(); }
+    else startExampleCycle();
+  });
+  window.matchMedia?.("(prefers-reduced-motion: reduce)")?.addEventListener?.("change", startExampleCycle);
+  document.addEventListener("keydown", (event) => {
+    if (!document.getElementById("proof-modal").classList.contains("open")) return;
+    if (event.key === "Escape") closeProofModal();
+    if (event.key === "Tab") {
+      const controls = Array.from(document.querySelectorAll("#proof-modal button, #proof-modal a")).filter(el => el.getClientRects().length);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+  document.getElementById("ilma-player").addEventListener("ended", stopAudio);
+  window.addEventListener?.("offline", syncConnectivity);
+  window.addEventListener?.("online", syncConnectivity);
+  fetch("/v1/content/fixed").then(response => response.ok ? response.json() : null).then(async content => {
+    if (!content) return;
+    fixedClips = content.clips || {};
+    if (navigator.serviceWorker) {
+      const worker = await navigator.serviceWorker.ready;
+      const urls = Object.values(fixedClips).flatMap(clip => [clip.url, clip.fallback_url]);
+      worker.active?.postMessage({ type: "cache-fixed-clips", urls });
+    }
+  }).catch(() => {});
+  if (navigator.serviceWorker && window.isSecureContext !== false) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  setupSpeech();
+
+  document.querySelectorAll(".dock button.dock-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tab = btn.getAttribute("data-tab");
+      switchTab(tab);
+    });
+  });
+
+  const tapTarget = document.getElementById("home-tap-target");
+  if (tapTarget) {
+    setupLanguageSwipe(tapTarget);
+    let lastRecordingTap = null;
+    tapTarget.addEventListener("click", (e) => {
+      if (suppressHomeClick) {
+        lastRecordingTap = null;
+        suppressHomeClick = false;
+        e.preventDefault();
+        return;
+      }
+      if (e.target.id === "btn-stop-listening") return;
+      if (!isListening) {
+        lastRecordingTap = null;
+        activeVoiceContext = { tab: "home", bank_id: null };
+        return startListening();
+      }
+      // Use click timing for touch and mouse alike, without relying on mobile
+      // browsers emitting dblclick. Only taps during recording form the pair.
+      const now = e.timeStamp ?? Date.now();
+      if (lastRecordingTap !== null && now - lastRecordingTap >= 0 && now - lastRecordingTap <= 450) {
+        lastRecordingTap = null;
+        e.preventDefault();
+        return finishRecording();
+      }
+      lastRecordingTap = now;
+    });
+
+  }
+
+  document.getElementById("voice-retry").addEventListener("click", startListening);
+
+  const stopBtn = document.getElementById("btn-stop-listening");
+  if (stopBtn) {
+    stopBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (isListening) return finishRecording();
+      return stopListening();
+    });
+  }
+
+  const langBtn = document.getElementById("lang-btn");
+  if (langBtn) {
+    langBtn.addEventListener("click", toggleLanguage);
+  }
+
+  document.addEventListener("pointerdown", event => {
+    const player = document.getElementById("ilma-player");
+    suppressReadoutClick = Boolean(player.src && !player.paused && event.target?.closest?.(".btn-primary-listen"));
+    stopAudio();
+  }, { capture: true });
+  document.getElementById("voice-type").addEventListener("click", showTyping);
+  document.getElementById("voice-text-form").addEventListener("submit", event => { event.preventDefault(); return submitTextQuestion(); });
+  document.getElementById("voice-language-chip").addEventListener("click", () => { setLanguage("bn"); document.getElementById("voice-language-chip").hidden = true; });
+  document.getElementById("mic-permission-allow").addEventListener("click", () => {
+    appSettings.micExplained = true; saveSettings(); document.getElementById("mic-permission-dialog").close(); return startListening();
+  });
+  document.getElementById("mic-permission-later").addEventListener("click", () => { document.getElementById("mic-permission-dialog").close(); showTyping(); });
+  for (const [id, tab] of [["bank-voice-btn", "bank"], ["services-voice-btn", "services"]]) {
+    document.getElementById(id).addEventListener("click", () => {
+      const bank = currentBankId; switchTab("home"); activeVoiceContext = { tab, bank_id: tab === "bank" ? bank : null }; return startListening();
+    });
+  }
+  fetch("/v1/voice/config").then(response => response.ok ? response.json() : null).then(config => { if (config) voiceConfig = config; }).catch(() => {});
+
+  const settingsDialog = document.getElementById("settings-dialog");
+  document.getElementById("settings-btn").addEventListener("click", () => {
+    stopAudio();
+    stopListening();
+    pauseGreetingCycle();
+    document.getElementById("settings-saved").textContent = "";
+    settingsDialog.showModal();
+  });
+  document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
+  settingsDialog.addEventListener("close", () => {
+    startExampleCycle();
+    document.getElementById("settings-btn").focus();
+  });
+  document.getElementById("settings-language").addEventListener("change", event => setLanguage(event.target.value));
+  ["motion", "swipe", "speak", "slow"].forEach(key => {
+    document.getElementById(`settings-${key}`).addEventListener("change", event => {
+      appSettings[key] = event.target.checked;
+      if (key === "speak" && !appSettings.speak) stopAudio();
+      saveSettings();
+      updateSettingsText();
+      if (key === "motion") startExampleCycle();
+      document.getElementById("settings-saved").textContent = currentLang === "bn" ? "সেটিংস সংরক্ষণ করা হয়েছে।" : "Settings saved.";
+    });
+  });
+
+  const bankSelect = document.getElementById("bank-select");
+  if (bankSelect) {
+    bankSelect.addEventListener("change", (e) => {
+      openBank(parseInt(e.target.value));
+    });
+  }
+
+  document.getElementById("btn-listen-report").addEventListener("click", speakReportCard);
+  document.getElementById("btn-listen-news").addEventListener("click", speakNews);
+  document.getElementById("btn-listen-services").addEventListener("click", () => requestReadout("insurance"));
+
+  document.getElementById("btn-watch-bank").addEventListener("click", () => {
+    document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "নজরে রাখার সুবিধা এখনও চালু হয়নি।" : "Bank watching is not available yet.";
+  });
+
+  document.getElementById("ins-amt-input").addEventListener("input", calculateInsuranceSplit);
+  document.getElementById("ins-type-select").addEventListener("change", calculateInsuranceSplit);
+  document.querySelectorAll(".q-pill").forEach(p => {
+    p.addEventListener("click", () => {
+      document.querySelectorAll(".q-pill").forEach(el => el.classList.remove("active"));
+      p.classList.add("active");
+      document.getElementById("ins-amt-input").value = p.getAttribute("data-val");
+      calculateInsuranceSplit();
+    });
+  });
+
+  document.getElementById("ret-amt-input").addEventListener("input", calculateRealReturn);
+  document.getElementById("ret-rate-input").addEventListener("input", calculateRealReturn);
+  document.getElementById("ret-tenor-select").addEventListener("change", calculateRealReturn);
+  document.getElementById("tin-check").addEventListener("change", calculateRealReturn);
+
+  document.getElementById("proof-modal-close").addEventListener("click", closeProofModal);
+  document.getElementById("proof-close-btn").addEventListener("click", closeProofModal);
+  document.getElementById("proof-modal").addEventListener("click", (e) => {
+    if (e.target.id === "proof-modal") closeProofModal();
+  });
+
+  calculateInsuranceSplit();
+  calculateRealReturn();
+});

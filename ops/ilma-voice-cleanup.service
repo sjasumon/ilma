@@ -1,0 +1,12 @@
+[Unit]
+Description=ILMA voice data retention cleanup
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/ilma
+Environment=PYTHONPATH=/opt/ilma/api
+ExecStart=/opt/ilma/.venv/bin/python -m ilma_api.voice_maintenance
+User=ilma
+Group=ilma
+NoNewPrivileges=true
+PrivateTmp=true

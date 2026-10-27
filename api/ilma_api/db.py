@@ -1,0 +1,215 @@
+import sys
+from datetime import datetime, date
+from sqlalchemy import (
+    create_engine, Column, Integer, SmallInteger, String, Text, Boolean,
+    Date, DateTime, Numeric, Enum, ForeignKey, UniqueConstraint, JSON, BigInteger
+)
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from ilma_api.settings import DATABASE_URL
+
+Base = declarative_base()
+
+class Release(Base):
+    __tablename__ = "release"
+    release_id = Column(String(64), primary_key=True)
+    loaded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    note = Column(Text, nullable=True)
+
+class Institution(Base):
+    __tablename__ = "institution"
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(64), unique=True, nullable=False)
+    name_bn = Column(String(128), nullable=False)
+    name_en = Column(String(128), nullable=False)
+    type = Column(Enum("bank", "nbfi", name="institution_type"), nullable=False)
+    islamic = Column(Boolean, default=False, nullable=False)
+    licensed = Column(Boolean, default=True, nullable=False)
+    listed = Column(Boolean, default=False, nullable=False)
+    coverage = Column(Enum("full", "partial", "licence_only", name="coverage_type"), nullable=False)
+
+    aliases = relationship("InstitutionAlias", back_populates="institution", cascade="all, delete-orphan")
+    facts = relationship("Fact", back_populates="institution", cascade="all, delete-orphan")
+    ratings = relationship("Rating", back_populates="institution", cascade="all, delete-orphan")
+    events = relationship("Event", back_populates="institution", cascade="all, delete-orphan")
+    rates = relationship("Rate", back_populates="institution", cascade="all, delete-orphan")
+
+class InstitutionAlias(Base):
+    __tablename__ = "institution_alias"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    alias = Column(String(128), nullable=False)
+    lang = Column(Enum("bn", "en", name="alias_lang"), nullable=False)
+    source = Column(String(64), nullable=True)
+
+    institution = relationship("Institution", back_populates="aliases")
+    __table_args__ = (UniqueConstraint("institution_id", "alias", name="uq_inst_alias"),)
+
+class Source(Base):
+    __tablename__ = "source"
+    source_id = Column(String(64), primary_key=True)
+    url = Column(Text, nullable=False)
+    title = Column(String(255), nullable=False)
+    publisher = Column(String(128), nullable=False)
+    published_at = Column(Date, nullable=False)
+    page = Column(Integer, nullable=True)
+    image_path = Column(String(255), nullable=True)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+
+class Fact(Base):
+    __tablename__ = "fact"
+    fact_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    metric = Column(Enum("crar", "npl_ratio", "net_profit", "provision_shortfall", name="metric_type"), nullable=False)
+    value = Column(Numeric(20, 6), nullable=False)
+    unit = Column(Enum("ratio", "bdt", name="unit_type"), nullable=False)
+    period = Column(String(32), nullable=False)
+    period_end = Column(Date, nullable=False)
+    source_id = Column(String(64), ForeignKey("source.source_id"), nullable=False)
+    quote = Column(Text, nullable=False)
+    highlight = Column(JSON, nullable=True)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+
+    institution = relationship("Institution", back_populates="facts")
+    source = relationship("Source")
+    __table_args__ = (UniqueConstraint("institution_id", "metric", "period", name="uq_inst_metric_period"),)
+
+class Rating(Base):
+    __tablename__ = "rating"
+    fact_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    agency = Column(String(64), nullable=False)
+    long_term = Column(String(32), nullable=False)
+    short_term = Column(String(32), nullable=True)
+    outlook = Column(Enum("stable", "positive", "negative", "developing", name="outlook_type"), nullable=True)
+    rated_on = Column(Date, nullable=False)
+    valid_to = Column(Date, nullable=True)
+    source_id = Column(String(64), ForeignKey("source.source_id"), nullable=False)
+    quote = Column(Text, nullable=False)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+
+    institution = relationship("Institution", back_populates="ratings")
+    source = relationship("Source")
+
+class Event(Base):
+    __tablename__ = "event"
+    event_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    type = Column(
+        Enum(
+            "administrator", "board_dissolved", "forced_merger", "licence_cancelled",
+            "liquidation", "withdrawal_limit", "emergency_liquidity", "provision_deferral",
+            "penalty", "fraud_case", "other",
+            name="event_type"
+        ),
+        nullable=False
+    )
+    title_bn = Column(String(255), nullable=False)
+    title_en = Column(String(255), nullable=False)
+    status = Column(
+        Enum("reported", "alleged", "case_filed", "charged", "convicted", "settled", "official", name="event_status"),
+        nullable=False
+    )
+    official = Column(Boolean, default=False, nullable=False)
+    severity = Column(SmallInteger, nullable=True)
+    event_date = Column(Date, nullable=False)
+    last_update = Column(Date, nullable=False)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+
+    institution = relationship("Institution", back_populates="events")
+    sources = relationship("Source", secondary="event_source")
+
+class EventSource(Base):
+    __tablename__ = "event_source"
+    event_id = Column(String(64), ForeignKey("event.event_id"), primary_key=True)
+    source_id = Column(String(64), ForeignKey("source.source_id"), primary_key=True)
+
+class Rate(Base):
+    __tablename__ = "rate"
+    fact_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    product = Column(Enum("fdr", "dps", "savings", name="rate_product"), nullable=False)
+    tenor_months = Column(Integer, nullable=False)
+    rate = Column(Numeric(6, 4), nullable=False)
+    min_amount_bdt = Column(Numeric(15, 2), nullable=True)
+    as_of = Column(Date, nullable=False)
+    source_id = Column(String(64), ForeignKey("source.source_id"), nullable=False)
+    quote = Column(Text, nullable=False)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+
+    institution = relationship("Institution", back_populates="rates")
+    source = relationship("Source")
+
+class SharePriceFlag(Base):
+    __tablename__ = "share_price_flag"
+    institution_id = Column(Integer, ForeignKey("institution.id"), primary_key=True)
+    days_below_face = Column(Integer, nullable=False)
+    window_end = Column(Date, nullable=False)
+    source_id = Column(String(64), ForeignKey("source.source_id"), nullable=False)
+
+    institution = relationship("Institution")
+    source = relationship("Source")
+
+class InsuranceRule(Base):
+    __tablename__ = "insurance_rule"
+    inst_type = Column(Enum("bank", "nbfi", name="inst_insurance_type"), primary_key=True)
+    covered = Column(Boolean, nullable=False)
+    limit_bdt = Column(Integer, nullable=True)
+    payout_working_days = Column(Integer, nullable=True)
+    covered_from = Column(Date, nullable=True)
+    text_bn = Column(Text, nullable=False)
+    text_en = Column(Text, nullable=False)
+    source_id = Column(String(64), ForeignKey("source.source_id"), nullable=False)
+
+    source = relationship("Source")
+
+class AppQuestionLog(Base):
+    __tablename__ = "app_question_log"
+    q_id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    device_hash = Column(String(16), nullable=True)
+    input_mode = Column(Enum("voice", "text", "photo", name="input_mode"), nullable=False)
+    text_redacted = Column(Text, nullable=False, default="[input omitted]")
+    intent = Column(String(32), nullable=False)
+    institution_id = Column(Integer, nullable=True)
+    fact_ids = Column(JSON, nullable=False, default=list)
+    outcome = Column(Enum("answered", "no_data", "refused", "error", name="question_outcome"), nullable=False)
+    latency_ms = Column(Integer, nullable=False, default=0)
+    cost_micro_usd = Column(Integer, nullable=False, default=0)
+    useful = Column(Boolean, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
+class AppContent(Base):
+    __tablename__ = "app_content"
+    content_key = Column(String(64), primary_key=True)
+    lang = Column(Enum("bn", "en", name="content_language"), primary_key=True)
+    version = Column(Integer, primary_key=True, default=1)
+    text = Column(Text, nullable=False)
+    audio_path = Column(String(255), nullable=True)
+    status = Column(Enum("draft", "reviewed", "live", name="content_status"), nullable=False, default="draft")
+
+
+class AppRateCounter(Base):
+    __tablename__ = "app_rate_counter"
+    key = Column(String(80), primary_key=True)
+    count = Column(Integer, nullable=False, default=0)
+    expires_at = Column(DateTime, nullable=False)
+
+
+for table in Base.metadata.tables.values():
+    table.dialect_options["mysql"]["charset"] = "utf8mb4"
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 5}, pool_recycle=1800)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def create_tables():
+    Base.metadata.create_all(bind=engine)
+    print("Database tables created successfully.")
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "create":
+        create_tables()

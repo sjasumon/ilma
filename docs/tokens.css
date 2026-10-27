@@ -1,0 +1,66 @@
+/* ILMA design tokens for the V1 build (26 Oct 2026).
+   Teal theme from the Home prototype (design/home-options/ilma_home_teal_prototype.html).
+   Overrides FRD §20.1 (light theme). Every text pair below is checked against its stated background. */
+:root {
+  /* Teal stage (decided 26 Oct, replaces navy): Start, Home, Listening, report-card hero.
+     Gradient top-to-bottom from --stage-hi to --stage-lo. */
+  --stage-hi: #2B5653;      /* top of gradient: ivory only (7.2:1); no muted, gold or status text here */
+  --stage: #1E4542;         /* middle; cards on the stage */
+  --stage-lo: #0F2624;      /* bottom; put status words and small text on this or darker */
+  --page: #06110F;          /* desktop surround behind the phone column */
+  --on-stage: #F6F0E4;      /* main text, 7.2:1 on hi, 14.0:1 on lo */
+  --on-stage-2: #A9C4BF;    /* helper text, 5.7:1 on --stage, 8.6:1 on lo (fails on hi: 4.4) */
+  --cyan: #7FD3E3;          /* orb waves only, decorative */
+  /* old names kept so earlier prototype code still works */
+  --navy: var(--stage); --navy-2: var(--stage-lo); --on-navy: var(--on-stage); --on-navy-2: var(--on-stage-2);
+
+  /* Ivory sheet: everything people read */
+  --ivory: #F6F0E4;         /* sheet background */
+  --ivory-2: #ECE3D0;       /* inset boxes (insurance line) */
+  --paper: #FFFDF8;         /* inputs, cards on the sheet */
+  --line: #D8CCB4;          /* borders, dashed dividers use #CDBF9F */
+  --ink: #1A1A1A;           /* main text, 15.3:1 */
+  --ink-2: #4F4A40;         /* secondary text, 7.8:1 */
+  --link: #1F4E8C;          /* "সূত্র" links, 7.3:1 */
+
+  /* Brand: gold only for brand (wordmark, Start button, orb waves, active tab, onboarding). Never on report cards or next to a status. */
+  --gold: #F6CB55;          /* 6.8:1 on --stage, 10.3:1 on lo */
+  --gold-soft: #E9D08A;     /* orb wave start, decorative */
+
+  /* Status on the teal stage: ONLY on --stage-lo (or a --stage-lo panel). On --stage-hi they fail contrast.
+     Green status sits close to the teal hue, so the ✓ mark and the word are required, never colour alone. */
+  --good-on-stage: #5CCB8F;    /* 7.9:1 on lo */
+  --watch-on-stage: #F0A43A;   /* 7.6:1 on lo */
+  --risk-on-stage: #F29B94;    /* 7.5:1 on lo, muted: no glow, no pulse */
+  --unknown-on-stage: #A7B0C0; /* 7.3:1 on lo */
+
+  /* Status on ivory (FRD §20.1 values kept) */
+  --good: #1B5E20;  --good-tint: #E6F4EA;     /* 6.9:1 */
+  --watch: #8A4B00; --watch-tint: #FFF4E0;    /* 6.0:1 */
+  --risk: #B71C1C;  --risk-tint: #FDECEA;     /* 5.8:1 */
+  --unknown: #4A4A4A; --unknown-tint: #EEEEEE;/* 7.8:1 */
+
+  /* Type */
+  --display: 'Tiro Bangla', 'Noto Serif Bengali', serif;          /* hero lines, status word, bank name */
+  --body: 'Noto Sans Bengali', 'Noto Sans', system-ui, sans-serif; /* all reading text */
+  --latin: 'Noto Sans', system-ui, sans-serif;
+  --script-bn: 'Galada', var(--display);        /* S-00 write-on only */
+  --script-en: 'Dancing Script', cursive;       /* S-00 / Home English hello frame only */
+
+  --fs-status: 32px; --fs-title: 26px; --fs-heading: 22px;
+  --fs-body: 20px;   --fs-secondary: 18px; --fs-small: 16px; /* 16 is the floor anywhere */
+  --lh-bn: 1.6;
+
+  /* Shape and spacing (8 dp grid) */
+  --gutter: 16px; --gap: 16px; --gap-group: 24px;
+  --r-card: 18px; --r-sheet: 28px; --r-pill: 999px;
+  --tap: 56px;     /* primary actions and every main target */
+  --tap-min: 48px; /* text buttons only */
+
+  /* Motion */
+  --t-fast: 200ms;   /* every ordinary transition */
+  --ease-out: cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

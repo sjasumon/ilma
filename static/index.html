@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ILMA · Your trusted savings companion</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans:wght@400;600;700&family=Tiro+Bangla&display=swap">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-13">
+  <style>
+    /* State and assistive text must stay hidden even before assets finish loading. */
+    [hidden] { display: none !important; }
+    .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important; }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">মূল বিষয়ে যান (Skip to content)</a>
+  <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
+
+  <div class="scr home-open" id="main-content" role="main" tabindex="-1">
+    <!-- Top Bar matching S01-Home.html -->
+    <header class="top-bar">
+      <div class="wordmark" aria-label="ইলমা ILMA">
+        <b>ইলমা</b>
+        <span id="wm-sub">ILMA</span>
+      </div>
+      <div class="header-actions">
+        <button class="pill latin" id="lang-btn" aria-label="Switch to English" aria-pressed="false">EN</button>
+        <button class="settings-button" id="settings-btn" type="button" aria-label="সেটিংস" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="9" cy="18" r="2" fill="currentColor"/></svg>
+        </button>
+      </div>
+      <button id="voice-language-chip" class="pill" type="button" hidden>English · বাংলায় ফিরুন</button>
+      <p id="offline-note" role="status" hidden></p>
+    </header>
+
+    <!-- TAB 1: S-01 HOME & S-02 LISTENING -->
+    <section id="tab-home" class="tab-content active" aria-label="হোম">
+      <div class="home-tap-target">
+        <button id="home-tap-target" class="home-speak-button" type="button" aria-label="কথা বলুন। ব্যাংকের নাম বলুন।"></button>
+        <!-- SVG Orb matching S01-Home.html exactly -->
+        <svg viewBox="0 0 260 260" width="280" height="280" aria-hidden="true" class="orb-svg" id="home-orb">
+          <defs>
+            <radialGradient id="hg" cx="50%" cy="50%" r="50%">
+              <stop offset="55%" stop-color="#7FD3E3" stop-opacity="0.22"></stop>
+              <stop offset="100%" stop-color="#7FD3E3" stop-opacity="0"></stop>
+            </radialGradient>
+            <radialGradient id="hs" cx="38%" cy="32%" r="75%">
+              <stop offset="0%" stop-color="#4A8E8A"></stop>
+              <stop offset="55%" stop-color="#1D4744"></stop>
+              <stop offset="100%" stop-color="#0C2321"></stop>
+            </radialGradient>
+            <linearGradient id="hr" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F6CB55"></stop>
+              <stop offset="100%" stop-color="#7FD3E3"></stop>
+            </linearGradient>
+            <linearGradient id="hw" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#E9D08A"></stop>
+              <stop offset="100%" stop-color="#7FD3E3"></stop>
+            </linearGradient>
+            <radialGradient id="hb1">
+              <stop offset="0%" stop-color="#46AAC0" stop-opacity="0.55"></stop>
+              <stop offset="100%" stop-color="#46AAC0" stop-opacity="0"></stop>
+            </radialGradient>
+            <radialGradient id="hb2">
+              <stop offset="0%" stop-color="#F6D682" stop-opacity="0.32"></stop>
+              <stop offset="100%" stop-color="#F6D682" stop-opacity="0"></stop>
+            </radialGradient>
+            <clipPath id="hc"><circle cx="130" cy="130" r="100"></circle></clipPath>
+          </defs>
+          <circle cx="130" cy="130" r="128" fill="url(#hg)"></circle>
+          <circle cx="130" cy="130" r="100" fill="url(#hs)"></circle>
+          <g clip-path="url(#hc)">
+            <circle cx="100" cy="152" r="72" fill="url(#hb1)"></circle>
+            <circle cx="170" cy="104" r="62" fill="url(#hb2)"></circle>
+            <path class="wv" stroke="url(#hw)" d="M20 130 C 55 92, 95 92, 130 130 S 205 168, 240 130"></path>
+            <path class="wv b" stroke="url(#hw)" d="M20 130 C 55 162, 95 166, 130 130 S 205 98, 240 130"></path>
+            <path class="wv c" stroke="url(#hw)" d="M20 130 C 60 114, 100 116, 130 130 S 200 146, 240 130"></path>
+          </g>
+          <circle cx="130" cy="130" r="100" fill="none" stroke="url(#hr)" stroke-width="1.6" opacity="0.75"></circle>
+          <ellipse cx="98" cy="80" rx="38" ry="17" fill="#FFFFFF" opacity="0.12" transform="rotate(-28 98 80)"></ellipse>
+        </svg>
+
+        <!-- Idle State View -->
+        <div class="home-idle-view" id="home-idle-view">
+          <div class="home-greeting" aria-hidden="true">
+            <p class="home-greeting-line" id="home-greeting-line" lang="bn">কথা বলতে যেকোনো জায়গায় ট্যাপ করুন</p>
+          </div>
+        </div>
+
+        <div id="voice-feedback" class="voice-feedback" hidden>
+          <p id="voice-feedback-message" role="status" aria-live="polite"></p>
+          <button id="voice-retry" class="btn-stop-listening" type="button">আবার চেষ্টা করুন</button>
+          <p id="voice-transcript" hidden></p>
+          <div id="voice-matches"></div>
+          <div id="voice-answer-sources"></div>
+          <button id="voice-type" class="voice-bank-choice" type="button">⌨ লিখে খুঁজুন</button>
+          <form id="voice-text-form" hidden>
+            <label id="voice-text-label" for="voice-text-input">ব্যাংকের নাম বা প্রশ্ন লিখুন</label>
+            <input id="voice-text-input" class="calc-field" maxlength="1000" autocomplete="off">
+            <button id="voice-text-submit" class="voice-bank-choice" type="submit">খুঁজুন</button>
+          </form>
+        </div>
+
+        <!-- Listening State View (S-02) -->
+        <div class="home-listening-view" id="home-listening-view" hidden aria-live="polite">
+          <p class="listening-state-text" id="listening-state-text">শুনছি…</p>
+          <p class="listening-subtext" id="listening-prompt">ব্যাংকের নাম বা প্রশ্ন বলুন</p>
+          <p class="listening-transcript" id="listening-transcript">…</p>
+          <button id="btn-stop-listening" class="btn-stop-listening" type="button" aria-label="থামুন">থামুন (Stop)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: BANK SERVICES -->
+    <section id="tab-services" class="tab-content" aria-label="ব্যাংক সেবা">
+      <div class="screen-header">
+        <button id="services-voice-btn" class="pill" type="button">প্রশ্ন বলুন</button>
+        <h1 class="screen-title" id="srv-title">ব্যাংক সেবা ও সঞ্চয় সুরক্ষা</h1>
+        <p class="screen-sub" id="srv-subtitle">আমানত বীমা আইন ২০২৬ ও প্রকৃত মুনাফা নির্দেশিকা</p>
+      </div>
+
+      <div class="sheet">
+        <button id="btn-listen-services" class="btn-primary-listen" style="margin-bottom: 18px;" aria-label="সেবা নির্দেশিকা শুনুন">
+          🔊 <span id="lbl-listen-srv">নিয়ম পড়ে শুনুন</span>
+        </button>
+
+        <div id="service-voice-answer" class="calc-card" hidden><p id="service-voice-text"></p><div id="service-voice-sources"></div></div>
+        <!-- Feature 4: Insurance Split Explainer -->
+        <div class="calc-card">
+          <h2 class="sheet-title" id="srv-ins-heading">আমানত সুরক্ষা হিসাব (Insurance Explainer)</h2>
+          <p style="font-size: 15px; color: var(--ink-2); margin-top: 0;" id="srv-ins-desc">
+            “Tk 2 lakh of your Tk 5 lakh is covered” — কোনো অ্যাকাউন্ট বা ব্যক্তিগত তথ্য ছাড়াই হিসাব করুন।
+          </p>
+
+          <label class="calc-label" for="ins-amt-input" id="srv-amt-label">জমা টাকার পরিমাণ (BDT):</label>
+          <input type="number" id="ins-amt-input" min="0" class="calc-field" value="500000" step="50000">
+
+          <div class="quick-pills">
+            <button class="q-pill" data-val="100000">১ লাখ</button>
+            <button class="q-pill" data-val="200000">২ লাখ (পূর্ণ বীমা)</button>
+            <button class="q-pill active" data-val="500000">৫ লাখ</button>
+            <button class="q-pill" data-val="1000000">১০ লাখ</button>
+          </div>
+
+          <label class="calc-label" for="ins-type-select" id="srv-type-label">প্রতিষ্ঠানের ধরন:</label>
+          <select id="ins-type-select" class="calc-field">
+            <option value="bank" id="opt-bank">বাণিজ্যিক ব্যাংক (আইন ২০২৬ প্রযোজ্য)</option>
+            <option value="nbfi" id="opt-nbfi">আর্থিক প্রতিষ্ঠান - NBFI (বীমা কার্যকর ১ জুলাই ২০২৮)</option>
+          </select>
+
+          <div id="ins-result-box" style="background: var(--ivory-2); padding: 14px; border-radius: 12px; border-left: 4px solid var(--good); margin-top: 8px;" role="region" aria-live="polite">
+          </div>
+        </div>
+
+        <!-- Feature 5: Real Return Calculator -->
+        <div class="calc-card">
+          <h2 class="sheet-title" id="srv-ret-heading">এফডিআর ও প্রকৃত মুনাফা ক্যালকুলেটর (Real Return)</h2>
+          <p style="font-size: 15px; color: var(--ink-2); margin-top: 0;" id="srv-ret-desc">
+            উৎস কর (AIT) ও বর্তমান মুদ্রাস্ফীতি (৯.৮%) সমন্বয়ের পর আপনার কত টাকা লাভ থাকবে?
+          </p>
+
+          <label class="calc-label" for="ret-amt-input" id="srv-ret-amt-lbl">আমানত বা এফডিআর (টাকা):</label>
+          <input type="number" id="ret-amt-input" min="0" class="calc-field" value="100000" step="10000">
+
+          <label class="calc-label" for="ret-rate-input" id="srv-ret-rate-lbl">বার্ষিক মুনাফার হার (%):</label>
+          <input type="number" id="ret-rate-input" min="0" max="25" class="calc-field" value="8.5" step="0.1">
+
+          <label class="calc-label" for="ret-tenor-select" id="srv-ret-tenor-lbl">মেয়াদ:</label>
+          <select id="ret-tenor-select" class="calc-field">
+            <option value="12">১২ মাস (১ বছর)</option>
+            <option value="6">৬ মাস</option>
+            <option value="24">২৪ মাস (২ বছর)</option>
+          </select>
+
+          <div style="margin: 8px 0 14px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+              <input type="checkbox" id="tin-check" checked style="width: 20px; height: 20px;">
+              <span id="lbl-tin">টিআইএন (TIN) সার্টিফিকেট আছে (১০% কর, না থাকলে ১৫%)</span>
+            </label>
+          </div>
+
+          <div id="ret-result-box" style="background: var(--ivory-2); padding: 14px; border-radius: 12px; border-left: 4px solid var(--stage);" role="region" aria-live="polite">
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; font-size: 14px; color: var(--ink-2);">
+          🔒 পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না (FRD DAT-01)
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: BANK DETAIL (Report Card & 7 Checks) -->
+    <section id="tab-detail" class="tab-content" aria-label="ব্যাংক বিবরণী">
+      <div style="padding: 76px 20px 8px;">
+        <button id="bank-voice-btn" class="pill" type="button">প্রশ্ন বলুন</button>
+        <p id="bank-heard" hidden></p>
+        <label for="bank-select" class="sr-only">ব্যাংক নির্বাচন করুন</label>
+        <select id="bank-select" class="input-select" aria-label="ব্যাংক নির্বাচন করুন">
+          <option value="" id="bank-placeholder">ব্যাংক বেছে নিন</option>
+        </select>
+
+        <div style="margin-top: 4px;">
+          <h1 id="card-bank-name" tabindex="-1" style="font-family: var(--display); font-size: 29px; color: var(--gold); margin: 0 0 4px;">ইস্টার্ন ব্যাংক পিএলসি</h1>
+          <p id="card-bank-meta" style="font-size: 14px; color: var(--on-stage-2); margin: 0 0 10px;">বাণিজ্যিক ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: অক্টোবর ২০২৬</p>
+        </div>
+      </div>
+
+      <!-- Teal Status Panel on --stage-lo (#0F2624) -->
+      <div class="status-panel-lo" role="region" aria-label="ব্যাংকের স্বাস্থ্য অবস্থা">
+        <div class="status-mark" id="card-status-mark" aria-hidden="true">✓</div>
+        <div class="status-word strong" id="card-status-word">ভালো অবস্থা</div>
+        <p class="status-meaning" id="card-status-meaning">আইনি মূলধন পর্যাপ্ত ও খেলাপি ঋণ স্বাভাবিক সীমার মধ্যে রয়েছে।</p>
+
+        <!-- 3-step scale with sliding marker -->
+        <div class="scale-wrapper" aria-hidden="true">
+          <div class="scale-track">
+            <div class="scale-segment good"></div>
+            <div class="scale-segment watch"></div>
+            <div class="scale-segment risk"></div>
+          </div>
+          <div class="scale-marker pos-strong" id="scale-marker"></div>
+        </div>
+        <div class="scale-labels" aria-hidden="true">
+          <span>ভালো অবস্থা</span>
+          <span>সতর্ক থাকুন</span>
+          <span>ঝুঁকি বেশি</span>
+        </div>
+      </div>
+
+      <!-- Ivory Sheet -->
+      <div class="sheet">
+        <div class="insurance-banner" id="card-insurance-line">
+          🛡️ আমানত সুরক্ষা আইন ২০২৬ অনুযায়ী প্রতি গ্রাহকের সর্বোচ্চ ২ লাখ টাকা পর্যন্ত শতভাগ আমানত বীমা দ্বারা সুরক্ষিত (১৭ কর্মদিবসের মধ্যে প্রদানযোগ্য)।
+        </div>
+
+        <h2 class="sheet-title" id="card-why-heading">কেন এই অবস্থা? (৩টি প্রধান কারণ)</h2>
+        <div id="reasons-list" role="list" aria-label="৩টি মূল কারণ"></div>
+
+        <div style="margin: 20px 0 28px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btn-listen-report" class="btn-primary-listen" aria-label="রিপোর্ট কার্ড পড়ে শুনুন">
+            🔊 <span id="lbl-listen-rpt">শুনুন</span>
+          </button>
+          <button id="btn-watch-bank" class="btn-secondary-watch" aria-label="এই ব্যাংক নজরে রাখুন">
+            🔔 <span id="lbl-watch-rpt">নজরে রাখুন</span>
+          </button>
+        </div>
+
+        <h2 class="sheet-title" style="margin-top: 10px;" id="card-checks-heading">৭টি মূল স্বাস্থ্য পরীক্ষা (7 Health Checks)</h2>
+        <div class="checks-list" id="checks-list" role="region" aria-label="৭টি স্বাস্থ্য পরীক্ষার ফলাফল"></div>
+
+        <div style="margin-top: 24px; padding: 14px; background: var(--ivory-2); border-radius: 12px; font-size: 14px; color: var(--ink-2);" id="card-disclaimer">
+          এটি তথ্য, পরামর্শ নয়। টাকা রাখার আগে ব্যাংকে হার ও নিয়ম নিশ্চিত হয়ে নিন।
+        </div>
+        <div style="margin-top: 10px; font-size: 13px; color: var(--ink-2);">
+          🔒 পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: NEWS -->
+    <section id="tab-news" class="tab-content" aria-label="খবর">
+      <div class="screen-header">
+        <h1 class="screen-title" id="news-title">ব্যাংকিং সংবাদ ও নোটিশ</h1>
+        <p class="screen-sub" id="news-sub">বাংলাদেশ ব্যাংক সার্কুলার ও নিয়ন্ত্রক আপডেট</p>
+      </div>
+
+      <div class="sheet">
+        <button id="btn-listen-news" class="btn-primary-listen" style="margin-bottom: 18px;" aria-label="সংবাদ পড়ে শুনুন">
+          🔊 <span id="lbl-listen-news">সংবাদ শুনুন</span>
+        </button>
+        <div id="news-feed" role="list" aria-label="সংবাদ ও সার্কুলারের তালিকা"></div>
+      </div>
+    </section>
+
+    <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+      <div class="settings-heading">
+        <h2 id="settings-title">সেটিংস</h2>
+        <button id="settings-close" class="settings-close" type="button" aria-label="বন্ধ করুন">✕</button>
+      </div>
+      <label class="calc-label" for="settings-language" id="settings-language-label">অ্যাপের ভাষা</label>
+      <select id="settings-language" class="calc-field">
+        <option value="bn">বাংলা (BN)</option>
+        <option value="en">English (EN)</option>
+      </select>
+      <label class="settings-option"><input id="settings-motion" type="checkbox" checked><span id="settings-motion-label">অ্যানিমেশন দেখান</span></label>
+      <label class="settings-option"><input id="settings-speak" type="checkbox" checked><span id="settings-speak-label">উত্তর পড়ে শোনান</span></label>
+      <label class="settings-option"><input id="settings-slow" type="checkbox"><span id="settings-slow-label">ধীরে পড়ুন</span></label>
+      <label class="settings-option"><input id="settings-swipe" type="checkbox" checked><span id="settings-swipe-label">বামে সোয়াইপ করে ভাষা বদলান</span></label>
+      <p id="settings-help">হোমে বামে সোয়াইপ করে ভাষা বদলান। স্ক্রিন রিডার ব্যবহার করলে ভাষার বোতাম বা এই তালিকা ব্যবহার করুন।</p>
+      <p id="settings-saved" role="status" aria-live="polite"></p>
+    </dialog>
+
+    <dialog id="mic-permission-dialog" class="settings-dialog" aria-labelledby="mic-permission-title">
+      <h2 id="mic-permission-title">কথা বলতে মাইক্রোফোন লাগবে</h2>
+      <p id="mic-permission-copy">আপনার কথা লিখে ব্যাংক খুঁজব। লেখা হওয়ার পর রেকর্ডিং মুছে ফেলা হয়। পিন বা অ্যাকাউন্ট নম্বর বলবেন না।</p>
+      <button id="mic-permission-allow" class="voice-bank-choice" type="button">অনুমতি দিন</button>
+      <button id="mic-permission-later" class="voice-bank-choice" type="button">এখন না — লিখে খুঁজুন</button>
+    </dialog>
+    <audio id="ilma-player" preload="none"></audio>
+
+    <!-- PROOF SNAP MODAL -->
+    <div id="proof-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-sheet">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 id="modal-title" style="font-family: var(--display); font-size: 21px; margin: 0; color: var(--stage);">নথি ও প্রমাণের তথ্য (Proof Snap)</h2>
+          <button id="proof-modal-close" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--ink-2);" aria-label="বন্ধ করুন">✕</button>
+        </div>
+        <p id="modal-meta" style="font-size: 14px; color: var(--ink-2); margin: 0 0 10px;"></p>
+        <div id="modal-quote" style="background: #FFF; border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 17px; line-height: 1.6; margin-bottom: 14px;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <a id="modal-link" href="#" target="_blank" rel="noopener noreferrer" style="color: var(--link); font-weight: 700; font-size: 15px; text-decoration: underline;">
+            মূল নথির লিংক দেখুন ↗
+          </a>
+          <button id="proof-close-btn" style="background: var(--ivory-2); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 8px 18px; font-weight: 700; cursor: pointer;">
+            বন্ধ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCK: EXACT 4 TABS MATCHING S01-Home.html -->
+    <nav class="dock" aria-label="প্রধান মেনু">
+      <!-- 1. Home -->
+      <button class="dock-item on" data-tab="home" aria-current="page" aria-label="হোম">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path>
+        </svg>
+        <span>হোম</span>
+      </button>
+
+      <!-- 2. Bank services -->
+      <button class="dock-item" data-tab="services" aria-current="false" aria-label="ব্যাংক সেবা">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="6" width="18" height="14" rx="3"></rect>
+          <path d="M3 10h18M16 15h2"></path>
+        </svg>
+        <span>ব্যাংক সেবা</span>
+      </button>
+
+      <!-- 3. Bank detail -->
+      <button class="dock-item" data-tab="detail" aria-current="false" aria-label="ব্যাংক বিবরণী">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 22h16M2 11h20M12 2L2 7h20L12 2zM5 11v8M9 11v8M15 11v8M19 11v8"></path>
+        </svg>
+        <span>ব্যাংক বিবরণী</span>
+      </button>
+
+      <!-- 4. News -->
+      <button class="dock-item" data-tab="news" aria-current="false" aria-label="খবর">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 8h6m-6 4h10m-10 4h6"></path>
+        </svg>
+        <span>খবর</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-13"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261027-13"></script>
+</body>
+</html>

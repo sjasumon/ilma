@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+data/*.db
+.venv/
+*.sql
+# Human voice recordings and generated local evaluation reports stay private.
+audio/
+voice-reports/
+voice-drafts/
