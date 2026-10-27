@@ -3,7 +3,7 @@
 ILMA is a Bangla and English banking information app designed for blind and
 low-vision users. Speak a bank name or ask a question to find bank reports,
 services and sourced answers. The interface uses a teal and gold theme, a living
-waveform and four tabs: Home, Bank Services, Bank Details and News.
+waveform and four tabs: Home, Bank Services, Banks and News.
 
 ## Features
 
@@ -62,15 +62,18 @@ authentication. Separate database name/user fields take precedence over
 
 ### Database setup
 
-Provision the verified institution schema and bank data using
-[the database specification](docs/APP_SPEC_01_database_and_status.md). A fresh
-clone does not include a production database dump. The voice migration requires
-the existing `institution` and `institution_alias` tables; it adds voice tables,
-aliases and authored glossary entries without inserting bank financial facts.
-Do not run the legacy sample seed loader against production.
+Provision the MySQL database **`ilma`** and enter its credentials in `.env`.
+The supplied v5.2 export has been converted to the committed CSVs in `seed/`.
+The transactional loader creates the schema and imports only the nine demo
+banks, sourced financials/ratings/headlines and all 470 service attributes.
+It refuses an unrelated MySQL database and checks the eight-strong/one-no-data
+baseline before committing. See [seed setup and review notes](seed/README.md).
+Do not run the legacy sample fixture loader against production.
 
 ```sh
 export PYTHONPATH="$PWD/api"
+export DB_NAME=ilma
+"$ILMA_VENV_PATH/bin/python" -m ilma_api.seed_loader seed
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.migrate_voice
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.voice_doctor --live
 "$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 0.0.0.0 --port 8001
@@ -89,7 +92,7 @@ The current host runs `ilma-app.service` as `ubuntu`, using
 `/home/ubuntu/venv/bin/python3 -m uvicorn ilma_api.main:app` from this project's
 directory. It listens on `127.0.0.1:8001` behind the public HTTPS endpoint. The
 service is enabled at boot and uses `Restart=always` for process recovery.
-The service uses the `ilma` database. Its bank dataset still needs loading;
+The service uses the `ilma` database, now populated from the supplied v5.2 CSVs;
 records from unrelated databases must not be used. The database override is documented in
 [the voice pipeline audit](docs/VOICE_PIPELINE_AUDIT.md).
 Restart it after deploying Python changes; updating static files does not reload
@@ -111,6 +114,11 @@ curl --fail https://app.sumon.me/v1/voice/config
 | `GET /v1/institutions/index` | Institution names and aliases |
 | `GET /v1/institutions/{id_or_slug}/report-card` | Bank report |
 | `GET /v1/news` | Banking events/news |
+| `GET /v1/institutions?list=demo` | Nine demo banks and server-computed status |
+| `GET /v1/institutions/{id}/figures`, `/ratings`, `/events` | Sourced bank details |
+| `GET /v1/services/categories`, `/compare` | Product choices and like-for-like comparisons |
+| `GET /v1/institutions/{id}/services` | One bank's visible service offers |
+| `GET /v1/services/offers/{offer_id}` | Sourced product attributes |
 | `POST /v1/voice` | Multipart audio and context; streaming response |
 | `POST /v1/ask` | Multipart text and context; streaming response |
 | `POST /v1/speech` | Spoken readout of database-backed content |
@@ -153,18 +161,28 @@ live service. No diagnostic recordings or transcripts are pushed to GitHub.
 
 ## Acceptance status
 
-The latest recorded checks include 50 passing Python tests, five passing
+The latest bank/services checks include 64 passing Python tests, five passing
 frontend suites, successful MySQL voice migration, Meta authentication and
 ElevenLabs configured-voice access. Full acceptance is still pending:
 
-- Load the verified bank dataset into `ilma`; it currently has no institution records.
+- Complete Sumon's manual checks in [seed/TO_CHECK.md](seed/TO_CHECK.md), including
+  withheld services, metadata gaps and the official insurance source.
 - Fixed offline audio generation, native-speaker review and publication.
 - Synthetic and real-person speech accuracy/latency measurements.
 - Physical phone, TalkBack, 200% text and offline validation.
 - Final HTTPS deployment and retention timer verification.
 
 Track current evidence and procedures in
-[VOICE_ACCEPTANCE.md](docs/VOICE_ACCEPTANCE.md).
+[VOICE_ACCEPTANCE.md](docs/VOICE_ACCEPTANCE.md) and
+[Bank/services acceptance](docs/BANK_SERVICES_ACCEPTANCE.md).
+
+## Data provenance / prior work
+
+Bank and service data comes from the v5.2 CSV export supplied by Sumon. ILMA code
+is implemented separately. Imported `agent-v4`/`agent-v5` rows have not been
+personally checked by Sumon; only his reviewed rows receive the checked mark.
+Bangladesh Bank actions and penalties have not been checked in this demo. Full
+newspaper articles are not displayed or copied into the normalized seed data.
 
 ## Project documents
 

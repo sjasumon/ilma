@@ -465,7 +465,8 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
             "source_title": src.get("title"),
             "published_at": str(src.get("published_at")) if src.get("published_at") else None,
             "page": src.get("page"),
-            "quote": src.get("quote")
+            "quote": src.get("quote"),
+            "checked": bool(src.get("checked"))
         })
 
     lbl_bn, lbl_en = STATUS_LABELS[status_code]

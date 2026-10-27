@@ -1,0 +1,34 @@
+[
+  {
+    "offer_id": "1976",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2024",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2158",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2159",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2160",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2161",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2162",
+    "reason": "numeric value not literal in quote"
+  },
+  {
+    "offer_id": "2163",
+    "reason": "numeric value not literal in quote"
+  }
+]

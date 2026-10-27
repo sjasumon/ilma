@@ -13,7 +13,7 @@ function element(id) {
   return elements.get(id);
 }
 const context = vm.createContext({
-  document: { getElementById: element, querySelector: element, querySelectorAll: () => [], addEventListener() {}, documentElement: {} },
+  document: { body: {style:{}}, getElementById: element, querySelector: element, querySelectorAll: () => [], addEventListener() {}, documentElement: {} },
   window: { scrollTo() {} }, navigator: {}, console, setTimeout: () => 1,
   clearTimeout() {}, clearInterval() {}, setInterval: () => 1,
 });
@@ -36,8 +36,8 @@ assert.ok(!element('ret-result-box').innerHTML.includes('NaN'));
 console.log('Frontend runtime regressions passed');
 const html = fs.readFileSync('static/index.html', 'utf8');
 assert.match(html, /id="home-listening-view" hidden/);
-assert.match(html, /ilma\.css\?v=voice-complete-20261027-20/);
-assert.match(html, /app\.js\?v=voice-complete-20261027-20/);
+assert.match(html, /ilma\.css\?v=voice-complete-20261027-28/);
+assert.match(html, /app\.js\?v=voice-complete-20261027-28/);
 assert.match(html, /id="home-tap-target" class="home-speak-button"/);
 console.log('Home visibility and asset-version regressions passed');
 

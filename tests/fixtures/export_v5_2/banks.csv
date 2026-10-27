@@ -1,0 +1,64 @@
+id,bank_name,short_code,dse_code,category,website_url,schedule_of_charges_url,status,merged_into_bank_id,status_date,status_document_id,document_id,created_at,updated_at
+1,AB Bank PLC,,ABBANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+2,Agrani Bank PLC,,,State-owned Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+3,Al-Arafah Islami Bank PLC,,ALARABANK,Islamic Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+4,Bangladesh Commerce Bank Limited,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+5,Bangladesh Development Bank PLC,,,State-owned Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+6,Bangladesh Krishi Bank,,,Specialized Development Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+7,Bank Al-Falah Limited,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+8,Bank Asia PLC.,,BANKASIA,Private Commercial Bank,https://www.bankasia-bd.com,https://www.bankasia-bd.com/about/schedule_charges,active,,,,2,2026-10-26T13:10:31,2026-10-27T10:31:07
+9,BASIC Bank PLC. (Bangladesh Small Industries and Commerce Bank PLC.),,,State-owned Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+10,Bengal Commercial Bank PLC.,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+11,BRAC Bank PLC,,BRACBANK,Private Commercial Bank,https://www.bracbank.com,https://www.bracbank.com/assets/resources/pdf/Schedule_of_Charges_Retail_Deposits_October_2026.pdf,active,,,,2,2026-10-26T13:10:31,2026-10-27T10:31:07
+12,Citibank N.A,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+13,Citizens Bank PLC,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+14,City Bank PLC,,CITYBANK,Private Commercial Bank,https://citybankplc.com,https://www.thecitybank.com/retail-banking/schedule-of-charges,active,,,,2,2026-10-26T13:10:31,2026-10-27T10:31:07
+15,Commercial Bank of Ceylon Limited,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+16,Community Bank Bangladesh PLC.,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+17,Dhaka Bank PLC,,DHAKABANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:10:31,2026-10-26T14:59:42
+18,Dutch-Bangla Bank PLC,,DUTCHBANGL,Private Commercial Bank,https://www.dutchbanglabank.com,https://www.dutchbanglabank.com/pdf/Schedule-of-Charges.pdf,active,,,,2,2026-10-26T13:10:31,2026-10-27T10:31:07
+19,Eastern Bank PLC,,EBL,Private Commercial Bank,https://www.ebl.com.bd,https://ebl.com.bd/assets/home/interest/Schedule_of_Charges_Effective_from_October_15_2026.pdf,active,,,,2,2026-10-26T13:10:31,2026-10-27T10:31:07
+20,Export Import Bank of Bangladesh PLC,,EXIMBANK,Private Commercial Bank,,,merged,47,2025-12-01,1,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+21,First Security Islami Bank PLC,,FIRSTSBANK,Islamic Commercial Bank,,,merged,47,2025-12-01,1,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+22,Global Islami Bank PLC,,GIB,Islamic Commercial Bank,,,merged,47,2025-12-01,1,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+23,Habib Bank Ltd.,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+24,ICB Islamic Bank Ltd.,,ICBIBANK,Islamic Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+25,IFIC Bank PLC,,IFIC,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+26,Islami Bank Bangladesh PLC,,ISLAMIBANK,Islamic Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+27,Jamuna Bank PLC,,JAMUNABANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+28,Janata Bank PLC,,,State-owned Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+29,Meghna Bank PLC,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+30,Mercantile Bank PLC,,MERCANBANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+31,Midland Bank Limited,,MIDLANDBNK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+32,Modhumoti Bank PLC,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+33,Mutual Trust Bank PLC,,MTB,Private Commercial Bank,https://www.mutualtrustbank.com,https://www.mutualtrustbank.com/wp-content/uploads/2026/09/Retail-Banking-SOC-Effective-from-October-01-2026.pdf,active,,,,2,2026-10-26T13:11:37,2026-10-27T10:31:07
+34,Nagad Digital Bank PLC,,,Digital Commercial Bank,,,licence_pending,,,,2,2026-10-26T13:15:48,2026-10-26T14:59:42
+35,National Bank of Pakistan,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+36,National Bank PLC,,NBL,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+37,National Credit & Commerce Bank PLC,,NCCBANK,Private Commercial Bank,https://www.nccbank.com.bd,https://www.nccbank.com.bd/assets/downloads/schedule-of-charges/SOC-2025.pdf,active,,,,2,2026-10-26T13:11:37,2026-10-27T10:31:07
+38,NRB Bank PLC,,NRBBANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+39,NRBC Bank PLC,,NRBCBANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+40,One Bank PLC,,ONEBANKPLC,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+41,Padma Bank PLC,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+42,Prime Bank PLC,,PRIMEBANK,Private Commercial Bank,https://www.primebank.com.bd,https://www.primebank.com.bd/assets/downloads/SOC_Retail_Loans_July_2026.pdf,active,,,,2,2026-10-26T13:11:37,2026-10-27T10:31:07
+43,Probashi Kollyan Bank,,,Specialized Development Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+44,Pubali Bank PLC,,PUBALIBANK,Private Commercial Bank,https://www.pubalibangla.com,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+45,Rajshahi Krishi Unnayan Bank,,,Specialized Development Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+46,Rupali Bank PLC,,RUPALIBANK,State-owned Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+47,Sammilito Islami Bank PLC,,,Islamic Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+48,SBAC Bank PLC,,SBACBANK,Private Commercial Bank,https://www.sbacbank.com,https://www.sbacbank.com/pdf/Schedule_of_Charges_2026.pdf,active,,,,2,2026-10-26T13:11:37,2026-10-27T10:31:07
+49,Shahjalal Islami Bank PLC,,SHAHJABANK,Islamic Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+50,Shimanto Bank PLC,,,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+51,Social Islami Bank PLC,,SIBL,Islamic Commercial Bank,,,merged,47,2025-12-01,1,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+52,Sonali Bank PLC,,,State-owned Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+53,Southeast Bank PLC,,SOUTHEASTB,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+54,Standard Chartered Bank,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+55,Standard Islami Bank PLC,,STANDBANKL,Islamic Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+56,State Bank of India,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+57,The Hong Kong and Shanghai Banking Corporation. Ltd.,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+58,The Premier Bank PLC,,PREMIERBAN,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+59,Trust Bank PLC,,TRUSTBANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+60,Union Bank PLC,,UNIONBANK,Islamic Commercial Bank,,,merged,47,2025-12-01,1,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+61,United Commercial Bank  PLC,,UCB,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+62,Uttara Bank PLC,,UTTARABANK,Private Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42
+63,Woori Bank,,,Foreign Commercial Bank,,,active,,,,2,2026-10-26T13:11:37,2026-10-26T14:59:42

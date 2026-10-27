@@ -51,7 +51,7 @@ class Source(Base):
     url = Column(Text, nullable=False)
     title = Column(String(255), nullable=False)
     publisher = Column(String(128), nullable=False)
-    published_at = Column(Date, nullable=False)
+    published_at = Column(Date, nullable=True)  # Unknown publication dates stay unknown.
     page = Column(Integer, nullable=True)
     image_path = Column(String(255), nullable=True)
     checked_by = Column(String(64), nullable=False)
@@ -71,6 +71,7 @@ class Fact(Base):
     highlight = Column(JSON, nullable=True)
     checked_by = Column(String(64), nullable=False)
     checked_on = Column(Date, nullable=False)
+    basis = Column(String(32), nullable=False, default='unknown')
 
     institution = relationship("Institution", back_populates="facts")
     source = relationship("Source")
@@ -145,6 +146,35 @@ class Rate(Base):
     institution = relationship("Institution", back_populates="rates")
     source = relationship("Source")
 
+class ServiceOffer(Base):
+    __tablename__ = 'service_offer'
+    offer_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey('institution.id'), nullable=False, index=True)
+    category = Column(String(24), nullable=False)
+    product = Column(String(255), nullable=False)
+    product_type = Column(String(40), nullable=False, index=True)
+    network = Column(String(32), nullable=True)
+    tier = Column(String(32), nullable=True)
+    tenor_months = Column(Integer, nullable=True)
+    attribute = Column(String(64), nullable=False)
+    value_num = Column(Numeric(20, 6), nullable=True)
+    value_text = Column(Text, nullable=False)
+    unit = Column(String(24), nullable=False)
+    condition = Column(Text, nullable=False)
+    basis = Column(String(24), nullable=False)
+    doc_date = Column(Date, nullable=False)
+    stale = Column(Boolean, nullable=False)
+    source_url = Column(Text, nullable=False)
+    page = Column(Integer, nullable=False)
+    quote = Column(Text, nullable=False)
+    column_header = Column(Text, nullable=False)
+    hidden = Column(Boolean, nullable=False, default=False)
+    hidden_reason = Column(Text, nullable=False, default='')
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+    institution = relationship('Institution')
+
+
 class SharePriceFlag(Base):
     __tablename__ = "share_price_flag"
     institution_id = Column(Integer, ForeignKey("institution.id"), primary_key=True)
@@ -182,6 +212,13 @@ class AppQuestionLog(Base):
     cost_micro_usd = Column(Integer, nullable=False, default=0)
     useful = Column(Boolean, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
+class AppWatchItem(Base):
+    __tablename__ = 'app_watch_item'
+    device_hash = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey('institution.id'), primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
 class VoiceDiagnostic(Base):

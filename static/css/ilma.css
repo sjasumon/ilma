@@ -916,3 +916,67 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 #voice-answer-sources a { display: block; min-height: 48px; color: var(--link); overflow-wrap: anywhere; }
 #voice-feedback :focus-visible { outline: 3px solid var(--gold) !important; outline-offset: 3px; }
 #offline-note { flex-basis: 100%; color: var(--on-stage); font-size: 16px; }
+
+/* Bank and service catalogue: sourced information on an ivory sheet. */
+#tab-detail, #tab-services { overflow-wrap: anywhere; }
+.catalog-search { display:flex; gap:8px; width:100%; margin:18px 0; }
+.catalog-search input { flex:1; min-width:0; border:1px solid var(--on-stage-2); border-radius:14px; padding:12px; font:inherit; }
+.catalog-search button, .catalog-action { min-height:56px; border:1px solid var(--on-stage-2); border-radius:14px; padding:10px 16px; background:var(--stage); color:var(--on-stage); font:inherit; cursor:pointer; }
+.catalog-back { min-height:48px; border:0; background:transparent; color:inherit; padding:8px 0; font:inherit; cursor:pointer; }
+.catalog-bank-row { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:100px; padding:18px 0; text-align:start; border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--ink); font:inherit; cursor:pointer; }
+.catalog-bank-row strong, .catalog-open-offer strong { display:block; font:600 22px/1.6 var(--body); }
+.catalog-bank-row small, .catalog-open-offer small { display:block; font:16px/1.6 var(--latin); color:var(--ink-2); }
+.catalog-status { display:inline-flex; gap:6px; flex-shrink:0; border:1px solid currentColor; border-radius:999px; padding:5px 10px; font:600 15px/1.5 var(--body); color:var(--ink); }
+.catalog-status.strong { color:#185d38; background:#e8f1e8; }
+.catalog-status.watch { color:#784500; background:#fff1d5; }
+.catalog-status.high { color:#8b2424; background:#f8e6e2; }
+.catalog-status.no_data { color:var(--ink-2); background:var(--ivory-2); }
+.catalog-note { color:var(--ink-2); font:16px/1.7 var(--body); margin:14px 0; }
+.catalog-empty { padding:24px 0; font:18px/1.7 var(--body); }
+.catalog-source { display:inline-block; background:transparent; border:0; color:var(--link); text-align:start; padding:10px 0; min-height:48px; font:600 17px/1.6 var(--body); cursor:pointer; }
+.catalog-detail-row { display:flex; justify-content:space-between; gap:12px; width:100%; padding:16px 0; min-height:60px; border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--ink); text-align:start; font:600 20px/1.6 var(--body); cursor:pointer; }
+.bank-report-header { padding:24px 20px 12px; }
+#tab-detail .sheet h2 { font-size:24px; }
+#tab-detail .screen-header h1, #tab-services .screen-header h1 { font:400 30px/1.6 var(--display); }
+.catalog-card { padding:18px 0; border-bottom:1px solid var(--line); }
+.catalog-card h2, .catalog-card h3 { font:600 23px/1.6 var(--body); margin:0 0 12px; }
+.catalog-card p { margin:8px 0; }
+.catalog-value { display:block; font:600 28px/1.5 var(--body); color:var(--ink); }
+.catalog-tiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:20px 0; }
+.catalog-tile { display:flex; flex-direction:column; align-items:flex-start; gap:18px; min-height:160px; border:1px solid var(--line); border-radius:18px; padding:20px; background:var(--ivory-2); color:var(--ink); text-align:start; font:600 21px/1.6 var(--body); cursor:pointer; }
+.catalog-tile span { font-size:30px; color:var(--stage); }
+.catalog-selectors { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
+.catalog-selectors label { display:flex; flex-direction:column; flex:1 1 140px; gap:5px; min-width:0; font-size:17px; }
+.catalog-selectors select { width:100%; min-width:0; min-height:52px; border:1px solid var(--line); border-radius:12px; padding:8px; background:var(--paper); color:var(--ink); font:inherit; }
+.catalog-offer-row { padding:24px 0; border-bottom:1px solid var(--line); }
+.catalog-offer-row p { margin:8px 0; font-size:17px; }
+.catalog-open-offer { display:block; width:100%; text-align:start; color:var(--ink); background:transparent; border:0; padding:0; font:inherit; cursor:pointer; }
+.catalog-open-offer .catalog-value { margin:14px 0 6px; }
+.catalog-offer-row .catalog-status { margin-right:14px; }
+.catalog-offer-row.muted { opacity:.8; }
+.catalog-stale { display:inline-block; background:var(--ivory-2); color:var(--ink-2); border-radius:8px; padding:2px 8px; font-size:15px; }
+.catalog-saving { border-left:3px solid var(--stage); padding-left:12px; font:600 20px/1.7 var(--body); }
+.catalog-saving:empty { display:none; }
+.catalog-calculator { border:1px solid var(--line); border-radius:14px; padding:14px; background:var(--ivory-2); }
+.catalog-calculator label { display:block; font-size:17px; }
+.catalog-suggestions { margin:20px 0; }
+#bank-detail-view .sheet, #bank-list-view .sheet, #services-catalog { padding-bottom:140px; }
+.scr.report-open .wordmark b { color:var(--on-stage); }
+.scr.report-open .header-actions .pill { border-color:var(--on-stage-2); }
+.scr.report-open .dock-item.on { color:var(--on-stage); }
+#tab-detail .status-panel-lo { box-shadow:none; }
+.quote-highlight { background:#FFE29A; color:var(--ink); }
+@media(max-width:420px) { .catalog-bank-row { flex-direction:column; align-items:flex-start; } }
+@media(max-width:360px) { .catalog-search { flex-wrap:wrap; } .catalog-search input { flex-basis:100%; } }
+
+@media(max-width:350px) { .catalog-tiles { grid-template-columns:1fr; } }
+.modal-sheet h2 { flex:1; min-width:0; }
+.catalog-offer-row > strong, .catalog-offer-row > small { display:block; }
+.catalog-offer-row > small { color:var(--ink-2); font:16px/1.6 var(--latin); }
+.scr.report-open :focus-visible { outline-color:var(--cyan) !important; }
+@media(min-width:351px) {
+  .catalog-bank-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+  .catalog-bank-row > .catalog-status { max-width:120px; white-space:normal; }
+}
+.catalog-answer { width:calc(100% - 40px); margin:12px 20px; padding:16px; border-radius:16px; background:var(--ivory-2); }
+.catalog-answer #service-heard { color:var(--ink-2); font-size:16px; }

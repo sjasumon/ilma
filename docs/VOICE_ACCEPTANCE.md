@@ -17,7 +17,7 @@ It does not claim that unexecuted live or human checks passed.
 | §3 | ffmpeg memory pipes → 24kHz mono PCM WAV; standard ASR, correct bias, no keywords; 8s deadline, 429/500 retries at 2s/4s | Multipart/retry tests, actual synthetic-audio ffmpeg conversion and live Meta authentication pass; speech accuracy/latency remain unmeasured |
 | §3.3 | Duplicate words/halves, known Janata Hindi output, remaining Hindi rejection, punctuation cleanup | Spec examples tested |
 | §4 | NFC/digits/affix normalization, bilingual sliding-window RapidFuzz, 90/75 thresholds, four choices, risky short-name confirmation | Normalization/routing tests and actual RapidFuzz test pass |
-| §4 | Demo-bank aliases + supplied mishearings, with provenance, added only to existing institutions | Live MySQL migration passed; added 15 aliases. Six required demo banks remain missing from the current index; see pending gates below |
+| §4 | Demo-bank aliases + supplied mishearings, with provenance, added only to existing institutions | All nine demo banks loaded into ilma from the supplied v5.2 CSVs; required aliases added. Manual source review remains pending |
 | §4 | Explicit unlicensed records get a not-licensed response, never a fraud claim | Unknown ASR matches remain unclear; absence of a match is not proof of licence status |
 | §5 | Spark temperature-0 constrained intent JSON, matcher/context ID whitelist, number normalization, name-only shortcut | Mocked intent/schema tests |
 | §5 | Fixed fact queries, sourced status/rates/insurance/detail answers, reviewed glossary, verified grounded wording with one retry/template fallback | Number/citation/banned-claim tests; unsupported data returns no-data |
@@ -132,6 +132,17 @@ services answer, source links, language chip, stop/slow/mute, and typing fallbac
 
 ## Current evidence
 
+Latest bank/services update: all nine banks are now loaded into **ilma** from
+Sumon's supplied v5.2 CSVs, together with 43 financial facts, nine ratings and
+470 service attributes. The eight-strong/one-no-data baseline passes unchanged.
+Host health is ready; the earlier missing-bank blocker is resolved by this
+supplied dataset, not by using another database. See
+[BANK_SERVICES_ACCEPTANCE.md](BANK_SERVICES_ACCEPTANCE.md) for 64 pytest checks,
+UI screenshots, source-review gaps and the actual typed/voice routing evidence.
+
+The following paragraphs record earlier stages of the work.
+
+
 User database clarification: `ilma` is canonical; `project_db` is unrelated. The
 previous switch was incorrect and has been reverted. The service now uses
 `DB_NAME=ilma`; ILMA tables and authored glossary were initialized there without
@@ -223,10 +234,10 @@ physical microphone transcription still needs a fresh phone test.
 The overall readiness command still exits nonzero. Connectivity and dependency
 installation are no longer blockers; the following work remains:
 
-- **Verified bank data:** the live doctor cannot resolve City, MTB, NCC, Prime,
-  Bank Asia or SBAC in the current institution index. Supply/import verified bank
-  records, rerun the migration, and confirm all nine demo-bank checks pass. Do
-  not use invented records or financial facts to satisfy this gate.
+- **Manual source review:** all nine banks are present from the supplied export.
+  Complete `seed/TO_CHECK.md`; agent-imported rows are not marked as personally
+  checked by Sumon. An official insurance source and v6 incident data remain
+  absent; those answers stay unavailable.
 - **Offline voice bundle:** generate the fixed clips, obtain actual native-speaker
   review, and publish the approved bundle. `reviewed_offline_clips` remains false.
 - **Synthetic and real speech acceptance:** replay the referenced corpora and

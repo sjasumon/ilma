@@ -19,7 +19,7 @@ const T = {
     tabs: {
       home: "হোম",
       services: "ব্যাংক সেবা",
-      detail: "ব্যাংক বিবরণী",
+      detail: "ব্যাংক",
       news: "খবর"
     },
     services: {
@@ -57,7 +57,7 @@ const T = {
     },
     news: {
       title: "ব্যাংকিং সংবাদ ও নোটিশ",
-      subtitle: "বাংলাদেশ ব্যাংক সার্কুলার ও নিয়ন্ত্রক আপডেট",
+      subtitle: "প্রকাশিত খবর — প্রতিটি শিরোনামের সূত্র দেখুন",
       listenNews: "সংবাদ শুনুন"
     }
   },
@@ -78,7 +78,7 @@ const T = {
     tabs: {
       home: "Home",
       services: "Bank services",
-      detail: "Bank detail",
+      detail: "Banks",
       news: "News"
     },
     services: {
@@ -116,7 +116,7 @@ const T = {
     },
     news: {
       title: "Banking News & Notices",
-      subtitle: "Bangladesh Bank circulars & regulatory directives",
+      subtitle: "Published news — open each headline’s source",
       listenNews: "Listen to news"
     }
   }
@@ -231,7 +231,10 @@ function switchTab(tabName, keepVoiceStream = false) {
   }
 
   if (tabName === "detail") {
-    loadReportCard(currentBankId);
+    if (window.IlmaCatalog) window.IlmaCatalog.enter(tabName);
+    else loadReportCard(currentBankId);
+  } else if (tabName === "services") {
+    window.IlmaCatalog?.enter(tabName);
   } else if (tabName === "news") {
     loadNews();
   }
@@ -251,6 +254,7 @@ function setLanguage(language, announce = true) {
   updateLocalizedText();
   startExampleCycle();
   if (currentTab === "detail" && reportCardData) renderReportCard();
+  window.IlmaCatalog?.relocalize();
   if (announce) document.getElementById("sr-announcer").textContent = currentLang === "bn"
     ? "ভাষা বাংলা করা হয়েছে।" : "Language changed to English.";
 }
@@ -687,6 +691,8 @@ function stopAudio() {
   player.load?.();
   const labels = { "lbl-listen-rpt": T[currentLang].detail.listenReport, "lbl-listen-srv": T[currentLang].services.listenBtn, "lbl-listen-news": T[currentLang].news.listenNews };
   Object.entries(labels).forEach(([id, text]) => document.getElementById(id).textContent = text);
+  const compareListen=document.getElementById('compare-listen');
+  if(compareListen)compareListen.textContent=currentLang==='bn'?'শুনুন':'Listen';
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false) {
@@ -696,6 +702,8 @@ function playVoiceAudio(url, request = playbackRequest, manual = false) {
   player.playbackRate = appSettings.slow ? .85 : 1;
   const label = currentTab === "detail" ? "lbl-listen-rpt" : currentTab === "services" ? "lbl-listen-srv" : currentTab === "news" ? "lbl-listen-news" : null;
   if (label) document.getElementById(label).textContent = currentLang === "bn" ? "থামুন" : "Stop";
+  const compareListen=document.getElementById('compare-listen');
+  if(currentTab==='services'&&compareListen)compareListen.textContent=currentLang==='bn'?'থামুন':'Stop';
   player.play?.().catch(() => { stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; });
 }
 
@@ -846,6 +854,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
     else if (["service_answer", "services"].includes(data.type)) {
       switchTab("services", true);
       document.getElementById("service-voice-answer").hidden = false;
+      document.getElementById("service-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + lastVoiceTranscript;
       document.getElementById("service-voice-text").textContent = data.text;
       const sources = document.getElementById("service-voice-sources"); sources.replaceChildren();
       (data.sources || []).forEach(source => {
@@ -855,6 +864,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
         link.textContent = source.source_title || (currentLang === "bn" ? "সূত্র" : "Source"); sources.appendChild(link);
       });
       if (data.amount_bdt != null) { document.getElementById("ret-amt-input").value = data.amount_bdt; calculateRealReturn(); }
+      if (data.comparison) window.IlmaCatalog?.openComparison(data.comparison,{amount:data.calculator_amount,term:data.calculator_term,fromVoice:true});
     } else {
       openVoiceFeedback();
       if (["clarify", "no_data", "not_licensed"].includes(data.type)) showTyping();
@@ -966,8 +976,8 @@ function renderReportCard() {
     card.setAttribute("role", "listitem");
     card.innerHTML = `
       <p class="reason-text">${escapeHTML(isBn ? r.text_bn : r.text_en)}</p>
-      <button class="reason-source-link" data-title="${escapeHTML(r.source_title || (isBn ? 'সূত্র পাওয়া যায়নি' : 'Source unavailable'))}" data-quote="${escapeHTML(r.quote || '')}" data-url="${escapeHTML(r.source_url || '')}" data-page="${escapeHTML(r.page || '')}" data-pub="${escapeHTML(r.published_at || '')}">
-        ${T[currentLang].detail.sourceBtn} ${escapeHTML(r.source_title || (isBn ? 'সূত্র পাওয়া যায়নি' : 'Source unavailable'))}
+      <button class="reason-source-link" aria-label="${escapeHTML((isBn ? 'সূত্র দেখুন: ' : 'Show source: ') + (isBn ? r.text_bn : r.text_en))}" data-title="${escapeHTML(r.source_title || (isBn ? 'সূত্র পাওয়া যায়নি' : 'Source unavailable'))}" data-quote="${escapeHTML(r.quote || '')}" data-url="${escapeHTML(r.source_url || '')}" data-page="${escapeHTML(r.page || '')}" data-pub="${escapeHTML(r.published_at || '')}">
+        ${T[currentLang].detail.sourceBtn} ${escapeHTML(r.source_title || (isBn ? 'সূত্র পাওয়া যায়নি' : 'Source unavailable'))}${r.checked ? (isBn ? ' · যাচাই করা হয়েছে' : ' · Checked') : ''}
       </button>
     `;
     reasonsDiv.appendChild(card);
@@ -1000,23 +1010,25 @@ function renderReportCard() {
     `;
     checksDiv.appendChild(item);
   });
+  window.IlmaCatalog?.reportReady(data);
 
   const sr = document.getElementById("sr-announcer");
   if (sr) {
     sr.textContent = isBn
-      ? `রিপোর্ট কার্ড: ${data.institution.name_bn}। অবস্থা: ${status.label_bn}। কারণ ${(data.reasons || []).length}টি।`
-      : `Report card: ${data.institution.name_en}. Status: ${status.label_en}. ${(data.reasons || []).length} reasons available.`;
+      ? `অবস্থা: ${status.label_bn}। কারণ ${(data.reasons || []).length}টি। ${data.institution.name_bn}।`
+      : `Status: ${status.label_en}. ${(data.reasons || []).length} reasons. ${data.institution.name_en}.`;
   }
 }
 
-function openProofModal(title, quote, url, page, pubDate) {
+function openProofModal(title, quote, url, page, pubDate, conversionNote = "") {
   const modal = document.getElementById("proof-modal");
   document.getElementById("modal-title").textContent = title || "নথি ও প্রমাণের তথ্য";
-  document.getElementById("modal-meta").textContent = currentLang === "bn" ? `পৃষ্ঠা: ${page || "—"} · প্রকাশের তারিখ: ${pubDate || "—"}` : `Page: ${page || "—"} · Published: ${pubDate || "—"}`;
+  document.getElementById("modal-meta").textContent = currentLang === "bn" ? `পৃষ্ঠা: ${page || "—"} · নথির তারিখ: ${pubDate || "—"}` : `Page: ${page || "—"} · Document date: ${pubDate || "—"}`;
+  if (conversionNote) document.getElementById("modal-meta").textContent += ' · ' + conversionNote;
   
   const quoteDiv = document.getElementById("modal-quote");
   quoteDiv.innerHTML = quote
-    ? `“…<span class="quote-highlight">${escapeHTML(quote)}</span>…”`
+    ? String(quote).split(/([0-9০-৯][0-9০-৯,.]*)/g).map(part => /^[0-9০-৯]/.test(part) ? `<mark class="quote-highlight">${escapeHTML(part)}</mark>` : escapeHTML(part)).join("")
     : (currentLang === "bn" ? "এই তথ্যের উদ্ধৃতি পাওয়া যায়নি।" : "No source quotation is available.");
 
   const link = document.getElementById("modal-link");
@@ -1027,6 +1039,7 @@ function openProofModal(title, quote, url, page, pubDate) {
     link.style.display = "none";
   }
   modalOpener = document.activeElement;
+  document.body.style.overflow = "hidden";
   modal.classList.add("open");
   document.querySelector("header").inert = true;
   document.querySelectorAll(".tab-content, .dock").forEach(el => el.inert = true);
@@ -1034,6 +1047,7 @@ function openProofModal(title, quote, url, page, pubDate) {
 }
 
 function closeProofModal() {
+  document.body.style.overflow = "";
   document.getElementById("proof-modal").classList.remove("open");
   document.querySelectorAll("header, .tab-content, .dock").forEach(el => el.inert = false);
   modalOpener?.focus();
@@ -1118,14 +1132,15 @@ async function loadNews() {
       card.style.cssText = "background: #FFF; border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px;";
       card.innerHTML = `
         <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
-          ${n.official ? (isBn ? 'অফিসিয়াল সার্কুলার' : 'Official Circular') : (isBn ? 'সংবাদ' : 'News')}
+          ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
         </span>
         <h3 style="font-family: var(--display); font-size: 20px; font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h3>
         <p style="font-size: 16px; color: var(--ink-2); margin: 0 0 8px;">${escapeHTML(isBn ? n.summary_bn : n.summary_en)}</p>
         <div style="font-size: 14px; color: #666; display: flex; justify-content: space-between;">
-          <span>${escapeHTML(n.publisher || 'বাংলাদেশ ব্যাংক')}</span>
+          <span>${escapeHTML(n.publisher || '—')}</span>
           <span>${escapeHTML(n.date)}</span>
         </div>
+        ${/^https?:\/\//i.test(n.source_url || "") ? `<a class="catalog-source" href="${escapeHTML(n.source_url)}" target="_blank" rel="noopener noreferrer">${isBn ? "উৎস খুলুন ↗" : "Open source ↗"}</a>` : ""}
       `;
       feed.appendChild(card);
     });
@@ -1182,6 +1197,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".dock button.dock-item").forEach(btn => {
     btn.addEventListener("click", () => {
       const tab = btn.getAttribute("data-tab");
+      if (tab === "detail") currentBankId = null;
       switchTab(tab);
     });
   });
@@ -1300,6 +1316,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-listen-services").addEventListener("click", () => requestReadout("insurance"));
 
   document.getElementById("btn-watch-bank").addEventListener("click", () => {
+    if (window.IlmaCatalog) return window.IlmaCatalog.toggleWatch();
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "নজরে রাখার সুবিধা এখনও চালু হয়নি।" : "Bank watching is not available yet.";
   });
 

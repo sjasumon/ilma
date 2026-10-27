@@ -16,7 +16,7 @@ LABELS = {'npl_ratio': ('খেলাপি ঋণ', 'Bad loans'), 'crar': ('ম
 def provenance(source, fact_id):
     if not source: return None
     return {'fact_id': fact_id, 'source_url': source.url, 'source_title': source.title,
-            'published_at': str(source.published_at), 'page': source.page}
+            'published_at': str(source.published_at) if source.published_at else None, 'page': source.page}
 
 
 def detail_facts(text, institution_id, language, db):
@@ -27,12 +27,18 @@ def detail_facts(text, institution_id, language, db):
         if row and row.source:
             rows.append({'text': f"{row.agency}: {row.long_term} ({row.rated_on})", **provenance(row.source, row.fact_id)})
         return rows
-    if re.search(r'fraud|incident|penalty|জালিয়াতি|জালিয়াতি|জরিমানা|সর্বশেষ ঘটনা', text, re.I):
-        for row in db.query(Event).filter_by(institution_id=institution_id).order_by(Event.event_date.desc()).limit(3):
+    news = bool(re.search(r'\bnews\b|খবর|সংবাদ', text, re.I))
+    if news or re.search(r'fraud|incident|penalty|history|জালিয়াতি|জালিয়াতি|জরিমানা|ইতিহাস|সর্বশেষ ঘটনা', text, re.I):
+        query = db.query(Event).filter_by(institution_id=institution_id)
+        if news: query=query.filter_by(type='other')
+        else: query=query.filter(Event.type!='other')
+        for row in query.order_by(Event.event_date.desc()).all():
             if not row.sources: continue
+            if not news and not row.official and len(row.sources)<2: continue
             label = ('খবরে প্রকাশিত, নিশ্চিত নয়। ' if bn else 'Reported, unconfirmed. ') if not row.official else ''
             rows.append({'text': label + (row.title_bn if bn else row.title_en) + f' ({row.event_date})',
                          'unconfirmed': not row.official, **provenance(row.sources[0], row.event_id)})
+            if len(rows)==3:break
         return rows
     for metric, pattern in TOPICS:
         if not re.search(pattern, text, re.I): continue

@@ -19,8 +19,9 @@ class VoiceIntent(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     intent: Literal['bank_status', 'bank_detail', 'rates', 'service_compare', 'insurance', 'explain_word', 'out_of_scope', 'unclear']
     institution_ids: list[int] = Field(default_factory=list, max_length=4)
-    product: Literal['fdr', 'dps', 'savings', 'credit_card', 'personal_loan', 'home_loan', 'car_loan', 'sme_loan'] | None = None
-    card_tier: Literal['classic', 'gold', 'platinum', 'signature'] | None = None
+    product: Literal['fdr', 'dps', 'savings', 'credit_card', 'personal_loan', 'home_loan', 'car_loan', 'sme_loan', 'loan_against_fdr', 'account_fee'] | None = None
+    card_tier: Literal['classic', 'gold', 'platinum', 'signature', 'world', 'infinite', 'titanium', 'blue', 'ultramarine'] | None = None
+    service_attribute: Literal['annual_fee','renewal_fee','interest_rate','late_fee','foreign_currency_markup','cash_advance_fee','card_replacement_fee','supplementary_card_fee','maintenance_fee_half_yearly','sms_alert_fee','cheque_book_fee','closing_fee','atm_other_bank_fee','minimum_balance'] | None = None
     amount_bdt: int | None = Field(default=None, ge=0)
     period_months: int | None = Field(default=None, ge=1, le=600)
 

@@ -1,0 +1,10 @@
+category,pattern,product_type
+card,.*,card
+account_fee,.*,account_fee
+deposit,(?i)fixed deposit|fdr,fdr
+deposit,(?i)dps|monthly savings|millionaire|lakhopati|kotipoti|double benefit,dps
+deposit,.*,savings
+loan,(?i)against fdr|secured overdraft,loan_against_fdr
+loan,(?i)home|thikana,home_loan
+loan,(?i)auto|car loan,auto_loan
+loan,.*,personal_loan

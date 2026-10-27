@@ -1,0 +1,10 @@
+id,slug,name_bn,name_en,type,islamic,licensed,listed,coverage
+8,bankasia,ব্যাংক এশিয়া পিএলসি,Bank Asia PLC,bank,False,True,True,full
+11,bracbank,ব্র্যাক ব্যাংক পিএলসি,BRAC Bank PLC,bank,False,True,True,full
+14,citybank,দ্য সিটি ব্যাংক পিএলসি,The City Bank PLC,bank,False,True,True,full
+18,dutchbangl,ডাচ্-বাংলা ব্যাংক পিএলসি,Dutch-Bangla Bank PLC,bank,False,True,True,full
+19,ebl,ইস্টার্ন ব্যাংক পিএলসি,Eastern Bank PLC,bank,False,True,True,full
+33,mtb,মিউচুয়াল ট্রাস্ট ব্যাংক পিএলসি,Mutual Trust Bank PLC,bank,False,True,True,full
+37,nccbank,ন্যাশনাল ক্রেডিট অ্যান্ড কমার্স ব্যাংক পিএলসি,National Credit and Commerce Bank PLC,bank,False,True,True,full
+42,primebank,প্রাইম ব্যাংক পিএলসি,Prime Bank PLC,bank,False,True,True,full
+48,sbacbank,সাউথ বাংলা এগ্রিকালচার অ্যান্ড কমার্স ব্যাংক পিএলসি,South Bangla Agriculture and Commerce Bank PLC,bank,False,True,True,full

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ILMA · Your trusted savings companion</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans:wght@400;600;700&family=Tiro+Bangla&display=swap">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-20">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-28">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -76,12 +76,13 @@
         <p class="screen-sub" id="srv-subtitle">আমানত বীমা আইন ২০২৬ ও প্রকৃত মুনাফা নির্দেশিকা</p>
       </div>
 
-      <div class="sheet">
+      <div id="service-voice-answer" class="sheet catalog-answer" hidden><p id="service-heard"></p><p id="service-voice-text" role="status"></p><div id="service-voice-sources"></div></div>
+      <div id="services-catalog" class="sheet"></div>
+      <div class="sheet" id="legacy-service-calculators" hidden>
         <button id="btn-listen-services" class="btn-primary-listen" style="margin-bottom: 18px;" aria-label="সেবা নির্দেশিকা শুনুন">
           🔊 <span id="lbl-listen-srv">নিয়ম পড়ে শুনুন</span>
         </button>
 
-        <div id="service-voice-answer" class="calc-card" hidden><p id="service-voice-text"></p><div id="service-voice-sources"></div></div>
         <!-- Feature 4: Insurance Split Explainer -->
         <div class="calc-card">
           <h2 class="sheet-title" id="srv-ins-heading">আমানত সুরক্ষা হিসাব (Insurance Explainer)</h2>
@@ -146,18 +147,20 @@
       </div>
     </section>
 
-    <!-- TAB 3: BANK DETAIL (Report Card & 7 Checks) -->
+    <!-- Bank list, plan-A report and sourced details -->
     <section id="tab-detail" class="tab-content" aria-label="ব্যাংক বিবরণী">
-      <div style="padding: 76px 20px 8px;">
+      <div id="bank-list-view"></div>
+      <div id="bank-report-view" hidden>      <div class="bank-report-header">
+        <button id="bank-list-back" class="catalog-back" type="button">← ব্যাংক</button>
         <button id="bank-voice-btn" class="pill" type="button">প্রশ্ন বলুন</button>
         <p id="bank-heard" hidden></p>
         <label for="bank-select" class="sr-only">ব্যাংক নির্বাচন করুন</label>
-        <select id="bank-select" class="input-select" aria-label="ব্যাংক নির্বাচন করুন">
+        <select hidden id="bank-select" class="input-select" aria-label="ব্যাংক নির্বাচন করুন">
           <option value="" id="bank-placeholder">ব্যাংক বেছে নিন</option>
         </select>
 
         <div style="margin-top: 4px;">
-          <h1 id="card-bank-name" tabindex="-1" style="font-family: var(--display); font-size: 29px; color: var(--gold); margin: 0 0 4px;">ইস্টার্ন ব্যাংক পিএলসি</h1>
+          <h1 id="card-bank-name" tabindex="-1" style="font-family: var(--display); font-size: 29px; color: var(--on-stage); margin: 0 0 4px;">ইস্টার্ন ব্যাংক পিএলসি</h1>
           <p id="card-bank-meta" style="font-size: 14px; color: var(--on-stage-2); margin: 0 0 10px;">বাণিজ্যিক ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: অক্টোবর ২০২৬</p>
         </div>
       </div>
@@ -202,8 +205,8 @@
           </button>
         </div>
 
-        <h2 class="sheet-title" style="margin-top: 10px;" id="card-checks-heading">৭টি মূল স্বাস্থ্য পরীক্ষা (7 Health Checks)</h2>
-        <div class="checks-list" id="checks-list" role="region" aria-label="৭টি স্বাস্থ্য পরীক্ষার ফলাফল"></div>
+        <p id="bank-not-checked" class="catalog-note"></p><div id="bank-detail-links"></div><h2 hidden id="card-checks-heading"></h2>
+        <div hidden class="checks-list" id="checks-list" role="region" aria-label="৭টি স্বাস্থ্য পরীক্ষার ফলাফল"></div>
 
         <div style="margin-top: 24px; padding: 14px; background: var(--ivory-2); border-radius: 12px; font-size: 14px; color: var(--ink-2);" id="card-disclaimer">
           এটি তথ্য, পরামর্শ নয়। টাকা রাখার আগে ব্যাংকে হার ও নিয়ম নিশ্চিত হয়ে নিন।
@@ -212,6 +215,8 @@
           🔒 পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না
         </div>
       </div>
+      </div>
+      <div id="bank-detail-view" hidden></div>
     </section>
 
     <!-- TAB 4: NEWS -->
@@ -327,7 +332,8 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-20"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261027-20"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-28"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261027-28"></script>
+  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261027-28"></script>
 </body>
 </html>

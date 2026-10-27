@@ -36,7 +36,7 @@ function createApp({ reducedMotion = false, animationThrows = false, savedSettin
     return nodes.get(id);
   };
   const document = {
-    hidden: false, documentElement: {}, getElementById: node, querySelector: node,
+    hidden: false, body: {style:{}}, documentElement: {}, getElementById: node, querySelector: node,
     createElement: tag => node(`created-${nodes.size}-${tag}`), querySelectorAll: () => [], addEventListener(name, callback) {
       if (!handlers.has(name)) handlers.set(name, []);
       handlers.get(name).push(callback);

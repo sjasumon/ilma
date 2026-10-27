@@ -227,4 +227,8 @@ def seed_data():
         db.close()
 
 if __name__ == "__main__":
-    seed_data()
+    import sys
+    if len(sys.argv) != 2: raise SystemExit('Pass a converted seed directory. Legacy sample data is test-only.')
+    from ilma_api.csv_loader import load
+    from ilma_api.db import engine
+    load(sys.argv[1], engine)

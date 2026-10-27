@@ -1,0 +1,313 @@
+id,alias,bank_id,kind,case_sensitive,created_at
+1,AB Bank PLC,1,full_name,0,2026-10-26T13:11:37
+2,AB Bank,1,short_name,0,2026-10-26T13:11:37
+4,AB Bank Limited,1,full_name,0,2026-10-26T13:11:37
+5,AB Bank Ltd,1,full_name,0,2026-10-26T13:11:37
+6,ABBANK,1,ticker,1,2026-10-26T13:11:37
+7,Agrani Bank PLC,2,full_name,0,2026-10-26T13:11:37
+8,Agrani Bank,2,short_name,0,2026-10-26T13:11:37
+10,Agrani Bank Limited,2,full_name,0,2026-10-26T13:11:37
+11,Agrani Bank Ltd,2,full_name,0,2026-10-26T13:11:37
+12,Al-Arafah Islami Bank PLC,3,full_name,0,2026-10-26T13:11:37
+13,Al-Arafah Islami Bank,3,short_name,0,2026-10-26T13:11:37
+15,Al-Arafah Islami Bank Limited,3,full_name,0,2026-10-26T13:11:37
+16,Al-Arafah Islami Bank Ltd,3,full_name,0,2026-10-26T13:11:37
+17,ALARABANK,3,ticker,1,2026-10-26T13:11:37
+18,Bangladesh Commerce Bank Limited,4,full_name,0,2026-10-26T13:11:37
+19,Bangladesh Commerce Bank,4,short_name,0,2026-10-26T13:11:37
+20,Bangladesh Commerce Bank PLC,4,full_name,0,2026-10-26T13:11:37
+22,Bangladesh Commerce Bank Ltd,4,full_name,0,2026-10-26T13:11:37
+23,Bangladesh Development Bank PLC,5,full_name,0,2026-10-26T13:11:37
+24,Bangladesh Development Bank,5,short_name,0,2026-10-26T13:11:37
+26,Bangladesh Development Bank Limited,5,full_name,0,2026-10-26T13:11:37
+27,Bangladesh Development Bank Ltd,5,full_name,0,2026-10-26T13:11:37
+28,Bangladesh Krishi Bank,6,full_name,0,2026-10-26T13:11:37
+29,Bank Al-Falah Limited,7,full_name,0,2026-10-26T13:11:37
+30,Bank Al-Falah,7,short_name,0,2026-10-26T13:11:37
+31,Bank Al-Falah PLC,7,full_name,0,2026-10-26T13:11:37
+33,Bank Al-Falah Ltd,7,full_name,0,2026-10-26T13:11:37
+34,Bank Asia PLC.,8,full_name,0,2026-10-26T13:11:37
+35,Bank Asia.,8,short_name,0,2026-10-26T13:11:37
+36,Bank Asia. PLC,8,full_name,0,2026-10-26T13:11:37
+37,Bank Asia. Limited,8,full_name,0,2026-10-26T13:11:37
+38,Bank Asia. Ltd,8,full_name,0,2026-10-26T13:11:37
+39,Bank Asia,8,short_name,0,2026-10-26T13:11:37
+40,BANKASIA,8,ticker,1,2026-10-26T13:11:37
+41,BASIC Bank PLC. (Bangladesh Small Industries and Commerce Bank PLC.),9,full_name,0,2026-10-26T13:11:37
+42,BASIC Bank. (Bangladesh Small Industries and Commerce Bank.),9,short_name,0,2026-10-26T13:11:37
+43,BASIC Bank. (Bangladesh Small Industries and Commerce Bank.) PLC,9,full_name,0,2026-10-26T13:11:37
+44,BASIC Bank. (Bangladesh Small Industries and Commerce Bank.) Limited,9,full_name,0,2026-10-26T13:11:37
+45,BASIC Bank. (Bangladesh Small Industries and Commerce Bank.) Ltd,9,full_name,0,2026-10-26T13:11:37
+46,Bengal Commercial Bank PLC.,10,full_name,0,2026-10-26T13:11:37
+47,Bengal Commercial Bank.,10,short_name,0,2026-10-26T13:11:37
+48,Bengal Commercial Bank. PLC,10,full_name,0,2026-10-26T13:11:37
+49,Bengal Commercial Bank. Limited,10,full_name,0,2026-10-26T13:11:37
+50,Bengal Commercial Bank. Ltd,10,full_name,0,2026-10-26T13:11:37
+51,BRAC Bank PLC,11,full_name,0,2026-10-26T13:11:37
+52,BRAC Bank,11,short_name,0,2026-10-26T13:11:37
+54,BRAC Bank Limited,11,full_name,0,2026-10-26T13:11:37
+55,BRAC Bank Ltd,11,full_name,0,2026-10-26T13:11:37
+57,BRACBANK,11,ticker,1,2026-10-26T13:11:37
+58,Citibank N.A,12,full_name,0,2026-10-26T13:11:37
+59,Citizens Bank PLC,13,full_name,0,2026-10-26T13:11:37
+60,Citizens Bank,13,short_name,0,2026-10-26T13:11:37
+62,Citizens Bank Limited,13,full_name,0,2026-10-26T13:11:37
+63,Citizens Bank Ltd,13,full_name,0,2026-10-26T13:11:37
+64,City Bank PLC,14,full_name,0,2026-10-26T13:11:37
+65,City Bank,14,short_name,0,2026-10-26T13:11:37
+67,City Bank Limited,14,full_name,0,2026-10-26T13:11:37
+68,City Bank Ltd,14,full_name,0,2026-10-26T13:11:37
+70,The City Bank,14,short_name,0,2026-10-26T13:11:37
+71,CITYBANK,14,ticker,1,2026-10-26T13:11:37
+72,Commercial Bank of Ceylon Limited,15,full_name,0,2026-10-26T13:11:37
+73,Commercial Bank of Ceylon,15,short_name,0,2026-10-26T13:11:37
+74,Commercial Bank of Ceylon PLC,15,full_name,0,2026-10-26T13:11:37
+76,Commercial Bank of Ceylon Ltd,15,full_name,0,2026-10-26T13:11:37
+77,Community Bank Bangladesh PLC.,16,full_name,0,2026-10-26T13:11:37
+78,Community Bank Bangladesh.,16,short_name,0,2026-10-26T13:11:37
+79,Community Bank Bangladesh. PLC,16,full_name,0,2026-10-26T13:11:37
+80,Community Bank Bangladesh. Limited,16,full_name,0,2026-10-26T13:11:37
+81,Community Bank Bangladesh. Ltd,16,full_name,0,2026-10-26T13:11:37
+82,Dhaka Bank PLC,17,full_name,0,2026-10-26T13:11:37
+83,Dhaka Bank,17,short_name,0,2026-10-26T13:11:37
+85,Dhaka Bank Limited,17,full_name,0,2026-10-26T13:11:37
+86,Dhaka Bank Ltd,17,full_name,0,2026-10-26T13:11:37
+87,DHAKABANK,17,ticker,1,2026-10-26T13:11:37
+88,Dutch-Bangla Bank PLC,18,full_name,0,2026-10-26T13:11:37
+89,Dutch-Bangla Bank,18,short_name,0,2026-10-26T13:11:37
+91,Dutch-Bangla Bank Limited,18,full_name,0,2026-10-26T13:11:37
+92,Dutch-Bangla Bank Ltd,18,full_name,0,2026-10-26T13:11:37
+93,Dutch Bangla Bank,18,short_name,0,2026-10-26T13:11:37
+95,DBBL,18,abbreviation,1,2026-10-26T13:11:37
+96,DUTCHBANGL,18,ticker,1,2026-10-26T13:11:37
+97,Eastern Bank PLC,19,full_name,0,2026-10-26T13:11:37
+98,Eastern Bank,19,short_name,0,2026-10-26T13:11:37
+100,Eastern Bank Limited,19,full_name,0,2026-10-26T13:11:37
+101,Eastern Bank Ltd,19,full_name,0,2026-10-26T13:11:37
+103,EBL,19,ticker,1,2026-10-26T13:11:37
+105,Export Import Bank of Bangladesh PLC,20,full_name,0,2026-10-26T13:11:37
+106,Export Import Bank of Bangladesh,20,short_name,0,2026-10-26T13:11:37
+108,Export Import Bank of Bangladesh Limited,20,full_name,0,2026-10-26T13:11:37
+109,Export Import Bank of Bangladesh Ltd,20,full_name,0,2026-10-26T13:11:37
+110,EXIMBANK,20,ticker,1,2026-10-26T13:11:37
+111,First Security Islami Bank PLC,21,full_name,0,2026-10-26T13:11:37
+112,First Security Islami Bank,21,short_name,0,2026-10-26T13:11:37
+114,First Security Islami Bank Limited,21,full_name,0,2026-10-26T13:11:37
+115,First Security Islami Bank Ltd,21,full_name,0,2026-10-26T13:11:37
+116,FIRSTSBANK,21,ticker,1,2026-10-26T13:11:37
+117,Global Islami Bank PLC,22,full_name,0,2026-10-26T13:11:37
+118,Global Islami Bank,22,short_name,0,2026-10-26T13:11:37
+120,Global Islami Bank Limited,22,full_name,0,2026-10-26T13:11:37
+121,Global Islami Bank Ltd,22,full_name,0,2026-10-26T13:11:37
+122,GIB,22,ticker,1,2026-10-26T13:11:37
+123,Habib Bank Ltd.,23,full_name,0,2026-10-26T13:11:37
+124,Habib Bank.,23,short_name,0,2026-10-26T13:11:37
+125,Habib Bank. PLC,23,full_name,0,2026-10-26T13:11:37
+126,Habib Bank. Limited,23,full_name,0,2026-10-26T13:11:37
+127,Habib Bank. Ltd,23,full_name,0,2026-10-26T13:11:37
+128,ICB Islamic Bank Ltd.,24,full_name,0,2026-10-26T13:11:37
+129,ICB Islamic Bank.,24,short_name,0,2026-10-26T13:11:37
+130,ICB Islamic Bank. PLC,24,full_name,0,2026-10-26T13:11:37
+131,ICB Islamic Bank. Limited,24,full_name,0,2026-10-26T13:11:37
+132,ICB Islamic Bank. Ltd,24,full_name,0,2026-10-26T13:11:37
+133,ICBIBANK,24,ticker,1,2026-10-26T13:11:37
+134,IFIC Bank PLC,25,full_name,0,2026-10-26T13:11:37
+135,IFIC Bank,25,short_name,0,2026-10-26T13:11:37
+137,IFIC Bank Limited,25,full_name,0,2026-10-26T13:11:37
+138,IFIC Bank Ltd,25,full_name,0,2026-10-26T13:11:37
+139,IFIC,25,ticker,1,2026-10-26T13:11:37
+140,Islami Bank Bangladesh PLC,26,full_name,0,2026-10-26T13:11:37
+141,Islami Bank Bangladesh,26,short_name,0,2026-10-26T13:11:37
+143,Islami Bank Bangladesh Limited,26,full_name,0,2026-10-26T13:11:37
+144,Islami Bank Bangladesh Ltd,26,full_name,0,2026-10-26T13:11:37
+145,ISLAMIBANK,26,ticker,1,2026-10-26T13:11:37
+146,Jamuna Bank PLC,27,full_name,0,2026-10-26T13:11:37
+147,Jamuna Bank,27,short_name,0,2026-10-26T13:11:37
+149,Jamuna Bank Limited,27,full_name,0,2026-10-26T13:11:37
+150,Jamuna Bank Ltd,27,full_name,0,2026-10-26T13:11:37
+151,JAMUNABANK,27,ticker,1,2026-10-26T13:11:37
+152,Janata Bank PLC,28,full_name,0,2026-10-26T13:11:37
+153,Janata Bank,28,short_name,0,2026-10-26T13:11:37
+155,Janata Bank Limited,28,full_name,0,2026-10-26T13:11:37
+156,Janata Bank Ltd,28,full_name,0,2026-10-26T13:11:37
+157,Meghna Bank PLC,29,full_name,0,2026-10-26T13:11:37
+158,Meghna Bank,29,short_name,0,2026-10-26T13:11:37
+160,Meghna Bank Limited,29,full_name,0,2026-10-26T13:11:37
+161,Meghna Bank Ltd,29,full_name,0,2026-10-26T13:11:37
+162,Mercantile Bank PLC,30,full_name,0,2026-10-26T13:11:37
+163,Mercantile Bank,30,short_name,0,2026-10-26T13:11:37
+165,Mercantile Bank Limited,30,full_name,0,2026-10-26T13:11:37
+166,Mercantile Bank Ltd,30,full_name,0,2026-10-26T13:11:37
+168,MBL,30,abbreviation,1,2026-10-26T13:11:37
+169,MERCANBANK,30,ticker,1,2026-10-26T13:11:37
+170,Midland Bank Limited,31,full_name,0,2026-10-26T13:11:37
+171,Midland Bank,31,short_name,0,2026-10-26T13:11:37
+172,Midland Bank PLC,31,full_name,0,2026-10-26T13:11:37
+174,Midland Bank Ltd,31,full_name,0,2026-10-26T13:11:37
+175,MIDLANDBNK,31,ticker,1,2026-10-26T13:11:37
+176,Modhumoti Bank PLC,32,full_name,0,2026-10-26T13:11:37
+177,Modhumoti Bank,32,short_name,0,2026-10-26T13:11:37
+179,Modhumoti Bank Limited,32,full_name,0,2026-10-26T13:11:37
+180,Modhumoti Bank Ltd,32,full_name,0,2026-10-26T13:11:37
+181,Mutual Trust Bank PLC,33,full_name,0,2026-10-26T13:11:37
+182,Mutual Trust Bank,33,short_name,0,2026-10-26T13:11:37
+184,Mutual Trust Bank Limited,33,full_name,0,2026-10-26T13:11:37
+185,Mutual Trust Bank Ltd,33,full_name,0,2026-10-26T13:11:37
+187,MTB,33,ticker,1,2026-10-26T13:11:37
+189,National Bank of Pakistan,35,full_name,0,2026-10-26T13:11:37
+190,National Bank PLC,36,full_name,0,2026-10-26T13:11:37
+191,National Bank,36,short_name,0,2026-10-26T13:11:37
+193,National Bank Limited,36,full_name,0,2026-10-26T13:11:37
+194,National Bank Ltd,36,full_name,0,2026-10-26T13:11:37
+196,NBL,36,ticker,1,2026-10-26T13:11:37
+198,National Credit & Commerce Bank PLC,37,full_name,0,2026-10-26T13:11:37
+199,National Credit & Commerce Bank,37,short_name,0,2026-10-26T13:11:37
+201,National Credit & Commerce Bank Limited,37,full_name,0,2026-10-26T13:11:37
+202,National Credit & Commerce Bank Ltd,37,full_name,0,2026-10-26T13:11:37
+203,NCC Bank,37,short_name,0,2026-10-26T13:11:37
+204,NCCB,37,abbreviation,1,2026-10-26T13:11:37
+205,NCCBANK,37,ticker,1,2026-10-26T13:11:37
+207,NRB Bank PLC,38,full_name,0,2026-10-26T13:11:37
+208,NRB Bank,38,short_name,0,2026-10-26T13:11:37
+210,NRB Bank Limited,38,full_name,0,2026-10-26T13:11:37
+211,NRB Bank Ltd,38,full_name,0,2026-10-26T13:11:37
+212,NRBBANK,38,ticker,1,2026-10-26T13:11:37
+213,NRBC Bank PLC,39,full_name,0,2026-10-26T13:11:37
+214,NRBC Bank,39,short_name,0,2026-10-26T13:11:37
+216,NRBC Bank Limited,39,full_name,0,2026-10-26T13:11:37
+217,NRBC Bank Ltd,39,full_name,0,2026-10-26T13:11:37
+218,NRBCBANK,39,ticker,1,2026-10-26T13:11:37
+219,One Bank PLC,40,full_name,0,2026-10-26T13:11:37
+220,One Bank,40,short_name,1,2026-10-26T13:11:37
+222,One Bank Limited,40,full_name,0,2026-10-26T13:11:37
+223,One Bank Ltd,40,full_name,0,2026-10-26T13:11:37
+225,ONEBANKPLC,40,ticker,1,2026-10-26T13:11:37
+226,Padma Bank PLC,41,full_name,0,2026-10-26T13:11:37
+227,Padma Bank,41,short_name,0,2026-10-26T13:11:37
+229,Padma Bank Limited,41,full_name,0,2026-10-26T13:11:37
+230,Padma Bank Ltd,41,full_name,0,2026-10-26T13:11:37
+231,Prime Bank PLC,42,full_name,0,2026-10-26T13:11:37
+232,Prime Bank,42,short_name,0,2026-10-26T13:11:37
+234,Prime Bank Limited,42,full_name,0,2026-10-26T13:11:37
+235,Prime Bank Ltd,42,full_name,0,2026-10-26T13:11:37
+237,PRIMEBANK,42,ticker,1,2026-10-26T13:11:37
+238,Probashi Kollyan Bank,43,full_name,0,2026-10-26T13:11:37
+239,Pubali Bank PLC,44,full_name,0,2026-10-26T13:11:37
+240,Pubali Bank,44,short_name,0,2026-10-26T13:11:37
+242,Pubali Bank Limited,44,full_name,0,2026-10-26T13:11:37
+243,Pubali Bank Ltd,44,full_name,0,2026-10-26T13:11:37
+245,PUBALIBANK,44,ticker,1,2026-10-26T13:11:37
+246,Rajshahi Krishi Unnayan Bank,45,full_name,0,2026-10-26T13:11:37
+247,Rupali Bank PLC,46,full_name,0,2026-10-26T13:11:37
+248,Rupali Bank,46,short_name,0,2026-10-26T13:11:37
+250,Rupali Bank Limited,46,full_name,0,2026-10-26T13:11:37
+251,Rupali Bank Ltd,46,full_name,0,2026-10-26T13:11:37
+252,RUPALIBANK,46,ticker,1,2026-10-26T13:11:37
+253,Sammilito Islami Bank PLC,47,full_name,0,2026-10-26T13:11:37
+254,Sammilito Islami Bank,47,short_name,0,2026-10-26T13:11:37
+256,Sammilito Islami Bank Limited,47,full_name,0,2026-10-26T13:11:37
+257,Sammilito Islami Bank Ltd,47,full_name,0,2026-10-26T13:11:37
+258,SBAC Bank PLC,48,full_name,0,2026-10-26T13:11:37
+259,SBAC Bank,48,short_name,0,2026-10-26T13:11:37
+261,SBAC Bank Limited,48,full_name,0,2026-10-26T13:11:37
+262,SBAC Bank Ltd,48,full_name,0,2026-10-26T13:11:37
+264,SBAC,48,abbreviation,1,2026-10-26T13:11:37
+265,SBACBANK,48,ticker,1,2026-10-26T13:11:37
+266,Shahjalal Islami Bank PLC,49,full_name,0,2026-10-26T13:11:37
+267,Shahjalal Islami Bank,49,short_name,0,2026-10-26T13:11:37
+269,Shahjalal Islami Bank Limited,49,full_name,0,2026-10-26T13:11:37
+270,Shahjalal Islami Bank Ltd,49,full_name,0,2026-10-26T13:11:37
+271,SHAHJABANK,49,ticker,1,2026-10-26T13:11:37
+272,Shimanto Bank PLC,50,full_name,0,2026-10-26T13:11:37
+273,Shimanto Bank,50,short_name,0,2026-10-26T13:11:37
+275,Shimanto Bank Limited,50,full_name,0,2026-10-26T13:11:37
+276,Shimanto Bank Ltd,50,full_name,0,2026-10-26T13:11:37
+277,Social Islami Bank PLC,51,full_name,0,2026-10-26T13:11:37
+278,Social Islami Bank,51,short_name,0,2026-10-26T13:11:37
+280,Social Islami Bank Limited,51,full_name,0,2026-10-26T13:11:37
+281,Social Islami Bank Ltd,51,full_name,0,2026-10-26T13:11:37
+283,SIBL,51,ticker,1,2026-10-26T13:11:37
+285,Sonali Bank PLC,52,full_name,0,2026-10-26T13:11:37
+286,Sonali Bank,52,short_name,0,2026-10-26T13:11:37
+288,Sonali Bank Limited,52,full_name,0,2026-10-26T13:11:37
+289,Sonali Bank Ltd,52,full_name,0,2026-10-26T13:11:37
+290,Southeast Bank PLC,53,full_name,0,2026-10-26T13:11:37
+291,Southeast Bank,53,short_name,0,2026-10-26T13:11:37
+293,Southeast Bank Limited,53,full_name,0,2026-10-26T13:11:37
+294,Southeast Bank Ltd,53,full_name,0,2026-10-26T13:11:37
+295,SOUTHEASTB,53,ticker,1,2026-10-26T13:11:37
+296,Standard Chartered Bank,54,short_name,0,2026-10-26T13:11:37
+297,Standard Islami Bank PLC,55,full_name,0,2026-10-26T13:11:37
+298,Standard Islami Bank,55,short_name,0,2026-10-26T13:11:37
+300,Standard Islami Bank Limited,55,full_name,0,2026-10-26T13:11:37
+301,Standard Islami Bank Ltd,55,full_name,0,2026-10-26T13:11:37
+302,STANDBANKL,55,ticker,1,2026-10-26T13:11:37
+303,State Bank of India,56,full_name,0,2026-10-26T13:11:37
+304,The Hong Kong and Shanghai Banking Corporation. Ltd.,57,full_name,0,2026-10-26T13:11:37
+305,The Hong Kong and Shanghai Banking Corporation..,57,short_name,0,2026-10-26T13:11:37
+306,The Hong Kong and Shanghai Banking Corporation.. PLC,57,full_name,0,2026-10-26T13:11:37
+307,The Hong Kong and Shanghai Banking Corporation.. Limited,57,full_name,0,2026-10-26T13:11:37
+308,The Hong Kong and Shanghai Banking Corporation.. Ltd,57,full_name,0,2026-10-26T13:11:37
+309,The Premier Bank PLC,58,full_name,0,2026-10-26T13:11:37
+310,The Premier Bank,58,short_name,0,2026-10-26T13:11:37
+312,The Premier Bank Limited,58,full_name,0,2026-10-26T13:11:37
+313,The Premier Bank Ltd,58,full_name,0,2026-10-26T13:11:37
+314,PREMIERBAN,58,ticker,1,2026-10-26T13:11:37
+315,Trust Bank PLC,59,full_name,0,2026-10-26T13:11:37
+316,Trust Bank,59,short_name,0,2026-10-26T13:11:37
+318,Trust Bank Limited,59,full_name,0,2026-10-26T13:11:37
+319,Trust Bank Ltd,59,full_name,0,2026-10-26T13:11:37
+320,TRUSTBANK,59,ticker,1,2026-10-26T13:11:37
+321,Union Bank PLC,60,full_name,0,2026-10-26T13:11:37
+322,Union Bank,60,short_name,0,2026-10-26T13:11:37
+324,Union Bank Limited,60,full_name,0,2026-10-26T13:11:37
+325,Union Bank Ltd,60,full_name,0,2026-10-26T13:11:37
+326,UNIONBANK,60,ticker,1,2026-10-26T13:11:37
+327,United Commercial Bank  PLC,61,full_name,0,2026-10-26T13:11:37
+328,United Commercial Bank,61,short_name,0,2026-10-26T13:11:37
+329,United Commercial Bank PLC,61,full_name,0,2026-10-26T13:11:37
+330,United Commercial Bank Limited,61,full_name,0,2026-10-26T13:11:37
+331,United Commercial Bank Ltd,61,full_name,0,2026-10-26T13:11:37
+333,UCB,61,ticker,1,2026-10-26T13:11:37
+335,Uttara Bank PLC,62,full_name,0,2026-10-26T13:11:37
+336,Uttara Bank,62,short_name,0,2026-10-26T13:11:37
+338,Uttara Bank Limited,62,full_name,0,2026-10-26T13:11:37
+339,Uttara Bank Ltd,62,full_name,0,2026-10-26T13:11:37
+340,UTTARABANK,62,ticker,1,2026-10-26T13:11:37
+341,Woori Bank,63,full_name,0,2026-10-26T13:11:37
+530,Nagad Digital Bank PLC,34,full_name,0,2026-10-26T13:15:48
+531,Nagad Digital Bank,34,short_name,0,2026-10-26T13:15:48
+533,Nagad Digital Bank Limited,34,full_name,0,2026-10-26T13:15:48
+534,Nagad Digital Bank Ltd,34,full_name,0,2026-10-26T13:15:48
+948,Rupali,46,short_name,0,2026-10-26T14:42:42
+989,Sonali,52,short_name,0,2026-10-26T14:42:42
+998,Standard Chartered,54,short_name,0,2026-10-26T14:42:42
+999,StanChart,54,short_name,0,2026-10-26T14:42:42
+1000,SCB,54,abbreviation,1,2026-10-26T14:42:42
+1013,HSBC,57,abbreviation,1,2026-10-26T14:42:42
+1014,HSBC Bangladesh,57,short_name,0,2026-10-26T14:42:42
+1193,IBBL,26,abbreviation,1,2026-10-26T14:59:42
+1207,Janata,28,short_name,0,2026-10-26T14:59:42
+1445,Bank Asia PLC,8,full_name,0,2026-10-26T16:56:26
+1446,Bank Asia Limited,8,full_name,0,2026-10-26T16:56:26
+1447,Bank Asia Ltd,8,full_name,0,2026-10-26T16:56:26
+1456,Bengal Commercial Bank,10,short_name,0,2026-10-26T16:56:26
+1457,Bengal Commercial Bank PLC,10,full_name,0,2026-10-26T16:56:26
+1458,Bengal Commercial Bank Limited,10,full_name,0,2026-10-26T16:56:26
+1459,Bengal Commercial Bank Ltd,10,full_name,0,2026-10-26T16:56:26
+1490,Community Bank Bangladesh,16,short_name,0,2026-10-26T16:56:26
+1491,Community Bank Bangladesh PLC,16,full_name,0,2026-10-26T16:56:26
+1492,Community Bank Bangladesh Limited,16,full_name,0,2026-10-26T16:56:26
+1493,Community Bank Bangladesh Ltd,16,full_name,0,2026-10-26T16:56:26
+1536,Habib Bank,23,short_name,0,2026-10-26T16:56:26
+1537,Habib Bank PLC,23,full_name,0,2026-10-26T16:56:26
+1538,Habib Bank Limited,23,full_name,0,2026-10-26T16:56:26
+1539,Habib Bank Ltd,23,full_name,0,2026-10-26T16:56:26
+1541,ICB Islamic Bank,24,short_name,0,2026-10-26T16:56:26
+1542,ICB Islamic Bank PLC,24,full_name,0,2026-10-26T16:56:26
+1543,ICB Islamic Bank Limited,24,full_name,0,2026-10-26T16:56:26
+1544,ICB Islamic Bank Ltd,24,full_name,0,2026-10-26T16:56:26
+1735,The Hong Kong and Shanghai Banking Corporation,57,short_name,0,2026-10-26T16:56:26
+1736,The Hong Kong and Shanghai Banking Corporation PLC,57,full_name,0,2026-10-26T16:56:26
+1737,The Hong Kong and Shanghai Banking Corporation Limited,57,full_name,0,2026-10-26T16:56:26
+1738,The Hong Kong and Shanghai Banking Corporation Ltd,57,full_name,0,2026-10-26T16:56:26

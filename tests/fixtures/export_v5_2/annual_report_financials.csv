@@ -1,0 +1,125 @@
+id,bank_id,year,metric_name,metric_value,ratio_pct,basis,is_restated,restatement_note,is_rejected,rejection_reason,page_no,quote,raw_value,parser,document_id,run_id,created_at
+18,42,2021,CRAR,17.17,17.17,solo,0,,0,,73,(CRAR) at 17.17% & 16.86% for stand-alone and for consolidated,17.17%,annual_report_pdf_v4,21,run_v3_pilot,2026-10-26T14:22:39
+59,19,2025,CRAR,15.49,15.49,unknown,0,,0,,26,"As on 31 December 2025, our Bank’s total regulatory capital is BDT 61,657 million and CRAR is 15.49%.",15.49%,annual_report_pdf_v4,13,run_v3_pilot,2026-10-26T11:12:28
+60,19,2024,CRAR,15.11,15.11,unknown,0,,0,,20,"On the day-end of 2024, our Bank’s total regulatory capital is BDT 51,846 million and CRAR is 15.11%.",15.11%,annual_report_pdf_v4,14,run_v3_pilot,2026-10-26T11:12:28
+61,19,2023,CRAR,15.04,15.04,unknown,1,restated to 15.07 in the 2024 and 2025 reports,0,,62,ratio (CRAR) has increased to 15.04% in 2023 from 14.61% in 2022.,15.04%,annual_report_pdf_v4,15,run_v3_pilot,2026-10-26T11:12:28
+62,19,2022,CRAR,14.61,14.61,unknown,0,,0,,62,ratio (CRAR) has increased to 15.04% in 2023 from 14.61% in 2022.,14.61%,annual_report_pdf_v4,15,run_v3_pilot,2026-10-26T11:12:28
+63,19,2021,CRAR,14.08,14.08,unknown,0,,0,,53,"2021, bank’s CET-1 ratio and CRAR stood at 10.31% and 14.08%",14.08%,annual_report_pdf_v4,17,run_v3_pilot,2026-10-26T11:12:28
+64,19,2020,CRAR,15.23,15.23,unknown,0,,0,,25,CRAR (15.23% ≥ 12.50%),15.23%,annual_report_pdf_v4,17,run_v3_pilot,2026-10-26T11:12:28
+65,19,2025,NPL_RATIO,2.24,2.24,unknown,0,,0,,68,NPL ratio improved from 3.34% to 2.24%. The reason the two moved,2.24%,annual_report_pdf_v4,13,run_v3_pilot,2026-10-26T11:12:28
+66,19,2024,NPL_RATIO,3.34,3.34,unknown,0,,0,,54,"Asset quality remained well-managed, with the non-performing loan (NPL) ratio at 3.34%",3.34%,annual_report_pdf_v4,14,run_v3_pilot,2026-10-26T11:12:28
+67,19,2023,NPL_RATIO,3.10,3.10,unknown,0,,0,,53,"We ended the year with a NPL ratio of 3.10%, a slight increase from 2.78% in",3.10%,annual_report_pdf_v4,15,run_v3_pilot,2026-10-26T11:12:28
+68,19,2022,NPL_RATIO,2.78,2.78,unknown,0,,0,,53,one of the lowest NPL ratio i.e. 2.78% (3.70% in 2021) at year-end 2022,2.78%,annual_report_pdf_v4,16,run_v3_pilot,2026-10-26T11:12:28
+69,19,2021,NPL_RATIO,3.70,3.70,unknown,0,,0,,59,one of the lowest NPL ratio i.e. 2.78% (3.70% in 2021) at year-end 2022,3.70%,annual_report_pdf_v4,17,run_v3_pilot,2026-10-26T11:12:28
+70,19,2020,NPL_RATIO,2.72,2.72,unknown,0,,0,,59,overall NPL ratio stood at 2.72% at year-end 2020,2.72%,annual_report_pdf_v4,17,run_v3_pilot,2026-10-26T11:12:28
+71,19,2025,PROFIT_AFTER_TAX,9010.00,,unknown,0,,0,,26,"Our profit after tax is BDT 9,010 million","9,010 BDT Million",annual_report_pdf_v4,13,run_v3_pilot,2026-10-26T11:12:28
+72,19,2024,PROFIT_AFTER_TAX,7504.00,,unknown,0,,0,,20,"Our profit after tax is BDT 7,504 million","7,504 BDT Million",annual_report_pdf_v4,14,run_v3_pilot,2026-10-26T11:12:28
+73,42,2025,CRAR,18.07,18.07,unknown,0,,0,,77,Capital to Risk-weighted Assets Ratio (CRAR) of 18.07%,18.07%,annual_report_pdf_v4,18,run_v3_pilot,2026-10-26T11:12:28
+74,42,2023,CRAR,17.06,17.06,unknown,0,,0,,5,weighted assets ratio (CRAR) at 17.06%.,17.06%,annual_report_pdf_v4,19,run_v3_pilot,2026-10-26T11:12:28
+75,42,2022,CRAR,16.78,16.78,unknown,0,,0,,12,assets ratio (CRAR) was maintained at 16.78%.,16.78%,annual_report_pdf_v4,20,run_v3_pilot,2026-10-26T11:12:28
+77,42,2020,CRAR,17.28,17.28,unknown,0,,0,,23,Weighted Assets Ratio (CRAR) which was at 17.28%,17.28%,annual_report_pdf_v4,21,run_v3_pilot,2026-10-26T11:12:28
+78,42,2025,NPL_RATIO,2.73,2.73,unknown,0,,0,,78,The NPL Ratio improved drastically from 4.22% to 2.73%.,2.73%,annual_report_pdf_v4,18,run_v3_pilot,2026-10-26T11:12:28
+79,42,2023,NPL_RATIO,3.54,3.54,unknown,0,,0,,23,NPL ratio stood at 3.54% at the end of 2023,3.54%,annual_report_pdf_v4,19,run_v3_pilot,2026-10-26T11:12:28
+80,42,2022,NPL_RATIO,3.42,3.42,unknown,0,,0,,23,Non-performing loan (NPL) ratio was maintained at 3.42%,3.42%,annual_report_pdf_v4,20,run_v3_pilot,2026-10-26T11:12:28
+81,42,2020,NPL_RATIO,3.46,3.46,unknown,0,,0,,23,NPL ratio closed at 3.46% in 2020,3.46%,annual_report_pdf_v4,21,run_v3_pilot,2026-10-26T11:12:28
+82,18,2025,CRAR,17.13,17.13,unknown,0,,0,,14,Capital to Risk-Weighted Asset Ratio (CRAR): 17.13%,17.13%,annual_report_pdf_v4,11,run_v3_pilot,2026-10-26T11:12:28
+83,18,2025,NPL_RATIO,6.43,6.43,unknown,0,,0,,14,Classified loans reduced to 6.43% of total loans;,6.43%,annual_report_pdf_v4,11,run_v3_pilot,2026-10-26T11:12:28
+84,18,2025,PROFIT_AFTER_TAX,9647.70,,unknown,0,,0,,14,"Net Profit After Tax: BDT 9,647.7 million (+103.8%);","9,647.7 BDT Million",annual_report_pdf_v4,11,run_v3_pilot,2026-10-26T11:12:28
+85,18,2024,PROFIT_AFTER_TAX,4734.80,,unknown,0,,0,,14,"(2024: BDT 4,734.8 million);","4,734.8 BDT Million",annual_report_pdf_v4,11,run_v3_pilot,2026-10-26T11:12:28
+86,18,2025,TOTAL_DEPOSITS,622057.80,,unknown,0,,0,,18,"rising from Taka 521,872.5 million to Taka 622,057.8 million in 2025","622,057.8 BDT Million",annual_report_pdf_v4,11,run_v3_pilot,2026-10-26T11:12:28
+87,18,2024,TOTAL_DEPOSITS,521872.50,,unknown,0,,0,,18,"rising from Taka 521,872.5 million to Taka 622,057.8 million in 2025","521,872.5 BDT Million",annual_report_pdf_v4,11,run_v3_pilot,2026-10-26T11:12:28
+88,8,2025,CRAR,15.32,15.32,unknown,0,,0,,48,"Total Capital Tk. 46,405 million I CRAR 15.32 %",15.32%,annual_report_pdf_v4,106,run_v3_pilot,2026-10-26T11:12:28
+89,8,2025,NPL_RATIO,8.38,8.38,unknown,0,,0,,48,Classified loans stood at 8.38%,8.38%,annual_report_pdf_v4,106,run_v3_pilot,2026-10-26T11:12:28
+90,8,2025,PROFIT_AFTER_TAX,4456.00,,unknown,0,,0,,269,"Profit After Tax (PAT) rose 60.6% to Tk. 4,456 million from Tk. 2,775","4,456 BDT Million",annual_report_pdf_v4,106,run_v3_pilot,2026-10-26T11:12:28
+91,8,2024,CRAR,15.61,15.61,unknown,0,,0,,52,"Total Capital Tk. 41,547 million I CRAR 15.61%",15.61%,annual_report_pdf_v4,107,run_v3_pilot,2026-10-26T11:12:28
+92,8,2024,NPL_RATIO,11.40,11.40,unknown,0,,0,,52,Classified loans stood at 11.40%,11.40%,annual_report_pdf_v4,107,run_v3_pilot,2026-10-26T11:12:28
+93,8,2024,PROFIT_AFTER_TAX,2775.00,,unknown,0,,0,,55,"Profit After Tax (PAT) rose 16% to Tk. 2,775 million, reflecting strong","2,775 BDT Million",annual_report_pdf_v4,107,run_v3_pilot,2026-10-26T11:12:28
+94,8,2023,CRAR,16.45,16.45,unknown,0,,0,,56,"Total Capital Tk. 40,659 million I CRAR 16.45%",16.45%,annual_report_pdf_v4,108,run_v3_pilot,2026-10-26T11:12:28
+95,8,2023,NPL_RATIO,6.70,6.70,unknown,0,,0,,56,Non-performing loans stood at 6.7%,6.7%,annual_report_pdf_v4,108,run_v3_pilot,2026-10-26T11:12:28
+96,8,2023,PROFIT_AFTER_TAX,2396.00,,unknown,0,,0,,71,"profit after tax of the bank stood at Tk. 2,396 million due to keeping higher","2,396 BDT Million",annual_report_pdf_v4,108,run_v3_pilot,2026-10-26T11:12:28
+111,42,2025,PROFIT_AFTER_TAX,8904.00,,unknown,0,,0,,69,"Net Profit after Tax: BDT 8,904 million","8,904 BDT Million",annual_report_pdf_v4,18,run_v3_pilot,2026-10-26T11:54:41
+175,14,2025,CRAR,15.74,15.74,unknown,0,,0,,170,Capital to Risk-Weighted Assets Ratio (CRAR): 15.74% (2024: 15.97%),15.74%,annual_report_pdf_v4,112,run_v3_pilot,2026-10-26T13:56:05
+176,14,2024,CRAR,15.97,15.97,unknown,0,,0,,170,Capital to Risk-Weighted Assets Ratio (CRAR): 15.74% (2024: 15.97%),15.97%,annual_report_pdf_v4,112,run_v3_pilot,2026-10-26T13:56:05
+177,14,2025,NPL_RATIO,2.50,2.50,unknown,0,,0,,102,"Percentage of NPL over Total Loans and Advances
+2.5%
+3.7%",2.5%,annual_report_pdf_v4,112,run_v3_pilot,2026-10-26T13:56:05
+178,14,2024,NPL_RATIO,3.70,3.70,unknown,0,,0,,102,"Percentage of NPL over Total Loans and Advances
+2.5%
+3.7%",3.7%,annual_report_pdf_v4,112,run_v3_pilot,2026-10-26T13:56:05
+179,14,2025,PROFIT_AFTER_TAX,13059.00,,unknown,0,,0,,102,"Profit After Tax
+ 13,059 
+10,851","13,059 BDT Million",annual_report_pdf_v4,112,run_v3_pilot,2026-10-26T13:56:05
+180,14,2024,PROFIT_AFTER_TAX,10851.00,,unknown,0,,0,,102,"Profit After Tax
+ 13,059 
+10,851","10,851 BDT Million",annual_report_pdf_v4,112,run_v3_pilot,2026-10-26T13:56:05
+181,11,2025,CRAR,15.63,15.63,unknown,0,,0,,163,"Total capital to risk-weighted asset ratio (CRAR)
+15.63%
+14.95%",15.63%,annual_report_pdf_v4,113,run_v3_pilot,2026-10-26T13:56:05
+182,11,2024,CRAR,14.95,14.95,unknown,0,,0,,163,"Total capital to risk-weighted asset ratio (CRAR)
+15.63%
+14.95%",14.95%,annual_report_pdf_v4,113,run_v3_pilot,2026-10-26T13:56:05
+183,11,2025,NPL_RATIO,2.27,2.27,unknown,0,,0,,163,"Percentage of NPLs to total loans and advances
+2.27%
+2.63%",2.27%,annual_report_pdf_v4,113,run_v3_pilot,2026-10-26T13:56:05
+184,11,2024,NPL_RATIO,2.63,2.63,unknown,0,,0,,163,"Percentage of NPLs to total loans and advances
+2.27%
+2.63%",2.63%,annual_report_pdf_v4,113,run_v3_pilot,2026-10-26T13:56:05
+185,11,2025,PROFIT_AFTER_TAX,15809.00,,unknown,0,,0,,163,"Net profit after tax
+ 15,809 
+ 12,136","15,809 BDT Million",annual_report_pdf_v4,113,run_v3_pilot,2026-10-26T13:56:05
+186,11,2024,PROFIT_AFTER_TAX,12136.00,,unknown,0,,0,,163,"Net profit after tax
+ 15,809 
+ 12,136","12,136 BDT Million",annual_report_pdf_v4,113,run_v3_pilot,2026-10-26T13:56:05
+187,37,2025,CRAR,15.54,15.54,solo,0,,0,,183,"Capital to Risk Weighted Assets (CRAR)
+15.86%
+14.82%
+15.91%
+15.14%
+15.54%",15.54%,annual_report_pdf_v4,114,run_v3_pilot,2026-10-26T13:56:05
+188,37,2024,CRAR,15.14,15.14,solo,0,,0,,183,"Capital to Risk Weighted Assets (CRAR)
+15.86%
+14.82%
+15.91%
+15.14%
+15.54%",15.14%,annual_report_pdf_v4,114,run_v3_pilot,2026-10-26T13:56:05
+189,37,2025,NPL_RATIO,4.12,4.12,solo,0,,0,,183,"Non performing loans  as % of total loans 
+4.57%
+6.85%
+5.66%
+7.32%
+4.12%",4.12%,annual_report_pdf_v4,114,run_v3_pilot,2026-10-26T13:56:05
+190,37,2024,NPL_RATIO,7.32,7.32,solo,0,,0,,183,"Non performing loans  as % of total loans 
+4.57%
+6.85%
+5.66%
+7.32%
+4.12%",7.32%,annual_report_pdf_v4,114,run_v3_pilot,2026-10-26T13:56:05
+191,37,2025,PROFIT_AFTER_TAX,4861.00,,solo,0,,0,,184,"Profit after tax*
+  3,188 
+  3,314 
+  3,486 
+  4,373 
+  4,861","4,861 BDT Million",annual_report_pdf_v4,114,run_v3_pilot,2026-10-26T13:56:05
+192,37,2024,PROFIT_AFTER_TAX,4373.00,,solo,0,,0,,184,"Profit after tax*
+  3,188 
+  3,314 
+  3,486 
+  4,373 
+  4,861","4,373 BDT Million",annual_report_pdf_v4,114,run_v3_pilot,2026-10-26T13:56:05
+193,33,2025,CRAR,13.55,13.55,consolidated,0,,0,,346,"Capital to Risk-weighted Assets Ratios (CRAR) (%)
+13.55%
+13.59%
+13.62%
+13.60%",13.55%,annual_report_pdf_v4,115,run_v3_pilot,2026-10-26T13:56:05
+194,33,2024,CRAR,13.62,13.62,consolidated,0,,0,,346,"Capital to Risk-weighted Assets Ratios (CRAR) (%)
+13.55%
+13.59%
+13.62%
+13.60%",13.62%,annual_report_pdf_v4,115,run_v3_pilot,2026-10-26T13:56:05
+195,33,2025,NPL_RATIO,5.77,5.77,consolidated,0,,0,,56,"Our non-performing loan ratio declined from 6.95% 
+in 2024 to 5.77% in 2025",5.77%,annual_report_pdf_v4,115,run_v3_pilot,2026-10-26T13:56:05
+196,33,2024,NPL_RATIO,6.95,6.95,consolidated,0,,0,,56,"Our non-performing loan ratio declined from 6.95% 
+in 2024 to 5.77% in 2025",6.95%,annual_report_pdf_v4,115,run_v3_pilot,2026-10-26T13:56:05
+197,33,2025,PROFIT_AFTER_TAX,3392.91,,consolidated,0,,0,,56,"Net Profit After Tax rose to BDT 3,392.91m","3,392.91 BDT Million",annual_report_pdf_v4,115,run_v3_pilot,2026-10-26T13:56:05
+198,33,2024,PROFIT_AFTER_TAX,3166.53,,consolidated,0,,0,,56,"net profit after tax stood at BDT 3,392.91 million, 
+compared to BDT 3,166.53 million in 2024","3,166.53 BDT Million",annual_report_pdf_v4,115,run_v3_pilot,2026-10-26T13:56:05

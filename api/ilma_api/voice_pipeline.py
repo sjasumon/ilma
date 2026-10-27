@@ -94,7 +94,7 @@ async def understand(text, candidates, context, client=None):
 
 def source_fields(source):
     if not source: return None
-    return {'source_url': source.url, 'source_title': source.title, 'source_id': source.source_id, 'published_at': str(source.published_at), 'page': source.page}
+    return {'source_url': source.url, 'source_title': source.title, 'source_id': source.source_id, 'published_at': str(source.published_at) if source.published_at else None, 'page': source.page}
 
 
 def build_result(intent, candidates, language, db, question=""):
@@ -119,7 +119,9 @@ def build_result(intent, candidates, language, db, question=""):
             summary = card.get('message_bn' if bn else 'message_en', missing)
         else:
             summary = (card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + '। ' +
-                       ' '.join(reason['text_bn' if bn else 'text_en'] for reason in card.get('reasons', [])[:2]))
+                       ' '.join(reason['text_bn' if bn else 'text_en'] for reason in card.get('reasons', [])[:3]))
+        insurance_line=card.get('insurance',{}).get('text_bn' if bn else 'text_en')
+        if insurance_line:summary += ' ' + insurance_line
         return {'type': 'report_card', 'institution_id': institution, 'url': f'/v1/institutions/{institution}/report-card',
                 'text': summary + ' ' + disclaimer, 'sources': card.get('reasons', []), 'disclaimer': disclaimer}
     if intent.intent == 'rates' and institution:
@@ -285,10 +287,15 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         intent = understood.intent
         if intent not in {'bank_status', 'insurance', 'rates'}: consume_question(db, device_hash)
         institution = understood.institution_ids[0] if understood.institution_ids else None
-        if intent in {'bank_status', 'bank_detail', 'rates'} and not institution:
+        from ilma_api.bank_services import voice_service_result
+        service_result=voice_service_result(text,understood,context,db,language)
+        if service_result:
+            result=service_result
+        elif intent in {'bank_status', 'bank_detail', 'rates'} and not institution:
             # Lack of a fuzzy match is not evidence of an unlicensed institution.
             result = {'type': 'clarify', 'text': 'বুঝতে পারিনি। আবার বলুন বা লিখুন।' if language == 'bn' else 'Not understood. Please speak again or type.', 'candidates': []}
-        else: result = build_result(understood, candidates, language, db, text)
+        else:
+            result = build_result(understood, candidates, language, db, text)
         if result.get('_facts'):
             from ilma_api.voice_answers import write_answer
             result['text'] = await write_answer(text, result.pop('_facts'), language)

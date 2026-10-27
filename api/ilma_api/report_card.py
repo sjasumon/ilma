@@ -1,13 +1,10 @@
 from datetime import date
-from decimal import Decimal
 from typing import Any
 import numpy as np
 
 from sqlalchemy.orm import Session
-from ilma_api.db import Institution, Fact, Rating, Rate, Event, InsuranceRule, SharePriceFlag, Source
-from ilma_api.rules.status import evaluate, EvalResult, months_between
-from ilma_api.rules.ratings import normalize_rating
-from ilma_api.rules.reasons import format_percent, format_crore, to_bn_digits, format_date
+from ilma_api.db import Institution, Fact, Rating, Rate, Event, InsuranceRule, SharePriceFlag, Source, Release, ServiceOffer
+from ilma_api.rules.status import evaluate, EvalResult
 
 def get_institution_report_card(db: Session, institution_id_or_slug: int | str, as_of: date | None = None) -> dict[str, Any] | None:
     if as_of is None:
@@ -65,7 +62,8 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
                     "publisher": src.publisher if src else None,
                     "published_at": src.published_at if src else None,
                     "page": src.page if src else None,
-                    "quote": f.quote
+                    "quote": f.quote,
+                    "checked": f.checked_by.casefold() == 'sumon'
                 } if src else {}
             }
 
@@ -92,7 +90,8 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
                 "publisher": src.publisher if src else None,
                 "published_at": src.published_at if src else None,
                 "page": src.page if src else None,
-                "quote": r.quote
+                "quote": r.quote,
+                "checked": r.checked_by.casefold() == 'sumon'
             } if src else {}
         })
 
@@ -129,7 +128,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
     for rate_row in db.query(Rate).filter_by(product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).all():
         latest_rates.setdefault(rate_row.institution_id, float(rate_row.rate))
     all_fdr_rates = list(latest_rates.values())
-    median_fdr = float(np.median(all_fdr_rates)) if all_fdr_rates else 0.0825
+    median_fdr = float(np.median(all_fdr_rates)) if all_fdr_rates else None
 
     inst_rate_row = db.query(Rate).filter_by(institution_id=inst.id, product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).first()
     rates_dict = {}
@@ -145,6 +144,22 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
                 "quote": inst_rate_row.quote
             }
         }
+
+    # The current service export supersedes legacy deposit-rate fixtures.
+    service_rates = db.query(ServiceOffer).filter_by(product_type='fdr', tenor_months=12,
+        attribute='rate', basis='conventional', hidden=False).all()
+    if service_rates:
+        chosen = {}
+        eligible = [row for row in service_rates if row.value_num is not None and not row.stale and (as_of-row.doc_date).days<=365]
+        eligible.sort(key=lambda row:(any(word in row.product.lower() for word in ('extra','plus','senior','women','million','kotipoti')),-row.doc_date.toordinal(),row.product,row.value_num,row.condition,row.offer_id))
+        for row in eligible:chosen.setdefault(row.institution_id,row)
+        median_fdr=float(np.median([float(row.value_num)/100 for row in chosen.values()])) if chosen else None
+        rates_dict={}
+        current=chosen.get(inst.id)
+        if current:
+            rates_dict['fdr_12m']=dict(fact_id=current.offer_id,rate=float(current.value_num)/100,as_of=current.doc_date,
+                source_info=dict(url=current.source_url,title=current.product,quote=current.quote,
+                    page=current.page,published_at=current.doc_date))
 
     # Share price flag
     spf = db.query(SharePriceFlag).filter_by(institution_id=inst.id).first()
@@ -181,166 +196,12 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         "limit_bdt": ins_rule.limit_bdt if ins_rule else None,
         "payout_working_days": ins_rule.payout_working_days if ins_rule else None,
         "text_bn": ins_rule.text_bn if ins_rule else "",
-        "text_en": ins_rule.text_en if ins_rule else ""
+        "text_en": ins_rule.text_en if ins_rule else "",
+        "source_url": ins_rule.source.url if ins_rule and ins_rule.source else None,
+        "source_title": ins_rule.source.title if ins_rule and ins_rule.source else None
     }
 
-    # 7 Health Checks (Core feature #2)
-    crar_f = latest_facts.get("crar")
-    npl_f = latest_facts.get("npl_ratio")
-    profit_f = latest_facts.get("net_profit")
-    rating_top = ratings_data[0] if ratings_data else None
-
-    # Check 1: Capital Adequacy (CRAR)
-    if crar_f:
-        c_val = crar_f["value"]
-        if c_val >= 0.125:
-            c_status = "pass"
-            c_desc_bn = "আইনি ন্যূনতম ১০.০০% ও বাফারের বেশি"
-            c_desc_en = "Comfortably above 10% legal requirement"
-        elif c_val >= 0.10:
-            c_status = "watch"
-            c_desc_bn = "আইনি সীমার কাছাকাছি (সতর্কতা)"
-            c_desc_en = "Close to regulatory minimum"
-        else:
-            c_status = "fail"
-            c_desc_bn = "আইনি ন্যূনতম সীমার নিচে"
-            c_desc_en = "Below statutory minimum"
-        c_val_text = f"{format_percent(c_val, bn=True)}%"
-    else:
-        c_status = "unknown"
-        c_val_text = "তথ্য কম"
-        c_desc_bn = "নিরীক্ষিত অনুপাত অপ্রাপ্য"
-        c_desc_en = "Audited data not available"
-
-    # Check 2: Bad Loans (NPL)
-    if npl_f:
-        n_val = npl_f["value"]
-        if n_val < 0.10:
-            n_status = "pass"
-            n_desc_bn = "স্বাভাবিক ও সহনীয় সীমার মধ্যে"
-            n_desc_en = "Within safe threshold"
-        elif n_val < 0.25:
-            n_status = "watch"
-            n_desc_bn = "১০% থেকে ২৫% এর মধ্যে (উদ্বেগজনক)"
-            n_desc_en = "Elevated between 10% and 25%"
-        else:
-            n_status = "fail"
-            n_desc_bn = "২৫% বা তার বেশি (উচ্চ ঝুঁকি)"
-            n_desc_en = "High risk >= 25%"
-        n_val_text = f"{format_percent(n_val, bn=True)}%"
-    else:
-        n_status = "unknown"
-        n_val_text = "তথ্য কম"
-        n_desc_bn = "সর্বশেষ হিসাব অপ্রাপ্য"
-        n_desc_en = "Latest figure not found"
-
-    # Check 3: Net Profit
-    if profit_f:
-        p_val = profit_f["value"]
-        if p_val > 0:
-            p_status = "pass"
-            p_val_text = f"{format_crore(p_val, bn=True)} কোটি টাকা"
-            p_desc_bn = "মুনাফাজনক অবস্থানে রয়েছে"
-            p_desc_en = "Profitable operation"
-        else:
-            p_status = "fail"
-            p_val_text = f"লোকসান {format_crore(p_val, bn=True)} কোটি"
-            p_desc_bn = "গত অর্থবছরে লোকসান হয়েছে"
-            p_desc_en = "Net loss in recent period"
-    else:
-        p_status = "unknown"
-        p_val_text = "তথ্য কম"
-        p_desc_bn = "নিরীক্ষিত মুনাফা পাওয়া যায়নি"
-        p_desc_en = "Profit data not available"
-
-    # Check 4: Rating
-    if rating_top:
-        r_val_text = normalize_rating(rating_top["long_term"])
-        r_agency = rating_top["agency"]
-        r_out = rating_top["outlook"] or "stable"
-        if r_val_text is None:
-            r_status = "unknown"
-            r_val_text = "—"
-            r_desc_bn = "রেটিং বোঝা যায়নি"
-            r_desc_en = "Unrecognized rating"
-        elif r_val_text in ["AAA", "AA+", "AA", "AA-", "A+", "A", "A-"] and r_out in ["stable", "positive"]:
-            r_status = "pass"
-            r_desc_bn = f"{r_agency} রেটিং {r_val_text}, পূর্বাভাস স্থির"
-            r_desc_en = f"{r_agency} rating {r_val_text}, stable"
-        elif r_val_text in ["BBB+", "BBB", "BBB-"] or r_out == "negative":
-            r_status = "watch"
-            r_desc_bn = f"{r_agency} রেটিং {r_val_text} (সতর্কতামূলক)"
-            r_desc_en = f"{r_agency} rating {r_val_text} (watch)"
-        else:
-            r_status = "fail"
-            r_desc_bn = f"{r_agency} রেটিং {r_val_text} (ঝুঁকিপূর্ণ)"
-            r_desc_en = f"{r_agency} rating {r_val_text} (high risk)"
-    else:
-        r_status = "unknown"
-        r_val_text = "রেটিং নেই"
-        r_desc_bn = "কোনো এজেন্সি রেটিং পাওয়া যায়নি"
-        r_desc_en = "No rating found"
-
-    # Check 5: Liquidity
-    has_emergency_liq = any(ev["type"] == "emergency_liquidity" and ev["official"] and 0 <= months_between(ev["event_date"], as_of) <= 12 for ev in events_data)
-    has_withdrawal_limit = any(ev["type"] == "withdrawal_limit" and ev["official"] and 0 <= months_between(ev["event_date"], as_of) <= 12 for ev in events_data)
-    if has_withdrawal_limit:
-        l_status = "fail"
-        l_val_text = "উত্তোলন সীমা জারি"
-        l_desc_bn = "টাকা তোলায় বিধিনিষেধ রয়েছে"
-        l_desc_en = "Withdrawal limits imposed"
-    elif has_emergency_liq:
-        l_status = "watch"
-        l_val_text = "জরুরি সহায়তা গৃহীত"
-        l_desc_bn = "বাংলাদেশ ব্যাংকের জরুরি সহায়তা নিয়েছে"
-        l_desc_en = "Received emergency liquidity"
-    else:
-        l_status = "pass"
-        l_val_text = "স্বাভাবিক"
-        l_desc_bn = "তারল্যে কোনো বিধিনিষেধ নেই"
-        l_desc_en = "Normal liquidity operations"
-
-    # Check 6: Regulator action
-    h1_events = [ev for ev in events_data if ev["official"] and 0 <= months_between(ev["event_date"], as_of) <= 24 and ev["type"] in {"administrator", "board_dissolved", "forced_merger", "licence_cancelled", "liquidation"}]
-    penalty_events = [ev for ev in events_data if ev["official"] and 0 <= months_between(ev["event_date"], as_of) <= 24 and ev["type"] == "penalty" and (ev["severity"] or 0) >= 3]
-    if h1_events:
-        reg_status = "fail"
-        reg_val_text = "কঠোর পদক্ষেপ"
-        reg_desc_bn = f"বাংলাদেশ ব্যাংক {h1_events[0]['title_bn']}"
-        reg_desc_en = f"Bangladesh Bank {h1_events[0]['title_en']}"
-    elif penalty_events:
-        reg_status = "watch"
-        reg_val_text = "নিয়ন্ত্রক জরিমানা"
-        reg_desc_bn = f"গুরুতর অনিয়মে জরিমানা করা হয়েছে"
-        reg_desc_en = "Regulatory penalty recorded"
-    else:
-        reg_status = "pass"
-        reg_val_text = "কোনো বিধিনিষেধ নেই"
-        reg_desc_bn = "পরিচালনা পর্ষদ ও কার্যক্রম স্বাভাবিক"
-        reg_desc_en = "No punitive regulatory actions"
-
-    # Check 7: Deposit Insurance
-    if inst.type == "bank":
-        ins_status = "pass"
-        ins_val_text = "২ লাখ টাকা পর্যন্ত"
-        ins_desc_bn = "আইন ২০২৬ অনুযায়ী শতভাগ আমানত বীমাযুক্ত"
-        ins_desc_en = "100% insured up to Tk 2 Lakh"
-    else:
-        ins_status = "watch"
-        ins_val_text = "বীমা প্রযোজ্য নয়"
-        ins_desc_bn = "আর্থিক প্রতিষ্ঠানে বীমা সুরক্ষা ২০২৮ থেকে কার্যকর হবে"
-        ins_desc_en = "NBFI coverage starts July 2028"
-
-    checks_list = [
-        {"id": "capital", "name_bn": "মূলধন পর্যাপ্ততা (CRAR)", "name_en": "Capital Adequacy (CRAR)", "status": c_status, "value_text": c_val_text, "desc_bn": c_desc_bn, "desc_en": c_desc_en},
-        {"id": "npl", "name_bn": "খেলাপি ঋণ (NPL)", "name_en": "Bad Loans (NPL Ratio)", "status": n_status, "value_text": n_val_text, "desc_bn": n_desc_bn, "desc_en": n_desc_en},
-        {"id": "profit", "name_bn": "নিট মুনাফা", "name_en": "Net Profit", "status": p_status, "value_text": p_val_text, "desc_bn": p_desc_bn, "desc_en": p_desc_en},
-        {"id": "rating", "name_bn": "ক্রেডিট রেটিং", "name_en": "Credit Rating", "status": r_status, "value_text": r_val_text, "desc_bn": r_desc_bn, "desc_en": r_desc_en},
-        {"id": "liquidity", "name_bn": "তারল্য অবস্থা", "name_en": "Liquidity", "status": l_status, "value_text": l_val_text, "desc_bn": l_desc_bn, "desc_en": l_desc_en},
-        {"id": "regulator", "name_bn": "নিয়ন্ত্রক পদক্ষেপ", "name_en": "Regulatory Cleanliness", "status": reg_status, "value_text": reg_val_text, "desc_bn": reg_desc_bn, "desc_en": reg_desc_en},
-        {"id": "insurance", "name_bn": "আমানত বীমা সুরক্ষা", "name_en": "Deposit Insurance Coverage", "status": ins_status, "value_text": ins_val_text, "desc_bn": ins_desc_bn, "desc_en": ins_desc_en}
-    ]
-
+    release = db.query(Release).order_by(Release.loaded_at.desc()).first()
     return {
         "institution": inst_dict,
         "status": {
@@ -360,8 +221,10 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
             "sector_median_fdr_12m": median_fdr,
             "source_url": rates_dict["fdr_12m"]["source_info"]["url"] if "fdr_12m" in rates_dict else None
         },
-        "checks": checks_list,
-        "data_date": str(newest_checked_on),
-        "release_id": "seed-2026-10-27-01",
+        "data_date": str(max((f.period_end for f in facts_rows), default=as_of)) if facts_rows else None,
+        "updated_at": str(newest_checked_on) if facts_rows or ratings_rows or events_rows else None,
+        "not_checked_bn": "বাংলাদেশ ব্যাংকের ব্যবস্থা ও জরিমানা এই ডেমোতে যাচাই করা হয়নি।",
+        "not_checked_en": "Bangladesh Bank actions and penalties were not checked in this demo.",
+        "release_id": release.release_id if release else None,
         "disclaimer_key": "VS-08"
     }

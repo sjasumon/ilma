@@ -1,7 +1,7 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-voice20';
+const SHELL = 'ilma-shell-voice28';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ['/', '/static/css/ilma.css?v=voice-complete-20261027-20', '/static/js/app.js?v=voice-complete-20261027-20', '/static/js/voice-recorder.js?v=voice-complete-20261027-20'];
+const ASSETS = ['/', '/static/css/ilma.css?v=voice-complete-20261027-28', '/static/js/app.js?v=voice-complete-20261027-28', '/static/js/bank-services-ui.js?v=voice-complete-20261027-28', '/static/js/voice-recorder.js?v=voice-complete-20261027-28'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -11,7 +11,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request, url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
-  const bank = /^\/v1\/institutions\/(?:index|[^/]+\/report-card)$/.test(url.pathname);
+  const bank = (url.pathname === '/v1/institutions' && url.searchParams.get('list') === 'demo') || /^\/v1\/institutions\/(?:index|[^/]+\/(?:report-card|figures|ratings|events|history|services))$/.test(url.pathname) || /^\/v1\/services\/(?:categories|compare|offers\/[^/]+)$/.test(url.pathname);
   const asset = url.pathname === '/' || url.pathname.startsWith('/static/');
   if (!bank && !asset && url.pathname !== '/v1/content/fixed') return;
   event.respondWith((async () => {

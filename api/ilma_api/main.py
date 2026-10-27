@@ -74,8 +74,12 @@ def health_check(db: Session = Depends(get_db)):
 @app.get("/v1/institutions")
 def search_institutions(
     q: Optional[str] = Query(None, description="Search term for bank name or alias"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    list_mode: Optional[str] = Query(None, alias='list')
 ):
+    if list_mode == 'demo':
+        from ilma_api.bank_services import demo_banks, bank_view
+        return [bank_view(db, bank) for bank in demo_banks(db)]
     if not q:
         insts = db.query(Institution).limit(5).all()
         return [
@@ -157,7 +161,8 @@ def get_report_card(id_or_slug: str, db: Session = Depends(get_db)):
         )
     return card
 
-@app.get("/v1/services/insurance-split")
+# Legacy pure helpers retained for regression fixtures; no public amount-taking
+# calculator routes. APP_SPEC_05 calculations run entirely on the device.
 def calculate_insurance(amount: float = Query(..., gt=0), type: Literal["bank", "nbfi"] = Query("bank")):
     if type == "bank":
         limit = 200000.0
@@ -183,7 +188,6 @@ def calculate_insurance(amount: float = Query(..., gt=0), type: Literal["bank", 
             "note": "Coverage starts July 1, 2028"
         }
 
-@app.get("/v1/services/calculate-return")
 def calculate_return(
     principal: float = Query(..., gt=0),
     rate: float = Query(..., gt=0, le=0.25),
@@ -215,18 +219,22 @@ def calculate_return(
 def get_banking_news(db: Session = Depends(get_db)):
     events = db.query(Event).order_by(Event.event_date.desc()).all()
     news_items = []
+    seen=set()
     for ev in events:
         src = ev.sources[0] if ev.sources else None
+        identity=(src.url if src else None,ev.title_en,str(ev.event_date))
+        if identity in seen:continue
+        seen.add(identity)
         news_items.append({
             "id": ev.event_id,
             "title_bn": ev.title_bn,
             "title_en": ev.title_en,
-            "summary_bn": f"বাংলাদেশ ব্যাংকের সাম্প্রতিক সিদ্ধান্ত ও সার্কুলার অনুযায়ী {ev.title_bn}।",
-            "summary_en": f"Under recent regulatory framework, {ev.title_en}.",
+            "summary_bn": "সরকারি সূত্রে প্রকাশিত।" if ev.official else "খবরে প্রকাশিত, নিশ্চিত নয়।",
+            "summary_en": "Published by an official source." if ev.official else "Reported in the news, not confirmed.",
             "official": ev.official,
             "status": ev.status,
             "date": str(ev.event_date),
-            "publisher": src.publisher if src else "বাংলাদেশ ব্যাংক",
+            "publisher": src.publisher if src else None,
             "source_url": src.url if src else None
         })
     return news_items
@@ -332,3 +340,7 @@ def service_worker():
 @app.get('/voice-test', include_in_schema=False)
 def voice_acceptance_page():
     return FileResponse(STATIC_DIR / 'voice-test.html', headers={'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex'})
+
+
+from ilma_api.bank_services import make_router
+app.include_router(make_router(get_db))

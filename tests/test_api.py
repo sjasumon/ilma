@@ -46,7 +46,8 @@ class TestAPI(unittest.TestCase):
         from ilma_api.main import get_report_card
         data = get_report_card("101", self.db)
         self.assertEqual(data["institution"]["name_en"], "Eastern Bank PLC")
-        self.assertEqual(len(data["checks"]), 7)
+        self.assertNotIn("checks", data)
+        self.assertLessEqual(len(data["reasons"]), 3)
 
     def test_services_endpoints(self):
         from ilma_api.main import calculate_insurance, calculate_return
@@ -64,10 +65,10 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(json.loads(response.body)["error"]["code"], "not_found")
 
-    def test_insurance_type_schema(self):
-        schema = app.openapi()["paths"]["/v1/services/insurance-split"]["get"]["parameters"]
-        type_schema = next(item["schema"] for item in schema if item["name"] == "type")
-        self.assertEqual(type_schema["enum"], ["bank", "nbfi"])
+    def test_calculators_do_not_expose_personal_amount_routes(self):
+        paths=app.openapi()['paths']
+        self.assertNotIn('/v1/services/insurance-split',paths)
+        self.assertNotIn('/v1/services/calculate-return',paths)
 
     def test_licence_only_has_no_status(self):
         from ilma_api.db import Institution

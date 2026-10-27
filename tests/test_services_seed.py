@@ -1,0 +1,142 @@
+import json
+import unittest
+from pathlib import Path
+from decimal import Decimal
+from sqlalchemy import create_engine, select, func
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
+from fastapi.testclient import TestClient
+from ilma_api.csv_loader import load
+from ilma_api.db import ServiceOffer, Fact, Event
+from ilma_api.export_seed import quote_numbers
+from ilma_api.main import app, get_db
+from ilma_api.voice_text import VoiceIntent, VoiceContext
+from ilma_api.bank_services import voice_service_result
+
+
+class TestServicesSeed(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.engine=create_engine('sqlite://',connect_args={'check_same_thread':False},poolclass=StaticPool)
+        cls.directory=Path(__file__).resolve().parents[1]/'seed'
+        cls.statuses=load(cls.directory,cls.engine)
+        def fixture():
+            with Session(cls.engine) as db:yield db
+        app.dependency_overrides[get_db]=fixture
+        cls.client=TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls):
+        app.dependency_overrides.clear();cls.client.close();cls.engine.dispose()
+
+    def test_470_sourced_offers_and_literal_numeric_evidence(self):
+        with Session(self.engine) as db:
+            rows=db.scalars(select(ServiceOffer)).all()
+            self.assertEqual(len(rows),470)
+            for row in rows:
+                self.assertTrue(row.source_url and row.page and row.quote)
+                if row.value_num is not None:self.assertIn(row.value_num,quote_numbers(row.quote))
+
+    def test_signature_exact_values_hidden_and_stale(self):
+        response=self.client.get('/v1/services/compare',params=dict(product_type='card',network='Visa',tier='Signature'))
+        self.assertEqual(response.status_code,200)
+        rows={row['slug']:row for row in response.json()['rows']}
+        self.assertEqual(len(rows),9)
+        self.assertEqual([rows[key]['offer']['value_num'] for key in ['nccbank','bankasia','mtb','dutchbangl']],[7000,7000,12000,20000])
+        self.assertTrue(rows['dutchbangl']['offer']['stale'])
+        self.assertEqual(rows['bracbank']['state'],'checking')
+        self.assertNotIn('offer',rows['bracbank'])
+        self.assertEqual(rows['primebank']['state'],'missing')
+        fresh=[r['offer']['value_num'] for r in rows.values() if r.get('offer') and not r['offer']['stale']]
+        self.assertEqual(max(fresh)-min(fresh),5000)
+
+    def test_fdr_twelve_months_is_like_for_like(self):
+        rows={r['slug']:r for r in self.client.get('/v1/services/compare?product_type=fdr&tenor_months=12').json()['rows']}
+        self.assertEqual(rows['citybank']['state'],'checking')
+        self.assertEqual(rows['dutchbangl']['state'],'not_published')
+        self.assertEqual(rows['ebl']['offer']['value_num'],6.5)
+        self.assertEqual(rows['ebl']['offer']['product'],'Fixed Deposit 12 Months')
+        self.assertTrue(all(row['offer']['tenor_months']==12 for row in rows.values() if row.get('offer')))
+        charges=self.client.get('/v1/services/compare?product_type=account_fee&attribute=maintenance_fee_half_yearly').json()['rows']
+        self.assertEqual(charges[0]['slug'],'bracbank')
+        self.assertIn('Free',charges[0]['offer']['quote'])
+
+    def test_hidden_offers_cannot_be_fetched_or_listed(self):
+        with Session(self.engine) as db:
+            hidden=db.scalars(select(ServiceOffer).where(ServiceOffer.hidden==True)).all()
+            ids={row.offer_id for row in hidden}
+            for row in hidden[:3]:self.assertEqual(self.client.get('/v1/services/offers/'+row.offer_id).status_code,404)
+            for bank in {row.institution_id for row in hidden}:
+                offers=self.client.get(f'/v1/institutions/{bank}/services').json()['offers']
+                self.assertFalse(ids & {row['offer_id'] for row in offers})
+
+    def test_calculator_amount_is_refused_by_server(self):
+        self.assertEqual(self.client.get('/v1/services/compare?product_type=fdr&tenor_months=12&amount=100000').status_code,422)
+        self.assertEqual(self.client.post('/v1/services/readout',json={'product_type':'fdr','amount':100000}).status_code,422)
+        self.assertEqual(self.client.get('/v1/services/compare?product_type=card').status_code,422)
+
+    def test_comparison_readout_uses_only_source_backed_rows(self):
+        from unittest.mock import patch, AsyncMock
+        with patch('ilma_api.voice_pipeline.speech',new=AsyncMock(return_value='data:audio/mpeg;base64,dGVzdA==')) as speak:
+            response=self.client.post('/v1/services/readout',json=dict(product_type='card',network='Visa',tier='Signature',language='en'))
+        self.assertEqual(response.status_code,200)
+        spoken=speak.await_args.args[0]
+        self.assertIn('5000',spoken)
+        self.assertIn('7000',spoken)
+        self.assertNotIn('20000',spoken)  # stale DBBL is not in the first three or savings line
+
+    def test_services_voice_navigates_to_signature_comparison(self):
+        with Session(self.engine) as db:
+            result=voice_service_result('সিগনেচার কার্ডের ফি',VoiceIntent(intent='rates',product='credit_card'),VoiceContext(tab='services'),db,'bn')
+        self.assertEqual(result['comparison']['network'],'Visa')
+        self.assertEqual(result['comparison']['tier'],'Signature')
+        self.assertTrue(result['sources'])
+        self.assertNotIn('10000',result['text'])
+        with Session(self.engine) as db:
+            sms=voice_service_result('SMS alert fees',VoiceIntent(intent='service_compare',product='account_fee',service_attribute='sms_alert_fee'),VoiceContext(tab='services'),db,'en')
+        self.assertEqual(sms['comparison']['product_type'],'account_fee')
+        self.assertEqual(sms['comparison']['attribute'],'sms_alert_fee')
+
+    def test_service_rates_intent_without_bank_still_opens_comparison(self):
+        import asyncio
+        from unittest.mock import patch, AsyncMock
+        from ilma_api.voice_pipeline import run_pipeline
+        from ilma_api.main import get_institution_index
+        async def check():
+            with Session(self.engine) as db:
+                with patch('ilma_api.voice_pipeline.understand',new=AsyncMock(return_value=VoiceIntent(intent='rates',product='credit_card',card_tier='signature'))):
+                    return ''.join([chunk async for chunk in run_pipeline(None,'সিগনেচার কার্ডের ফি','',VoiceContext(tab='services',speak=False),get_institution_index(db),db,mode='text')])
+        result=asyncio.run(check())
+        self.assertIn('"tier": "Signature"',result)
+        self.assertIn('"type": "service_answer"',result)
+        self.assertNotIn('"type": "clarify"',result)
+
+    def test_watch_persists_in_mysql_model_and_is_idempotent(self):
+        headers={'X-ILMA-Device':'test-anonymous-device-12345678'}
+        path='/v1/institutions/19/watch'
+        self.assertTrue(self.client.post(path,headers=headers).json()['watching'])
+        self.assertTrue(self.client.post(path,headers=headers).json()['watching'])
+        self.assertTrue(self.client.get(path,headers=headers).json()['watching'])
+        self.assertFalse(self.client.delete(path,headers=headers).json()['watching'])
+
+    def test_import_is_idempotent(self):
+        self.assertEqual(load(self.directory,self.engine),self.statuses)
+        with Session(self.engine) as db:self.assertEqual(db.scalar(select(func.count()).select_from(ServiceOffer)),470)
+
+    def test_duplicate_fact_rejects_whole_import(self):
+        import tempfile,shutil,csv
+        with tempfile.TemporaryDirectory() as temporary:
+            folder=Path(temporary)
+            for source in self.directory.glob('*.csv'):shutil.copy2(source,folder/source.name)
+            shutil.copy2(self.directory/'release.json',folder/'release.json')
+            with (folder/'fact.csv').open(encoding='utf-8',newline='') as source:
+                reader=csv.DictReader(source);rows=list(reader);columns=reader.fieldnames
+            with (folder/'fact.csv').open('a',encoding='utf-8',newline='') as output:csv.DictWriter(output,fieldnames=columns).writerow(rows[0])
+            with self.assertRaisesRegex(ValueError,'duplicate'):load(folder,self.engine)
+        with Session(self.engine) as db:self.assertEqual(db.scalar(select(func.count()).select_from(ServiceOffer)),470)
+
+    def test_import_cannot_target_an_unrelated_mysql_database(self):
+        from ilma_api.csv_loader import prepare_schema
+        unrelated=create_engine('mysql+pymysql://localhost/project_db')
+        with self.assertRaisesRegex(ValueError,'ilma database'):prepare_schema(unrelated)
+        unrelated.dispose()
