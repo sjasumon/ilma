@@ -143,6 +143,11 @@ Private recordings, database dumps, audio drafts and evaluation reports are
 excluded from Git. Schedule daily retention cleanup using the templates in
 `ops/`, after adjusting their installation path and service account.
 
+For development tests only, [audio diagnostics](docs/VOICE_DIAGNOSTICS.md) can
+pair original recordings and raw Meta transcripts in a separate MySQL table.
+This requires two explicit development switches and remains disabled on the
+live service. No diagnostic recordings or transcripts are pushed to GitHub.
+
 ## Acceptance status
 
 The latest recorded checks include 39 passing Python tests, five passing

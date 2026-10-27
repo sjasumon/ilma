@@ -2,9 +2,10 @@ import sys
 from datetime import datetime, date
 from sqlalchemy import (
     create_engine, Column, Integer, SmallInteger, String, Text, Boolean,
-    Date, DateTime, Numeric, Enum, ForeignKey, UniqueConstraint, JSON, BigInteger
+    Date, DateTime, Numeric, Enum, ForeignKey, UniqueConstraint, JSON, BigInteger, LargeBinary
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.dialects.mysql import MEDIUMBLOB
 from ilma_api.settings import DATABASE_URL
 
 Base = declarative_base()
@@ -181,6 +182,18 @@ class AppQuestionLog(Base):
     cost_micro_usd = Column(Integer, nullable=False, default=0)
     useful = Column(Boolean, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
+class VoiceDiagnostic(Base):
+    __tablename__ = "voice_diagnostic"
+    diagnostic_id = Column(String(32), primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    mime = Column(String(64), nullable=False)
+    language = Column(String(2), nullable=False)
+    audio = Column(LargeBinary().with_variant(MEDIUMBLOB(), 'mysql'), nullable=False)
+    meta_transcript = Column(Text, nullable=True)
+    expected_question = Column(Text, nullable=True)
+    events = Column(JSON, nullable=False)
 
 
 class AppContent(Base):

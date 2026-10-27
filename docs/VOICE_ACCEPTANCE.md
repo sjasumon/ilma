@@ -132,6 +132,14 @@ services answer, source links, language chip, stop/slow/mute, and typing fallbac
 
 ## Current evidence
 
+Optional development diagnostics now support paired original audio, raw ASR
+text, language and match/result/error events in MySQL. Both development mode
+and an explicit enable switch are required; production defaults do not capture.
+No live capture was enabled and no production diagnostic table was created.
+See [VOICE_DIAGNOSTICS.md](VOICE_DIAGNOSTICS.md) for isolated setup, intended
+question labels, private exports and retention behavior. Three regression tests
+cover production blocking, explicit opt-in and paired sample persistence.
+
 Unexpected-script diagnosis: `clean_transcript` rejects remaining Devanagari
 characters as required by §3.3. Previously this happened before the transcript
 event, incorrectly making a returned ASR transcript look absent. Rejected text

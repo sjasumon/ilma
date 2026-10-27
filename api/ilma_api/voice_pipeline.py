@@ -205,14 +205,16 @@ def consume_question(db, device_hash):
         raise VoiceError('daily_limit', 429, 'আজকের প্রশ্নের সীমা শেষ। ব্যাংকের অবস্থা, বীমা ও হার দেখা যাবে।', 'Daily question limit reached. Status, insurance and rate lookups remain available.')
 
 
-async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', device_hash=None):
+async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', device_hash=None, diagnostic=None):
     started, intent, institution, outcome = time.monotonic(), 'unclear', None, 'error'
     fact_ids = []
     try:
         if mode == 'voice':
             wav = await convert_audio(audio, mime)
             audio = None
-            try: text = await transcribe(wav, context.ui_lang, [])
+            try:
+                text = await transcribe(wav, context.ui_lang, [])
+                if diagnostic is not None: diagnostic['meta_transcript'] = text
             finally: del wav
         try:
             text = clean_transcript(text)

@@ -25,3 +25,7 @@ ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "")
 ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_v3")
 
 VOICE_LOG_SALT = os.getenv("VOICE_LOG_SALT") or __import__("secrets").token_hex(32)
+
+# Diagnostic recordings require BOTH switches; never enable on the live service.
+ILMA_ENV = os.getenv("ILMA_ENV", "production")
+VOICE_DIAGNOSTICS_ENABLED = os.getenv("VOICE_DIAGNOSTICS_ENABLED", "false").lower() == "true"

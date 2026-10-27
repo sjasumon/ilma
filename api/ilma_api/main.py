@@ -250,15 +250,20 @@ async def _voice_request(request, db, mode):
         bind = db.get_bind()
         async def stream_response():
             nonlocal audio
+            from ilma_api.voice_diagnostics import start_capture, capture_event, save_capture
+            diagnostic = start_capture(audio, mime, context.ui_lang) if mode == 'voice' else None
             # Own the session through streaming, independent of FastAPI's
             # dependency cleanup timing. Drop the outer raw-audio reference.
             with Session(bind=bind) as stream_db:
-                pipeline = run_pipeline(audio, text, mime, context, lambda: get_institution_index(stream_db), stream_db, mode, device_hash)
+                pipeline = run_pipeline(audio, text, mime, context, lambda: get_institution_index(stream_db), stream_db, mode, device_hash, diagnostic=diagnostic)
                 audio = None
                 try:
-                    async for chunk in pipeline: yield chunk
+                    async for chunk in pipeline:
+                        if diagnostic is not None: capture_event(diagnostic, chunk)
+                        yield chunk
                 finally:
                     await pipeline.aclose()
+                    if diagnostic is not None: save_capture(diagnostic, bind)
         return StreamingResponse(stream_response(),
             media_type="text/event-stream", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
     except SQLAlchemyError:
