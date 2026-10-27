@@ -207,6 +207,7 @@ class ServiceOffer(Base):
     page = Column(Integer, nullable=False)
     quote = Column(Text, nullable=False)
     column_header = Column(Text, nullable=False)
+    variant = Column(String(16), nullable=False, default='main')
     hidden = Column(Boolean, nullable=False, default=False)
     hidden_reason = Column(Text, nullable=False, default='')
     checked_by = Column(String(64), nullable=False)

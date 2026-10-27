@@ -93,3 +93,7 @@ incident filters/source sheets, missing Islami NPL and phone/rotation/desktop
 layouts with no runtime errors. Live HTML serves asset version 33 and retains
 strict CSP, HSTS, nosniff and no-transform. These checks do not replace human
 source review, physical screen-reader testing or real microphone acceptance.
+
+The later [v5.4 services refresh](BANK_SERVICES_V54.md) updates the service
+attribute count to 606, adds retail-card variants and narrows source holds.
+The 470-attribute observations above describe the earlier releases.

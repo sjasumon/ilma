@@ -35,7 +35,7 @@ scrape-report numbers are imported.
 - 9 institutions, 56 exported aliases (voice migration adds required aliases).
 - 43 financial facts, including available 2024 history; 9 entity ratings.
 - 58 sources (including the official legal rule) and 5 linked news headlines.
-- 470 service attributes: 383 visible and 87 withheld under the current policy.
+- 606 service attributes from v5.4: 581 visible and 25 withheld under the current policy.
 - Baseline: 8 `strong`, SBAC `no_data`, using the existing plan-A rules.
 
 `product_type_map.csv` contains ordered regex mappings. Ambiguous products such
@@ -43,7 +43,9 @@ as “24 & 36 Months” remain without a single tenor and cannot enter a 12/24/3
 comparison. Network, tier, tenor, basis and attribute are filtered separately.
 The original value and quote are always retained. Numeric values absent from
 the quote are not used for numeric calculations. A printed “Free” amount is
-shown as text and sorts as free without inventing a literal numeric quote; derived MTB endpoints and unreadable quotes remain withheld. See
+normalized to a semantic zero while retaining the printed word and quote;
+legacy zero values without a literal quote remain nonnumeric. Derived MTB
+endpoints and unreadable quotes remain withheld. See
 `service_validation.json` and [TO_CHECK.md](TO_CHECK.md).
 
 ## Unknown metadata and review
@@ -53,7 +55,7 @@ converter preserves publication dates as unknown instead of using fetch dates.
 Financial pages are preserved; web rating sources without page numbers show an
 unknown/web page. Explicit service `doc_date` values remain beside the numbers.
 The export date comes from the supplied service fetch metadata: 2026-10-27.
-Imported rows use `agent-v4` or `agent-v5`; none is represented as personally
+Imported rows use `agent-v4`, `agent-v5.4` or `agent-v6.2`; none is represented as personally
 checked by Sumon. The checked badge appears only for a `Sumon` review. A review
 survives a reimport only if the material content is unchanged.
 
@@ -64,3 +66,5 @@ that the original collector or Sumon had checked it. Release suffix: `-law75`.
 The approved v6.2 supplement is now available in [incidents/](incidents/README.md).
 It adds two sourced High cards and qualified incident history. Search-window
 coverage remains unknown; no complete-history claim is made.
+
+Current service import details and acceptance: [v5.4](../docs/BANK_SERVICES_V54.md).

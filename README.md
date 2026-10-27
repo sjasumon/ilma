@@ -31,7 +31,7 @@ Built for the **Meta hackathon, Indie track, 27 October–4 November 2026**.
 
 ## Demo status
 
-- Working: eleven-bank reports, sourced financial details, service comparisons,
+- Working: eleven-bank reports, sourced financial details, service comparisons with retail card variants,
   BN/EN transcription and questions, visible transcripts, spoken answers and
   typed recovery. Unknown or ambiguous input never defaults to EBL.
 - Working: Home, Bank Services, Banks and News; EN/BN settings, optional left
@@ -154,8 +154,10 @@ exports, backups or generated review drafts are committed.
 
 ## Data provenance / prior work
 
-Sumon collected the source data **before the event** with a separate collection
-tool that is not part of this repository. Only normalized seed CSVs in `seed/`
+Sumon performed the initial source collection **before the event** with a
+separate tool that is not part of this repository. Later supplied v5.4/v6.2
+exports are documented as data updates; import dates do not establish when the
+collection tool was built. Only normalized seed CSVs in `seed/`
 are used by the app; raw source exports and collection metadata stay outside the
 current public tree. The small handwritten test fixtures are explicitly synthetic.
 An earlier commit included public source-export fixtures; their removal is a new
@@ -166,7 +168,7 @@ this event, with the work recorded in the repository's event-dated commits. The
 [FRD](docs/FRD.md) was written **before the event** and is retained as the design
 document. Planning documents are not claims of completed implementation.
 
-Imported financial/service rows remain labelled `agent-v4`/`agent-v5`; manual
+Imported financial/service rows remain labelled `agent-v4`/`agent-v5.4`/`agent-v6.2`; manual
 checks are pending in [TO_CHECK.md](seed/TO_CHECK.md). They are not described as
 personally verified by Sumon. Only his completed reviews receive a checked badge.
 Full newspaper articles are not published; single-source headlines are not
@@ -180,3 +182,5 @@ Licenses in `static/fonts/`, not newly authored font designs.
 [FRD](docs/FRD.md) · [Build roadmap](docs/BUILD_PLAN.md) ·
 [Specifications](docs/specs/) · [Design tokens](docs/tokens.css) ·
 [Home reference](design/S01-Home.html) · [Voice acceptance](docs/VOICE_ACCEPTANCE.md)
+
+Bank services v5.4 import and review notes: [implementation](docs/BANK_SERVICES_V54.md).

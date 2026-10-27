@@ -13,15 +13,15 @@ Nothing on this list has been marked as a completed personal review.
 3. **MTB group accounts:** the supplied figures are consolidated; health rows
    explicitly show “গ্রুপ হিসাব / Group accounts”. Others retain their supplied
    solo/unknown basis. Check the nine Bangla bank-name spellings too.
-4. **Three required service exclusions:** BRAC cards, Prime cards, City FDR.
-   Do not remove `services_hidden.csv` entries without the specified review and
-   Sumon's OK. The app exposes only “data being checked” placeholders.
-5. **Additional source issues:** 13 rows have `quote_unreadable`; six MTB loan
-   endpoints (services 2158–2163) are derived from a printed mid-rate ±1%, not
-   literally quoted endpoints. All remain loaded but withheld. Service 2024
-   gives zero with a “Free” quote and is retained as text, not used as a numeric
-   calculation operand. The split comma in service 2190 (“6 ,000”) is normalized
-   for evidence checking without changing the original quote.
+4. **Current service holds:** Prime Signature ZERO and City FDR remain hidden.
+   The supplied v5.4 specification resolves the previous blanket BRAC/Prime
+   card holds through explicit headers and variants; it is not a personal
+   source review. Do not remove the remaining hold rules without Sumon's OK.
+5. **Additional source issues:** 13 unreadable quotes and six derived MTB loan
+   endpoints remain withheld. Printed Free values map to semantic zero while
+   retaining the original word and quote. Legacy numeric zero without literal
+   evidence remains nonnumeric. Check card column mapping, variants and dates
+   against the original bank schedules; see [v5.4 notes](../docs/BANK_SERVICES_V54.md).
 6. **Unknown publication dates/pages:** `documents.csv` does not provide
    publication dates. Entity rating rows have blank page numbers. These are
    shown as unknown; fetch timestamps have not been relabelled as publication.
@@ -29,7 +29,7 @@ Nothing on this list has been marked as a completed personal review.
    12 and 21–23, verified during the website review. The bank rule is sourced;
    retain human wording review, exclusions and the qualified 10+7-day stages.
    Do not describe the payout as an unconditional 17-day guarantee.
-8. **History/news:** v6 incidents and its search window have not been supplied.
-   The history page says it was not checked. Newspaper titles remain in their
-   original language and are labelled reported/unconfirmed; no article bodies
-   or invented translations are shown.
+8. **History/news:** the owner supplied v6.2, now imported into dedicated
+   incident/source/history tables. Complete search-window coverage is unknown.
+   Review the [exclusions and legal-label corrections](incidents/README.md);
+   no report is promoted to an official finding or a current status trigger.

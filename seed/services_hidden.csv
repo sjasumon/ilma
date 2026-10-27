@@ -1,4 +1,3 @@
 bank,category,product_type,tier,reason
-BRACBANK,card,*,*,column mapping not proven (v5.2 S1)
-PRIMEBANK,card,*,*,two Free columns unnamed (v5.2 S2)
+PRIMEBANK,card,card,Signature,Signature ZERO free conditions await manual review (v5.3 N1)
 CITYBANK,deposit,fdr,*,12M 7.00 vs 5.75 waiting for Sumon's check (v5.2 S4)

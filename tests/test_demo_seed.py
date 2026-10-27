@@ -16,7 +16,10 @@ class TestDemoSeed(unittest.TestCase):
         with tempfile.TemporaryDirectory() as output:
             codes={'EBL','BRACBANK','CITYBANK'}
             bank_data=convert(source,output,services=False,bank_codes=codes)
-            service_data=convert(source,output,services=True,bank_codes=codes)
+            service_data=convert(source,output,services=True,bank_codes=codes,services_version='v9.9')
+            manifest=__import__('json').loads((Path(output)/'release.json').read_text())
+            self.assertEqual(manifest['services_version'],'v9.9')
+            self.assertEqual(service_data['service_offer'][0]['checked_by'],'agent-v9.9')
             self.assertEqual(len(bank_data['institution']),3)
             self.assertEqual(len(bank_data['fact']),9)
             self.assertEqual(len(bank_data['event']),0)

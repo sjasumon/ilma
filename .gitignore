@@ -29,3 +29,5 @@ design/search.png
 
 # Approved incident input archives remain private; publish normalized data only.
 ilma_incidents_input_*.zip
+ilma_seed_input_*.zip
+/APP_SPEC_05_bank_services.md

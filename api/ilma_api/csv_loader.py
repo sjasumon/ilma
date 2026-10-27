@@ -2,6 +2,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 import json
+import re
 from pathlib import Path
 from sqlalchemy import Boolean, Date, DateTime, Integer, Numeric, inspect, text, delete
 from sqlalchemy.orm import Session
@@ -24,6 +25,8 @@ def prepare_schema(engine):
                 connection.execute(text("ALTER TABLE fact ADD COLUMN basis VARCHAR(32) NOT NULL DEFAULT 'unknown'"))
             if not next(c for c in schema.get_columns('source') if c['name'] == 'published_at')['nullable']:
                 connection.execute(text('ALTER TABLE source MODIFY published_at DATE NULL'))
+            if 'variant' not in {c['name'] for c in schema.get_columns('service_offer')}:
+                connection.execute(text("ALTER TABLE service_offer ADD COLUMN variant VARCHAR(16) NOT NULL DEFAULT 'main'"))
 
 
 def typed(model, row):
@@ -75,7 +78,9 @@ def load(directory, engine):
             if name == 'service_offer':
                 for field in ('source_url','page','quote','doc_date'):
                     if not row.get(field): fail('missing ' + field)
-                if row.get('value_num') is not None and row['value_num'] not in quote_numbers(row['quote']): fail('number absent from quote')
+                if row.get('value_num') is not None and row['value_num'] not in quote_numbers(row['quote']) and not (
+                    row['value_num']==0 and row['value_text'].casefold()=='free' and re.search(r'\bfree\b',row['quote'],re.I)): fail('number absent from quote')
+                if row.get('variant','main') not in {'main','variant','excluded'}: fail('invalid card variant')
                 if row.get('value_num') is not None and row['value_num'] < 0: fail('negative service value')
     if errors: raise ValueError('\n'.join(errors))
     prepare_schema(engine)

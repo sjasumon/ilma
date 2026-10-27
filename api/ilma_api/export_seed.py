@@ -37,6 +37,26 @@ def tenor(row):
     return int(match[1]) * (12 if match and match[2].lower().startswith('year') else 1) if match else None
 
 
+def card_variants(rows):
+    """Select a tier's printed retail header, then earliest source column."""
+    def identity(row):
+        return (row['bank_id'],row['network'],row['tier'],row['basis'],row['product'],row['column_header'])
+    excluded={identity(row) for row in rows if row['category']=='card' and re.search(
+        r'\b(corporate|defen[cs]e|army|payroll|rfcd|erq|fx|co.branded)\b|US\$',
+        row['product']+' '+row['column_header']+' '+row['value'],re.I)}
+    groups={}
+    for row in rows:
+        if row['category']!='card' or identity(row) in excluded:continue
+        group=identity(row)[:4];card=identity(row)[4:]
+        english=' '.join(re.findall(r"[A-Za-z]+",row['column_header'])).casefold()
+        rank=(english!=row['tier'].casefold(),int(row.get('col_num') or 100000),card)
+        current=groups.setdefault(group,{})
+        current[card]=min(current.get(card,rank),rank)
+    main={group:min(cards,key=cards.get) for group,cards in groups.items()}
+    return {row['id']:('excluded' if identity(row) in excluded else 'main' if row['category']!='card' or
+        identity(row)[4:]==main.get(identity(row)[:4]) else 'variant') for row in rows}
+
+
 def bank_rows(directory, bank_codes=None):
     names = {row['code']: row for row in read(CONFIG / 'bank_names.csv')}
     if bank_codes is not None:
@@ -54,8 +74,12 @@ def bank_rows(directory, bank_codes=None):
     return result
 
 
-def convert(directory, output, services=False, *, bank_codes=None):
+def convert(directory, output, services=False, *, bank_codes=None, services_version=None):
     directory, output = Path(directory), Path(output)
+    if services:
+        version_match=re.search(r'v\d+\.\d+',directory.name)
+        services_version=services_version or (version_match[0] if version_match else 'v5.4')
+        if not re.fullmatch(r'v\d+\.\d+',services_version):raise ValueError('Invalid services release version.')
     output.mkdir(parents=True, exist_ok=True)
     # Tests explicitly select three banks; public CLI/runtime defaults stay nine.
     banks = bank_rows(directory, bank_codes)
@@ -65,7 +89,9 @@ def convert(directory, output, services=False, *, bank_codes=None):
     if services:
         hidden_rules = read(CONFIG / 'services_hidden.csv')
         offers, issues = [], []
-        for row in read(directory / 'services.csv'):
+        service_rows=read(directory / 'services.csv')
+        variants=card_variants(service_rows)
+        for row in service_rows:
             if row['bank_id'] not in by_id: continue
             for field in ['source_url', 'page', 'quote', 'doc_date', 'value']:
                 if not row[field]: raise ValueError(f"Service {row['id']}: missing {field}")
@@ -73,9 +99,12 @@ def convert(directory, output, services=False, *, bank_codes=None):
             reason = next((rule['reason'] for rule in hidden_rules if rule['bank'] == row['bank']
                 and rule['category'] == row['category'] and rule['product_type'] in ('*', product_type)
                 and rule['tier'] in ('*', row['tier'])), '')
-            try: number = Decimal(row['value'])
+            try: number = Decimal(row['value'].replace(',', ''))
             except InvalidOperation: number = None
-            if number is not None and number not in quote_numbers(row['quote']):
+            free=row['value'].casefold()=='free' and re.search(r'\bfree\b',row['quote'],re.I)
+            if free:number=Decimal(0)
+            if number is not None and not number.is_finite():raise ValueError('Non-finite service number')
+            if number is not None and number not in quote_numbers(row['quote']) and not free:
                 number = None
                 # Preserve the original value but never use unsupported endpoints
                 # in arithmetic/sorting or show unreadable/unproven numeric rows.
@@ -91,8 +120,8 @@ def convert(directory, output, services=False, *, bank_codes=None):
                 attribute=row['attribute'], value_num=number, value_text=row['value'], unit=row['unit'],
                 condition=row['condition'], basis=row['basis'], doc_date=row['doc_date'], stale=stale,
                 source_url=row['source_url'], page=int(row['page']), quote=row['quote'],
-                column_header=row['column_header'], hidden=bool(reason), hidden_reason=reason,
-                checked_by='agent-v5', checked_on=exported))
+                column_header=row['column_header'], variant=variants[row['id']], hidden=bool(reason), hidden_reason=reason,
+                checked_by='agent-'+services_version, checked_on=exported))
         result['service_offer'] = offers
         (output / 'service_validation.json').write_text(json.dumps(issues, indent=2), encoding='utf-8')
     else:
@@ -144,6 +173,11 @@ def convert(directory, output, services=False, *, bank_codes=None):
             if rows:
                 writer = csv.DictWriter(destination, fieldnames=list(rows[0]))
                 writer.writeheader(); writer.writerows(rows)
-    (output / 'release.json').write_text(json.dumps({'release_id': 'export-v5.2-' + exported, 'export_date': exported}), encoding='utf-8')
+    if services:
+        previous=json.loads((output/'release.json').read_text()) if (output/'release.json').exists() else {}
+        manifest={**previous,'release_id':'services-'+services_version+'-'+exported,'export_date':exported,
+            'services_version':services_version,'financial_version':previous.get('financial_version','v5.2')}
+    else:manifest={'release_id':'export-v5.2-'+exported,'export_date':exported}
+    (output / 'release.json').write_text(json.dumps(manifest), encoding='utf-8')
     print('Converted:', {name: len(rows) for name, rows in result.items()})
     return result

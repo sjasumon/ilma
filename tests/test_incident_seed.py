@@ -34,7 +34,7 @@ def test_sourced_high_cards_and_service_baseline(engine):
     with Session(engine) as db:
         assert len(demo_banks(db))==9
         assert len(demo_banks(db,True))==11
-        assert db.query(ServiceOffer).count()==470
+        assert db.query(ServiceOffer).count()==606
         nbl=get_institution_report_card(db,36)
         islami=get_institution_report_card(db,26)
         assert nbl['status']['code']==islami['status']['code']=='high'

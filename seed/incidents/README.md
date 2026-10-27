@@ -55,5 +55,5 @@ The supplemental loader validates references, domains, source counts, dates,
 quoted figures and unchanged original statuses before committing. It only
 accepts MySQL database `ilma` (SQLite is used in isolated tests). Reimport is
 idempotent and preserves unchanged manual reviews. Service comparisons still
-cover the original nine banks and 470 service attributes; no service terms are
+cover the original nine banks (the later v5.4 refresh has 606 service attributes); no service terms are
 invented for the two new banks.

@@ -1,6 +1,6 @@
 # ILMA app spec 05: Bank services tab
 
-For Sumon's build agent. Written 27 Oct 2026. Read it together with APP_SPEC_01 (database), 02 (voice), 03 (Bank tab), 04 (Meta models), and the design build checklist plus `tokens.css`. If they disagree, this spec wins for the Bank services tab.
+For ILMA implementation. Written 27 Oct 2026. Read it together with APP_SPEC_01 (database), 02 (voice), 03 (Bank tab), 04 (Meta models), and the design build checklist plus `tokens.css`. If they disagree, this spec wins for the Bank services tab.
 
 ## 0. What the tab is
 
@@ -19,7 +19,7 @@ It has four screens:
 
 ## 1. Data: from `services.csv` into the seed tables
 
-**Input:** `services.csv` from the latest export zip (v5.2 now; v5.3 later). Write `seed/convert_services.py`. It reads the CSV and writes `seed/service_offer.csv`, which the APP_SPEC_01 seed loader loads. Never type a number into code. When a new export arrives, re-run the converter and the loader, and nothing else changes.
+**Input:** `services.csv` and `documents.csv` from the latest export zip (v5.4 current). The raw export stays **outside the repo**. The converter reads its folder from env `EXPORT_DIR` (add the name to `.env.example`). Only the cleaned `seed/*.csv` files are committed. Write `seed/convert_services.py`. It reads the CSV and writes `seed/service_offer.csv`, which the APP_SPEC_01 seed loader loads. Never type a number into code. When a new export arrives, re-run the converter and the loader, and nothing else changes.
 
 **New seed table `service_offer`** (SQLAlchemy model, like the others in spec 01):
 
@@ -42,12 +42,21 @@ It has four screens:
 | `stale` | `condition` contains "stale", or `doc_date` older than 12 months | |
 | `source_url`, `page`, `quote`, `column_header` | same | For the Source sheet |
 | `hidden` | from `seed/services_hidden.csv` | See below |
-| `checked_by`, `checked_on` | `agent-v5` and the export date | Sumon changes to his name after a hand-check; then the "যাচাই করা হয়েছে" (checked) mark shows |
+| `checked_by`, `checked_on` | `agent-v5.4` and the export date | Sumon changes to his name after a hand-check; then the "যাচাই করা হয়েছে" (checked) mark shows |
 
-**Hide list, `seed/services_hidden.csv`** (bank, category, product_type, tier, reason). Start with:
-- BRACBANK, card, *, *: "column mapping not proven (v5.2 S1)"
-- PRIMEBANK, card, *, *: "two 'Free' columns unnamed (v5.2 S2)"
+**Hide list, `seed/services_hidden.csv`** (bank, category, product_type, tier, reason). Current review holds:
 - CITYBANK, deposit, fdr, *: "12M 7.00 vs 5.75, waiting for Sumon's check (v5.2 S4)"
+- PRIMEBANK, card, card, Signature: "Signature ZERO free: conditions not yet checked (v5.3 N1)". Remove this line once Sumon has checked.
+
+**Several cards in one tier** (v5.3 N2; BRAC has Platinum, Platinum Flexi, TARA Platinum and others). Add `variant` to `service_offer`:
+- `main`: `column_header` equals the tier name (the English part, if the header is bilingual, e.g. "ভিসা প্লাটিনাম Platinum"), or is the only retail card for that bank + network + tier. If no header matches exactly (EBL's Signature tier has "Signature Light / Women Signature" and "Signature Exclusive"), `main` is the first of them in the bank's own header order (`col_num`), which is the entry-level card.
+- `variant`: any other retail card in that tier (e.g. "Platinum Flexi", "Gold Flexi", "TARA World", "Women Platinum").
+- `excluded`: corporate cards ("Corporate" in the name), cards limited to one group ("Defense", "Army", "Payroll" in the name), and foreign-currency cards (value in US$ or "RFCD", "ERQ" or "FX" in the name). These are kept and shown in S3, but never in a retail comparison.
+- A value of "নোট ১৭ অনুযায়ী" (as per note 17) or similar is text, not a number: show it as printed in S3 only, never in a comparison.
+
+S2 shows the `main` row for each bank. Under it, a small "আরও {n}টি সংস্করণ" (n more versions) opens the variants, each with its printed name and fee. The savings line uses `main` rows only.
+
+**Use the printed card name.** Show `column_header` as the card's name (e.g. "Signature ‘ZERO’"), not just the tier. The network is inferred by the agent, so use it only as a filter.
 
 A hidden row is loaded but never shown. In its place the bank shows "তথ্য যাচাই হচ্ছে" (data being checked). When Sumon clears an item, delete the line and re-run the loader.
 
@@ -74,7 +83,7 @@ A hidden row is loaded but never shown. In its place the bank shows "তথ্�
 **Top:** selector chips for the choice:
 - Deposits: product (FDR · DPS · সঞ্চয়ী হিসাব (savings)), then tenor (3 · 6 · 12 · 24 · 36 months)
 - Cards: network (Visa · Mastercard · Amex), then tier (Classic · Gold · Platinum · Signature · World · Infinite, showing only tiers that exist in the data)
-- Loans: type, plus an optional amount and term for the installment calculator
+- Loans: type, plus fixed amount examples and term for the installment calculator
 - Account charges: item
 
 **List:** one row per bank (all 9, always). Each row shows:
@@ -94,13 +103,13 @@ A hidden row is loaded but never shown. In its place the bank shows "তথ্�
 
 **Savings line** (the money-saving story, computed by code from the two rows, never by a model):
 - Cards: "{bank A}-এর ফি {bank B}-এর চেয়ে বছরে {diff} টাকা কম" (Bank A's fee is Tk {diff} a year less than Bank B's). Compare the cheapest and most expensive shown rows that are not stale. If renewal fees exist, use them for year 2 onwards, and show "৩ বছরে মোট" (total over 3 years) as year-1 fee + 2 × renewal fee.
-- Deposits: an amount box (default ১,০০,০০০). Show "{tenor} মাসে সুদ" (interest over {tenor} months) per bank = amount × rate × months / 12, simple interest, before tax. Label it "আনুমানিক, কর কাটার আগে" (estimate, before tax).
-- Loans: amount and term boxes. Show the monthly installment (standard EMI formula) at the declared rate, labelled "আনুমানিক কিস্তি" (estimated installment).
+- Deposits: a fixed-example selector (default ১,০০,০০০). Show "{tenor} মাসে সুদ" (interest over {tenor} months) per bank = amount × rate × months / 12, simple interest, before tax. Label it "আনুমানিক, কর কাটার আগে" (estimate, before tax).
+- Loans: fixed amount examples and a term box. Show the monthly installment (standard EMI formula) at the declared rate, labelled "আনুমানিক কিস্তি" (estimated installment).
 - All calculations run on the phone. Amounts are never sent to the server and never stored (same rule as the insurance split calculator).
 
 **Insurance line** under deposit lists: "প্রতি ব্যাংকে জমাকারী প্রতি ২ লাখ টাকা পর্যন্ত বিমা সুরক্ষিত" (insured up to Tk 2 lakh per depositor per bank), from the `insurance_rule` table with its source.
 
-**Islamic banks:** label rows with `basis = islamic` "মুনাফার হার (আনুমানিক)" (profit rate, provisional) instead of "সুদের হার" (interest rate). Keep them in the same list but with that label.
+**Islamic banks:** label rows with `basis = islamic` "মুনাফার হার (আনুমানিক)" (profit rate, provisional) instead of "সুদের হার" (interest rate). Use the same comparison screen with that label, under a separate Islamic basis filter; never mix bases.
 
 ## 4. S3 Offer detail
 
@@ -146,9 +155,9 @@ The server never takes an amount. All calculators run in the app.
 ## 8. Tests
 
 `tests/test_services_seed.py`:
-1. The converter run on the v5.2 `services.csv` loads 470 rows, all with source_url, page and quote.
+1. The converter run on the v5.4 `services.csv` loads 606 rows, all with source_url, page and quote.
 2. Every `value_num` appears in its `quote` (same as the agent's check, repeated on our side).
-3. The compare query for Visa Signature annual_fee returns NCC 7,000, Bank Asia 7,000, MTB 12,000 and DBBL 20,000 (stale), with BRAC hidden. Prime has no Signature row.
+3. The compare query for Visa Signature annual_fee returns NCC 7,000, Bank Asia 7,000, EBL 10,000 ("Signature Light / Women Signature" as main, "Signature Exclusive" 12,000 as variant), BRAC 10,000, MTB 12,000 and DBBL 20,000 (stale), with Prime "Signature ‘ZERO’" hidden until Sumon clears it (then Free = 0). The query for Visa Platinum returns BRAC's main row 5,000, with 2 retail variants (Platinum Flexi 3,000, TARA Platinum 2,500); Corporate, RFCD and ERQ are excluded.
 4. The compare query for FDR 12 months returns City as hidden, DBBL as "প্রকাশিত নয়", and EBL plain FD 6.50.
 5. A hidden row never appears in any API response.
 6. Stale rows are shown in the list but left out of the savings line. So the Visa Signature savings line compares NCC/Bank Asia (7,000) with MTB (12,000): Tk 5,000 a year. DBBL (20,000, stale) is not used.
@@ -163,5 +172,5 @@ The server never takes an amount. All calculators run in the app.
 
 ## 10. When later data arrives
 
-- **v5.3 services export:** re-run `convert_services.py` and the loader. Remove items from `services_hidden.csv` only after manual review and Sumon's OK.
-- **v6 incidents export:** loads into `event`/`event_source` for the Bank tab's History (spec 03, B3-History). Bank services is not affected.
+- **Later services export:** re-run `convert_services.py` and the loader. Remove items from `services_hidden.csv` only after manual review and Sumon's approval.
+- **v6 incidents export:** loads into dedicated incident/source/history tables for the Bank tab's History (spec 03, B3-History). Bank services is not affected.

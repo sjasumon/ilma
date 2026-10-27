@@ -35,8 +35,8 @@ def offer_view(row, today=None):
         if column.name not in {'hidden','hidden_reason','checked_by'}},
         'value_num':float(row.value_num) if row.value_num is not None else None,
         'stale':row.stale or (today-row.doc_date).days>365,
-        'checked':row.checked_by.casefold()=='sumon', 'source_title':row.product,
-        'group_key':f'{row.institution_id}:{row.product}:{row.network or ""}:{row.tier or ""}:{row.tenor_months or ""}:{row.basis}'}
+        'checked':row.checked_by.casefold()=='sumon', 'source_title':row.column_header if row.product_type=='card' and row.column_header else row.product,
+        'group_key':f'{row.institution_id}:{row.product}:{row.column_header if row.product_type=="card" else ""}:{row.network or ""}:{row.tier or ""}:{row.tenor_months or ""}:{row.basis}'}
 
 
 def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
@@ -53,7 +53,8 @@ def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
         candidates=[r for r in all_rows if r.institution_id==bank.id and r.attribute==primary]
         if not candidates and product_type.endswith('_loan'):
             candidates=[r for r in all_rows if r.institution_id==bank.id and r.attribute=='interest_rate']
-        visible=[r for r in candidates if not r.hidden]
+        visible=[r for r in candidates if not r.hidden and (product_type!='card' or
+            r.variant=='main' and r.value_num is not None and (primary not in {'annual_fee','renewal_fee'} or r.unit=='bdt'))]
         item=bank_view(db,bank)
         if visible:
             # Match a plain/general product before premium/targeted variants.
@@ -64,15 +65,17 @@ def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
                 return float('inf')
             visible.sort(key=lambda r:(any(word in r.product.lower() for word in ('extra','plus','senior','women','million','kotipoti')),-r.doc_date.toordinal(),r.product,published_cost(r),r.condition,r.offer_id))
             selected=visible[0]
-            item.update(state='published',offer=offer_view(selected),alternatives=[offer_view(r) for r in visible[1:]])
+            variants=[r for r in candidates if not r.hidden and r.variant=='variant' and r.value_num is not None and r.unit==selected.unit] if product_type=='card' else visible[1:]
+            item.update(state='published',offer=offer_view(selected),alternatives=[offer_view(r) for r in variants])
             group=[r for r in all_rows if not r.hidden and r.institution_id==bank.id and r.product==selected.product
-                   and r.network==selected.network and r.tier==selected.tier and r.tenor_months==selected.tenor_months]
+                   and r.network==selected.network and r.tier==selected.tier and r.tenor_months==selected.tenor_months
+                   and (product_type!='card' or r.column_header==selected.column_header)]
             renewal=next((r for r in group if r.attribute=='renewal_fee'),None)
             high=next((r for r in group if r.attribute=='rate_max'),None)
             item['renewal_offer']=offer_view(renewal) if renewal else None
             item['range_max']=offer_view(high) if high else None
         else:
-            item['state']='checking' if candidates else 'not_published' if bank.slug=='dutchbangl' and product_type in {'fdr','dps','savings'} else 'missing'
+            item['state']='checking' if any(r.hidden for r in candidates) else 'not_published' if bank.slug=='dutchbangl' and product_type in {'fdr','dps','savings'} else 'missing'
         rows.append(item)
     descending=product_type in {'fdr','dps','savings'}
     def sorting_value(row):
@@ -151,7 +154,7 @@ def make_router(get_db):
 
     @router.get('/v1/services/categories')
     def categories(db:Session=Depends(get_db)):
-        rows=db.query(ServiceOffer).filter_by(hidden=False).all()
+        rows=db.query(ServiceOffer).filter_by(hidden=False).filter(ServiceOffer.variant!='excluded').all()
         return [dict(category=category,product_types=sorted({r.product_type for r in rows if r.category==category}),
             tenors=sorted({r.tenor_months for r in rows if r.category==category and r.tenor_months}),
             networks=sorted({r.network for r in rows if r.category==category and r.network}),
@@ -180,7 +183,9 @@ def make_router(get_db):
         row=db.get(ServiceOffer,offer_id)
         if not row or row.hidden:raise HTTPException(404,'Offer not available')
         group=db.query(ServiceOffer).filter_by(institution_id=row.institution_id,product=row.product,network=row.network,
-                    tier=row.tier,tenor_months=row.tenor_months,basis=row.basis,hidden=False).all()
+                    tier=row.tier,tenor_months=row.tenor_months,basis=row.basis,hidden=False)
+        if row.product_type=='card':group=group.filter_by(column_header=row.column_header)
+        group=group.all()
         return dict(institution=bank_view(db,row.institution),product=row.product,offers=[offer_view(item) for item in group])
 
     from pydantic import BaseModel, ConfigDict
