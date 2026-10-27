@@ -14,8 +14,9 @@ from ilma_api.report_card import get_institution_report_card
 DEMO_CODES = {row['code'].lower() for row in csv.DictReader((Path(__file__).resolve().parents[2]/'seed/bank_names.csv').open(encoding='utf-8'))}
 
 
-def demo_banks(db):
-    return db.query(Institution).filter(Institution.slug.in_(DEMO_CODES)).all()
+def demo_banks(db,include_incident_banks=False):
+    codes=DEMO_CODES|({'nbl','islamibank'} if include_incident_banks else set())
+    return db.query(Institution).filter(Institution.slug.in_(codes)).all()
 
 
 def bank_view(db, bank):
@@ -145,8 +146,8 @@ def make_router(get_db):
     @router.get('/v1/institutions/{id}/history')
     def history(id:int,db:Session=Depends(get_db)):
         institution(db,id)
-        return dict(available=False,window=None,items=[],message_bn='এই রপ্তানিতে ঘটনা ও অনুসন্ধানের সময়সীমা নেই। ইতিহাস যাচাই করা হয়নি।',
-                    message_en='This export does not include incidents or a search window. History has not been checked.')
+        from ilma_api.incidents import history as incident_history
+        return incident_history(db,id)
 
     @router.get('/v1/services/categories')
     def categories(db:Session=Depends(get_db)):

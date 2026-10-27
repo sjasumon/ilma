@@ -55,7 +55,7 @@
     root.querySelectorAll('[data-source]').forEach(button => button.addEventListener('click',()=>{
       const row=rows.find(row=>(row.fact_id||row.offer_id||'')===button.dataset.source);
       if(row)openProofModal(row.source_title||row.product,row.quote,row.source_url,row.page,row.published_at||row.doc_date,
-        row.metric==='net_profit'?tr('মূল নথির মিলিয়ন টাকা প্রদর্শনে কোটি টাকায় রূপান্তর করা হয়েছে।','Source amounts in million BDT are displayed in crore BDT.'):(row.condition||''));
+        row.metric==='net_profit'?tr('পরিমাণ কোটি টাকায় দেখানো হয়েছে। মূল একক সূত্রে দেখুন।','Amounts are displayed in crore BDT. See the source for original units.'):(row.condition||''));
     }));
   }
   function voice(tab,bank=null) { switchTab('home'); activeVoiceContext={tab,bank_id:bank}; startListening(); }
@@ -77,7 +77,7 @@
     const root=$('bank-list-view');
     root.innerHTML=`<div class="screen-header"><h1>${tr('ব্যাংক','Banks')}</h1><p>${tr('কোন ব্যাংকের অবস্থা জানতে চান?','Which bank do you want to check?')}</p>
       <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div></div>
-      <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr('ডেমোতে ৯টি ব্যাংক আছে। আরও ব্যাংক শিগগির।','9 banks in the demo. More banks coming soon.')}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
+      <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr(`ডেমোতে ${digits(banks.length)}টি ব্যাংক আছে। আরও ব্যাংক শিগগির।`,`${banks.length} banks in the demo. More banks coming soon.`)}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
     function rows(){const query=$('bank-list-search').value.trim().toLowerCase();
       $('bank-list-rows').innerHTML=banks.filter(b=>`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query)).sort((a,b)=>a.name_bn.localeCompare(b.name_bn,'bn')).map(bank=>
         `<button class="catalog-bank-row" type="button" data-bank="${bank.id}"><span>${bankNames(bank)}</span>${statusChip(bank)}</button>`).join('')||empty();
@@ -85,8 +85,8 @@
     }
     rows(); $('bank-list-search').oninput=rows; $('bank-list-mic').onclick=()=>voice('bank');
     $('prior-work').onclick=()=>openProofModal(tr('তথ্য কোথা থেকে এসেছে','Where the data comes from'),tr(
-      'তথ্য সুমনের দেওয়া v5.2 CSV রপ্তানি থেকে এসেছে। ILMA-র কোড আলাদাভাবে তৈরি। agent-v4 ও agent-v5 চিহ্নিত তথ্য সুমনের হাতে যাচাই করা নয়। বাংলাদেশ ব্যাংকের ব্যবস্থা ও জরিমানা যাচাই করা হয়নি।',
-      'Data comes from the v5.2 CSV export supplied by Sumon. ILMA code is implemented separately. Agent-v4 and agent-v5 rows have not been personally checked by Sumon. Bangladesh Bank actions and penalties were not checked.'),'',null,null);
+      'তথ্য সুমনের দেওয়া v5.2 ও v6.2 রপ্তানি থেকে এসেছে। ILMA-র কোড আলাদাভাবে তৈরি। agent-v4, agent-v5 ও agent-v6.2 চিহ্নিত তথ্য সুমনের হাতে যাচাই করা নয়। ঘটনার তালিকা সম্পূর্ণ নয়; সংবাদকে সরকারি সিদ্ধান্ত হিসেবে দেখানো হয় না।',
+      'Data comes from the v5.2 and v6.2 exports supplied by Sumon. ILMA code is implemented separately. Agent-v4, agent-v5 and agent-v6.2 rows have not been personally checked by Sumon. Incident coverage is incomplete; news reports are not treated as official findings.'),'',null,null);
   }
   function showReport() { ++epoch; bankPage='report';reportView(true);$('btn-watch-bank').setAttribute('aria-pressed','false');$('btn-watch-bank').disabled=true;loadReportCard(currentBankId); }
   function reportReady(data) {
@@ -99,7 +99,7 @@
     watchNotice.textContent=tr('নজরে রাখলে শুধু তালিকায় সংরক্ষিত হবে। SMS/WhatsApp বিজ্ঞপ্তি শিগগির আসছে।','Watch saves this bank to your list. SMS/WhatsApp alerts are coming soon.');
     $('card-why-heading').textContent=tr('কেন?','Why?');
     $('bank-not-checked').textContent=bn?data.not_checked_bn:data.not_checked_en;
-    $('bank-detail-links').innerHTML=[['health','আর্থিক অবস্থা','Financial health'],['rating','রেটিং','Rating'],['history','জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'],['news','খবর','News about this bank'],['services','এই ব্যাংকের সেবা ও হার','Services and rates'],['ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank']].map(([key,b,e])=>`<button type="button" class="catalog-detail-row" data-bank-detail="${key}">${tr(b,e)} <span aria-hidden="true">›</span></button>`).join('');
+    $('bank-detail-links').innerHTML=[['health','আর্থিক অবস্থা','Financial health'],['rating','রেটিং','Rating'],['history','জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'],['news','খবর','News about this bank'],['services','এই ব্যাংকের সেবা ও হার','Services and rates'],['ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank']].map(([key,b,e])=>`<button type="button" class="catalog-detail-row" data-bank-detail="${key}">${tr(b,e)}${key==='history'?' ('+digits(data.incident_count||0)+')':''} <span aria-hidden="true">›</span></button>`).join('');
     $('bank-detail-links').querySelectorAll('button').forEach(button=>button.onclick=()=>button.dataset.bankDetail==='services'?openBankServices(bank.id):showBankDetail(button.dataset.bankDetail));
     $('btn-watch-bank').disabled=!anonymousDevice;
     if(anonymousDevice)fetch(`/v1/institutions/${bank.id}/watch`,{headers:{'X-ILMA-Device':anonymousDevice}}).then(r=>r.ok?r.json():null).then(state=>{if(state&&currentBankId===bank.id){$('btn-watch-bank').setAttribute('aria-pressed',String(state.watching));$('lbl-watch-rpt').textContent=state.watching?tr('নজরে রাখা হচ্ছে','Watching'):tr('নজরে রাখুন','Watch');}}).catch(()=>{});
@@ -130,7 +130,7 @@
     try {
       const rows=await json(`/v1/institutions/${currentBankId}/${({health:'figures',rating:'ratings',news:'events',history:'history'})[kind]}`);
       if(request!==epoch)return;
-      if(kind==='history'){body.innerHTML=empty(currentLang==='bn'?rows.message_bn:rows.message_en);return;}
+      if(kind==='history'){renderHistory(body,rows);return;}
       if(!rows.length){body.innerHTML=empty();return;}
       if(kind==='health') {
         const headings={crar:tr('মূলধন অনুপাত','Capital ratio'),npl_ratio:tr('খেলাপি ঋণ','Bad loans'),net_profit:tr('কর-পরবর্তী মুনাফা','Profit after tax')};
@@ -144,6 +144,20 @@
         body.innerHTML=rows.map(r=>`<article class="catalog-card"><h2>${E(currentLang==='bn'?r.title_bn:r.title_en)}</h2>${currentLang==='bn'&&!/[\u0980-\u09ff]/.test(r.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}<p>${dateText(r.date)}</p><p class="catalog-note">${tr('খবরে প্রকাশিত, নিশ্চিত নয়','Reported in the news, not confirmed')}</p>${r.sources.filter(s=>/^https?:\/\//.test(s.source_url)).map(s=>`<a class="catalog-source" href="${E(s.source_url)}" target="_blank" rel="noopener noreferrer">${tr('মূল সূত্র ↗','Original source ↗')}</a>`).join('')}</article>`).join('');
       }
     }catch(e){if(request===epoch)error(body,e);}
+  }
+
+  function renderHistory(body,data) {
+    const bn=currentLang==='bn', items=data.items||[];
+    body.innerHTML=`<p class="catalog-note">${E(bn?data.message_bn:data.message_en)}</p><p>${tr('এই নথিগুলো বর্তমান অবস্থার রং পরিবর্তন করে না।','These records do not change the current status colour.')}</p>${data.record_window?`<p class="catalog-note">${tr('সরবরাহকৃত নথির তারিখ','Dates of supplied records')}: ${dateText(data.record_window.start)} → ${dateText(data.record_window.end)}. ${tr('এটি অনুসন্ধানের পূর্ণ সময়সীমা নয়।','This is not a complete search window.')}</p>`:''}${items.length?`<label for="incident-filter">${tr('ঘটনার ধরন','Incident type')}</label><select class="calc-field" id="incident-filter"><option value="">${tr('সব','All')}</option>${[...new Set(items.map(r=>r.kind))].map(kind=>{const row=items.find(r=>r.kind===kind);return `<option value="${E(kind)}">${E(bn?row.type_label_bn:row.type_label_en)}</option>`;}).join('')}</select><div id="incident-rows"></div>`:''}`;
+    if(!items.length)return;
+    function render(){
+      const sources=[];
+      $('incident-rows').innerHTML=items.filter(row=>!$('incident-filter').value||row.kind===$('incident-filter').value).map(row=>{
+        const proof=row.sources.map(source=>({...source,fact_id:source.source_id}));sources.push(...proof);
+        return `<article class="catalog-card"><h2>${E(bn?row.title_bn:row.title_en)}</h2><p>${E(bn?row.confirmation_bn:row.confirmation_en)}</p><p><strong>${E(bn?row.status_label_bn:row.status_label_en)}</strong> · ${dateText(row.last_update_on)}</p>${row.older_history?`<p class="catalog-note">${tr('পুরোনো ঘটনা; বর্তমান আর্থিক অবস্থার প্রমাণ নয়।','Historical record; not evidence of current financial condition.')}</p>`:''}<p>${tr('প্রথম প্রকাশ','First reported')}: ${dateText(row.first_reported_on)}</p><ol>${row.changes.map(change=>`<li>${dateText(change.changed_on)} · ${E(bn?change.status_label_bn:change.status_label_en)}</li>`).join('')}</ol>${proof.map(source=>sourceButton(source)).join('')}</article>`;
+      }).join('')||empty();wireSources($('incident-rows'),sources);
+    }
+    $('incident-filter').onchange=render;render();
   }
 
   async function enterServices(){$('service-voice-answer').hidden=true;++epoch;servicePage='home';bankFilter=null;renderServicesHome();if(!categories.length)try{categories=await json('/v1/services/categories');}catch{}}

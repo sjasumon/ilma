@@ -26,3 +26,6 @@ design/error1.png
 design/e1.png
 design/search.png
 .tools/
+
+# Approved incident input archives remain private; publish normalized data only.
+ilma_incidents_input_*.zip

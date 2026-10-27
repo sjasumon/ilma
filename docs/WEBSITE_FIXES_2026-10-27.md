@@ -5,7 +5,7 @@ fixes, reproducible checks and missing inputs. Current shell asset version: 32.
 
 | Review item | Result |
 | --- | --- |
-| 1. High-risk example | **Blocked by input.** The approved v6.1 archive remains unavailable at the checked server locations. Requested its path. Nine-bank scope and status thresholds are unchanged; no incident or warning card is fabricated. |
+| 1. High-risk example | **Resolved with approved v6.2 input.** Sumon supplied the replacement archive. National Bank and Islami Bank have sourced High cards under unchanged thresholds. The original nine-bank statuses and service scope remain unchanged. See [supplement review](../seed/incidents/README.md) for exclusions, legal-label corrections and source limitations. |
 | 2. Insurance | Added the official bank rule with its legal source, qualified account aggregation and payment stages. Imported into `ilma`; the report and voice answer link the source. |
 | 3. Personal amount field | Removed free-form amount entry from deposit/loan comparisons. Four fixed examples (1, 2, 5, 10 lakh) calculate locally; no personal amount is requested, sent or persisted. |
 | 4. Mixed-language answers | Bangla service answers use Bangla digits/dates and bank-specific source captions. Product labels are localized; original names/quotes/conditions remain on source sheets. Known slab phrases are translated; unknown conditions explicitly direct users to the original source rather than guessing. English news headlines have a Bangla language tag. |
@@ -75,3 +75,21 @@ Run against the controlled demo (creates/removes one anonymous Watch entry):
 ```
 
 Screenshots from the live checks are in `design/reviews/website-20261027/`.
+
+## Approved v6.2 follow-up
+
+The owner supplied the replacement incident archive after the original review.
+The live catalogue now contains eleven banks: eight Strong, two High and one
+No data, under unchanged status thresholds. Service comparisons retain their
+original nine-bank scope and 470 attributes. The supplement imports four
+financial facts, two ratings, nineteen incidents, thirty-four source links and
+twenty-three status updates. Raw inputs remain private. See the
+[review and source limitations](../seed/incidents/README.md).
+
+Validation: 82 pytest tests / 25 subtests and five frontend suites pass. Import
+and reimport succeed in isolated SQLite; the backed-up `ilma` MySQL import also
+succeeds. Live HTTPS browser checks cover both languages, two High cards,
+incident filters/source sheets, missing Islami NPL and phone/rotation/desktop
+layouts with no runtime errors. Live HTML serves asset version 33 and retains
+strict CSP, HSTS, nosniff and no-transform. These checks do not replace human
+source review, physical screen-reader testing or real microphone acceptance.

@@ -1,0 +1,3 @@
+id,slug,name_bn,name_en,type,islamic,licensed,listed,coverage
+26,islamibank,ইসলামী ব্যাংক বাংলাদেশ পিএলসি,Islami Bank Bangladesh PLC,bank,true,True,True,partial
+36,nbl,ন্যাশনাল ব্যাংক পিএলসি,National Bank PLC,bank,false,True,True,full

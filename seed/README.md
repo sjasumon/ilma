@@ -61,5 +61,6 @@ The original export did not supply insurance. The website review added a sourced
 bank rule from the Ministry of Law's Deposit Protection Act 2026 (Act 75),
 sections 12 and 21–23. This is additional event-time verification, not a claim
 that the original collector or Sumon had checked it. Release suffix: `-law75`.
-Approved v6 incidents/search-window input is still absent; history remains
-unavailable without invented incidents or fabricated dates.
+The approved v6.2 supplement is now available in [incidents/](incidents/README.md).
+It adds two sourced High cards and qualified incident history. Search-window
+coverage remains unknown; no complete-history claim is made.

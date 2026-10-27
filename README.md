@@ -31,7 +31,7 @@ Built for the **Meta hackathon, Indie track, 27 October–4 November 2026**.
 
 ## Demo status
 
-- Working: nine-bank reports, sourced financial details, service comparisons,
+- Working: eleven-bank reports, sourced financial details, service comparisons,
   BN/EN transcription and questions, visible transcripts, spoken answers and
   typed recovery. Unknown or ambiguous input never defaults to EBL.
 - Working: Home, Bank Services, Banks and News; EN/BN settings, optional left
@@ -39,8 +39,8 @@ Built for the **Meta hackathon, Indie track, 27 October–4 November 2026**.
 - Working: public-report offline caching, local calculators, private Watch
   selections, API budgets, retention and local backup/restore checks.
 - In progress: representative voice accuracy/latency and physical accessibility
-  acceptance, native review of offline audio, financial source review and approved
-  incident history. The bank insurance rule now links to the official Act.
+  acceptance, native review of offline audio, financial source review. Approved incident records are available with
+  incomplete-coverage warnings. The bank insurance rule now links to the official Act.
 - Planned: Proof Snap image understanding/highlighting, WhatsApp voice notes and
   Watch SMS notifications. Android packaging is a decision due 1 November.
 
@@ -94,6 +94,7 @@ Provision **ilma**, then import the normalized seed CSVs:
 ```sh
 export PYTHONPATH="$PWD/api"
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.seed_loader seed
+"$ILMA_VENV_PATH/bin/python" -m ilma_api.incident_loader seed/incidents
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.migrate_voice
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.voice_doctor --live
 "$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 127.0.0.1 --port 8001

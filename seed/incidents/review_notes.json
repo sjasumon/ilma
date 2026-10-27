@@ -1,0 +1,29 @@
+{
+  "excluded_single_source": [
+    "CITYBANK_EMBEZZLE_2026"
+  ],
+  "withheld_metrics": [
+    {
+      "bank": "ISLAMIBANK",
+      "metric": "CLASSIFIED_INVESTMENT",
+      "reason": "Not an explicit supported ratio; no derived NPL is invented."
+    },
+    {
+      "bank": "ISLAMIBANK",
+      "metric": "GROSS_INVESTMENT",
+      "reason": "Not an explicit supported ratio; no derived NPL is invented."
+    }
+  ],
+  "status_corrections": [
+    {
+      "incident": "ISLAMIBANK_SCAM_2022",
+      "supplied": "case_filed",
+      "published": "reported"
+    },
+    {
+      "incident": "PRIMEBANK_EMBEZZLE_2014",
+      "supplied": "charged",
+      "published": "reported"
+    }
+  ]
+}

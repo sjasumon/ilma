@@ -19,7 +19,7 @@ with sync_playwright() as p:
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),name+' horizontal overflow'
   page.screenshot(path=str(root/folder/(name+'.png')),full_page=name!='source-sheet')
  page.locator('.dock [data-tab="detail"]').click();page.locator('[data-bank="19"]').wait_for()
- assert page.locator('[data-bank]').count()==9
+ assert page.locator('[data-bank]').count()==11
  snap('bank-tab','B1-list')
  page.locator('#bank-list-search').fill('DBBL');assert page.locator('[data-bank]').count()==1
  assert page.locator('[data-bank="18"]').count()==1

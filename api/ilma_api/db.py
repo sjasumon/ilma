@@ -129,6 +129,45 @@ class EventSource(Base):
     event_id = Column(String(64), ForeignKey("event.event_id"), primary_key=True)
     source_id = Column(String(64), ForeignKey("source.source_id"), primary_key=True)
 
+
+class BankIncident(Base):
+    __tablename__ = 'bank_incident'
+    incident_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey('institution.id'), nullable=False, index=True)
+    kind = Column(String(32), nullable=False)
+    title_bn = Column(String(255), nullable=False)
+    title_en = Column(String(255), nullable=False)
+    status = Column(String(24), nullable=False)
+    official = Column(Boolean, nullable=False)
+    status_effect = Column(Boolean, nullable=False, default=False)
+    started_on = Column(Date, nullable=True)
+    first_reported_on = Column(Date, nullable=False)
+    last_update_on = Column(Date, nullable=False)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+    sources = relationship('IncidentSource', cascade='all, delete-orphan')
+    changes = relationship('IncidentStatusChange', cascade='all, delete-orphan')
+
+
+class IncidentSource(Base):
+    __tablename__ = 'incident_source'
+    incident_id = Column(String(64), ForeignKey('bank_incident.incident_id'), primary_key=True)
+    source_id = Column(String(64), ForeignKey('source.source_id'), primary_key=True)
+    quote = Column(Text, nullable=False)
+    language = Column(String(2), nullable=False)
+    source = relationship('Source')
+
+
+class IncidentStatusChange(Base):
+    __tablename__ = 'incident_status_change'
+    change_id = Column(String(64), primary_key=True)
+    incident_id = Column(String(64), ForeignKey('bank_incident.incident_id'), nullable=False, index=True)
+    status = Column(String(24), nullable=False)
+    changed_on = Column(Date, nullable=False)
+    source_id = Column(String(64), ForeignKey('source.source_id'), nullable=False)
+    quote = Column(Text, nullable=False)
+    source = relationship('Source')
+
 class Rate(Base):
     __tablename__ = "rate"
     fact_id = Column(String(64), primary_key=True)

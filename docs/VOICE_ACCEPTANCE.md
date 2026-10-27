@@ -240,10 +240,11 @@ physical microphone transcription still needs a fresh phone test.
 The overall readiness command still exits nonzero. Connectivity and dependency
 installation are no longer blockers; the following work remains:
 
-- **Manual source review:** all nine banks are present from the supplied export.
+- **Manual source review:** the original nine banks and two supplemental banks are present.
   Complete `seed/TO_CHECK.md`; agent-imported rows are not marked as personally
-  checked by Sumon. The official bank-insurance rule is now sourced; approved v6
-  incidents remain absent and history answers stay unavailable.
+  checked by Sumon. The official bank-insurance rule is now sourced; approved v6.2
+  incidents now support qualified history answers. Source review and complete
+  search-window coverage remain outstanding.
 - **Offline voice bundle:** all 22 private drafts are generated, including the
   sourced insurance clips. Obtain actual native-speaker review and
   publish the approved bundle. `reviewed_offline_clips` remains false.

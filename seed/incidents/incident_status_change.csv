@@ -1,0 +1,24 @@
+change_id,incident_id,status,changed_on,source_id,quote
+v62-change-46dbb95d6f41da544427,v62-BANKASIA_ACC_2021,case_filed,2021-08-05,v62-src-59376354697df3aaa7fa,ACC filed formal money laundering case
+v62-change-0d6fb6f25451e1b621ae,v62-CITYBANK_CYBER_2016,reported,2016-02-15,v62-src-8143b44dfb6cba96e732,Skimming device discovered installed at terminal
+v62-change-5a4986b5942dee0a0b40,v62-DUTCHBANGL_CYBER_2019,reported,2019-06-21,v62-src-6a3945923c20c8c63637,Cyber breach and overseas cash withdrawals detected
+v62-change-be2f9e16193b533b449d,v62-EBL_CYBER_2016,reported,2016-02-18,v62-src-90d4f8063e3e6afe6e78,EBL reimbursed affected victims of ATM fraudulence incident
+v62-change-f6114723eb42b11f3e8b,v62-EBL_EMBEZZLE_2019,case_filed,2019-10-16,v62-src-f4e8aa5ffbb9475c40ad,ACC filed corruption case against former priority branch manager
+v62-change-a5a9f2ae440d8049f51c,v62-EBL_EMBEZZLE_2019,convicted,2023-08-07,v62-src-fb3d920bc2ec0c0d7088,Court convicted former branch manager to 54 years imprisonment
+v62-change-de35bdc4168e1d68f9cf,v62-ISLAMIBANK_BOARD_2024,reported,2024-08-22,v62-src-3e54760d72352a953399,Central bank dissolved board and appointed administrator
+v62-change-9dd7419849d74ecdceab,v62-ISLAMIBANK_COURT_2025,reported,2025-12-09,v62-src-5ac6952532b869a33d70,High Court order issued regarding AGM schedule
+v62-change-1735cdc8c4a27fd1e40f,v62-ISLAMIBANK_PENALTY_2023,reported,2023-07-27,v62-src-c94755fc07133bff2fcd,Daily fines imposed for CRR/SLR shortfalls reported
+v62-change-b79e0bd9e8f464f45df9,v62-ISLAMIBANK_SCAM_2022,reported,2022-11-27,v62-src-a3424786d511c2f8b73e,Shell company loan disbursement exposed
+v62-change-6fe9f1e9079fd39288f5,v62-ISLAMIBANK_SCAM_2022,reported,2022-11-29,v62-src-ec780d85f2bc1dac3fca,Central bank initiated formal regulatory probe
+v62-change-e23f78f85b41332dc496,v62-MTB_EMBEZZLE_2019,case_filed,2019-12-10,v62-src-8430d5f76c78dafe68b4,ACC filed corruption case against privilege banking manager
+v62-change-a036f4f3749465e2d2b4,v62-MTB_EMBEZZLE_2019,convicted,2023-09-11,v62-src-621204f3b3e9890b6a2f,Court convicted former bank official to 24 years imprisonment
+v62-change-2bc07a421e7911200235,v62-NBL_AUDIT_2024,reported,2025-06-15,v62-src-abb31ba274fb1f65e668,Auditor qualified opinion disclosed via DSE
+v62-change-175f63bbad854b841950,v62-NBL_AUDIT_2025,reported,2026-06-01,v62-src-6eb2fd79c3740ff5e39b,Auditor qualified opinion published in Annual Report
+v62-change-48422a968bef8eca0882,v62-NBL_BOARD_2024,reported,2024-08-20,v62-src-aac2424805a8f895700e,Central bank dissolved board and formed new board
+v62-change-bfb5db368710742a65ff,v62-NBL_LIQUIDITY_2026,reported,2026-10-12,v62-src-8165b02ba2db3ac56af3,Emergency liquidity support extended under regulatory guarantee
+v62-change-8f3e70c08c035c8801c0,v62-NBL_PENALTY_2022,reported,2022-01-13,v62-src-893975c020c612833ab5,Central bank imposed Tk 55 lakh penalty for credit card irregularities
+v62-change-10a4b88b1f06b9efacef,v62-NCCBANK_EMBEZZLE_2023,case_filed,2023-03-27,v62-src-cf765035ae4837a0259b,ACC filed formal case against five branch officials
+v62-change-87aefdf119d2d35095f0,v62-PRIMEBANK_EMBEZZLE_2014,reported,2014-05-29,v62-src-fa520c8c6adf20e54c4b,ACC okayed charge sheet against 38 individuals
+v62-change-a060fcf652e79db59d24,v62-PRIMEBANK_EMBEZZLE_2014,reported,2014-07-17,v62-src-2029f424c8b452e705cd,Formal charge sheet submitted before court
+v62-change-6309d2c03788d2c9bb55,v62-SBACBANK_ACC_2021,case_filed,2021-10-21,v62-src-f1eb137498b5d334d2c0,ACC filed corruption case against former chairman and officials
+v62-change-70024dc1531fe1706554,v62-SBACBANK_AUDIT_2025,reported,2026-06-02,v62-src-dd076f662bac09a48b11,Qualified audit opinion published via regulatory disclosure

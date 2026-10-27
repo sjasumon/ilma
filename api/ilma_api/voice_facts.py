@@ -29,6 +29,10 @@ def detail_facts(text, institution_id, language, db):
         return rows
     news = bool(re.search(r'\bnews\b|খবর|সংবাদ', text, re.I))
     if news or re.search(r'fraud|incident|penalty|history|জালিয়াতি|জালিয়াতি|জরিমানা|ইতিহাস|সর্বশেষ ঘটনা', text, re.I):
+        if not news:
+            from ilma_api.incidents import voice_facts
+            incident_facts=voice_facts(db,institution_id,language)
+            if incident_facts:return incident_facts
         query = db.query(Event).filter_by(institution_id=institution_id)
         if news: query=query.filter_by(type='other')
         else: query=query.filter(Event.type!='other')

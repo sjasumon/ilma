@@ -1,7 +1,7 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-voice32';
+const SHELL = 'ilma-shell-voice33';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ["/static/fonts/fonts.css?v=voice-complete-20261027-32", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-complete-20261027-32', '/static/js/app.js?v=voice-complete-20261027-32', '/static/js/bank-services-ui.js?v=voice-complete-20261027-32', '/static/js/voice-recorder.js?v=voice-complete-20261027-32'];
+const ASSETS = ["/static/fonts/fonts.css?v=voice-complete-20261027-33", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-complete-20261027-33', '/static/js/app.js?v=voice-complete-20261027-33', '/static/js/bank-services-ui.js?v=voice-complete-20261027-33', '/static/js/voice-recorder.js?v=voice-complete-20261027-33'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

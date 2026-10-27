@@ -90,7 +90,7 @@ def match_candidates(text, banks, scorer=None):
                     best, best_alias = score, alias
         if best >= 75:
             single = len(normalize_alias(best_alias).split()) == 1
-            short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
+            short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
             follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', text, re.I))
             candidates.append({**{k: bank[k] for k in ('id', 'slug', 'name_bn', 'name_en', 'type', 'coverage')},
                                'licensed': bank.get('licensed', True), 'confidence': round(best / 100, 3), 'alias': best_alias,

@@ -1,0 +1,6 @@
+bank_code,scope,url,publisher,page,quote_override
+ISLAMIBANK,financial,https://www.cse.com.bd/upload_media/ISLAMIBANK_2025.pdf,Chittagong Stock Exchange,2,
+ISLAMIBANK,rating,https://www.dse.com.bd/company/ISLAMIBANK,Dhaka Stock Exchange,,
+NBL,financial,https://www.nblbd.com/public/assets/annual-reports/1785227780_Annual%20Report%202025.pdf,National Bank PLC,16,
+NBL,financial_crar,https://www.dsebd.org/Auditors_opinion/2025/206.%20National%20Bank%20PLC25.pdf,Dhaka Stock Exchange,1,Capital to Risk Weighted Assets Ratio (CRAR) of the Bank was (5.48)% and 0.65% respectively
+NBL,rating,https://www.dse.com.bd/company/NBL,Dhaka Stock Exchange,,

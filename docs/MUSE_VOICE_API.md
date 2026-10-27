@@ -101,4 +101,4 @@ Fixed offline audio clips still need generating and native-speaker review.
 
 Full requirement matrix, replay commands, native audio review and host acceptance:
 [VOICE_ACCEPTANCE.md](VOICE_ACCEPTANCE.md). The asset version is
-voice-complete-20261027-32.
+voice-complete-20261027-33.

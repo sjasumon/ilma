@@ -202,6 +202,8 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
     }
 
     release = db.query(Release).order_by(Release.loaded_at.desc()).first()
+    from ilma_api.incidents import records
+    incident_count=len(records(db,inst.id))
     return {
         "institution": inst_dict,
         "status": {
@@ -215,6 +217,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         "ratings": ratings_data,
         "figures": list(latest_facts.values()),
         "events": events_data[:5],
+        "incident_count": incident_count,
         "rates": {
             "as_of": str(rates_dict["fdr_12m"]["as_of"]) if "fdr_12m" in rates_dict else None,
             "fdr_12m": rates_dict["fdr_12m"]["rate"] if "fdr_12m" in rates_dict else None,
