@@ -48,9 +48,12 @@ def save_capture(capture, bind):
             db.flush()
             prune(db)
             db.commit()
-    except Exception:
+    except Exception as error:
         # Diagnostics must not turn a successful voice request into a failure.
-        logging.getLogger(__name__).warning('voice_diagnostic_save_failed; run development diagnostics setup')
+        original = getattr(error, 'orig', error)
+        args = getattr(original, 'args', ())
+        code = args[0] if args and isinstance(args[0], int) else None
+        logging.getLogger(__name__).warning('voice_diagnostic_save_failed type=%s db_code=%s', type(original).__name__, code)
     finally:
         capture.clear()
 

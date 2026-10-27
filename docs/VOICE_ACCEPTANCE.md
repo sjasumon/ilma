@@ -140,6 +140,12 @@ See [VOICE_DIAGNOSTICS.md](VOICE_DIAGNOSTICS.md) for isolated setup, intended
 question labels, private exports and retention behavior. Three regression tests
 cover production blocking, explicit opt-in and paired sample persistence.
 
+Activation update: the user subsequently explicitly requested capture for the
+current diagnostic test. Enabled the two private switches, created the MySQL
+diagnostic table and restarted `ilma-app.service` on 2026-10-27. This instance is
+temporarily operating in development diagnostics; restore production/disabled
+switches after testing. No private configuration or samples are committed.
+
 Unexpected-script diagnosis: `clean_transcript` rejects remaining Devanagari
 characters as required by §3.3. Previously this happened before the transcript
 event, incorrectly making a returned ASR transcript look absent. Rejected text
