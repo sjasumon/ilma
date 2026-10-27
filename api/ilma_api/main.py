@@ -14,6 +14,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from ilma_api.db import SessionLocal, Institution, InstitutionAlias, Release, Event, Source
 from ilma_api.report_card import get_institution_report_card
 from ilma_api.voice import MAX_UPLOAD_BYTES, VoiceError
+from ilma_api import settings
+from ilma_api.admission import ProviderAdmissionMiddleware
 
 app = FastAPI(
     title="ILMA Banking API",
@@ -21,9 +23,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(ProviderAdmissionMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -30,3 +30,13 @@ VOICE_LOG_SALT = os.getenv("VOICE_LOG_SALT") or __import__("secrets").token_hex(
 # Diagnostic recordings require BOTH switches; never enable on the live service.
 ILMA_ENV = os.getenv("ILMA_ENV", "production")
 VOICE_DIAGNOSTICS_ENABLED = os.getenv("VOICE_DIAGNOSTICS_ENABLED", "false").lower() == "true"
+
+# Single-worker provider admission budgets. Restrict origins even during diagnostics.
+CORS_ORIGINS = [value.strip().rstrip('/') for value in os.getenv(
+    'CORS_ORIGINS', 'https://app.sumon.me,http://localhost:8001,http://127.0.0.1:8001').split(',') if value.strip()]
+API_CLIENT_PER_MINUTE = max(1, int(os.getenv('API_CLIENT_PER_MINUTE', '12')))
+API_GLOBAL_PER_MINUTE = max(1, int(os.getenv('API_GLOBAL_PER_MINUTE', '60')))
+API_GLOBAL_PER_DAY = max(1, int(os.getenv('API_GLOBAL_PER_DAY', '1000')))
+API_CLIENT_CONCURRENCY = max(1, int(os.getenv('API_CLIENT_CONCURRENCY', '2')))
+API_GLOBAL_CONCURRENCY = max(1, int(os.getenv('API_GLOBAL_CONCURRENCY', '4')))
+API_UPLOAD_TIMEOUT_SECONDS = max(1, min(60, int(os.getenv('API_UPLOAD_TIMEOUT_SECONDS', '20'))))

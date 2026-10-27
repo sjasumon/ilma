@@ -39,8 +39,8 @@ def trace_stage(capture, stage, started, **metadata):
             'stage': stage, 'elapsed_ms': round((time.monotonic() - started) * 1000), **metadata}})
 
 
-def prune(db):
-    db.execute(delete(VoiceDiagnostic).where(VoiceDiagnostic.created_at < datetime.utcnow() - timedelta(days=7)))
+def prune(db, now=None):
+    db.execute(delete(VoiceDiagnostic).where(VoiceDiagnostic.created_at < (now or datetime.utcnow()) - timedelta(days=7)))
     # Keep at most 200 samples, even during intensive testing.
     excess = list(db.scalars(select(VoiceDiagnostic.diagnostic_id).order_by(
         VoiceDiagnostic.created_at.desc(), VoiceDiagnostic.diagnostic_id.desc()).offset(200)))

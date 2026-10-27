@@ -1,13 +1,17 @@
 """Daily MySQL retention cleanup. Run with python -m ilma_api.voice_maintenance."""
 from datetime import datetime, timedelta
-from sqlalchemy import delete
-from ilma_api.db import SessionLocal, AppQuestionLog, AppRateCounter
+from sqlalchemy import delete, inspect
+from ilma_api.db import SessionLocal, AppQuestionLog, AppRateCounter, VoiceDiagnostic
+from ilma_api.voice_diagnostics import prune
 
 
 def cleanup(db, now=None):
     now = now or datetime.utcnow()
     logs = db.execute(delete(AppQuestionLog).where(AppQuestionLog.created_at < now - timedelta(days=30))).rowcount
     counters = db.execute(delete(AppRateCounter).where(AppRateCounter.expires_at < now)).rowcount
+    # Run even after capture is disabled; do not retain idle diagnostic samples.
+    if inspect(db.get_bind()).has_table(VoiceDiagnostic.__tablename__):
+        prune(db, now=now)
     db.commit()
     return logs, counters
 
