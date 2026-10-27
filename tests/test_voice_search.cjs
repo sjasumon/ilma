@@ -84,6 +84,19 @@ function voiceApp(options = {}) {
     assert.equal(failed.node('voice-feedback').open, false, 'retry closes the dialog before recording');
   }
   const english = voiceApp();
+  const dataFailure = voiceApp();
+  dataFailure.context.fetch = async () => response([
+    ['transcript', { text: 'Is Pubali Bank safe?', language: 'en' }],
+    ['error', { code: 'bank_data_unavailable' }]
+  ]);
+  await dataFailure.fire('home-tap-target', 'click');
+  await dataFailure.run('finishRecording()');
+  assert.equal(dataFailure.node('voice-transcript').hidden, false);
+  assert.match(dataFailure.node('voice-transcript').textContent, /You said:.*Is Pubali Bank safe/);
+  dataFailure.context.fetch = async () => ({ ok: false, status: 503, json: async () => ({ error: {code: 'bank_data_unavailable'} }) });
+  await dataFailure.fire('voice-retry', 'click');
+  await dataFailure.run('finishRecording()');
+  assert.equal(dataFailure.node('voice-transcript').textContent, 'No transcript was received for this attempt.');
   const outdated = voiceApp();
   outdated.run('currentLang = "en"');
   outdated.context.fetch = async () => ({ ok: false, status: 404 });

@@ -216,6 +216,12 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             finally: del wav
         text = clean_transcript(text)
         if not text: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
+        if callable(banks):
+            try:
+                banks = banks()
+            except SQLAlchemyError:
+                yield event('transcript', {'text': text, 'language': context.ui_lang})
+                raise
         from ilma_api.voice_answers import numbers
         sensitive_numbers = bool(numbers(text))
         candidates = match_candidates(text, banks)

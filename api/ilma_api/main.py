@@ -242,7 +242,6 @@ async def _voice_request(request, db, mode):
             body.extend(chunk)
         audio, text, mime, context = parse_request(request.headers.get("content-type", ""), bytes(body), mode)
         body.clear()
-        banks = get_institution_index(db)
         import hashlib, hmac
         from datetime import datetime
         from ilma_api import settings
@@ -254,7 +253,7 @@ async def _voice_request(request, db, mode):
             # Own the session through streaming, independent of FastAPI's
             # dependency cleanup timing. Drop the outer raw-audio reference.
             with Session(bind=bind) as stream_db:
-                pipeline = run_pipeline(audio, text, mime, context, banks, stream_db, mode, device_hash)
+                pipeline = run_pipeline(audio, text, mime, context, lambda: get_institution_index(stream_db), stream_db, mode, device_hash)
                 audio = None
                 try:
                     async for chunk in pipeline: yield chunk

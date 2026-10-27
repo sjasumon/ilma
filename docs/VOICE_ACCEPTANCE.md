@@ -132,6 +132,13 @@ services answer, source links, language chip, stop/slow/mute, and typing fallbac
 
 ## Current evidence
 
+Transcript feedback update: voice transcription now precedes loading the bank
+index. If that lookup fails, SSE delivers the transcript before the sanitized
+database error. The dialog preserves the current attempt's question above the
+error and explicitly indicates when no transcript was received; retry clears
+the prior voice transcript. Regression tests cover database failure ordering and
+preventing an old question from appearing as the new recording's transcript.
+
 Updated 2026-10-27 after the workspace access change:
 
 - All 39 Python checks passed again after migration. All five Node suites passed

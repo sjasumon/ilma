@@ -510,6 +510,7 @@ async function startListening() {
   document.getElementById("voice-matches").replaceChildren();
   document.getElementById("voice-answer-sources").replaceChildren();
   document.getElementById("voice-transcript").hidden = true;
+  lastVoiceTranscript = "";
   if (window.isSecureContext === false) { showVoiceFallback("insecure"); return; }
   if (!window.IlmaVoiceRecorder?.supported()) { showVoiceFallback("unsupported"); return; }
   const request = ++voiceRequest;
@@ -583,6 +584,11 @@ function showVoiceFallback(code = "unmatched") {
   document.getElementById("voice-matches").replaceChildren();
   const bn = currentLang === "bn";
   voiceFailures++;
+  const transcript = document.getElementById("voice-transcript");
+  transcript.hidden = false;
+  transcript.textContent = lastVoiceTranscript
+    ? (bn ? "আপনি বলেছেন: " : "You said: ") + `“${lastVoiceTranscript}”`
+    : (bn ? "এই চেষ্টায় কোনো প্রতিলিপি পাওয়া যায়নি।" : "No transcript was received for this attempt.");
   const messages = {
     offline: bn ? "ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আবার চেষ্টা করুন।" : "You are offline. Reconnect to use voice search.",
     unclear: bn ? "বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Not understood. Please speak again or type.",
@@ -825,6 +831,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
 
 async function submitTextQuestion(text = document.getElementById("voice-text-input").value) {
   if (!text.trim()) return;
+  lastVoiceTranscript = text.trim();
   stopListening();
   const request = ++voiceRequest; isSearching = true; pauseGreetingCycle();
   setWaveformState("thinking");

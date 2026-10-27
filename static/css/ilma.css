@@ -910,6 +910,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 #voice-feedback .voice-bank-choice, #voice-feedback .btn-stop-listening { background: var(--stage); color: var(--on-stage); border: 1px solid var(--gold-soft); }
 #voice-feedback a { color: var(--cyan); }
 #voice-feedback p { overflow-wrap: anywhere; }
+#voice-feedback #voice-transcript { padding: 12px; border-left: 3px solid var(--gold); border-radius: 8px; background: var(--stage); color: var(--on-stage); white-space: pre-wrap; }
 #voice-feedback .btn-stop-listening { display: block; min-height: 48px; margin: 16px auto; padding: 8px 20px; }
 #voice-feedback input { font-size: 18px; }
 #voice-answer-sources a { display: block; min-height: 48px; color: var(--link); overflow-wrap: anywhere; }
