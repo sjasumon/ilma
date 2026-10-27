@@ -132,6 +132,15 @@ services answer, source links, language chip, stop/slow/mute, and typing fallbac
 
 ## Current evidence
 
+Unexpected-script diagnosis: `clean_transcript` rejects remaining Devanagari
+characters as required by §3.3. Previously this happened before the transcript
+event, incorrectly making a returned ASR transcript look absent. Rejected text
+now streams to the user before `transcript_language_mismatch`, with an editable
+correction field. It is not used to choose a bank or stored in logs. Repeated
+provider/language errors no longer automatically imply noise. Backend warnings
+record fixed error codes only. No real-user error percentage or improvement in
+Meta recognition accuracy has been measured by this fix.
+
 Transcript feedback update: voice transcription now precedes loading the bank
 index. If that lookup fails, SSE delivers the transcript before the sanitized
 database error. The dialog preserves the current attempt's question above the

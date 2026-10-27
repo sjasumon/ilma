@@ -214,7 +214,15 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             audio = None
             try: text = await transcribe(wav, context.ui_lang, [])
             finally: del wav
-        text = clean_transcript(text)
+        try:
+            text = clean_transcript(text)
+        except VoiceError as error:
+            if error.code == 'unclear':
+                yield event('transcript', {'text': text, 'language': context.ui_lang, 'unusable': True})
+                raise VoiceError('transcript_language_mismatch', 422,
+                    'ভয়েস সেবা অন্য লিপিতে কথা লিখেছে। নিচের লেখা দেখুন, আবার বলুন বা সংশোধন করে লিখুন।',
+                    'The speech service returned text in an unexpected script. Check what it heard, then speak again or type a correction.') from None
+            raise
         if not text: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
         if callable(banks):
             try:
@@ -274,6 +282,8 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             if audio_url: yield event('speech', {'audio_url': audio_url, 'text': result['text']})
             else: yield event('speech_unavailable', {'text': 'Listen is unavailable until a speech voice is configured.'})
     except VoiceError as error:
+        import logging
+        logging.getLogger(__name__).warning('voice_pipeline_error code=%s', error.code)
         yield event('error', {'code': error.code, 'message_bn': error.bn, 'message_en': error.en})
     except SQLAlchemyError:
         yield event('error', {'code': 'bank_data_unavailable', 'message_bn': 'ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না।', 'message_en': 'Bank data is unavailable.'})

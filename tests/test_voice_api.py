@@ -197,6 +197,12 @@ class TestMetaVoice(unittest.IsolatedAsyncioTestCase):
                 self.assertIn('Pubali Bank', events)
                 self.assertIn('bank_data_unavailable', events)
                 self.assertNotIn('private details', events)
+                with patch('ilma_api.voice_pipeline.convert_audio', new=AsyncMock(return_value=wav())), patch('ilma_api.voice_pipeline.transcribe', new=AsyncMock(return_value='नमस्ते बैंक')):
+                    mismatch = await voice_input(incoming(wav()), db)
+                    parts = [json.loads(part.split('data: ', 1)[1]) async for part in mismatch.body_iterator]
+                self.assertEqual(parts[0]['text'], 'नमस्ते बैंक')
+                self.assertTrue(parts[0]['unusable'])
+                self.assertEqual(parts[1]['code'], 'transcript_language_mismatch')
 
         finally:
             engine.dispose()

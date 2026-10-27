@@ -592,6 +592,7 @@ function showVoiceFallback(code = "unmatched") {
   const messages = {
     offline: bn ? "ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আবার চেষ্টা করুন।" : "You are offline. Reconnect to use voice search.",
     unclear: bn ? "বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Not understood. Please speak again or type.",
+    transcript_language_mismatch: bn ? "ভয়েস সেবা অন্য লিপিতে কথা লিখেছে। উপরের লেখা দেখুন, আবার বলুন বা লিখে সংশোধন করুন।" : "The speech service returned text in an unexpected script. Check the text above, then speak again or type a correction.",
     intent_unavailable: bn ? "প্রশ্নটি বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Could not understand the question. Speak again or type.",
     voice_dependency_missing: bn ? "ভয়েস সেবা প্রস্তুত নয়। লিখে খুঁজুন।" : "Voice service is not ready. Try typing.",
     bank_data_unavailable: bn ? "ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।" : "Bank data is currently unavailable. Please try again.",
@@ -617,8 +618,9 @@ function showVoiceFallback(code = "unmatched") {
   document.getElementById("voice-feedback-message").textContent = messages[code] || (bn ? "ভয়েস চালু করা যায়নি। আবার চেষ্টা করুন।" : "Could not start voice recognition. Try again.");
   openVoiceFeedback();
   document.getElementById("voice-retry").textContent = bn ? "আবার চেষ্টা করুন" : "Try again";
-  if (voiceFailures >= 2) document.getElementById("voice-feedback-message").textContent += bn ? " চারপাশে শব্দ বেশি হলে লিখে খুঁজুন।" : "If it is noisy, try typing instead.";
-  if (voiceFailures >= 2 || ["not-allowed", "audio-capture", "unsupported"].includes(code)) showTyping();
+  if (voiceFailures >= 2 && ["no-speech", "audio-capture"].includes(code)) document.getElementById("voice-feedback-message").textContent += bn ? " চারপাশে শব্দ বেশি হলে লিখে খুঁজুন।" : "If it is noisy, try typing instead.";
+  if (code === "transcript_language_mismatch") document.getElementById("voice-text-input").value = lastVoiceTranscript;
+  if (voiceFailures >= 2 || ["not-allowed", "audio-capture", "unsupported", "transcript_language_mismatch"].includes(code)) showTyping();
   playFixedClip(code === "offline" ? "E-01" : ["not-allowed", "audio-capture"].includes(code) ? "E-03" : "E-04");
   startExampleCycle();
 }

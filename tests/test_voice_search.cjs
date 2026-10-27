@@ -84,6 +84,18 @@ function voiceApp(options = {}) {
     assert.equal(failed.node('voice-feedback').open, false, 'retry closes the dialog before recording');
   }
   const english = voiceApp();
+  const mismatch = voiceApp();
+  mismatch.run('currentLang = "en"');
+  mismatch.context.fetch = async () => response([
+    ['transcript', {text: 'नमस्ते बैंक', language: 'en', unusable: true}],
+    ['error', {code: 'transcript_language_mismatch'}]
+  ]);
+  await mismatch.fire('home-tap-target', 'click');
+  await mismatch.run('finishRecording()');
+  assert.match(mismatch.node('voice-transcript').textContent, /नमस्ते बैंक/);
+  assert.match(mismatch.node('voice-feedback-message').textContent, /unexpected script/);
+  assert.equal(mismatch.node('voice-text-input').value, 'नमस्ते बैंक');
+  assert.ok(!mismatch.node('voice-feedback-message').textContent.includes('noisy'));
   const dataFailure = voiceApp();
   dataFailure.context.fetch = async () => response([
     ['transcript', { text: 'Is Pubali Bank safe?', language: 'en' }],
