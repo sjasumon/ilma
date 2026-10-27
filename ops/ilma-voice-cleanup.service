@@ -1,5 +1,6 @@
 [Unit]
 Description=ILMA voice data retention cleanup
+OnFailure=ilma-ops-alert@%n.service
 
 [Service]
 Type=oneshot

@@ -79,7 +79,7 @@ function voiceApp(options = {}) {
   await keyboard.fire('home-tap-target', 'click', {detail:0});
   assert.equal(keyboard.run('isListening'), false);
   assert.equal(keyboard.context.openedBank, 102, 'assistive/keyboard activation stops with one native activation');
-  for (const code of ['voice_unconfigured', 'voice_unavailable', 'voice_rate_limited', 'no_speech']) {
+  for (const code of ['voice_unconfigured', 'voice_unavailable', 'voice_rate_limited', 'no_speech', 'request_limited', 'upload_timeout', 'origin_denied']) {
     const failed = voiceApp();
     failed.context.fetch = async () => response([['error', { code }]]);
     await failed.fire('home-tap-target', 'click'); await failed.run('finishRecording()');

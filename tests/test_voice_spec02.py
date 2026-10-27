@@ -40,6 +40,13 @@ class TestVoiceText(unittest.TestCase):
             self.assertEqual(clean_transcript(before), after)
         with self.assertRaises(VoiceError): clean_transcript('नमस्ते बैंक')
 
+    def test_bengali_shared_danda_is_not_a_script_mismatch(self):
+        for text in ['ইস্টার্ন ব্যাংক কেমন আছে।', 'সিগনেচার কার্ডের ফি কত॥', 'EBL ব্যাংকের তথ্য।']:
+            self.assertEqual(clean_transcript(text), text[:-1])
+        self.assertEqual(clean_transcript('ব্যাংক। কার্ডের ফি কত?'), 'ব্যাংক। কার্ডের ফি কত')
+        with self.assertRaises(VoiceError):
+            clean_transcript('नमस्ते ব্যাংক।')
+
     def test_all_test_mishearings(self):
         for text, id in [('উবালি', 1), ('কুবালি', 1), ('ভ্যালি', 1), ('arcantile', 5),
                          ('আল-আরাফাহ Islami Bank', 6), ('Eastern Bank কি নিরাপদ?', 2),

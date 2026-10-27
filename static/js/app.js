@@ -596,6 +596,9 @@ function showVoiceFallback(code = "unmatched") {
     ? (bn ? "আপনি বলেছেন: " : "You said: ") + `“${lastVoiceTranscript}”`
     : (bn ? "এই চেষ্টায় কোনো প্রতিলিপি পাওয়া যায়নি।" : "No transcript was received for this attempt.");
   const messages = {
+    request_limited: bn ? "অনুরোধের সীমা হয়েছে। একটু পরে আবার চেষ্টা করুন।" : "The service request limit was reached. Please wait before trying again.",
+    upload_timeout: bn ? "আপলোডে সময় বেশি লাগছে। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।" : "The upload timed out. Check your connection and try again.",
+    origin_denied: bn ? "অ্যাপের অনুমোদিত ঠিকানা থেকে খুলুন।" : "Open the app from its approved address.",
     offline: bn ? "ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আবার চেষ্টা করুন।" : "You are offline. Reconnect to use voice search.",
     unclear: bn ? "বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Not understood. Please speak again or type.",
     transcript_language_mismatch: bn ? "ভয়েস সেবা অন্য লিপিতে কথা লিখেছে। উপরের লেখা দেখুন, আবার বলুন বা লিখে সংশোধন করুন।" : "The speech service returned text in an unexpected script. Check the text above, then speak again or type a correction.",

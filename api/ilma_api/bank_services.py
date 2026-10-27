@@ -244,11 +244,16 @@ def voice_service_result(question,intent,context,db,language):
     result=compare(db,**choice)
     rows=[bank for bank in result['rows'] if bank.get('offer')]
     if intent.institution_ids:rows=[bank for bank in rows if bank['id'] in intent.institution_ids]
-    sources=[];lines=[]
+    sources=[];lines=[];spoken=[]
     for bank in rows[:3]:
         row=bank['offer'];value=f"{row['value_num']:g}" if row['value_num'] is not None else row['value_text']
         lines.append(f"{bank['name_bn' if language=='bn' else 'name_en']}: {value}{'%' if row['unit']=='pct_year' else ' BDT' if row['unit']=='bdt' else ''} ({row['doc_date']})"+(' · '+('পুরনো তথ্য' if language=='bn' else 'old data') if row['stale'] else ''))
+        aliases=[a.alias for a in db.get(Institution,bank['id']).aliases if bool(re.search('[\u0980-\u09ff]',a.alias))==(language=='bn')]
+        short_name=min(aliases,key=len,default=bank['name_bn' if language=='bn' else 'name_en'])
+        unit=(' শতাংশ' if language=='bn' else ' percent per year') if row['unit']=='pct_year' else (' টাকা' if language=='bn' else ' taka') if row['unit']=='bdt' else ' '+row['unit']
+        spoken.append(f'{short_name}: {value}{unit}'+((' পুরনো তথ্য' if language=='bn' else ' old data') if row['stale'] else ''))
         sources.append(dict(fact_id=row['offer_id'],source_url=row['source_url'],source_title=row['product'],page=row['page'],quote=row['quote']))
-    return dict(type='service_answer',text='; '.join(lines) if lines else ('এই তথ্য আমাদের কাছে নেই।' if language=='bn' else 'We do not have this information.'),
+    speech_text='। '.join(spoken)+('। উৎসের তারিখ ও শর্ত পর্দায় আছে।' if language=='bn' else '. Source dates and conditions are on screen.') if spoken else ('এই তথ্য আমাদের কাছে নেই।' if language=='bn' else 'We do not have this information.')
+    return dict(type='service_answer',text='; '.join(lines) if lines else ('এই তথ্য আমাদের কাছে নেই।' if language=='bn' else 'We do not have this information.'),speech_text=speech_text,
                 comparison=choice,sources=sources,calculator_amount=intent.amount_bdt,
                 calculator_term=intent.period_months if product.endswith('_loan') else None)

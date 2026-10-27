@@ -92,6 +92,10 @@ class TestServicesSeed(unittest.TestCase):
         self.assertEqual(result['comparison']['tier'],'Signature')
         self.assertTrue(result['sources'])
         self.assertNotIn('10000',result['text'])
+        self.assertIn('7000',result['speech_text'])
+        self.assertIn('12000',result['speech_text'])
+        self.assertNotIn('20000',result['speech_text'])
+        self.assertLess(len(result['speech_text']),len(result['text']))
         with Session(self.engine) as db:
             sms=voice_service_result('SMS alert fees',VoiceIntent(intent='service_compare',product='account_fee',service_attribute='sms_alert_fee'),VoiceContext(tab='services'),db,'en')
         self.assertEqual(sms['comparison']['product_type'],'account_fee')

@@ -4,6 +4,12 @@ Authority: [APP_SPEC_02_voice.md](../APP_SPEC_02_voice.md). This record distingu
 implemented code from checks that require the deployment host or real people.
 It does not claim that unexecuted live or human checks passed.
 
+Current remediation evidence is in [RELEASE_HARDENING.md](RELEASE_HARDENING.md):
+74 Python tests, five Node suites, the Bangla punctuation correction, successful
+replays of both formerly rejected recordings, deployed admission/retention,
+isolated backup restore and crash recovery. Historical deployment incidents below
+are not current blockers. Physical/native/source acceptance remains outstanding.
+
 ## Implemented
 
 | Spec | Behavior / artifact | Verification |
@@ -238,12 +244,14 @@ installation are no longer blockers; the following work remains:
   Complete `seed/TO_CHECK.md`; agent-imported rows are not marked as personally
   checked by Sumon. An official insurance source and v6 incident data remain
   absent; those answers stay unavailable.
-- **Offline voice bundle:** generate the fixed clips, obtain actual native-speaker
-  review, and publish the approved bundle. `reviewed_offline_clips` remains false.
+- **Offline voice bundle:** 20 private drafts are generated. Supply the insurance
+  source for the two missing clips, obtain actual native-speaker review, and
+  publish the approved bundle. `reviewed_offline_clips` remains false.
 - **Synthetic and real speech acceptance:** replay the referenced corpora and
   consented participant recordings; accuracy and latency thresholds have not
   been measured.
 - **Physical device/accessibility checks:** microphone permissions, Android/mobile
   data, TalkBack, 200% text and offline behavior still require hands-on validation.
-- **Deployment operations:** installation/enabling of the daily retention timer
-  and final HTTPS deployment checks have not been verified.
+- **Deployment operations:** daily retention, local backup/isolated restore,
+  local health monitoring, crash recovery and HTTPS are now verified. External
+  alerts, encrypted off-host recovery, capacity tests and traffic rollback remain.

@@ -1,6 +1,11 @@
 # Production readiness audit — 27 October 2026
 
 **Verdict: NO-GO for unrestricted production. Suitable for controlled testing.**
+Remediation progress is tracked in [RELEASE_HARDENING.md](RELEASE_HARDENING.md).
+The original script-mismatch attribution below was corrected by retained-data
+analysis: both saved cases were false rejection of valid Bangla danda punctuation,
+not proof that Meta returned an unexpected script. Source/device acceptance is
+still outstanding.
 This audit combines current code review and fresh live checks with previously
 recorded voice/browser acceptance evidence. Passing tests and a healthy database
 do not establish speech accuracy, financial correctness or accessible usability.
@@ -15,25 +20,25 @@ do not establish speech accuracy, financial correctness or accessible usability.
   restarts in the current activation. This verifies configuration, not a reboot drill.
 - 64 Python tests and 25 subtests pass; all five Node suites pass.
   `pip check` reports no broken requirements.
-- Host timer inventory contains no ILMA cleanup timer. The committed cleanup
-  service template points to `/opt/ilma`, unlike this deployment's actual path.
-- App service runs as ubuntu; `NoNewPrivileges` and `PrivateTmp` are disabled.
-  This is an operational hardening gap, not evidence of an exploit.
+- Remediation installed daily cleanup/backups and two-minute health monitoring.
+  First cleanup, backup, isolated restore and controlled crash recovery passed.
+- App service runs as ubuntu with `NoNewPrivileges`, `PrivateTmp`, a read-only
+  system filesystem and resource ceilings. See the hardening record for details.
 
 ## Release blockers and required evidence
 
 | Priority | Finding | Required before public production |
 | --- | --- | --- |
 | P0 | Diagnostic mode currently retains original audio, Meta transcripts and result events in MySQL, as requested for testing. | Set production mode and diagnostics off; explicitly decide retention/deletion of existing samples and backups. Verify new requests create no diagnostic rows. |
-| P0 | Seven-day/200-sample diagnostic pruning runs on capture or explicit CLI use. Ordinary log cleanup has no installed daily timer. Idle records can outlive the intended retention period. | Install a correctly configured daily cleanup job for both ordinary logs and diagnostic samples; test expiry without a new voice request and alert on failure. Disabling capture alone does not delete existing rows. |
-| P0 | ASR accuracy is not accepted. Previously tested bank-name audio succeeded, while a synthetic Bangla Signature question returned an unexpected script and was rejected. Real quiet/noisy phone corpus metrics are missing. | Replay labelled real recordings; measure transcript accuracy, bank/intent accuracy, no-speech rejection and per-stage latency for BN and EN, including failures and corrections. Agree acceptance thresholds before launch. |
+| P0 | Daily idle diagnostic/log pruning is now installed and tested. Existing exports/backups have separate retention. | Verify ongoing scheduled success and agree deletion of existing test exports/backups before production. Disabling capture alone does not delete them. |
+| P0 | The false script rejection caused by Bangla punctuation is fixed; both original saved recordings now complete end-to-end. Real quiet/noisy phone corpus metrics remain missing. | Replay labelled real recordings; measure transcript accuracy, bank/intent accuracy, no-speech rejection and per-stage latency for BN and EN, including failures and corrections. Agree acceptance thresholds before launch. |
 | P0 | Financial rows are agent-labelled; manual checks remain, including NCC figures, rating dates and source metadata. 87 service attributes are withheld. | Complete and record the reviews in `seed/TO_CHECK.md`; retain unavailable states until evidence supports publication. Do not imply independent regulatory verification. |
-| P0 | No general pre-provider admission limit exists for public transcription and speech routes. The 20-question quota is applied after transcription/intent and exempts some intents; anonymous device IDs are client-controlled. CORS allows all origins. | Apply trusted server/proxy rate and concurrency limits before paid calls, upload/read deadlines and resource budgets. Restrict browser origins to intended deployments. Load-test normal use and abuse without generating uncontrolled provider costs. CORS alone is not an abuse control. |
+| P0 | Pre-provider global/client limits, concurrency ceilings, upload deadlines and explicit origins are deployed. Counters are process-local and reset on restart. | Keep one worker; add shared ingress enforcement before scaling and finish representative sustained/abuse testing. CORS alone is not an abuse control. |
 | P0 | Physical TalkBack/VoiceOver and mobile microphone acceptance is outstanding. | Test permission denied/revoked, interruptions, background/resume, single/double taps, keyboard activation, slow speech, 200% text and offline recovery on actual Android/iOS devices with target users. |
-| P1 | Previous full spoken report took 24.75 seconds, exceeding the 15-second target. Current speech deadline is 25 seconds. | Measure end-to-end p50/p95 under representative load and outages; shorten speech or change delivery to meet the agreed response target. Increasing the timeout does not improve latency. |
-| P1 | Fixed offline audio has not been published and native-speaker pronunciation review is incomplete. | Generate/review/publish required clips and validate a real offline session. |
+| P1 | Shorter summaries completed bank speech in 13.87s and service speech in 12.32s for two saved recordings. Representative latency remains unmeasured. | Measure end-to-end p50/p95 under representative load and outages. Two successful probes do not establish the response-time target. |
+| P1 | Twenty private offline audio drafts are generated; insurance clips are blocked and native review/publication is incomplete. | Review/publish the required bundle once complete and validate a real offline session. |
 | P1 | Official insurance input and incident-history input are absent; Watch has no notifications. | Keep these capabilities explicitly unavailable or finish them before advertising them as supported. These need not block a narrower, accurately described release. |
-| P1 | Database backup/restore, rollback, alerting, provider outage drills and capacity limits have no accepted evidence. | Restore an `ilma` backup to an isolated target, rehearse deployment rollback and restart, configure health/latency/error alerts, and document proxy timeouts and operational ownership. Never use `project_db`. |
+| P1 | Local backup/isolated restore, crash recovery, rollback startup canary and local failure signals pass. External alerts, encrypted off-host recovery and traffic switching remain unverified. | Configure authorized destinations, restore off-host, rehearse public-traffic rollback and finish sustained capacity/outage acceptance. Never use `project_db`. |
 
 ## Pipeline review
 
@@ -57,8 +62,8 @@ mobile audio encoding require device evidence beyond the automated recorder test
 This is not a penetration test or a new measured speech benchmark. Prior browser
 and paid-provider observations are recorded in `BANK_SERVICES_ACCEPTANCE.md` and
 `VOICE_ACCEPTANCE.md`; they were not repeated or relabelled as fresh measurements.
-No production settings were changed, no recordings deleted and no unrelated
-database accessed. Diagnostic capture remains active for the authorized test phase.
+The audit itself changed no settings; subsequent authorized hardening is recorded
+in the remediation document. Diagnostic capture remains active for the test phase.
 
 Recommended sequence: finish labelled voice diagnostics, add provider admission
 controls and scheduled retention, complete source/accessibility acceptance, then

@@ -18,6 +18,9 @@ def cleanup(db, now=None):
 
 if __name__ == '__main__':
     try:
+        from ilma_api import settings
+        if settings.DATABASE_URL.get_backend_name() != 'mysql' or settings.DATABASE_URL.database != 'ilma':
+            raise ValueError('Retention requires the ilma MySQL database.')
         with SessionLocal() as db:
             logs, counters = cleanup(db)
         print(f'Retention cleanup: {logs} old log rows, {counters} expired counters removed.')

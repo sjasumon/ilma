@@ -11,3 +11,5 @@ audio/
 voice-reports/
 voice-drafts/
 voice-diagnostics/
+*.sql.gz
+voice-backups/

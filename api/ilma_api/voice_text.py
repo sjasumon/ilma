@@ -28,7 +28,9 @@ class VoiceIntent(BaseModel):
 
 def clean_transcript(text):
     text = unicodedata.normalize('NFC', text).replace('जनता बैंक', 'জনতা ব্যাংক').replace('बैंक', 'ব্যাংক')
-    if re.search('[\u0900-\u097f]', text):
+    # Danda/double danda are shared Bengali punctuation, despite occupying the
+    # Devanagari Unicode block. Meta commonly ends valid Bangla with U+0964.
+    if re.search('[\u0900-\u0963\u0966-\u097f]', text):
         raise VoiceError('unclear', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Please speak again or type.')
     words = []
     for word in text.split():

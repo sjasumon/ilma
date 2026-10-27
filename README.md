@@ -165,16 +165,20 @@ live service. No diagnostic recordings or transcripts are pushed to GitHub.
 [production readiness audit](docs/PRODUCTION_READINESS.md) for verified behavior,
 release blockers and the evidence required to launch.
 
-The latest bank/services checks include 64 passing Python tests, five passing
+The latest checks include 74 passing Python tests, five passing
 frontend suites, successful MySQL voice migration, Meta authentication and
 ElevenLabs configured-voice access. Full acceptance is still pending:
 
 - Complete Sumon's manual checks in [seed/TO_CHECK.md](seed/TO_CHECK.md), including
   withheld services, metadata gaps and the official insurance source.
-- Fixed offline audio generation, native-speaker review and publication.
+- Complete insurance audio input, native review of the generated drafts and publication.
 - Synthetic and real-person speech accuracy/latency measurements.
 - Physical phone, TalkBack, 200% text and offline validation.
-- Final HTTPS deployment and retention timer verification.
+- External alerts, encrypted off-host backups, capacity and traffic-rollback checks.
+
+Deployed admission limits, retention, local backup/restore, crash recovery and
+the corrected Bangla punctuation validation are recorded in
+[release hardening progress](docs/RELEASE_HARDENING.md). See [operations](ops/RUNBOOK.md).
 
 Track current evidence and procedures in
 [VOICE_ACCEPTANCE.md](docs/VOICE_ACCEPTANCE.md) and

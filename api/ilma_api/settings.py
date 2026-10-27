@@ -27,7 +27,7 @@ SPEECH_TIMEOUT_SECONDS = max(5, min(25, int(os.getenv("SPEECH_TIMEOUT_SECONDS", 
 
 VOICE_LOG_SALT = os.getenv("VOICE_LOG_SALT") or __import__("secrets").token_hex(32)
 
-# Diagnostic recordings require BOTH switches; never enable on the live service.
+# Diagnostic recordings require BOTH switches; never enable in production.
 ILMA_ENV = os.getenv("ILMA_ENV", "production")
 VOICE_DIAGNOSTICS_ENABLED = os.getenv("VOICE_DIAGNOSTICS_ENABLED", "false").lower() == "true"
 

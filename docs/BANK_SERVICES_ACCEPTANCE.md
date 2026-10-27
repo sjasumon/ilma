@@ -46,9 +46,13 @@ Input: `bank and bank service menu/ilma_seed_input_v5.2`. Runtime database: **il
   a native-speaker pronunciation sign-off.
 - Live typed “সিগনেচার কার্ডের ফি” returned a service answer with Visa/Signature
   navigation. A synthetic WebM “ইস্টার্ন ব্যাংক” traversed Meta and opened EBL
-  in 2.54s. The synthetic Bangla Signature recording returned Meta's unexpected
-  script and was rejected visibly in 2.48s. That voice case is **not** claimed
-  passed; ASR quality and real phone checks remain separate acceptance work.
+  in 2.54s. The synthetic Bangla Signature recording was rejected in 2.48s.
+  Subsequent retained-transcript analysis identified a local validation bug:
+  shared Bangla danda punctuation was mistaken for Devanagari script. Both saved
+  script-mismatch cases contained valid Bangla punctuation, not Devanagari letters.
+  After correction, replaying their stored transcripts through current intent/data
+  returned `service_answer` and `report_card`. This is transcript replay evidence,
+  not a new microphone-to-answer accuracy benchmark. Real phone checks remain.
 - Browser checks on the public host at 360×640: B1/B2/B3, source sheets, S1/S2/S3,
   nine comparison rows, correct savings line, no request when calculator inputs
   change, and no horizontal overflow with emulated 200% text on bank list,

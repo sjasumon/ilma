@@ -1,5 +1,10 @@
 # Voice pipeline audit — 2026-10-27
 
+**Historical audit:** current corrections/evidence are in
+[RELEASE_HARDENING.md](RELEASE_HARDENING.md). All nine banks are now loaded into
+`ilma`; both retained script-mismatch cases were false rejection of Bangla danda
+punctuation and now pass. Retention, admission and recovery work has progressed.
+
 Scope: capture/stop/cancel, multipart upload, conversion, Meta ASR, transcript
 cleanup, matching, intent, MySQL queries, SSE parsing, speech playback, diagnostic
 capture and the actual systemd deployment. This is an implementation audit, not

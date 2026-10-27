@@ -122,8 +122,16 @@ def build_result(intent, candidates, language, db, question=""):
                        ' '.join(reason['text_bn' if bn else 'text_en'] for reason in card.get('reasons', [])[:3]))
         insurance_line=card.get('insurance',{}).get('text_bn' if bn else 'text_en')
         if insurance_line:summary += ' ' + insurance_line
+        # Keep the full sourced report on screen; speak a short, complete summary
+        # instead of waiting for three reasons and an unavailable-insurance note.
+        spoken = summary
+        if card.get('status'):
+            spoken = card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + '। '
+            if card.get('reasons'):
+                spoken += card['reasons'][0]['text_bn' if bn else 'text_en'] + ' '
+        spoken += ' আরও তথ্য পর্দায় আছে। এটি আর্থিক পরামর্শ নয়।' if bn else ' More details are on screen. This is not financial advice.'
         return {'type': 'report_card', 'institution_id': institution, 'url': f'/v1/institutions/{institution}/report-card',
-                'text': summary + ' ' + disclaimer, 'sources': card.get('reasons', []), 'disclaimer': disclaimer}
+                'text': summary + ' ' + disclaimer, 'speech_text': spoken, 'sources': card.get('reasons', []), 'disclaimer': disclaimer}
     if intent.intent == 'rates' and institution:
         if intent.product is None and re.search(r'\bloan\b|\bcard\b|লোন|কার্ড', question, re.I):
             return {'type': 'service_answer', 'text': missing, 'sources': []}
@@ -313,9 +321,10 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         outcome = 'refused' if result['type'] == 'refused' else 'no_data' if result['type'] in {'clarify', 'no_data'} else 'answered'
         if context.speak:
             trace_stage(diagnostic, 'speech_started', started)
-            audio_url = await speech(result.get('privacy_notice', '') + ' ' + result['text'], language)
+            spoken = result.get('speech_text', result['text'])
+            audio_url = await speech(result.get('privacy_notice', '') + ' ' + spoken, language)
             trace_stage(diagnostic, 'speech_completed' if audio_url else 'speech_unavailable', started)
-            if audio_url: yield event('speech', {'audio_url': audio_url, 'text': result['text']})
+            if audio_url: yield event('speech', {'audio_url': audio_url, 'text': spoken})
             else: yield event('speech_unavailable', {'text': 'Listen is unavailable until a speech voice is configured.'})
     except VoiceError as error:
         trace_stage(diagnostic, 'failed', started, code=error.code)
@@ -349,5 +358,5 @@ async def readout(kind, institution_id, language, db):
         from ilma_api.db import Event
         rows = db.query(Event).order_by(Event.event_date.desc()).limit(5).all()
         result = {'text': '। '.join((('খবরে প্রকাশিত, নিশ্চিত নয়। ' if language == 'bn' else 'Reported, unconfirmed. ') if not row.official else '') + (row.title_bn if language == 'bn' else row.title_en) for row in rows)}
-    url = await speech(result.get('text', ''), language)
+    url = await speech(result.get('speech_text', result.get('text', '')), language)
     return {'audio_url': url, 'text': result.get('text', '')}
