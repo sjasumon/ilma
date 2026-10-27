@@ -386,6 +386,8 @@ function updateLocalizedText() {
   document.getElementById("voice-type").textContent = currentLang === "bn" ? "⌨ লিখে খুঁজুন" : "⌨ Type to search";
   document.getElementById("voice-text-label").textContent = currentLang === "bn" ? "ব্যাংকের নাম বা প্রশ্ন লিখুন" : "Type a bank name or question";
   document.getElementById("voice-text-submit").textContent = currentLang === "bn" ? "খুঁজুন" : "Search";
+  document.getElementById("voice-dialog-title").textContent = currentLang === "bn" ? "ভয়েস অনুসন্ধান" : "Voice search";
+  document.getElementById("voice-dialog-close").setAttribute("aria-label", currentLang === "bn" ? "বন্ধ করুন" : "Close");
   for (const id of ["bank-voice-btn", "services-voice-btn"]) document.getElementById(id).textContent = currentLang === "bn" ? "প্রশ্ন বলুন" : "Ask by voice";
   document.getElementById("home-tap-target").setAttribute("aria-label", currentLang === "bn" ? "কথা বলুন। ব্যাংকের নাম বলুন।" : "Speak. Say a bank name.");
   document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "থামুন" : "Stop";
@@ -456,8 +458,9 @@ function stopGreetingCycle() {
 }
 
 function startExampleCycle() {
+  document.getElementById("home-orb").setAttribute("data-reduced-motion", String(greetingMotionReduced()));
   pauseGreetingCycle();
-  if (currentTab !== "home" || isListening || recognitionStarting || isSearching || document.hidden || document.getElementById("settings-dialog").open) return;
+  if (currentTab !== "home" || isListening || recognitionStarting || isSearching || document.hidden || document.getElementById("settings-dialog").open || document.getElementById("voice-feedback").open) return;
   const frames = greetingFrames.filter(frame => frame.lang === currentLang);
   greetingIndex = 0;
   showGreetingFrame(frames[0], true);
@@ -470,6 +473,18 @@ function startExampleCycle() {
 // S-02: Record locally, upload only to ILMA; Meta credentials stay on the server.
 function setupSpeech() { /* Audio capture is initialized only after a user tap. */ }
 
+function setWaveformState(state) {
+  const wave = document.getElementById("home-orb");
+  wave.setAttribute("data-state", state);
+  wave.style.setProperty?.("--wave-level", "1");
+  const button = document.getElementById("home-tap-target");
+  button.setAttribute("aria-pressed", String(state === "listening"));
+  button.setAttribute("aria-busy", String(state === "thinking" || state === "starting"));
+  button.setAttribute("aria-label", state === "listening"
+    ? (currentLang === "bn" ? "রেকর্ডিং চলছে। থামিয়ে খুঁজতে দুইবার ট্যাপ করুন অথবা থামুন বোতাম চাপুন।" : "Recording. Double-tap to stop and search, or use the Stop button.")
+    : (currentLang === "bn" ? "কথা বলুন। ব্যাংকের নাম বলুন।" : "Speak. Say a bank name."));
+}
+
 function setVoiceState(text) {
   document.getElementById("home-idle-view").hidden = true;
   document.getElementById("home-listening-view").hidden = false;
@@ -480,6 +495,7 @@ async function startListening() {
   if (isListening || recognitionStarting || isSearching) return;
   stopAudio();
   if (navigator.onLine === false) { showVoiceFallback("offline"); return; }
+  closeVoiceFeedback();
   if (!appSettings.micExplained) {
     const bn = currentLang === "bn";
     document.getElementById("mic-permission-title").textContent = bn ? "কথা বলতে মাইক্রোফোন লাগবে" : "Use your microphone to speak";
@@ -490,7 +506,7 @@ async function startListening() {
     document.getElementById("mic-permission-dialog").showModal();
     return;
   }
-  document.getElementById("voice-feedback").hidden = true;
+  closeVoiceFeedback();
   document.getElementById("voice-matches").replaceChildren();
   document.getElementById("voice-answer-sources").replaceChildren();
   document.getElementById("voice-transcript").hidden = true;
@@ -498,6 +514,7 @@ async function startListening() {
   if (!window.IlmaVoiceRecorder?.supported()) { showVoiceFallback("unsupported"); return; }
   const request = ++voiceRequest;
   recognitionStarting = true;
+  setWaveformState("starting");
   pauseGreetingCycle();
   setVoiceState(currentLang === "bn" ? "মাইক্রোফোন চালু হচ্ছে…" : "Starting microphone…");
   document.getElementById("listening-transcript").textContent = "";
@@ -508,7 +525,7 @@ async function startListening() {
     await recorder.start({
       silenceMs: voiceConfig.silence_ms,
       onLevel: level => {
-        if (!greetingMotionReduced()) document.getElementById("home-orb").style.setProperty("--voice-scale", String(1 + Math.min(.16, level * 3)));
+        if (!greetingMotionReduced()) document.getElementById("home-orb").style.setProperty("--wave-level", String(1 + Math.min(.65, level * 8)));
       },
       onNoise: () => { document.getElementById("listening-prompt").textContent = currentLang === "bn" ? "চারপাশে শব্দ বেশি, একটু শান্ত জায়গায় বলুন" : "It is noisy. Try speaking somewhere quieter."; },
       onComplete: finishRecording,
@@ -521,8 +538,8 @@ async function startListening() {
     if (request !== voiceRequest) { recorder.cancel(); return; }
     recognitionStarting = false;
     isListening = true;
+    setWaveformState("listening");
     setVoiceState(T[currentLang].listeningText);
-    document.getElementById("home-orb").classList.add("listening");
     document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "থামুন ও খুঁজুন" : "Stop and search";
     document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "রেকর্ডিং থামিয়ে খুঁজুন" : "Stop recording and search");
     document.getElementById("sr-announcer").textContent = T[currentLang].listeningText;
@@ -540,7 +557,7 @@ async function finishRecording() {
   const recorder = audioRecorder, request = voiceRequest;
   isListening = false;
   isSearching = true;
-  document.getElementById("home-orb").classList.remove("listening");
+  setWaveformState("thinking");
   setVoiceState(T[currentLang].checkingText);
   document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "বাতিল করুন" : "Cancel";
   document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "বাতিল করুন" : "Cancel transcription");
@@ -573,6 +590,7 @@ function showVoiceFallback(code = "unmatched") {
     voice_dependency_missing: bn ? "ভয়েস সেবা প্রস্তুত নয়। লিখে খুঁজুন।" : "Voice service is not ready. Try typing.",
     bank_data_unavailable: bn ? "ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।" : "Bank data is currently unavailable. Please try again.",
     voice_unconfigured: bn ? "ভয়েস সেবা এখনও চালু হয়নি।" : "Voice service is not configured yet.",
+    voice_backend_outdated: bn ? "সার্ভারে ভয়েস অনুসন্ধান চালু নেই। অ্যাপের সার্ভার আপডেট করা প্রয়োজন।" : "Voice search is unavailable on this server. The app backend needs to be updated or restarted.",
     voice_timeout: bn ? "ভয়েস সেবায় সময় বেশি লাগছে। আবার চেষ্টা করুন।" : "Transcription timed out. Try again.",
     voice_rate_limited: bn ? "একটু পরে আবার চেষ্টা করুন।" : "Voice service is busy. Try again shortly.",
     voice_unavailable: bn ? "ভয়েস সেবায় সংযোগ করা যায়নি। আবার চেষ্টা করুন।" : "Could not transcribe the recording. Try again.",
@@ -591,7 +609,7 @@ function showVoiceFallback(code = "unmatched") {
     multiple: bn ? "একাধিক ব্যাংকের নাম পাওয়া গেছে। নিচে একটি বেছে নিন।" : "More than one bank was found. Choose one below."
   };
   document.getElementById("voice-feedback-message").textContent = messages[code] || (bn ? "ভয়েস চালু করা যায়নি। আবার চেষ্টা করুন।" : "Could not start voice recognition. Try again.");
-  document.getElementById("voice-feedback").hidden = false;
+  openVoiceFeedback();
   document.getElementById("voice-retry").textContent = bn ? "আবার চেষ্টা করুন" : "Try again";
   if (voiceFailures >= 2) document.getElementById("voice-feedback-message").textContent += bn ? " চারপাশে শব্দ বেশি হলে লিখে খুঁজুন।" : "If it is noisy, try typing instead.";
   if (voiceFailures >= 2 || ["not-allowed", "audio-capture", "unsupported"].includes(code)) showTyping();
@@ -600,6 +618,7 @@ function showVoiceFallback(code = "unmatched") {
 }
 
 function stopListening() {
+  setWaveformState("idle");
   voiceRequest++;
   audioRecorder?.cancel();
   audioRecorder = null;
@@ -612,8 +631,7 @@ function stopListening() {
     playTone(440, 0.08);
     if ("vibrate" in navigator) navigator.vibrate(30);
   }
-  document.getElementById("voice-feedback").hidden = true;
-  document.getElementById("home-orb").classList.remove("listening");
+  closeVoiceFeedback();
   const listeningView = document.getElementById("home-listening-view");
   if (listeningView) {
     listeningView.hidden = true;
@@ -626,13 +644,27 @@ function stopListening() {
   startExampleCycle();
 }
 
+function openVoiceFeedback() {
+  const dialog = document.getElementById("voice-feedback");
+  dialog.hidden = false;
+  if (!dialog.open) dialog.showModal();
+  pauseGreetingCycle();
+}
+
+function closeVoiceFeedback() {
+  const dialog = document.getElementById("voice-feedback");
+  if (dialog.open) dialog.close();
+  dialog.hidden = true;
+}
+
 function showTyping() {
-  document.getElementById("voice-feedback").hidden = false;
+  openVoiceFeedback();
   document.getElementById("voice-text-form").hidden = false;
   document.getElementById("voice-text-input").focus();
 }
 
 function stopAudio() {
+  setWaveformState(isListening ? "listening" : recognitionStarting ? "starting" : isSearching ? "thinking" : "idle");
   playbackRequest++;
   const player = document.getElementById("ilma-player");
   player.pause?.();
@@ -697,7 +729,12 @@ async function sendVoiceInput(audio, text, request) {
   armTimeout(40000); // bounded ASR retries/conversion can precede the first event
   try {
     const response = await fetch(audio ? "/v1/voice" : "/v1/ask", { method: "POST", body: form, signal: controller.signal, headers: { "Accept-Language": currentLang, "X-ILMA-Device": anonymousDevice } });
-    if (!response.ok) { const result = await response.json(); throw new Error(result.error?.code || "voice_unavailable"); }
+    if (response.status === 404 || response.status === 405) throw new Error("voice_backend_outdated");
+    if (!response.ok) {
+      let result;
+      try { result = await response.json(); } catch {}
+      throw new Error(result?.error?.code || "voice_unavailable");
+    }
     const reader = response.body.getReader(), decoder = new TextDecoder();
     let buffer = "";
     while (true) {
@@ -714,7 +751,12 @@ async function sendVoiceInput(audio, text, request) {
       }
       if (done) break;
     }
-    if (request === voiceRequest) { isSearching = false; voiceAbort = null; startExampleCycle(); }
+    if (request === voiceRequest) {
+      isSearching = false; voiceAbort = null;
+      const player = document.getElementById("ilma-player");
+      if (!player.src || player.paused) setWaveformState("idle");
+      startExampleCycle();
+    }
   } finally { clearTimeout(timeout); form.delete("audio"); }
 }
 
@@ -737,7 +779,6 @@ async function handleVoiceEvent(name, data, audioRequest) {
     document.getElementById("home-listening-view").hidden = true;
     document.getElementById("home-idle-view").hidden = false;
     document.getElementById("voice-feedback-message").textContent = (data.privacy_notice ? data.privacy_notice + " " : "") + data.text;
-    document.getElementById("voice-feedback").hidden = false;
     const allSources = document.getElementById("voice-answer-sources"); allSources.replaceChildren();
     (data.sources || []).forEach(source => {
       if (!/^https?:\/\//i.test(source.source_url || "")) return;
@@ -773,7 +814,10 @@ async function handleVoiceEvent(name, data, audioRequest) {
         link.textContent = source.source_title || (currentLang === "bn" ? "সূত্র" : "Source"); sources.appendChild(link);
       });
       if (data.amount_bdt != null) { document.getElementById("ret-amt-input").value = data.amount_bdt; calculateRealReturn(); }
-    } else if (["clarify", "no_data", "not_licensed"].includes(data.type)) showTyping();
+    } else {
+      openVoiceFeedback();
+      if (["clarify", "no_data", "not_licensed"].includes(data.type)) showTyping();
+    }
   }
   if (name === "speech") playVoiceAudio(data.audio_url, audioRequest);
   if (name === "speech_unavailable") document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "পড়ে শোনানোর সেবা এখন চালু নেই। উত্তরটি পর্দায় আছে।" : "Spoken playback is unavailable. The answer is shown on screen.";
@@ -783,6 +827,7 @@ async function submitTextQuestion(text = document.getElementById("voice-text-inp
   if (!text.trim()) return;
   stopListening();
   const request = ++voiceRequest; isSearching = true; pauseGreetingCycle();
+  setWaveformState("thinking");
   setVoiceState(T[currentLang].checkingText);
   try { await sendVoiceInput(null, text, request); }
   catch (error) { if (request === voiceRequest) { stopListening(); showVoiceFallback(error.message); } }
@@ -1055,7 +1100,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener?.("resize", fitGreetingLine);
   document.fonts?.ready.then(fitGreetingLine);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { stopListening(); pauseGreetingCycle(); }
+    if (document.hidden) { stopListening(); stopAudio(); pauseGreetingCycle(); }
     else startExampleCycle();
   });
   window.matchMedia?.("(prefers-reduced-motion: reduce)")?.addEventListener?.("change", startExampleCycle);
@@ -1070,6 +1115,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   document.getElementById("ilma-player").addEventListener("ended", stopAudio);
+  document.getElementById("ilma-player").addEventListener("playing", () => {
+    setWaveformState("speaking");
+    document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "ইলমা উত্তর পড়ে শোনাচ্ছে।" : "ILMA is reading the answer.";
+  });
+  document.getElementById("ilma-player").addEventListener("error", () => {
+    stopAudio();
+    document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "অডিও চালানো যায়নি। উত্তরটি পর্দায় আছে।" : "Audio could not play. The answer is shown on screen.";
+  });
   window.addEventListener?.("offline", syncConnectivity);
   window.addEventListener?.("online", syncConnectivity);
   fetch("/v1/content/fixed").then(response => response.ok ? response.json() : null).then(async content => {
@@ -1122,6 +1175,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("voice-retry").addEventListener("click", startListening);
+  document.getElementById("voice-dialog-close").addEventListener("click", closeVoiceFeedback);
+  document.getElementById("voice-feedback").addEventListener("close", () => {
+    if (document.getElementById("voice-feedback").open) return;
+    document.getElementById("voice-feedback").hidden = true;
+    startExampleCycle();
+  });
 
   const stopBtn = document.getElementById("btn-stop-listening");
   if (stopBtn) {

@@ -12,6 +12,8 @@ It does not claim that unexecuted live or human checks passed.
 | §2 | MediaRecorder WebM/MP4, 1.5s configurable silence, 15s cap, 6s no-speech, 300ms noise measurement, shared RMS orb, tones/haptics | Recorder tests; physical phone still required |
 | §2 | First-tap permission explanation; Home/Bank/Services context, last three non-sensitive exchanges | UI tests; actual browser permission/TalkBack still required |
 | Home gesture | Single tap starts recording; while recording, two taps within 450ms stop and search. Explicit stop button remains available; BN/EN recording instructions explain the gesture | UI regression covers single taps, separated taps and double-tap input-specific routing; physical touch/TalkBack validation pending |
+| Home waveform | Horizontal gold/cyan SVG replaces the orb; actual microphone levels drive listening, request lifecycle drives processing, and player events drive speaking. Native voice button, four tabs and current theme retained | UI regressions cover listening/processing/idle, playback/error and reduced-motion state. Physical device/accessibility review remains pending |
+| Search feedback | Error, clarification and typed search use a native modal dialog in dark teal/gold; retry closes it before recording, Escape/close dismiss it. Microphone status text is capped at 24px | Regression tests cover modal open/retry/close; frontend styling does not resolve upstream transcription failures |
 | §3 | ffmpeg memory pipes → 24kHz mono PCM WAV; standard ASR, correct bias, no keywords; 8s deadline, 429/500 retries at 2s/4s | Multipart/retry tests, actual synthetic-audio ffmpeg conversion and live Meta authentication pass; speech accuracy/latency remain unmeasured |
 | §3.3 | Duplicate words/halves, known Janata Hindi output, remaining Hindi rejection, punctuation cleanup | Spec examples tested |
 | §4 | NFC/digits/affix normalization, bilingual sliding-window RapidFuzz, 90/75 thresholds, four choices, risky short-name confirmation | Normalization/routing tests and actual RapidFuzz test pass |
@@ -27,6 +29,11 @@ It does not claim that unexecuted live or human checks passed.
 | §8 | MySQL daily AI counter; status/insurance/rate templates exempt; daily retention job | Counter/retention tests; anonymous device headers are not full device authentication |
 | §9 | /v1/voice audio+context, /v1/ask text+context, transcript/match/result/speech SSE; owned streaming DB session and audio release | Fragmented UTF-8 SSE + route tests |
 | §10–11 | Replay CLI with explicit CSV column mapping, real-voice collector, metric thresholds, clean-real <90% review flag | Harness/threshold tests; datasets and people are not available here |
+
+Waveform integration browser checks: headless Chromium at 320×568, 390×844 and
+1440×900 passed startup without JavaScript errors, horizontal overflow checks,
+settings open/close and reduced-motion preference propagation. These checks do
+not substitute for physical microphone, TalkBack or VoiceOver testing.
 
 All runtime database persistence uses MySQL. SQLite is only used for isolated test
 fixtures. The migration never inserts bank fundamentals or sample institutions.
@@ -141,6 +148,22 @@ Updated 2026-10-27 after the workspace access change:
 - No credentials were printed. Runtime requests do not save audio to disk.
 
 ## Remaining acceptance gates
+
+Deployment incident, 2026-10-27: `https://app.sumon.me` served frontend asset
+version 15, but its published OpenAPI document omitted `/v1/voice`, `/v1/ask`,
+`/v1/speech` and `/v1/voice/config`. Empty POST probes to voice/ask and GET config
+returned 404. No user recording was sent in these probes. Local live Meta
+authentication still passed. Deploy/restart the current `ilma_api.main:app` and
+verify reverse-proxy routing before retesting speech. Updating static assets
+alone cannot activate Python routes. The frontend now identifies missing voice
+routes explicitly; it does not claim the deployment has been repaired.
+
+Resolved later on 2026-10-27: the existing `ilma-app.service` was already enabled
+at boot with `Restart=always`, but its process predated the voice implementation.
+Restarted that service. Both localhost:8001 and `https://app.sumon.me` now return
+200 for `/v1/voice/config`, and both OpenAPI documents contain all four voice
+routes. Service is active/running. This resolves the missing-route incident;
+physical microphone transcription still needs a fresh phone test.
 
 The overall readiness command still exits nonzero. Connectivity and dependency
 installation are no longer blockers; the following work remains:

@@ -12,6 +12,7 @@ function response(events) {
 function voiceApp(options = {}) {
   const app = createApp(options);
   app.context.fetch = async (url, request) => {
+    assert.equal(app.node('home-orb').attributes['data-state'], 'thinking');
     assert.equal(url, '/v1/voice');
     assert.equal(request.method, 'POST');
     const context = JSON.parse(request.body.get('context'));
@@ -48,10 +49,20 @@ function voiceApp(options = {}) {
   const app = voiceApp();
   await app.fire('home-tap-target', 'click');
   assert.equal(app.run('isListening'), true);
+  assert.equal(app.node('home-orb').attributes['data-state'], 'listening');
+  assert.equal(app.node('home-tap-target').attributes['aria-pressed'], 'true');
   await app.fire('btn-stop-listening', 'click', { stopPropagation() {} });
   assert.equal(app.run('isListening'), false);
   assert.equal(app.node('voice-transcript').textContent, 'আপনি বলেছেন: “পূবালী ব্যাংক”');
   assert.equal(app.context.openedBank, 102);
+  assert.equal(app.node('home-orb').attributes['data-state'], 'idle');
+  assert.equal(app.node('home-tap-target').attributes['aria-pressed'], 'false');
+  await app.fire('ilma-player', 'playing');
+  assert.equal(app.node('home-orb').attributes['data-state'], 'speaking');
+  await app.fire('ilma-player', 'error');
+  assert.equal(app.node('home-orb').attributes['data-state'], 'idle');
+  const reduced = voiceApp({ reducedMotion: true });
+  assert.equal(reduced.node('home-orb').attributes['data-reduced-motion'], 'true');
   const doubleTap = voiceApp();
   await doubleTap.fire('home-tap-target', 'click', { timeStamp: 1000 });
   assert.equal(doubleTap.run('isListening'), true);
@@ -68,9 +79,18 @@ function voiceApp(options = {}) {
     await failed.fire('home-tap-target', 'click'); await failed.run('finishRecording()');
     assert.equal(failed.context.openedBank, undefined);
     assert.equal(failed.node('voice-feedback').hidden, false);
+    assert.equal(failed.node('voice-feedback').open, true, 'errors open the search dialog');
     await failed.fire('voice-retry', 'click'); assert.equal(failed.run('isListening'), true);
+    assert.equal(failed.node('voice-feedback').open, false, 'retry closes the dialog before recording');
   }
   const english = voiceApp();
+  const outdated = voiceApp();
+  outdated.run('currentLang = "en"');
+  outdated.context.fetch = async () => ({ ok: false, status: 404 });
+  await outdated.fire('home-tap-target', 'click');
+  await outdated.run('finishRecording()');
+  assert.match(outdated.node('voice-feedback-message').textContent, /backend needs to be updated or restarted/);
+  assert.equal(outdated.context.openedBank, undefined);
   english.context.fetch = async () => response([['transcript', { text: 'Is Pubali Bank safe?', language: 'en' }], ['result', { type: 'report_card', institution_id: 102, text: 'Pubali information' }]]);
   await english.fire('home-tap-target', 'click'); await english.run('finishRecording()');
   assert.equal(english.document.documentElement.lang, 'en');
@@ -84,5 +104,8 @@ function voiceApp(options = {}) {
   await unknown.fire('home-tap-target', 'click'); await unknown.run('finishRecording()');
   assert.equal(unknown.context.openedBank, undefined);
   assert.equal(unknown.node('voice-text-form').hidden, false);
+  assert.equal(unknown.node('voice-feedback').open, true);
+  await unknown.fire('voice-dialog-close', 'click');
+  assert.equal(unknown.node('voice-feedback').hidden, true);
   console.log('Spec 02 voice UI passed: permission explanation, compressed upload/context, fragmented UTF-8 SSE, input-based routing, automatic language switch, typing and errors');
 })().catch(error => { console.error(error); process.exitCode = 1; });

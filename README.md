@@ -2,8 +2,8 @@
 
 ILMA is a Bangla and English banking information app designed for blind and
 low-vision users. Speak a bank name or ask a question to find bank reports,
-services and sourced answers. The interface uses a teal and gold theme, a voice
-orb and four tabs: Home, Bank Services, Bank Details and News.
+services and sourced answers. The interface uses a teal and gold theme, a living
+waveform and four tabs: Home, Bank Services, Bank Details and News.
 
 ## Features
 
@@ -82,6 +82,22 @@ nonzero when any readiness gate is incomplete, even if connectivity succeeds.
 
 `bash ops/bootstrap_voice.sh` can install dependencies and run the migration
 using `ILMA_VENV_PATH` or the activated environment. It reuses an existing venv.
+
+### Current server service
+
+The current host runs `ilma-app.service` as `ubuntu`, using
+`/home/ubuntu/venv/bin/python3 -m uvicorn ilma_api.main:app` from this project's
+directory. It listens on `127.0.0.1:8001` behind the public HTTPS endpoint. The
+service is enabled at boot and uses `Restart=always` for process recovery.
+Restart it after deploying Python changes; updating static files does not reload
+the running backend:
+
+```sh
+sudo systemctl restart ilma-app.service
+systemctl status ilma-app.service --no-pager
+journalctl -u ilma-app.service -n 50 --no-pager
+curl --fail https://app.sumon.me/v1/voice/config
+```
 
 ## API overview
 

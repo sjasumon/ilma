@@ -89,9 +89,10 @@ class TestMetaVoice(unittest.IsolatedAsyncioTestCase):
         sleep = patch("ilma_api.voice.asyncio.sleep", new_callable=AsyncMock)
         sleep.start(); self.addCleanup(sleep.stop)
         self.key = patch.object(settings, 'MUSE_VOICE_API_KEY', 'test-key-do-not-leak')
+        self.spark_key = patch.object(settings, 'META_MODEL_API_KEY', 'test-key-do-not-leak')
         self.url = patch.object(settings, 'MUSE_VOICE_API_URL', 'https://api.meta.ai/v1/asr/transcribe')
         self.model = patch.object(settings, 'MUSE_VOICE_MODEL', 'muse-voice-transcribe-1.0')
-        for item in (self.key, self.url, self.model):
+        for item in (self.key, self.spark_key, self.url, self.model):
             item.start()
             self.addCleanup(item.stop)
 

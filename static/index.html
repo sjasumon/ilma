@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ILMA · Your trusted savings companion</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans:wght@400;600;700&family=Tiro+Bangla&display=swap">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-13">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261027-16">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -37,48 +37,17 @@
     <section id="tab-home" class="tab-content active" aria-label="হোম">
       <div class="home-tap-target">
         <button id="home-tap-target" class="home-speak-button" type="button" aria-label="কথা বলুন। ব্যাংকের নাম বলুন।"></button>
-        <!-- SVG Orb matching S01-Home.html exactly -->
-        <svg viewBox="0 0 260 260" width="280" height="280" aria-hidden="true" class="orb-svg" id="home-orb">
-          <defs>
-            <radialGradient id="hg" cx="50%" cy="50%" r="50%">
-              <stop offset="55%" stop-color="#7FD3E3" stop-opacity="0.22"></stop>
-              <stop offset="100%" stop-color="#7FD3E3" stop-opacity="0"></stop>
-            </radialGradient>
-            <radialGradient id="hs" cx="38%" cy="32%" r="75%">
-              <stop offset="0%" stop-color="#4A8E8A"></stop>
-              <stop offset="55%" stop-color="#1D4744"></stop>
-              <stop offset="100%" stop-color="#0C2321"></stop>
-            </radialGradient>
-            <linearGradient id="hr" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#F6CB55"></stop>
-              <stop offset="100%" stop-color="#7FD3E3"></stop>
-            </linearGradient>
-            <linearGradient id="hw" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#E9D08A"></stop>
-              <stop offset="100%" stop-color="#7FD3E3"></stop>
-            </linearGradient>
-            <radialGradient id="hb1">
-              <stop offset="0%" stop-color="#46AAC0" stop-opacity="0.55"></stop>
-              <stop offset="100%" stop-color="#46AAC0" stop-opacity="0"></stop>
-            </radialGradient>
-            <radialGradient id="hb2">
-              <stop offset="0%" stop-color="#F6D682" stop-opacity="0.32"></stop>
-              <stop offset="100%" stop-color="#F6D682" stop-opacity="0"></stop>
-            </radialGradient>
-            <clipPath id="hc"><circle cx="130" cy="130" r="100"></circle></clipPath>
-          </defs>
-          <circle cx="130" cy="130" r="128" fill="url(#hg)"></circle>
-          <circle cx="130" cy="130" r="100" fill="url(#hs)"></circle>
-          <g clip-path="url(#hc)">
-            <circle cx="100" cy="152" r="72" fill="url(#hb1)"></circle>
-            <circle cx="170" cy="104" r="62" fill="url(#hb2)"></circle>
-            <path class="wv" stroke="url(#hw)" d="M20 130 C 55 92, 95 92, 130 130 S 205 168, 240 130"></path>
-            <path class="wv b" stroke="url(#hw)" d="M20 130 C 55 162, 95 166, 130 130 S 205 98, 240 130"></path>
-            <path class="wv c" stroke="url(#hw)" d="M20 130 C 60 114, 100 116, 130 130 S 200 146, 240 130"></path>
-          </g>
-          <circle cx="130" cy="130" r="100" fill="none" stroke="url(#hr)" stroke-width="1.6" opacity="0.75"></circle>
-          <ellipse cx="98" cy="80" rx="38" ry="17" fill="#FFFFFF" opacity="0.12" transform="rotate(-28 98 80)"></ellipse>
-        </svg>
+        <!-- Decorative waveform; driven by the real voice pipeline. -->
+        <svg id="home-orb" class="home-waveform" data-state="idle" viewBox="0 0 420 160" role="presentation" aria-hidden="true" preserveAspectRatio="none">
+      <defs><radialGradient id="home-wave-glow"><stop stop-color="#6ce0c9" stop-opacity=".16"/><stop offset="1" stop-color="#6ce0c9" stop-opacity="0"/></radialGradient></defs>
+      <ellipse cx="210" cy="81" rx="148" ry="69" fill="url(#home-wave-glow)"/>
+      <path class="line baseline" d="M6 82 H414"/>
+      <path class="line ghost" d="M5 82 C50 82 64 36 107 43 S169 123 209 83 S275 37 307 50 S370 83 415 82"/>
+      <path class="line ghost" d="M5 82 C57 80 78 134 115 124 S169 34 209 77 S274 131 315 118 S368 81 415 82"/>
+      <path class="line gold" d="M6 82 C45 81 72 82 98 94 S140 117 170 79 S206 19 229 26 S267 96 298 107 S349 63 385 78 S408 82 414 82"/>
+      <path class="line cyan" d="M6 82 C51 83 72 66 101 69 S146 121 178 98 S212 57 243 62 S286 121 319 110 S356 74 414 82"/>
+      <circle class="particle" cx="88" cy="44" r="2"/><circle class="particle mint" cx="116" cy="63" r="1.2"/><circle class="particle" cx="356" cy="47" r="1.6"/><circle class="particle mint" cx="374" cy="111" r="1.9"/><circle class="particle" cx="107" cy="132" r="2"/>
+    </svg>
 
         <!-- Idle State View -->
         <div class="home-idle-view" id="home-idle-view">
@@ -87,19 +56,7 @@
           </div>
         </div>
 
-        <div id="voice-feedback" class="voice-feedback" hidden>
-          <p id="voice-feedback-message" role="status" aria-live="polite"></p>
-          <button id="voice-retry" class="btn-stop-listening" type="button">আবার চেষ্টা করুন</button>
-          <p id="voice-transcript" hidden></p>
-          <div id="voice-matches"></div>
-          <div id="voice-answer-sources"></div>
-          <button id="voice-type" class="voice-bank-choice" type="button">⌨ লিখে খুঁজুন</button>
-          <form id="voice-text-form" hidden>
-            <label id="voice-text-label" for="voice-text-input">ব্যাংকের নাম বা প্রশ্ন লিখুন</label>
-            <input id="voice-text-input" class="calc-field" maxlength="1000" autocomplete="off">
-            <button id="voice-text-submit" class="voice-bank-choice" type="submit">খুঁজুন</button>
-          </form>
-        </div>
+
 
         <!-- Listening State View (S-02) -->
         <div class="home-listening-view" id="home-listening-view" hidden aria-live="polite">
@@ -272,6 +229,21 @@
       </div>
     </section>
 
+        <dialog id="voice-feedback" class="voice-feedback" aria-labelledby="voice-dialog-title" hidden>
+          <div class="voice-dialog-heading"><h2 id="voice-dialog-title">ভয়েস অনুসন্ধান</h2><button id="voice-dialog-close" class="settings-close" type="button" aria-label="বন্ধ করুন">×</button></div>
+          <p id="voice-feedback-message" role="status" aria-live="polite"></p>
+          <button id="voice-retry" class="btn-stop-listening" type="button">আবার চেষ্টা করুন</button>
+          <p id="voice-transcript" hidden></p>
+          <div id="voice-matches"></div>
+          <div id="voice-answer-sources"></div>
+          <button id="voice-type" class="voice-bank-choice" type="button">⌨ লিখে খুঁজুন</button>
+          <form id="voice-text-form" hidden>
+            <label id="voice-text-label" for="voice-text-input">ব্যাংকের নাম বা প্রশ্ন লিখুন</label>
+            <input id="voice-text-input" class="calc-field" maxlength="1000" autocomplete="off">
+            <button id="voice-text-submit" class="voice-bank-choice" type="submit">খুঁজুন</button>
+          </form>
+        </dialog>
+
     <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
       <div class="settings-heading">
         <h2 id="settings-title">সেটিংস</h2>
@@ -355,7 +327,7 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-13"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261027-13"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261027-16"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261027-16"></script>
 </body>
 </html>
