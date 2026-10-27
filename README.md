@@ -161,6 +161,10 @@ live service. No diagnostic recordings or transcripts are pushed to GitHub.
 
 ## Acceptance status
 
+**Not yet approved for unrestricted production.** See the current
+[production readiness audit](docs/PRODUCTION_READINESS.md) for verified behavior,
+release blockers and the evidence required to launch.
+
 The latest bank/services checks include 64 passing Python tests, five passing
 frontend suites, successful MySQL voice migration, Meta authentication and
 ElevenLabs configured-voice access. Full acceptance is still pending:
