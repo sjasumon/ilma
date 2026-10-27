@@ -71,7 +71,9 @@
       try {
         if (this.media.state !== 'inactive') this.media.stop();
         this.stream?.getTracks().forEach(track => track.stop());
-        await this.stopped;
+        await Promise.race([this.stopped, new Promise((_, reject) => {
+          this.stopWaitTimer = setTimeout(() => reject(new Error('recording_finalize_timeout')), 5000);
+        })]);
         if (this.cancelled) throw new Error('cancelled');
         const recording = new Blob(this.chunks, { type: this.media.mimeType });
         this.chunks = [];
@@ -79,7 +81,7 @@
         return recording;
       } finally { this.cleanup(); }
     }
-    clearTimers() { clearInterval(this.monitor); clearTimeout(this.deadline); }
+    clearTimers() { clearInterval(this.monitor); clearTimeout(this.deadline); clearTimeout(this.stopWaitTimer); }
     cleanup() {
       this.clearTimers();
       this.stream?.getTracks().forEach(track => track.stop());
@@ -89,6 +91,7 @@
     cancel() {
       this.cancelled = true;
       if (this.media?.state === 'recording') this.media.stop();
+      this.resolveStop?.();
       this.cleanup();
     }
   }

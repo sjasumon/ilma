@@ -1,7 +1,7 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-voice18';
+const SHELL = 'ilma-shell-voice20';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ['/', '/static/css/ilma.css?v=voice-complete-20261027-18', '/static/js/app.js?v=voice-complete-20261027-18', '/static/js/voice-recorder.js?v=voice-complete-20261027-18'];
+const ASSETS = ['/', '/static/css/ilma.css?v=voice-complete-20261027-20', '/static/js/app.js?v=voice-complete-20261027-20', '/static/js/voice-recorder.js?v=voice-complete-20261027-20'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

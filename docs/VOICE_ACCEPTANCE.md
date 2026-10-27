@@ -132,6 +132,14 @@ services answer, source links, language chip, stop/slow/mute, and typing fallbac
 
 ## Current evidence
 
+Full pipeline follow-up: see [VOICE_PIPELINE_AUDIT.md](VOICE_PIPELINE_AUDIT.md).
+The host service's wrong database selection is corrected using the systemd
+override in `ops/ilma-database.conf`; public bank lookup and a typed report-card
+request now work. Forty-eight Python checks and five Node suites pass. Three
+saved-recording replays produced a report, a clarification and a script rejection,
+without database errors. Dataset completeness, real speech accuracy and physical
+device checks remain pending.
+
 Optional development diagnostics now support paired original audio, raw ASR
 text, language and match/result/error events in MySQL. Both development mode
 and an explicit enable switch are required; production defaults do not capture.

@@ -2,7 +2,7 @@ import io
 import json
 import unittest
 import importlib.util
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import CreateTable
@@ -98,6 +98,63 @@ class TestVoiceText(unittest.TestCase):
 
 
 class TestVoiceProviders(unittest.IsolatedAsyncioTestCase):
+    async def test_speech_uses_separate_bounded_timeout(self):
+        import httpx
+        from ilma_api import settings
+        from ilma_api.voice_pipeline import speech
+        real_wait = __import__('asyncio').wait_for
+        timeouts = []
+        async def bounded(awaitable, timeout):
+            timeouts.append(timeout)
+            return await real_wait(awaitable, timeout)
+        with patch.object(settings, 'ELEVENLABS_API_KEY', 'test-only'), patch.object(settings, 'ELEVENLABS_VOICE_ID', 'testvoice'), patch('ilma_api.voice_pipeline.asyncio.wait_for', new=bounded):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(200, content=b'mp3'))) as client:
+                result = await speech('ইলমা', 'bn', client)
+        self.assertTrue(result.startswith('data:audio/mpeg;base64,'))
+        self.assertEqual(timeouts, [settings.SPEECH_TIMEOUT_SECONDS])
+
+    async def test_unexpected_failure_becomes_sanitized_stream_error(self):
+        from ilma_api.voice_pipeline import run_pipeline
+        db = MagicMock()
+        with patch('ilma_api.voice_pipeline.clean_transcript', side_effect=RuntimeError('private-provider-payload')):
+            chunks = [chunk async for chunk in run_pipeline(None, 'hello', '', VoiceContext(), [], db, mode='text')]
+        self.assertIn('voice_internal_error', ''.join(chunks))
+        self.assertNotIn('private-provider-payload', ''.join(chunks))
+        db.rollback.assert_called()
+
+    async def test_cancelled_request_records_stage_and_still_cancels(self):
+        import asyncio
+        from ilma_api.voice_pipeline import run_pipeline
+        capture = {'events': []}
+        with patch('ilma_api.voice_pipeline.convert_audio', side_effect=asyncio.CancelledError()):
+            with self.assertRaises(asyncio.CancelledError):
+                async for _ in run_pipeline(b'webm', '', 'audio/webm', VoiceContext(), [], MagicMock(), diagnostic=capture):
+                    pass
+        self.assertEqual(capture['events'][-1]['data']['stage'], 'cancelled')
+
+    async def test_health_detects_connected_but_incomplete_database(self):
+        from ilma_api.main import health_check
+        from ilma_api.db import Release
+        engine = create_engine('sqlite://')
+        Release.__table__.create(engine)
+        with Session(engine) as db:
+            db.add(Release(release_id='test-release'))
+            db.commit()
+            health = health_check(db)
+        self.assertFalse(health['ok'])
+        self.assertFalse(health['bank_data_ready'])
+        engine.dispose()
+
+    async def test_empty_provider_choices_is_a_controlled_intent_error(self):
+        import httpx
+        from ilma_api import settings
+        from ilma_api.voice import VoiceError
+        with patch.object(settings, 'META_MODEL_API_KEY', 'test-only'):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(200, json={'choices': []}))) as client:
+                with self.assertRaises(VoiceError) as caught:
+                    await understand('What is the deposit rate?', [], VoiceContext(), client)
+        self.assertEqual(caught.exception.code, 'intent_unavailable')
+
     async def test_bank_name_skips_spark(self):
         matches = match_candidates('Eastern Bank', BANKS, scorer=exact_score)
         with patch('ilma_api.voice_pipeline.httpx.AsyncClient') as client:

@@ -22,6 +22,14 @@ from ilma_api.replay_voice import read_manifest, summarize, public_transcript
 
 
 class TestVoiceCompletion(unittest.TestCase):
+    def test_empty_grounded_provider_choices_fall_back_to_facts(self):
+        async def check():
+            facts = [{'fact_id': 'npl', 'text': 'Bad loans 2.24%.'}]
+            with patch.object(settings, 'META_MODEL_API_KEY', 'test-only'):
+                async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(200, json={'choices': []}))) as client:
+                    return await write_answer('What is NPL?', facts, 'en', client)
+        self.assertEqual(asyncio.run(check()), 'Bad loans 2.24%.')
+
     def test_compound_numbers_and_full_speech_lexicon(self):
         self.assertEqual(len(WORDS), 100)
         for text, expected in [('দুই লাখ পঞ্চাশ হাজার', '250000 taka'), ('দেড় বছর', '18 months'),

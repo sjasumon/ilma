@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-function createRecorder({ permissionError = null } = {}) {
+function createRecorder({ permissionError = null, stopStalls = false } = {}) {
   const intervals = new Map(), timeouts = new Map();
   let now = 0, level = .1, next = 0, tracksStopped = 0;
   const decoded = { length: 48000, sampleRate: 48000, numberOfChannels: 1, getChannelData: () => new Float32Array(48000).fill(.1) };
@@ -18,7 +18,7 @@ function createRecorder({ permissionError = null } = {}) {
     static isTypeSupported() { return true; }
     mimeType = 'audio/webm'; state = 'inactive';
     start() { this.state = 'recording'; }
-    stop() { this.state = 'inactive'; this.ondataavailable({ data: new Blob(['encoded recording']) }); this.onstop(); }
+    stop() { this.state = 'inactive'; this.ondataavailable({ data: new Blob(['encoded recording']) }); if (!stopStalls) this.onstop(); }
   }
   const context = vm.createContext({
     Blob, Date: { now: () => now },
@@ -63,5 +63,18 @@ function createRecorder({ permissionError = null } = {}) {
   const blocked = createRecorder({ permissionError: 'NotAllowedError' });
   await assert.rejects(blocked.recorder.start({ onComplete() {}, onError() {} }), { name: 'NotAllowedError' });
   assert.equal(blocked.recorder.context.state, 'closed');
+  const stalled = createRecorder({stopStalls:true});
+  await stalled.recorder.start({onComplete(){},onError(){}});
+  const rejected = assert.rejects(stalled.recorder.finish(), /recording_finalize_timeout/);
+  stalled.limit();
+  await rejected;
+  assert.equal(stalled.timers(), 0);
+  assert.ok(stalled.stopped());
+  const cancelled = createRecorder({stopStalls:true});
+  await cancelled.recorder.start({onComplete(){},onError(){}});
+  const cancelledFinish = assert.rejects(cancelled.recorder.finish(), /cancelled/);
+  cancelled.recorder.cancel();
+  await cancelledFinish;
+  assert.equal(cancelled.timers(), 0);
   console.log('Audio recorder passed: raw compressed recording, configurable silence detection, 15-second timer, no-speech, track/timer cleanup and permission denial');
 })().catch(error => { console.error(error); process.exitCode = 1; });

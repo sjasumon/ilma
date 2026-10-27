@@ -54,7 +54,7 @@ async def write_answer(question, facts, language, client=None):
                 if response.status_code != 200: continue
                 answer = GroundedAnswer.model_validate_json(response.json()['choices'][0]['message']['content'])
                 if verified(answer, facts): return ' '.join(sentence.text for sentence in answer.sentences)
-            except (httpx.HTTPError, ValueError, KeyError, TypeError): continue
+            except (httpx.HTTPError, ValueError, KeyError, TypeError, IndexError): continue
         return fallback
     if client is not None: return await attempts(client)
     async with httpx.AsyncClient(timeout=8, follow_redirects=False) as http: return await attempts(http)

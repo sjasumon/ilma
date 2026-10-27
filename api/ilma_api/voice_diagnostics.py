@@ -5,6 +5,7 @@ import json
 import logging
 from pathlib import Path
 import uuid
+import time
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -30,6 +31,12 @@ def capture_event(capture, chunk):
     if name not in {'transcript', 'match', 'result', 'error'}: return
     payload = next((line[6:] for line in lines if line.startswith('data: ')), '{}')
     capture['events'].append({'event': name, 'data': json.loads(payload)})
+
+
+def trace_stage(capture, stage, started, **metadata):
+    if capture is not None and len(capture['events']) < 20:
+        capture['events'].append({'event': 'stage', 'data': {
+            'stage': stage, 'elapsed_ms': round((time.monotonic() - started) * 1000), **metadata}})
 
 
 def prune(db):

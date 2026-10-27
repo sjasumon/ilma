@@ -1,11 +1,11 @@
 const assert = require('node:assert/strict');
 const { createApp } = require('./frontend_harness.cjs');
-function response(events) {
+function response(events, lineEnding = '\n', failAtEnd = false) {
   // Split across UTF-8 code points and SSE frame boundaries to exercise buffering.
-  const bytes = new TextEncoder().encode(events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join(''));
+  const bytes = new TextEncoder().encode(events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join('').replace(/\n/g, lineEnding));
   let offset = 0;
   return { ok: true, body: { getReader: () => ({
-    async read() { if (offset >= bytes.length) return { done: true }; const value = bytes.slice(offset, offset + 7); offset += 7; return { value, done: false }; },
+    async read() { if (offset >= bytes.length) { if (failAtEnd) throw Error('connection lost'); return { done: true }; } const value = bytes.slice(offset, offset + 7); offset += 7; return { value, done: false }; },
     async cancel() {}
   }) } };
 }
@@ -73,6 +73,12 @@ function voiceApp(options = {}) {
   await doubleTap.fire('home-tap-target', 'click', { timeStamp: 6200 });
   assert.equal(doubleTap.run('isListening'), false);
   assert.equal(doubleTap.context.openedBank, 102, 'double tap stops and searches the recorded input');
+  const keyboard = voiceApp();
+  await keyboard.fire('home-tap-target', 'click', {detail:0});
+  assert.equal(keyboard.run('isListening'), true);
+  await keyboard.fire('home-tap-target', 'click', {detail:0});
+  assert.equal(keyboard.run('isListening'), false);
+  assert.equal(keyboard.context.openedBank, 102, 'assistive/keyboard activation stops with one native activation');
   for (const code of ['voice_unconfigured', 'voice_unavailable', 'voice_rate_limited', 'no_speech']) {
     const failed = voiceApp();
     failed.context.fetch = async () => response([['error', { code }]]);
@@ -84,6 +90,32 @@ function voiceApp(options = {}) {
     assert.equal(failed.node('voice-feedback').open, false, 'retry closes the dialog before recording');
   }
   const english = voiceApp();
+  const lateDisconnect = voiceApp();
+  lateDisconnect.context.fetch = async () => response([
+    ['transcript', {text:'Pubali Bank', language:'en'}],
+    ['result', {type:'report_card', institution_id:102, text:'Pubali information'}]
+  ], '\n', true);
+  await lateDisconnect.fire('home-tap-target', 'click');
+  await lateDisconnect.run('finishRecording()');
+  assert.equal(lateDisconnect.context.openedBank, 102);
+  assert.equal(lateDisconnect.run('isSearching'), false);
+  assert.match(lateDisconnect.node('sr-announcer').textContent, /answer is shown/);
+  const crlf = voiceApp();
+  crlf.context.fetch = async () => response([
+    ['transcript', {text:'Pubali Bank', language:'en'}],
+    ['result', {type:'report_card', institution_id:102, text:'Pubali information'}]
+  ], '\r\n');
+  await crlf.fire('home-tap-target', 'click');
+  await crlf.run('finishRecording()');
+  assert.equal(crlf.context.openedBank, 102, 'CRLF split across network chunks must parse');
+  const interrupted = voiceApp();
+  interrupted.run('currentLang = "en"');
+  interrupted.context.fetch = async () => response([['transcript', {text:'Pubali Bank', language:'en'}]]);
+  await interrupted.fire('home-tap-target', 'click');
+  await interrupted.run('finishRecording()');
+  assert.match(interrupted.node('voice-feedback-message').textContent, /connection ended before the answer/);
+  assert.match(interrupted.node('voice-transcript').textContent, /Pubali Bank/);
+  assert.equal(interrupted.run('isSearching'), false);
   const mismatch = voiceApp();
   mismatch.run('currentLang = "en"');
   mismatch.context.fetch = async () => response([

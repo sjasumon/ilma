@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from ilma_api.db import SessionLocal, Institution, InstitutionAlias, Release, Event, Source
@@ -53,10 +53,16 @@ def health_check(db: Session = Depends(get_db)):
     try:
         rel = db.query(Release).order_by(Release.loaded_at.desc()).first()
         release_id = rel.release_id if rel else "unknown"
+        tables = set(inspect(db.get_bind()).get_table_names())
+        bank_ready = {'institution', 'institution_alias', 'fact', 'source', 'rate', 'insurance_rule'} <= tables
+        bank_ready = bank_ready and db.query(Institution.id).first() is not None
+        voice_ready = {'app_question_log', 'app_rate_counter', 'app_content'} <= tables
         return {
-            "ok": True,
+            "ok": bool(bank_ready and voice_ready),
             "release_id": release_id,
-            "db": "connected"
+            "db": "connected",
+            "bank_data_ready": bool(bank_ready),
+            "voice_tables_ready": voice_ready,
         }
     except Exception as e:
         return {

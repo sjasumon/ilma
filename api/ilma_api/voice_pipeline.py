@@ -19,6 +19,7 @@ from ilma_api.db import AppQuestionLog, AppRateCounter, Rate, InsuranceRule
 from ilma_api.report_card import get_institution_report_card
 from ilma_api.voice import VoiceError, MAX_UPLOAD_BYTES, convert_audio, transcribe
 from ilma_api.voice_text import VoiceContext, VoiceIntent, clean_transcript, match_candidates, decide_language, normalize_numbers, bank_name_only
+from ilma_api.voice_diagnostics import trace_stage
 
 
 def parse_request(content_type, body, mode):
@@ -87,7 +88,7 @@ async def understand(text, candidates, context, client=None):
         if not intent.institution_ids and intent.intent in {'bank_status', 'bank_detail', 'rates'} and len(ids) == 1:
             intent.institution_ids = ids
         return intent
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+    except (httpx.HTTPError, ValueError, KeyError, TypeError, IndexError):
         raise VoiceError('intent_unavailable', 502, 'প্রশ্নটি বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Could not understand the question. Please try again or type.') from None
 
 
@@ -167,11 +168,18 @@ async def speech(text, language, client=None):
             json={'text': pronounce(text[:1600], language), 'model_id': settings.ELEVENLABS_MODEL})
     try:
         if client is None:
-            async with httpx.AsyncClient(timeout=8, follow_redirects=False) as http: response = await send(http)
-        else: response = await send(client)
-        if response.status_code != 200 or len(response.content) > 2 * 1024 * 1024: return None
+            async with httpx.AsyncClient(timeout=httpx.Timeout(settings.SPEECH_TIMEOUT_SECONDS, connect=5), follow_redirects=False) as http:
+                response = await asyncio.wait_for(send(http), settings.SPEECH_TIMEOUT_SECONDS)
+        else: response = await asyncio.wait_for(send(client), settings.SPEECH_TIMEOUT_SECONDS)
+        if response.status_code != 200 or len(response.content) > 2 * 1024 * 1024:
+            import logging
+            logging.getLogger(__name__).warning('voice_speech_failed status=%s', response.status_code)
+            return None
         return 'data:audio/mpeg;base64,' + base64.b64encode(response.content).decode()
-    except httpx.HTTPError: return None
+    except (httpx.HTTPError, asyncio.TimeoutError) as error:
+        import logging
+        logging.getLogger(__name__).warning('voice_speech_failed type=%s', type(error).__name__)
+        return None
 
 
 def log_outcome(db, mode, intent, institution, outcome, started, device_hash=None, fact_ids=None):
@@ -210,11 +218,17 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
     fact_ids = []
     try:
         if mode == 'voice':
+            trace_stage(diagnostic, 'conversion_started', started, uploaded_bytes=len(audio), mime=mime)
             wav = await convert_audio(audio, mime)
+            import wave
+            with wave.open(io.BytesIO(wav), 'rb') as recording:
+                duration_ms = round(recording.getnframes() / recording.getframerate() * 1000)
+            trace_stage(diagnostic, 'asr_started', started, duration_ms=duration_ms, language=context.ui_lang)
             audio = None
             try:
                 text = await transcribe(wav, context.ui_lang, [])
                 if diagnostic is not None: diagnostic['meta_transcript'] = text
+                trace_stage(diagnostic, 'asr_completed', started)
             finally: del wav
         try:
             text = clean_transcript(text)
@@ -226,17 +240,18 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                     'The speech service returned text in an unexpected script. Check what it heard, then speak again or type a correction.') from None
             raise
         if not text: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
+        # A slow/failing database must never delay the recognized question.
+        yield event('transcript', {'text': text, 'language': context.ui_lang})
         if callable(banks):
-            try:
-                banks = banks()
-            except SQLAlchemyError:
-                yield event('transcript', {'text': text, 'language': context.ui_lang})
-                raise
+            trace_stage(diagnostic, 'bank_index_started', started)
+            banks = banks()
         from ilma_api.voice_answers import numbers
         sensitive_numbers = bool(numbers(text))
         candidates = match_candidates(text, banks)
+        trace_stage(diagnostic, 'matching_completed', started, candidates=len(candidates))
         language = decide_language(text, candidates, context.ui_lang)
-        yield event('transcript', {'text': text, 'language': language})
+        if language != context.ui_lang:
+            yield event('transcript', {'text': text, 'language': language})
         if not candidates and context.bank_id and context.tab == 'bank':
             bank = next((bank for bank in banks if bank['id'] == context.bank_id), None)
             if bank: candidates = [{**bank, 'alias': '', 'confidence': 1, 'confirm': False}]
@@ -256,7 +271,9 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             yield event('result', {'type': 'not_licensed', 'text': 'আমাদের যাচাইকৃত তালিকায় এটি লাইসেন্সপ্রাপ্ত ব্যাংক বা আর্থিক প্রতিষ্ঠান নয়।' if language == 'bn' else 'Our verified institution list does not mark this organization as a licensed bank or finance company.', 'sources': [], 'omit_history': sensitive_numbers})
             outcome = 'no_data'
             return
+        trace_stage(diagnostic, 'intent_started', started)
         understood = await understand(text, candidates, context)
+        trace_stage(diagnostic, 'intent_completed', started, intent=understood.intent)
         intent = understood.intent
         if intent not in {'bank_status', 'insurance', 'rates'}: consume_question(db, device_hash)
         institution = understood.institution_ids[0] if understood.institution_ids else None
@@ -280,15 +297,29 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         yield event('result', result)
         outcome = 'refused' if result['type'] == 'refused' else 'no_data' if result['type'] in {'clarify', 'no_data'} else 'answered'
         if context.speak:
+            trace_stage(diagnostic, 'speech_started', started)
             audio_url = await speech(result.get('privacy_notice', '') + ' ' + result['text'], language)
+            trace_stage(diagnostic, 'speech_completed' if audio_url else 'speech_unavailable', started)
             if audio_url: yield event('speech', {'audio_url': audio_url, 'text': result['text']})
             else: yield event('speech_unavailable', {'text': 'Listen is unavailable until a speech voice is configured.'})
     except VoiceError as error:
+        trace_stage(diagnostic, 'failed', started, code=error.code)
         import logging
         logging.getLogger(__name__).warning('voice_pipeline_error code=%s', error.code)
         yield event('error', {'code': error.code, 'message_bn': error.bn, 'message_en': error.en})
     except SQLAlchemyError:
+        trace_stage(diagnostic, 'failed', started, code='bank_data_unavailable')
+        db.rollback()
         yield event('error', {'code': 'bank_data_unavailable', 'message_bn': 'ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না।', 'message_en': 'Bank data is unavailable.'})
+    except Exception as error:
+        trace_stage(diagnostic, 'failed', started, code='voice_internal_error')
+        import logging
+        logging.getLogger(__name__).error('voice_pipeline_unexpected type=%s', type(error).__name__)
+        db.rollback()
+        yield event('error', {'code': 'voice_internal_error', 'message_bn': 'অনুরোধটি শেষ করা যায়নি। আবার চেষ্টা করুন।', 'message_en': 'Could not finish this request. Please try again.'})
+    except asyncio.CancelledError:
+        trace_stage(diagnostic, 'cancelled', started)
+        raise
     finally:
         audio, text = None, None
         log_outcome(db, mode, intent, institution, outcome, started, device_hash, fact_ids)

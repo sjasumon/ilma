@@ -493,6 +493,8 @@ function setVoiceState(text) {
 
 async function startListening() {
   if (isListening || recognitionStarting || isSearching) return;
+  lastVoiceTranscript = "";
+  document.getElementById("voice-transcript").hidden = true;
   stopAudio();
   if (navigator.onLine === false) { showVoiceFallback("offline"); return; }
   closeVoiceFeedback();
@@ -598,6 +600,11 @@ function showVoiceFallback(code = "unmatched") {
     bank_data_unavailable: bn ? "ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।" : "Bank data is currently unavailable. Please try again.",
     voice_unconfigured: bn ? "ভয়েস সেবা এখনও চালু হয়নি।" : "Voice service is not configured yet.",
     voice_backend_outdated: bn ? "সার্ভারে ভয়েস অনুসন্ধান চালু নেই। অ্যাপের সার্ভার আপডেট করা প্রয়োজন।" : "Voice search is unavailable on this server. The app backend needs to be updated or restarted.",
+    voice_incomplete_response: bn ? "উত্তর আসার আগেই সংযোগ শেষ হয়েছে। আবার চেষ্টা করুন।" : "The connection ended before the answer arrived. Please try again.",
+    voice_internal_error: bn ? "অনুরোধটি শেষ করা যায়নি। আবার চেষ্টা করুন।" : "Could not finish this request. Please try again.",
+    recording_finalize_timeout: bn ? "রেকর্ডিংটি শেষ করা যায়নি। আবার রেকর্ড করুন।" : "The recording could not finish. Please record again.",
+    daily_limit: bn ? "আজকের প্রশ্নের সীমা শেষ। ব্যাংকের অবস্থা, বীমা ও হার দেখা যাবে।" : "Daily question limit reached. Bank status, insurance and rate lookups remain available.",
+    invalid_request: bn ? "প্রশ্নটি পাঠানো যায়নি। আবার চেষ্টা করুন বা লিখুন।" : "The question could not be submitted. Please try again or type.",
     voice_timeout: bn ? "ভয়েস সেবায় সময় বেশি লাগছে। আবার চেষ্টা করুন।" : "Transcription timed out. Try again.",
     voice_rate_limited: bn ? "একটু পরে আবার চেষ্টা করুন।" : "Voice service is busy. Try again shortly.",
     voice_unavailable: bn ? "ভয়েস সেবায় সংযোগ করা যায়নি। আবার চেষ্টা করুন।" : "Could not transcribe the recording. Try again.",
@@ -735,6 +742,8 @@ async function sendVoiceInput(audio, text, request) {
   let timeout;
   const armTimeout = ms => { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), ms); };
   armTimeout(40000); // bounded ASR retries/conversion can precede the first event
+  let reader;
+  let receivedResult = false;
   try {
     const response = await fetch(audio ? "/v1/voice" : "/v1/ask", { method: "POST", body: form, signal: controller.signal, headers: { "Accept-Language": currentLang, "X-ILMA-Device": anonymousDevice } });
     if (response.status === 404 || response.status === 405) throw new Error("voice_backend_outdated");
@@ -743,29 +752,53 @@ async function sendVoiceInput(audio, text, request) {
       try { result = await response.json(); } catch {}
       throw new Error(result?.error?.code || "voice_unavailable");
     }
-    const reader = response.body.getReader(), decoder = new TextDecoder();
+    if (!response.body?.getReader) throw new Error("voice_incomplete_response");
+    reader = response.body.getReader();
+    const decoder = new TextDecoder();
     let buffer = "";
     while (true) {
       const { value, done } = await reader.read();
       if (request !== voiceRequest) { await reader.cancel(); return; }
       buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      buffer = buffer.replace(/\r\n/g, "\n");
       let end;
       while ((end = buffer.indexOf("\n\n")) >= 0) {
         const block = buffer.slice(0, end); buffer = buffer.slice(end + 2);
         const name = block.match(/^event: (.+)$/m)?.[1];
         const data = block.match(/^data: (.+)$/m)?.[1];
         if (request !== voiceRequest) { await reader.cancel(); return; }
-        if (data) { armTimeout(30000); await handleVoiceEvent(name, JSON.parse(data), audioRequest); }
+        if (data) {
+          armTimeout(30000);
+          let parsed;
+          try { parsed = JSON.parse(data); } catch { throw new Error("voice_incomplete_response"); }
+          await handleVoiceEvent(name, parsed, audioRequest);
+          if (name === "result") receivedResult = true;
+        }
       }
       if (done) break;
     }
+    if (request === voiceRequest && !receivedResult) throw new Error("voice_incomplete_response");
     if (request === voiceRequest) {
       isSearching = false; voiceAbort = null;
       const player = document.getElementById("ilma-player");
       if (!player.src || player.paused) setWaveformState("idle");
       startExampleCycle();
     }
-  } finally { clearTimeout(timeout); form.delete("audio"); }
+  } catch (error) {
+    if (receivedResult && request === voiceRequest) {
+      isSearching = false; voiceAbort = null;
+      stopAudio();
+      document.getElementById("sr-announcer").textContent = currentLang === "bn"
+        ? "উত্তরটি পর্দায় আছে। পড়ে শোনানো সম্পূর্ণ হয়নি।" : "The answer is shown. Spoken playback could not finish.";
+      startExampleCycle();
+      return;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout); form.delete("audio");
+    try { await reader?.cancel(); } catch {}
+    reader?.releaseLock?.();
+  }
 }
 
 async function handleVoiceEvent(name, data, audioRequest) {
@@ -1169,6 +1202,12 @@ document.addEventListener("DOMContentLoaded", () => {
         lastRecordingTap = null;
         activeVoiceContext = { tab: "home", bank_id: null };
         return startListening();
+      }
+      // Native keyboard/assistive activations are single click events (detail=0).
+      // Do not require two activations from a screen reader or keyboard user.
+      if (e.detail === 0) {
+        lastRecordingTap = null;
+        return finishRecording();
       }
       // Use click timing for touch and mouse alike, without relying on mobile
       // browsers emitting dblclick. Only taps during recording form the pair.
