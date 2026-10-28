@@ -136,6 +136,7 @@ PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" -m pytest -q
 node tests/test_frontend.cjs
 node tests/test_greeting_cycle.cjs
 node tests/test_voice_search.cjs
+node tests/test_ivr_steps.cjs
 node tests/test_audio_recorder.cjs
 node tests/test_offline.cjs
 python3 ops/check_repo.py
@@ -189,3 +190,5 @@ Licenses in `static/fonts/`, not newly authored font designs.
 Bank services v5.4 import and review notes: [implementation](docs/BANK_SERVICES_V54.md).
 
 Extra source publications and watched-bank announcements: [v5.4 notes](docs/EXTRA_DATA_V54.md).
+
+Guided first-use and Voice only mode: [tap-or-talk behavior and pending device acceptance](docs/TAP_OR_TALK.md).

@@ -124,16 +124,17 @@ const T = {
   }
 };
 
-const defaultSettings = { language: "bn", motion: true, swipe: true, speak: true, slow: false, micExplained: false };
+const defaultSettings = { language: "bn", motion: true, swipe: true, speak: true, slow: false, micExplained: false, voiceonly: false, screenreader: false, ivrFinished: false, ivrLanguageChosen: false };
 let appSettings = { ...defaultSettings };
 try {
   const saved = JSON.parse(window.localStorage?.getItem("ilma-settings") || "null");
   if (saved) {
     if (["en", "bn"].includes(saved.language)) appSettings.language = saved.language;
     if (typeof saved.motion === "boolean") appSettings.motion = saved.motion;
-    for (const key of ["swipe", "speak", "slow", "micExplained"]) if (typeof saved[key] === "boolean") appSettings[key] = saved[key];
+    for (const key of ["swipe", "speak", "slow", "micExplained", "voiceonly", "screenreader", "ivrFinished", "ivrLanguageChosen"]) if (typeof saved[key] === "boolean") appSettings[key] = saved[key];
   }
 } catch { /* Preferences still work when storage is unavailable. */ }
+let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
 let currentLang = appSettings.language;
 let suppressHomeClick = false;
 let swipeClickTimer = null;
@@ -269,6 +270,8 @@ function toggleLanguage() {
 function updateSettingsText() {
   const bn = currentLang === "bn";
   const labels = {
+    "settings-voiceonly-label": bn ? "শুধু কথায়" : "Voice only",
+    "settings-screenreader-label": bn ? "স্ক্রিন রিডার ব্যবহার করছি" : "I use a screen reader",
     "settings-title": bn ? "সেটিংস" : "Settings",
     "settings-language-label": bn ? "অ্যাপের ভাষা" : "App language",
     "settings-motion-label": bn ? "অ্যানিমেশন দেখান" : "Show animations",
@@ -282,7 +285,7 @@ function updateSettingsText() {
   document.getElementById("settings-close").setAttribute("aria-label", bn ? "বন্ধ করুন" : "Close settings");
   document.getElementById("settings-language").value = currentLang;
   document.getElementById("settings-motion").checked = appSettings.motion;
-  for (const key of ["swipe", "speak", "slow"]) document.getElementById(`settings-${key}`).checked = appSettings[key];
+  for (const key of ["swipe", "speak", "slow", "voiceonly", "screenreader"]) document.getElementById(`settings-${key}`).checked = appSettings[key];
   document.querySelector(".scr").classList.toggle("motion-disabled", !appSettings.motion);
 }
 
@@ -481,6 +484,7 @@ function stopGreetingCycle() {
 }
 
 function startExampleCycle() {
+  if (ivr?.active) return;
   document.getElementById("home-orb").setAttribute("data-reduced-motion", String(greetingMotionReduced()));
   pauseGreetingCycle();
   if (currentTab !== "home" || isListening || recognitionStarting || isSearching || document.hidden || document.getElementById("settings-dialog").open || document.getElementById("voice-feedback").open || document.getElementById("mini-voice-modal")?.open) return;
@@ -563,7 +567,7 @@ async function startListening() {
     return;
   }
   closeVoiceFeedback();
-  if (isMiniVoiceFlow()) openMiniVoiceModal();
+  if (!ivr?.active && isMiniVoiceFlow()) openMiniVoiceModal();
   document.getElementById("voice-matches").replaceChildren();
   document.getElementById("voice-answer-sources").replaceChildren();
   document.getElementById("voice-transcript").hidden = true;
@@ -586,6 +590,7 @@ async function startListening() {
   try {
     await recorder.start({
       silenceMs: voiceConfig.silence_ms,
+      maxMs: ivr?.active ? 6000 : 15000,
       onLevel: level => {
         if (!greetingMotionReduced()) document.getElementById("home-orb").style.setProperty("--wave-level", String(1 + Math.min(.65, level * 8)));
       },
@@ -600,6 +605,11 @@ async function startListening() {
     if (request !== voiceRequest) { recorder.cancel(); return; }
     recognitionStarting = false;
     isListening = true;
+    if (ivr?.active && ivr.id === 'mic') {
+      stopListening();
+      return ivr.enter(appSettings.ivrLanguageChosen ? 'menu' : 'language');
+    }
+    if (ivr?.active) document.getElementById("ivr-status").textContent = T[currentLang].listeningPrompt;
     setWaveformState("listening");
     setVoiceState(T[currentLang].listeningText);
     document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "থামুন ও খুঁজুন" : "Stop and search";
@@ -635,6 +645,7 @@ async function finishRecording() {
     if (audioRecorder === recorder) audioRecorder = null;
     if (audio.size > 1024 * 1024) throw new Error("audio_too_large");
     await sendVoiceInput(audio, null, request);
+    await flushIvrResult();
 
   } catch (error) {
     if (request !== voiceRequest) return;
@@ -644,6 +655,14 @@ async function finishRecording() {
 }
 
 function showVoiceFallback(code = "unmatched") {
+  if (ivr?.active) {
+    document.getElementById('ivr-status').textContent = ['no_speech','no-speech'].includes(code)
+      ? (currentLang === 'bn' ? 'কথা শোনা যায়নি। এখন এক বা দুইবার চাপুন।' : 'No speech heard. Tap once or twice now.')
+      : (currentLang === 'bn' ? 'ভয়েস পাওয়া যাচ্ছে না। এক বা দুইবার চাপুন, অথবা এড়িয়ে যান।' : 'Voice unavailable. Tap once or twice, or Skip.');
+    if (!['no_speech','no-speech'].includes(code)) ivr.repeated = true;
+    ivr.silent(); return;
+  }
+
   closeMiniVoiceModal();
   if (code === "no_speech") code = "no-speech";
   document.getElementById("voice-answer-sources").replaceChildren();
@@ -748,6 +767,7 @@ function showTyping() {
 }
 
 function stopAudio() {
+  if (ivrAudioCancel) { const cancel = ivrAudioCancel; ivrAudioCancel = null; cancel(); }
   setWaveformState(isListening ? "listening" : recognitionStarting ? "starting" : isSearching ? "thinking" : "idle");
   playbackRequest++;
   const player = document.getElementById("ilma-player");
@@ -814,7 +834,7 @@ async function sendVoiceInput(audio, text, request) {
   const form = new FormData();
   if (audio) form.append("audio", audio, audio.type.includes("mp4") ? "recording.mp4" : "recording.webm");
   else form.append("text", text);
-  form.append("context", JSON.stringify({ ...activeVoiceContext, ui_lang: currentLang, history: voiceHistory.slice(-3), speak: Boolean(audio && appSettings.speak) }));
+  form.append("context", JSON.stringify({ ...activeVoiceContext, ui_lang: currentLang, history: voiceHistory.slice(-3), speak: Boolean(audio && appSettings.speak && !ivr?.active), ...(ivr?.active ? { ivr_step: ivr.id } : {}) }));
   const controller = new AbortController();
   voiceAbort = controller;
   const audioRequest = playbackRequest;
@@ -884,6 +904,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
   if (name === "error") throw new Error(data.code);
   if (name === "transcript") {
     lastVoiceTranscript = data.text;
+    if (ivr?.active) document.getElementById("ivr-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + data.text;
     if (data.language === "en" && currentLang !== "en") {
       currentLang = "en"; appSettings.language = "en"; saveSettings(); updateLocalizedText();
       document.getElementById("voice-language-chip").hidden = false;
@@ -896,6 +917,8 @@ async function handleVoiceEvent(name, data, audioRequest) {
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? `আপনি বলেছেন: ${data.text}` : `You said: ${data.text}`;
     if (window.requestAnimationFrame) await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   }
+  if (ivr?.active && name === 'result') { ivrPendingResult = data; return; }
+  if (ivr?.active && name === 'speech') return;
   if (name === "result") {
     voiceFailures = ["clarify", "no_data"].includes(data.type) ? voiceFailures + 1 : 0;
     document.getElementById("home-listening-view").hidden = true;
@@ -963,7 +986,7 @@ async function submitTextQuestion(text = document.getElementById("voice-text-inp
   const request = ++voiceRequest; isSearching = true; pauseGreetingCycle();
   setWaveformState("thinking");
   setVoiceState(T[currentLang].checkingText);
-  try { await sendVoiceInput(null, text, request); }
+  try { await sendVoiceInput(null, text, request); await flushIvrResult(); }
   catch (error) { if (request === voiceRequest) { stopListening(); showVoiceFallback(error.message); } }
 }
 
@@ -1168,6 +1191,7 @@ function closeProofModal() {
 }
 
 function speakReportCard() {
+  if (ivr?.active && currentBankId) return playGuidedSpeech("report_card", null, currentBankId);
   if (currentBankId) return requestReadout("report_card", currentBankId);
 }
 
@@ -1299,8 +1323,8 @@ function syncOrientation() {
   panel.hidden=!active;
   document.querySelector('.scr').inert=active;
   document.querySelector('.scr').classList.toggle('orientation-blocked',active);
-  if(active&&!phoneLandscape){document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeProofModal();stopListening();stopAudio();pauseGreetingCycle();panel.focus();}
-  if(!active&&phoneLandscape){startExampleCycle();document.querySelector('.dock-item.on')?.focus();}
+  if(active&&!phoneLandscape){if(ivr?.active){ivr.clear();++ivr.epoch;ivr.phase='waiting';}document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeProofModal();stopListening();stopAudio();pauseGreetingCycle();panel.focus();}
+  if(!active&&phoneLandscape){phoneLandscape=false;if(ivr?.active)ivr.enter(ivr.id);else if(appSettings.voiceonly||!appSettings.ivrFinished)startGuidedVoice();startExampleCycle();document.querySelector('.dock-item.on')?.focus();}
   phoneLandscape=active;
 }
 
@@ -1313,7 +1337,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener?.("resize", fitGreetingLine);
   document.fonts?.ready.then(fitGreetingLine);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { stopListening(); stopAudio(); pauseGreetingCycle(); }
+    if (document.hidden) { if (ivr?.active) { ivr.clear(); ++ivr.epoch; ivr.phase = "waiting"; } stopListening(); stopAudio(); pauseGreetingCycle(); }
     else startExampleCycle();
   });
   window.matchMedia?.("(prefers-reduced-motion: reduce)")?.addEventListener?.("change", startExampleCycle);
@@ -1327,13 +1351,13 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   });
-  document.getElementById("ilma-player").addEventListener("ended", stopAudio);
+  document.getElementById("ilma-player").addEventListener("ended", () => { if (!ivrAudioCancel) stopAudio(); });
   document.getElementById("ilma-player").addEventListener("playing", () => {
     setWaveformState("speaking");
-    document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "ইলমা উত্তর পড়ে শোনাচ্ছে।" : "ILMA is reading the answer.";
+    if (!ivr?.active) document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "ইলমা উত্তর পড়ে শোনাচ্ছে।" : "ILMA is reading the answer.";
   });
   document.getElementById("ilma-player").addEventListener("error", () => {
-    stopAudio();
+    if (!ivrAudioCancel) stopAudio();
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "অডিও চালানো যায়নি। উত্তরটি পর্দায় আছে।" : "Audio could not play. The answer is shown on screen.";
   });
   window.addEventListener?.("offline", syncConnectivity);
@@ -1352,6 +1376,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelectorAll(".dock button.dock-item").forEach(btn => {
     btn.addEventListener("click", () => {
+      if (ivr?.active) ivr.skip();
       const tab = btn.getAttribute("data-tab");
       if (tab === "detail") currentBankId = null;
       switchTab(tab);
@@ -1419,7 +1444,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("pointerdown", event => {
     const player = document.getElementById("ilma-player");
     suppressReadoutClick = Boolean(player.src && !player.paused && event.target?.closest?.(".btn-primary-listen"));
-    stopAudio();
+    if (!ivr?.active) stopAudio();
   }, { capture: true });
   document.getElementById("voice-type").addEventListener("click", showTyping);
   document.getElementById("voice-text-form").addEventListener("submit", event => { event.preventDefault(); return submitTextQuestion(); });
@@ -1463,15 +1488,18 @@ document.addEventListener("DOMContentLoaded", () => {
     stopListening();
     pauseGreetingCycle();
     document.getElementById("settings-saved").textContent = "";
+    if (ivr?.active) { ivr.clear(); ++ivr.epoch; ivr.phase = "waiting"; }
     settingsDialog.showModal();
   });
   document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
   settingsDialog.addEventListener("close", () => {
+    if (appSettings.voiceonly) startGuidedVoice();
+    else if (ivr?.active) ivr.skip();
     startExampleCycle();
     document.getElementById("settings-btn").focus();
   });
   document.getElementById("settings-language").addEventListener("change", event => setLanguage(event.target.value));
-  ["motion", "swipe", "speak", "slow"].forEach(key => {
+  ["motion", "swipe", "speak", "slow", "voiceonly", "screenreader"].forEach(key => {
     document.getElementById(`settings-${key}`).addEventListener("change", event => {
       appSettings[key] = event.target.checked;
       if (key === "speak" && !appSettings.speak) stopAudio();
@@ -1522,4 +1550,174 @@ document.addEventListener("DOMContentLoaded", () => {
 
   calculateInsuranceSplit();
   calculateRealReturn();
+  setupGuidedVoice();
 });
+
+// The label lives in updateSettingsText; the table is shared with timing tests.
+function ivrCopy(id) {
+  const clip = window.IVR_STEPS[id]?.clip;
+  let text = window.IVR_COPY?.[clip]?.[currentLang === 'bn' ? 0 : 1] || '';
+  const candidate = ivrCandidates[ivrCandidateIndex];
+  return text.replace('{bank}', candidate?.[currentLang === 'bn' ? 'name_bn' : 'name_en'] || '');
+}
+
+async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId) {
+  stopAudio();
+  const controller = new AbortController(), player = document.getElementById('ilma-player');
+  let resolveAudio, timer;
+  const completion = new Promise(resolve => { resolveAudio = resolve; });
+  const done = ok => {
+    clearTimeout(timer); controller.abort();
+    player.removeEventListener('ended', ended); player.removeEventListener('error', failed);
+    if (ivrAudioCancel === cancelled) ivrAudioCancel = null;
+    resolveAudio(ok);
+  };
+  const ended = () => done(true), failed = () => done(false), cancelled = () => done(false);
+  ivrAudioCancel = cancelled;
+  timer = setTimeout(failed, 90000);
+  player.addEventListener('ended', ended); player.addEventListener('error', failed);
+  (async () => {
+    try {
+      const clip = prompt !== 'ivr_confirm' && fixedClips[`${currentLang}:${prompt}`];
+      let url = clip && (player.canPlayType?.('audio/ogg; codecs="opus"') ? clip.url : clip.fallback_url);
+      if (!url) {
+        const response = await fetch('/v1/speech', { method: 'POST', signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, prompt, institution_id: bankId, language: currentLang }) });
+        if (!response.ok) throw Error('speech_unavailable');
+        url = (await response.json()).audio_url;
+      }
+      if (controller.signal.aborted) return;
+      if (!(url?.startsWith('data:audio/mpeg;base64,') || /^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || ''))) throw Error('speech_unavailable');
+      player.src = url; player.playbackRate = appSettings.slow ? .85 : 1;
+      await player.play();
+    } catch { done(false); }
+  })();
+  return completion;
+}
+
+async function flushIvrResult() {
+  if (!ivr?.active || !ivrPendingResult) return;
+  const result = ivrPendingResult; ivrPendingResult = null;
+  if (result.ivr_action) return ivr.command(result.ivr_action);
+  if (result.candidates?.length) {
+    ivrCandidates = result.candidates; ivrCandidateIndex = 0; return ivr.enter('confirm');
+  }
+  if (result.type === 'report_card') {
+    currentBankId = result.institution_id;
+    appSettings.ivrFinished = true; saveSettings();
+    openBank(currentBankId, true); return ivr.enter('report');
+  }
+  document.getElementById('ivr-status').textContent = result.text || '';
+  ivr.silent();
+}
+
+async function guidedAction(action) {
+  if (!ivr?.active) return;
+  if (['mic', 'name', 'report', 'next'].includes(action)) return ivr.enter(action);
+  if (action === 'permission') {
+    activeVoiceContext = { tab: 'home', bank_id: null };
+    return startListening();
+  }
+  if (action === 'bn' || action === 'en') {
+    setLanguage(action, false); appSettings.ivrLanguageChosen = true; saveSettings();
+    const epoch = ++ivr.epoch;
+    await playGuidedSpeech('ivr', action === 'bn' ? 'ivr_chose_bn' : 'ivr_chose_en', null);
+    if (ivr.active && epoch === ivr.epoch) return ivr.enter('menu');
+  }
+  if (action === 'bank' || action === 'services') {
+    const epoch = ++ivr.epoch;
+    await playGuidedSpeech('ivr', action === 'bank' ? 'ivr_chose_bank' : 'ivr_chose_services', null);
+    if (!ivr.active || epoch !== ivr.epoch) return;
+    if (action === 'bank') return ivr.enter('name');
+    ivr.skip(); switchTab('services'); return;
+  }
+  if (action === 'listen') {
+    ivr.phase = 'starting'; await startListening();
+    if (ivr.active && isListening) ivr.phase = 'listening'; return;
+  }
+  if (action === 'no') {
+    ivrCandidateIndex++;
+    return ivr.enter(ivrCandidateIndex < ivrCandidates.length ? 'confirm' : 'name');
+  }
+  if (action === 'yes') {
+    const bank = ivrCandidates[ivrCandidateIndex];
+    if (!bank) return ivr.enter('name');
+    activeVoiceContext = { tab: 'bank', bank_id: bank.id };
+    ivr.phase = 'searching';
+    return submitTextQuestion(bank[currentLang === 'bn' ? 'name_bn' : 'name_en']);
+  }
+}
+
+function startGuidedVoice() {
+  if (!ivr || document.hidden || phoneLandscape) return;
+  stopListening(); switchTab('home'); pauseGreetingCycle();
+  playTone(660, .08);
+  return ivr.enter('open');
+}
+
+function setupGuidedVoice() {
+  if (!window.IlmaGuidedVoice) return;
+  ivr = new window.IlmaGuidedVoice({
+    cancel() { ivrPendingResult = null; stopListening(); },
+    interrupt: stopAudio,
+    recording: () => isListening,
+    assistive: () => appSettings.screenreader,
+    finish: finishRecording,
+    render(id) {
+      document.getElementById('ivr-overlay').hidden = false;
+      document.getElementById('main-content').classList.add('ivr-active');
+      document.querySelectorAll('.tab-content').forEach(el => { el.inert = true; });
+      const text = id === 'report' ? (currentLang === 'bn' ? 'ব্যাংকের অবস্থা পড়ে শোনাচ্ছি।' : 'Reading the bank report.') : ivrCopy(id);
+      document.getElementById('ivr-question').textContent = text;
+      document.getElementById('ivr-tap').setAttribute('aria-label', text);
+      document.getElementById('ivr-status').textContent = '';
+      document.getElementById('ivr-skip').textContent = currentLang === 'bn' ? 'এড়িয়ে যান' : 'Skip';
+      document.getElementById('ivr-tap').focus(); pauseGreetingCycle();
+    },
+    announce(id) { document.getElementById('sr-announcer').textContent = ivrCopy(id); },
+    async prompt(id) {
+      const epoch = ivr.epoch;
+      if (id === 'report') return speakReportCard();
+      if (id === 'open' && appSettings.voiceonly) await playGuidedSpeech('ivr', 'ivr_ready', null);
+      if (!ivr.active || epoch !== ivr.epoch) return false;
+      const heard = await playGuidedSpeech('ivr', window.IVR_STEPS[id].clip,
+        id === 'confirm' ? ivrCandidates[ivrCandidateIndex]?.id : null);
+      if (!heard && ivr.active) document.getElementById('ivr-status').textContent = currentLang === 'bn'
+        ? 'শুনতে পাওয়া যায়নি। এক বা দুইবার চাপুন, অথবা এড়িয়ে যান।' : 'Audio unavailable. Tap once or twice, or Skip.';
+      return heard;
+    },
+    async listen(id) {
+      if (document.hidden || phoneLandscape || navigator.onLine === false) { ivr.silent(); return; }
+      activeVoiceContext = { tab: id === 'next' ? 'bank' : 'home', bank_id: id === 'next' ? currentBankId : null };
+      await startListening();
+    },
+    async echo(n, id) {
+      navigator.vibrate?.(30);
+      // Transition prompts echo menu/language choices; other choices use fixed yes/no.
+      if (!['language','menu'].includes(id)) await playGuidedSpeech('ivr', n === 1 ? 'ivr_yes' : 'ivr_no', null);
+    },
+    action: guidedAction,
+    async read(kind) {
+      if (!['reasons','insurance','sources'].includes(kind) || !currentBankId) return ivr.enter(ivr.id);
+      ivr.clear(); const epoch = ++ivr.epoch; ivr.phase = 'speaking';
+      await playGuidedSpeech(kind, null, currentBankId);
+      if (ivr.active && epoch === ivr.epoch) return ivr.enter('next');
+    },
+    exit() {
+      appSettings.ivrFinished = true; saveSettings();
+      document.getElementById('ivr-overlay').hidden = true;
+      document.getElementById('main-content').classList.remove('ivr-active');
+      document.querySelectorAll('.tab-content').forEach(el => { el.inert = false; });
+      activeVoiceContext = { tab: 'home', bank_id: null };
+      switchTab('home'); startExampleCycle(); document.getElementById('home-tap-target').focus();
+    }
+  });
+  document.getElementById('ivr-tap').addEventListener('click', event => ivr.tap(event));
+  document.getElementById('ivr-skip').addEventListener('click', () => ivr.skip());
+  // The optional native wrapper may implement this bridge. No UA heuristics.
+  const bridge = window.Capacitor?.Plugins?.IlmaAccessibility;
+  if (bridge?.isTouchExplorationEnabled) bridge.isTouchExplorationEnabled().then(result => {
+    if (result.enabled) { appSettings.screenreader = true; updateSettingsText(); }
+  }).catch(() => {});
+  if (appSettings.voiceonly || !appSettings.ivrFinished) startGuidedVoice();
+}

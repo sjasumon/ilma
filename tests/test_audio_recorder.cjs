@@ -60,6 +60,12 @@ function createRecorder({ permissionError = null, stopStalls = false } = {}) {
   const cap = createRecorder(); let capped = 0;
   await cap.recorder.start({ onComplete: () => capped++, onError() {} });
   cap.limit(); assert.equal(capped, 1); cap.recorder.cancel(); assert.ok(cap.stopped());
+  const guidedQuiet = createRecorder(); let guidedError;
+  await guidedQuiet.recorder.start({ maxMs: 6000, onComplete() { throw Error('silent IVR audio must not upload'); }, onError: code => guidedError = code });
+  guidedQuiet.limit(); assert.equal(guidedError, 'no-speech'); assert.ok(guidedQuiet.stopped());
+  const guidedSpeech = createRecorder(); let guidedCompleted = 0;
+  await guidedSpeech.recorder.start({ maxMs: 6000, onComplete() { guidedCompleted++; }, onError(code) { throw Error(code); } });
+  guidedSpeech.sample(400, .1); guidedSpeech.limit(); assert.equal(guidedCompleted, 1); guidedSpeech.recorder.cancel();
   const blocked = createRecorder({ permissionError: 'NotAllowedError' });
   await assert.rejects(blocked.recorder.start({ onComplete() {}, onError() {} }), { name: 'NotAllowedError' });
   assert.equal(blocked.recorder.context.state, 'closed');

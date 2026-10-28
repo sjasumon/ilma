@@ -291,6 +291,12 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         if not text: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
         # A slow/failing database must never delay the recognized question.
         yield event('transcript', {'text': text, 'language': context.ui_lang})
+        from ilma_api.ivr import match_ivr_action
+        action = match_ivr_action(text, context.ivr_step)
+        if action:
+            yield event('result', {'type': 'ivr_action', 'ivr_action': action, 'omit_history': True, 'sources': [], 'text': ''})
+            outcome = 'answered'
+            return
         if callable(banks):
             trace_stage(diagnostic, 'bank_index_started', started)
             banks = banks()
@@ -412,8 +418,46 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         log_outcome(db, mode, intent, institution, outcome, started, device_hash, fact_ids)
 
 
-async def readout(kind, institution_id, language, db):
-    if kind == 'report_card':
+async def readout(kind, institution_id, language, db, prompt=None):
+    if kind == 'ivr':
+        from ilma_api.voice_assets import CATALOG
+        pair = CATALOG.get(prompt) if prompt and prompt.startswith('ivr_') else None
+        if not pair:
+            raise ValueError('Unknown guided prompt')
+        text = pair[0 if language == 'bn' else 1]
+        if prompt == 'ivr_confirm':
+            card = get_institution_report_card(db, institution_id) if institution_id else None
+            if not card:
+                return {'audio_url': None, 'text': ''}
+            text = text.replace('{bank}', card['institution']['name_bn' if language == 'bn' else 'name_en'])
+        result = {'text': text}
+    elif kind in {'reasons', 'sources'}:
+        card = get_institution_report_card(db, institution_id) if institution_id else None
+        reasons = (card or {}).get('reasons', [])[:3]
+        if kind == 'reasons':
+            text = ' '.join(row['text_bn' if language == 'bn' else 'text_en'] for row in reasons)
+        else:
+            # Speak publisher and document date, never raw URLs.
+            labels = []
+            for row in reasons:
+                publisher = row.get('publisher') or row.get('source_title') or ''
+                if re.search(r'https?://|www\.', publisher, re.I):
+                    continue
+                day = row.get('published_at') or row.get('doc_date') or row.get('source_date') or ''
+                if day:
+                    from datetime import date
+                    try:
+                        parsed = date.fromisoformat(str(day))
+                        months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর']
+                        day = (f'{parsed.day} {months[parsed.month-1]} {parsed.year}'.translate(str.maketrans('0123456789','০১২৩৪৫৬৭৮৯')) if language == 'bn' else parsed.strftime('%d %B %Y'))
+                    except ValueError:
+                        day = ''
+                label = ('উৎস: ' if language == 'bn' else 'Source: ') + publisher + (', ' + day if day else '')
+                if publisher and label not in labels:
+                    labels.append(label)
+            text = '। '.join(labels)
+        result = {'text': text or ('এই তথ্য পাওয়া যাচ্ছে না।' if language == 'bn' else 'This information is unavailable.')}
+    elif kind == 'report_card':
         result = build_result(VoiceIntent(intent='bank_status', institution_ids=[institution_id] if institution_id else []), [], language, db)
     elif kind == 'insurance':
         result = build_result(VoiceIntent(intent='insurance', institution_ids=[institution_id] if institution_id else []), [], language, db)

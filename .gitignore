@@ -42,3 +42,10 @@ feedback/
 
 # Private reference screenshots; never publish.
 muse/
+
+# Private incoming tap/voice review; public implementation notes are separate.
+docs/TAP_OR_TALK_FIXES_*.md
+
+# Private original specification copies; public versions live in docs/specs.
+/fix/APP_SPEC_05_bank_services.md
+/fix/APP_SPEC_06_extra_data.md

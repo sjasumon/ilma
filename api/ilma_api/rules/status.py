@@ -477,6 +477,7 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
             "fact_id": r.fact_or_event_id,
             "source_url": src.get("url"),
             "source_title": src.get("title"),
+            "publisher": src.get("publisher"),
             "published_at": str(src.get("published_at")) if src.get("published_at") else None,
             "page": src.get("page"),
             "quote": src.get("quote"),

@@ -19,6 +19,20 @@ CATALOG = {
     'E-03': ('মাইক্রোফোনের অনুমতি দিন, অথবা লিখে খুঁজুন।', 'Allow microphone access, or type to search.'),
     'E-04': ('বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Please speak again or type.'),
     'privacy': ('পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো বলবেন না।', 'Never say your PIN, OTP or account number.'),
+    'ivr_open': ('আমি ইলমা। শুরু করতে স্ক্রিনের যেকোনো জায়গায় চাপুন।', 'I am Ilma. Tap anywhere to start.'),
+    'ivr_mic': ("এখন ফোন মাইক্রোফোনের অনুমতি চাইবে। অনুমতি দিন চাপুন।", 'Your phone will ask for microphone permission. Choose Allow.'),
+    'ivr_lang': ('বাংলার জন্য একবার চাপুন। For English, tap twice. অথবা বলুন।', 'Tap once for Bangla. Tap twice for English. Or say your choice.'),
+    'ivr_menu': ('ব্যাংকের অবস্থা জানতে একবার চাপুন। ব্যাংকের সেবা জানতে দুবার চাপুন। অথবা সরাসরি ব্যাংকের নাম বলুন।', 'Tap once to check a bank. Tap twice for bank services. Or say a bank name.'),
+    'ivr_name': ('ব্যাংকের নাম বলুন।', 'Say the bank name.'),
+    'ivr_confirm': ('আপনি কি {bank} বললেন? হ্যাঁ হলে একবার, না হলে দুবার চাপুন।', 'Did you say {bank}? Tap once for yes, twice for no.'),
+    'ivr_next': ('আবার শুনতে একবার, অন্য ব্যাংকের জন্য দুবার চাপুন।', 'Tap once to hear it again, twice for another bank.'),
+    'ivr_chose_bn': ('আপনি বাংলা বেছেছেন।', 'You chose Bangla.'),
+    'ivr_chose_en': ('আপনি ইংরেজি বেছেছেন।', 'You chose English.'),
+    'ivr_chose_bank': ('আপনি ব্যাংকের অবস্থা বেছেছেন।', 'You chose bank status.'),
+    'ivr_chose_services': ('আপনি ব্যাংকের সেবা বেছেছেন।', 'You chose bank services.'),
+    'ivr_yes': ('হ্যাঁ।', 'Yes.'), 'ivr_no': ('না।', 'No.'),
+    'ivr_ready': ('বলুন।', 'Speak now.'),
+    'ivr_repeat_hint': ("আবার শুনতে আবার বলুন।", 'Say again to hear it again.'),
     'insurance': (None, None),
 }
 
@@ -31,11 +45,14 @@ def validate_review(item):
                 item.get('text_sha256') == digest(item.get('text', '').encode()))
 
 
-def load_approved(directory):
+def load_approved(directory, allow_legacy=False):
     directory = Path(directory)
     manifest = json.loads((directory / 'manifest.json').read_text())
     required = {f'{lang}:{key}' for lang in ('bn', 'en') for key in CATALOG}
-    if set(manifest.get('clips', {})) != required: raise ValueError('Incomplete fixed clip bundle.')
+    supplied = set(manifest.get('clips', {}))
+    baseline = {key for key in required if ':ivr_' not in key}
+    if not ((baseline <= supplied <= required) if allow_legacy else supplied == required):
+        raise ValueError('Incomplete fixed clip bundle.')
     for key, item in manifest['clips'].items():
         if not validate_review(item): raise ValueError('Native review is missing or text changed.')
         name = item.get('file', '')
@@ -77,6 +94,8 @@ async def generate(directory, limit=None):
                         row = db.query(InsuranceRule).filter_by(inst_type='bank').first()
                         phrase = (row.text_bn if language == 'bn' else row.text_en) if row and row.source else None
                 except Exception: phrase = None
+            if key == 'ivr_confirm':
+                phrase = phrase.replace('{bank}', 'ব্যাংকের নাম' if language == 'bn' else 'the bank name')
             if not phrase:
                 failures.append(language + ':' + key); continue
             url = await speech(phrase, language)

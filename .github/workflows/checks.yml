@@ -26,6 +26,7 @@ jobs:
           node tests/test_frontend.cjs
           node tests/test_greeting_cycle.cjs
           node tests/test_voice_search.cjs
+          node tests/test_ivr_steps.cjs
           node tests/test_audio_recorder.cjs
           node tests/test_offline.cjs
       - run: python ops/install_gitleaks.py

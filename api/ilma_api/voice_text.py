@@ -13,6 +13,7 @@ class VoiceContext(BaseModel):
     ui_lang: Literal['bn', 'en'] = 'bn'
     history: list[dict[str, str]] = Field(default_factory=list, max_length=3)
     speak: bool = True
+    ivr_step: Literal['open', 'mic', 'language', 'menu', 'name', 'confirm', 'report', 'next'] | None = None
 
 
 class VoiceIntent(BaseModel):

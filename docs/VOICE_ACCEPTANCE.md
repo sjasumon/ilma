@@ -261,3 +261,11 @@ installation are no longer blockers; the following work remains:
 - **Deployment operations:** daily retention, local backup/isolated restore,
   local health monitoring, crash recovery and HTTPS are now verified. External
   alerts, encrypted off-host recovery, capacity tests and traffic rollback remain.
+
+## Guided tap-or-talk mode (28 October 2026)
+
+Implemented first-use/Voice only steps and exact server command dispatch are
+documented in [TAP_OR_TALK.md](TAP_OR_TALK.md). Automated timing and synthetic
+browser checks are separate from real microphone/provider and screen-reader
+acceptance. New clip pronunciation review and physical TalkBack/VoiceOver
+walkthroughs remain pending; no native wrapper is present in this repository.

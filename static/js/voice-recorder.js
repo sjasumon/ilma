@@ -9,7 +9,7 @@
       this.chunks = [];
       this.finishing = false;
     }
-    async start({ onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500 }) {
+    async start({ onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500, maxMs = 15000 }) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       this.context = new AudioContext();
       // Resume during the user's tap, before waiting for the permission prompt.
@@ -52,7 +52,10 @@
           if (lastSpeech !== null && now - lastSpeech >= silenceMs) this.complete(onComplete);
           else if (lastSpeech === null && now - started >= 6000) { this.cancel(); onError('no-speech'); }
         }, 100);
-        this.deadline = setTimeout(() => this.complete(onComplete), 15000);
+        this.deadline = setTimeout(() => {
+          if (maxMs <= 6000 && lastSpeech === null) { this.cancel(); onError('no-speech'); }
+          else this.complete(onComplete);
+        }, Math.min(15000, Math.max(1000, maxMs)));
       } catch (error) {
         this.cleanup();
         throw error;

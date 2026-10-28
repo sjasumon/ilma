@@ -336,24 +336,31 @@ async def ask_voice(request: Request, db: Session = Depends(get_db)):
     return await _voice_request(request, db, "text")
 
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 class ReadoutRequest(BaseModel):
-    kind: Literal['report_card', 'insurance', 'news']
+    kind: Literal['report_card', 'insurance', 'news', 'ivr', 'reasons', 'sources']
+    prompt: Literal['ivr_open', 'ivr_mic', 'ivr_lang', 'ivr_menu', 'ivr_name', 'ivr_confirm', 'ivr_next', 'ivr_chose_bn', 'ivr_chose_en', 'ivr_chose_bank', 'ivr_chose_services', 'ivr_yes', 'ivr_no', 'ivr_ready', 'ivr_repeat_hint'] | None = None
     institution_id: int | None = None
     language: Literal['bn', 'en'] = 'bn'
+
+    @model_validator(mode='after')
+    def guided_prompt_scope(self):
+        if (self.kind == 'ivr') != (self.prompt is not None):
+            raise ValueError('Guided readouts require an allowlisted prompt; other readouts do not accept prompts.')
+        return self
 
 
 @app.post('/v1/speech')
 async def speech_readout(payload: ReadoutRequest, db: Session = Depends(get_db)):
     from ilma_api.voice_pipeline import readout
     try:
-        result = await readout(payload.kind, payload.institution_id, payload.language, db)
+        result = await readout(payload.kind, payload.institution_id, payload.language, db, payload.prompt)
         if not result['audio_url']:
             return JSONResponse(status_code=503, content={'error': {'code': 'speech_unavailable',
                 'message_bn': 'পড়ে শোনানোর সেবা এখন চালু নেই।', 'message_en': 'Spoken playback is not available.'}})
         return result
-    except SQLAlchemyError:
+    except (SQLAlchemyError, ValueError):
         return JSONResponse(status_code=503, content={'error': {'code': 'bank_data_unavailable',
             'message_bn': 'ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না।', 'message_en': 'Bank data is unavailable.'}})
 
@@ -362,7 +369,7 @@ async def speech_readout(payload: ReadoutRequest, db: Session = Depends(get_db))
 def fixed_voice_content():
     from ilma_api.voice_assets import load_approved
     try:
-        manifest = load_approved(STATIC_DIR / 'audio/fixed')
+        manifest = load_approved(STATIC_DIR / 'audio/fixed', allow_legacy=True)
         return {'clips': {key: {'url': '/static/audio/fixed/' + item['file'], 'fallback_url': '/static/audio/fixed/' + item['fallback_file'], 'text': item['text']} for key, item in manifest['clips'].items()}}
     except (ValueError, OSError, KeyError):
         return {'clips': {}}

@@ -1125,3 +1125,11 @@ body { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
   align-content: stretch;
   padding: 10px 20px 20px;
 }
+
+/* Guided mode stays within the content pane, leaving the pinned chrome visible. */
+.app-main.ivr-active { position: relative; overflow: hidden; }
+#ivr-overlay:not([hidden]) { position: absolute; inset: 0; z-index: 70; display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--stage-lo); color: var(--on-stage); }
+#ivr-tap { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 24px 12px; border: 1px solid var(--gold-soft); border-radius: 24px; background: var(--stage); color: var(--on-stage); font: 600 clamp(20px, 4vw, 28px)/1.6 var(--body); touch-action: manipulation; }
+#ivr-status, #ivr-heard { display: block; font: 400 18px/1.6 var(--body); color: var(--on-stage-2); overflow-wrap: anywhere; }
+#ivr-skip { flex-shrink: 0; min-height: 56px; padding: 12px; border: 1px solid var(--on-stage-2); border-radius: 16px; background: var(--stage); color: var(--on-stage); font: 600 18px/1.6 var(--body); }
+#ivr-overlay :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }

@@ -14,7 +14,7 @@ with sync_playwright() as p:
  for label,base_url in ([('before',args.baseline_url)] if args.baseline_url else [])+[('after',args.base_url.rstrip('/'))]:
   ctx=browser.new_context(viewport={'width':390,'height':844},service_workers='block')
   page=ctx.new_page();requests=[];errors=[];page.on('request',lambda r:requests.append(r.url));page.on('pageerror',lambda e:errors.append(str(e)));page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
-  start=time.monotonic();page.goto(base_url,wait_until='networkidle');page.evaluate('document.fonts.ready')
+  start=time.monotonic();page.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true}))");page.goto(base_url,wait_until='networkidle');page.evaluate('document.fonts.ready')
   print(json.dumps({'version':label,'network_idle_seconds':round(time.monotonic()-start,2),'requests':len(requests),'external_requests':sum(urlsplit(r).netloc!=urlsplit(base_url).netloc for r in requests),'errors':errors}),flush=True)
   if label=='before':ctx.close();continue
   assert not errors,errors
@@ -51,12 +51,12 @@ with sync_playwright() as p:
  # Actual device metrics emulate physical rotation, including screen orientation.
  ctx=browser.new_context(viewport={'width':844,'height':390},screen={'width':844,'height':390},has_touch=True,is_mobile=True,service_workers='block')
  page=ctx.new_page();cdp=ctx.new_cdp_session(page);cdp.send('Emulation.setDeviceMetricsOverride',{'width':844,'height':390,'deviceScaleFactor':1,'mobile':True,'screenWidth':844,'screenHeight':390,'screenOrientation':{'type':'landscapePrimary','angle':90}})
- page.goto(base_url,wait_until='networkidle');page.locator('#orientation-panel').wait_for(state='visible');assert page.locator('.scr').evaluate('(el)=>el.inert')
+ page.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true}))");page.goto(base_url,wait_until='networkidle');page.locator('#orientation-panel').wait_for(state='visible');assert page.locator('.scr').evaluate('(el)=>el.inert')
  page.screenshot(path=str(out/'landscape.png'))
  cdp.send('Emulation.setDeviceMetricsOverride',{'width':390,'height':844,'deviceScaleFactor':1,'mobile':True,'screenWidth':390,'screenHeight':844,'screenOrientation':{'type':'portraitPrimary','angle':0}});page.locator('#orientation-panel').wait_for(state='hidden');assert not page.locator('.scr').evaluate('(el)=>el.inert')
  # A software keyboard can shorten a portrait viewport without rotating the screen.
  cdp.send('Emulation.setDeviceMetricsOverride',{'width':390,'height':300,'deviceScaleFactor':1,'mobile':True,'screenWidth':390,'screenHeight':844,'screenOrientation':{'type':'portraitPrimary','angle':0}});assert page.locator('#orientation-panel').is_hidden()
  ctx.close()
- ctx=browser.new_context(viewport={'width':1366,'height':768},service_workers='block');page=ctx.new_page();page.goto(base_url,wait_until='networkidle');assert page.locator('#orientation-panel').is_hidden();assert page.locator('.scr').bounding_box()['width']<600;ctx.close()
+ ctx=browser.new_context(viewport={'width':1366,'height':768},service_workers='block');page=ctx.new_page();page.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true}))");page.goto(base_url,wait_until='networkidle');assert page.locator('#orientation-panel').is_hidden();assert page.locator('.scr').bounding_box()['width']<600;ctx.close()
  browser.close()
  print('Rotation: touch landscape, return to portrait, keyboard and desktop passed',flush=True)

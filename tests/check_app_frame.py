@@ -9,7 +9,7 @@ with sync_playwright() as p:
  browser=p.chromium.launch()
  page=browser.new_page(viewport={'width':390,'height':844},service_workers='block')
  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
- page.goto(args.base_url,wait_until='networkidle')
+ page.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true}))");page.goto(args.base_url,wait_until='networkidle')
  def verify(label):
   before=page.evaluate(GEOMETRY)
   assert before['header']['top']>=0 and before['dock']['bottom']<=before['h']+.5,(label,before)

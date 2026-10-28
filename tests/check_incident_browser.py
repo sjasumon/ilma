@@ -11,7 +11,7 @@ with sync_playwright() as p:
     browser=p.chromium.launch()
     page=browser.new_page(viewport={'width':360,'height':740},service_workers='block')
     errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-    page.goto(args.base_url,wait_until='networkidle')
+    page.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true}))");page.goto(args.base_url,wait_until='networkidle')
     for language in ('bn','en'):
         page.evaluate('(lang)=>{setLanguage(lang,false);}',language)
         page.locator('.dock [data-tab="detail"]').click()

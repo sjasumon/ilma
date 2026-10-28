@@ -20,8 +20,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-46">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-46">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-47">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-47">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -59,6 +59,11 @@
     </header>
 
     <main id="main-content" class="app-main" tabindex="-1">
+      <section id="ivr-overlay" hidden aria-label="Tap or talk">
+        <button id="ivr-tap" type="button"><span id="ivr-question"></span><span id="ivr-status" role="status" aria-live="polite"></span><span id="ivr-heard"></span></button>
+        <button id="ivr-skip" type="button">এড়িয়ে যান / Skip</button>
+      </section>
+
     <!-- TAB 1: S-01 HOME & S-02 LISTENING -->
     <section id="tab-home" class="tab-content active" aria-label="হোম">
       <div class="home-tap-target">
@@ -299,6 +304,8 @@
         <option value="en">English (EN)</option>
       </select>
       <label class="settings-option"><input id="settings-motion" type="checkbox" checked><span id="settings-motion-label">অ্যানিমেশন দেখান</span></label>
+      <label class="settings-option"><input id="settings-voiceonly" type="checkbox"><span id="settings-voiceonly-label">শুধু কথায়</span></label>
+      <label class="settings-option"><input id="settings-screenreader" type="checkbox"><span id="settings-screenreader-label">স্ক্রিন রিডার ব্যবহার করছি</span></label>
       <label class="settings-option"><input id="settings-speak" type="checkbox" checked><span id="settings-speak-label">উত্তর পড়ে শোনান</span></label>
       <label class="settings-option"><input id="settings-slow" type="checkbox"><span id="settings-slow-label">ধীরে পড়ুন</span></label>
       <label class="settings-option"><input id="settings-swipe" type="checkbox" checked><span id="settings-swipe-label">বামে সোয়াইপ করে ভাষা বদলান</span></label>
@@ -371,8 +378,9 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-46"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261028-46"></script>
-  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-46"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-47"></script>
+  <script src="/static/js/ivr.js?v=voice-complete-20261028-47"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261028-47"></script>
+  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-47"></script>
 </body>
 </html>
