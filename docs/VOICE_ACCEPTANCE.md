@@ -354,3 +354,18 @@ recognition and native accessibility remain separate acceptance items.
 This update passed 256 Python tests plus 25 subtests and all seven frontend
 suites. Live typed-input browser checks verified all three aliases without
 changing Bangla, plus responsive frame and Cloudflare/API-doc security headers.
+
+
+## Capital explanation wording — 28 October 2026
+
+The P1 capital explanation now states the configured base minimum plus buffer
+(currently 10% + 2.5%) in both languages. It says the combined threshold is met,
+which includes equality, rather than describing only a 10% legal minimum. The
+configuration, status decisions, source quotes and financial rows are unchanged.
+A synthetic boundary test checks both the current configuration and an alternate
+base/buffer pair to prevent hardcoded wording.
+
+Validation: 257 Python tests plus 27 subtests, all seven frontend suites, and
+live EBL reason/card checks passed, including rotation, keyboard-sized viewport,
+desktop, 200% text and Cloudflare/API-doc security headers. This is a wording
+correction, not independent regulatory or financial-source acceptance.

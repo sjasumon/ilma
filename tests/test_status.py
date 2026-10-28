@@ -141,6 +141,22 @@ class TestStatusRules(unittest.TestCase):
             self.assertNotIn("নিরাপদ", reason["text_bn"])
             self.assertNotIn("safe", reason["text_en"].lower())
 
+    def test_positive_capital_wording_uses_configured_base_and_buffer_at_boundary(self):
+        import json
+        from pathlib import Path
+        from ilma_api.rules import status
+        cfg=json.loads(Path(status.__file__).with_name('thresholds.json').read_text())
+        inst={'id':101,'slug':'test-bank','type':'bank','coverage':'full'}
+        for minimum,buffer,bn,en in [(.10,.025,'১০% + ২.৫%','10% plus a 2.5%'),(.08,.015,'৮% + ১.৫%','8% plus a 1.5%')]:
+            with self.subTest(minimum=minimum,buffer=buffer):
+                data={'facts':{'crar':{'fact_id':'synthetic-capital','value':minimum+buffer,'period':'2025','period_end':date(2025,12,31),'source_info':{}},'npl_ratio':{'fact_id':'synthetic-npl','value':.02,'period':'2025','period_end':date(2025,12,31),'source_info':{}}},'ratings':[],'events':[],'rates':{}}
+                result=evaluate(inst,data,date(2026,10,28),{**cfg,'crar_min':minimum,'crar_buffer':buffer})
+                reason=next(reason for reason in result.reasons if reason['rule']=='P1')
+                self.assertIn(bn,reason['text_bn']);self.assertIn(en,reason['text_en'])
+                self.assertIn('সীমা পূরণ করেছে',reason['text_bn']);self.assertIn('meeting',reason['text_en'])
+                self.assertNotIn('আইনি ন্যূনতমের',reason['text_bn'])
+                self.assertNotIn('above the legal minimum',reason['text_en'])
+
     def test_missing_rules_version_is_loud(self):
         inst = {"id": 101, "slug": "test-bank", "type": "bank", "coverage": "full"}
         data = {"facts": {}, "ratings": [], "events": [], "rates": {}, "median_12m_fdr": 0.08}

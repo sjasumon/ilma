@@ -356,8 +356,8 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
                 rule_id="P1",
                 fact_or_event_id=crar_row.get("fact_id"),
                 source_info=crar_row.get("source_info", {}),
-                text_bn=f"মূলধন অনুপাত {format_percent(crar_val, bn=True)}%, আইনি ন্যূনতমের ({format_percent(crar_min, bn=True)}%) চেয়ে বেশি ({to_bn_digits(p)})।",
-                text_en=f"Capital ratio {format_percent(crar_val)}%, above the legal minimum ({format_percent(crar_min)}%) ({p})."
+                text_bn=f"মূলধন অনুপাত {format_percent(crar_val, bn=True)}%, ন্যূনতম {format_percent(crar_min, bn=True)}% + {format_percent(crar_buffer, bn=True)}% বাফারসহ সীমা পূরণ করেছে ({to_bn_digits(p)})।",
+                text_en=f"Capital ratio {format_percent(crar_val)}%, meeting the minimum of {format_percent(crar_min)}% plus a {format_percent(crar_buffer)}% buffer ({p})."
             ))
 
     # P2: npl_ratio < npl_watch
