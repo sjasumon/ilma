@@ -101,7 +101,7 @@
     watchNotice.textContent=tr('নজরে রাখলে শুধু তালিকায় সংরক্ষিত হবে। SMS/WhatsApp বিজ্ঞপ্তি শিগগির আসছে।','Watch saves this bank to your list. SMS/WhatsApp alerts are coming soon.');
     $('card-why-heading').textContent=tr('কেন?','Why?');
     $('bank-not-checked').textContent=bn?data.not_checked_bn:data.not_checked_en;
-    $('bank-detail-links').innerHTML=[['health','আর্থিক অবস্থা','Financial health'],['rating','রেটিং','Rating'],['history','জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'],['news','খবর','News about this bank'],['services','এই ব্যাংকের সেবা ও হার','Services and rates'],['ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank']].map(([key,b,e])=>`<button type="button" class="catalog-detail-row" data-bank-detail="${key}">${tr(b,e)}${key==='history'?' ('+digits(data.incident_count||0)+')':''} <span aria-hidden="true">›</span></button>`).join('');
+    $('bank-detail-links').innerHTML=[['health','আর্থিক অবস্থা','Financial health'],['rating','রেটিং','Rating'],['history','জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'],['news','খবর','News about this bank'],['announcements','কোম্পানির ঘোষণা','Company announcements'],['reports','প্রতিবেদন','Reports'],['bb-notices','এই ব্যাংক নিয়ে বাংলাদেশ ব্যাংকের নোটিশ','BB notices about this bank'],['services','এই ব্যাংকের সেবা ও হার','Services and rates'],['ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank']].map(([key,b,e])=>`<button type="button" class="catalog-detail-row" data-bank-detail="${key}">${tr(b,e)}${key==='history'?' ('+digits(data.incident_count||0)+')':''} <span aria-hidden="true">›</span></button>`).join('');
     $('bank-detail-links').querySelectorAll('button').forEach(button=>button.onclick=()=>button.dataset.bankDetail==='services'?openBankServices(bank.id):showBankDetail(button.dataset.bankDetail));
     $('btn-watch-bank').disabled=!anonymousDevice;
     if(anonymousDevice)fetch(`/v1/institutions/${bank.id}/watch`,{headers:{'X-ILMA-Device':anonymousDevice}}).then(r=>r.ok?r.json():null).then(state=>{if(state&&currentBankId===bank.id){$('btn-watch-bank').setAttribute('aria-pressed',String(state.watching));$('lbl-watch-rpt').textContent=state.watching?tr('নজরে রাখা হচ্ছে','Watching'):tr('নজরে রাখুন','Watch');}}).catch(()=>{});
@@ -128,6 +128,18 @@
       $('bank-ask-form').onsubmit=e=>{e.preventDefault();ask($('bank-ask-text').value,'bank',currentBankId);};
       $('bank-detail-mic').onclick=()=>voice('bank',currentBankId);
       body.querySelectorAll('[data-suggestion]').forEach(b=>b.onclick=()=>ask(b.dataset.suggestion,'bank',currentBankId));return;
+    }
+    if(['announcements','reports','bb-notices'].includes(kind)){
+      root.querySelector('h1').textContent=({announcements:tr('কোম্পানির ঘোষণা','Company announcements'),reports:tr('প্রতিবেদন','Reports'),'bb-notices':tr('বাংলাদেশ ব্যাংকের নোটিশ','Bangladesh Bank notices')})[kind];
+      let page=1;body.innerHTML='';
+      async function more(){try{
+        const response=await json(`/v1/institutions/${currentBankId}/publications/${kind}?page=${page}`);if(request!==epoch)return;
+        body.querySelector('[data-more]')?.remove();
+        const html=response.items.map(row=>window.publicationHTML(row,kind==='announcements'?tr('ডিএসই-তে ব্যাংকের নিজের ঘোষণা','The bank’s own DSE announcement'):kind==='reports'?tr('ব্যাংকের প্রকাশিত প্রতিবেদন','Bank-published report'):tr('বাংলাদেশ ব্যাংকের নোটিশ','Bangladesh Bank notice'))).join('');
+        body.insertAdjacentHTML('beforeend',html||empty());
+        if(page*20<response.total){body.insertAdjacentHTML('beforeend',`<button type="button" class="catalog-action" data-more>${tr('আরও দেখুন','Show more')}</button>`);body.querySelector('[data-more]').onclick=()=>{body.querySelector('[data-more]').disabled=true;page++;more();};}
+      }catch(e){if(request===epoch)error(body,e);}}
+      more();return;
     }
     try {
       const rows=await json(`/v1/institutions/${currentBankId}/${({health:'figures',rating:'ratings',news:'events',history:'history'})[kind]}`);

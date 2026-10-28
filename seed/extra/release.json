@@ -1,0 +1,13 @@
+{
+  "release_id": "extra-v5.4-2026-10-28",
+  "checked_on": "2026-10-28",
+  "counts": {
+    "bank_notice": 19,
+    "report": 69,
+    "press": 5,
+    "announcement": 438,
+    "rule": 12,
+    "compliance": 2
+  },
+  "related_entities": 33
+}

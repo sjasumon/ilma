@@ -1122,6 +1122,26 @@ function calculateRealReturn() {
   `;
 }
 
+function publicationHTML(row,label) {
+  const bn=currentLang==='bn';
+  const when=row.date?new Intl.DateTimeFormat(bn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(row.date+'T00:00:00')):row.year?(bn?toBnDigits(row.year):String(row.year)):'';
+  return `<article class="catalog-card publication-card"><p class="catalog-note">${escapeHTML([bn?row.bank_name_bn:row.bank_name_en,label].filter(Boolean).join(' · '))}</p><h2 lang="${/[\u0980-\u09ff]/.test(row.title)?'bn':'en'}">${escapeHTML(row.title)}</h2>${bn&&!/[\u0980-\u09ff]/.test(row.title)?'<p class="catalog-note" lang="bn">মূল শিরোনাম ইংরেজিতে</p>':''}<p>${escapeHTML(when)}</p>${/^https?:\/\//.test(row.source_url)?`<a class="catalog-source" aria-label="${escapeHTML((bn?'উৎস খুলুন: ':'Open source: ')+row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind==='index'?(bn?'মূল উৎসের সূচি খুলুন ↗':'Open source index ↗'):(bn?'উৎস খুলুন ↗':'Open source ↗')}</a>`:''}</article>`;
+}
+window.publicationHTML=publicationHTML;
+
+async function loadExtraNews(feed,isBn){
+  if(isBn!==(currentLang==='bn'))return;
+  document.getElementById('extra-news-sections')?.remove();
+  const section=document.createElement('section');section.id='extra-news-sections';feed.after(section);
+  try{
+    const response=await fetch('/v1/extra-news',{headers:anonymousDevice?{'X-ILMA-Device':anonymousDevice}:{},cache:'no-store'});
+    if(!response.ok)throw Error('extra news unavailable');const data=await response.json();
+    if(!section.isConnected)return;
+    const groups=[['warnings','বাংলাদেশ ব্যাংকের সতর্কবার্তা ও ঘোষণা','BB warnings and notices','বাংলাদেশ ব্যাংকের ঘোষণা','Bangladesh Bank notice'],['rules','নতুন নিয়ম','New rules','বাংলাদেশ ব্যাংকের সার্কুলার','Bangladesh Bank circular'],['announcements','নজরে রাখা ব্যাংকের ঘোষণা','Watched-bank announcements','ডিএসই-তে ব্যাংকের নিজের ঘোষণা','The bank’s own DSE announcement']];
+    section.innerHTML=groups.map(([key,bn,en,labelBn,labelEn])=>`<section aria-label="${escapeHTML(isBn?bn:en)}"><h2>${escapeHTML(isBn?bn:en)}</h2>${(data[key]||[]).map(row=>publicationHTML(row,isBn?labelBn:labelEn)).join('')||`<p class="catalog-note">${key==='announcements'&&!data.watching?(isBn?'ব্যাংক ট্যাবে একটি ব্যাংক নজরে রাখুন। ব্যক্তিগত তালিকার ঘোষণাই এখানে দেখানো হবে।':'Watch a bank in the Banks tab to see its announcements here.'):(isBn?'এই বিভাগে সরবরাহকৃত তথ্য নেই।':'No supplied records in this section.')}</p>`}</section>`).join('');
+  }catch{section.textContent=isBn?'অতিরিক্ত ঘোষণা লোড করা যায়নি। আবার চেষ্টা করুন।':'Could not load additional notices. Please try again.';}
+}
+
 async function loadNews() {
   try {
     const res = await fetch("/v1/news");
@@ -1150,6 +1170,7 @@ async function loadNews() {
       `;
       feed.appendChild(card);
     });
+    await loadExtraNews(feed,isBn);
   } catch (e) {
     document.getElementById("news-feed").textContent = currentLang === "bn" ? "সংবাদ লোড করা যায়নি। আবার চেষ্টা করুন।" : "Could not load news. Try again.";
   }

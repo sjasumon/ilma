@@ -31,3 +31,5 @@ design/search.png
 ilma_incidents_input_*.zip
 ilma_seed_input_*.zip
 /APP_SPEC_05_bank_services.md
+ilma_extra_input_*.zip
+/APP_SPEC_06_extra_data.md

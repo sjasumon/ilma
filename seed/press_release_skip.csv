@@ -1,0 +1,7 @@
+pattern,reason
+auction,market operation
+statement of affairs,balance-sheet operation
+treasury\s+bond,market operation
+investment\s+bond,market operation
+buyback|liability management operation,market operation
+seminar|workshop|courtesy|conference|meeting|mpc|monetary policy committee|minutes,administrative or event notice

@@ -1,0 +1,546 @@
+item_id,institution_id,kind,topic,title,published_on,report_year,source_url,source_kind,checked_by,checked_on
+extra54-dse-1,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-17,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-2,19,announcement,capital,Declaration of Share Receipt by a Director,2026-09-23,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-3,19,announcement,company_notice,Election of Chairman,2026-07-30,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-4,19,announcement,financials,Q2 Financials,2026-07-28,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-5,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-21,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-6,19,announcement,dividend,Dividend Disbursement,2026-07-20,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-7,19,announcement,credit_rating,Credit Rating Result,2026-06-17,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-8,19,announcement,financials,Q1 Financials,2026-05-14,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-9,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-05-10,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-10,19,announcement,dividend,Resumption after Record Date,2026-05-06,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-11,19,announcement,dividend,Suspension for Record Date,2026-05-05,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-12,19,announcement,company_notice,Spot News,2026-05-03,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-13,19,announcement,financials,Emphasis of Matters,2026-04-27,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-14,19,announcement,md_change,Appointment of Managing Director,2026-04-21,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-15,19,announcement,company_notice,Price Limit Open,2026-04-16,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-16,19,announcement,dividend,Dividend Declaration,2026-04-16,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-17,19,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-09,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-18,19,announcement,capital,"BSEC Consent for Issuance of Unsecured, Non-convertible Subordinated Bond",2025-12-22,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-19,19,announcement,financials,Q3 Financials,2025-10-30,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-20,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-23,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-21,19,announcement,capital,"Board approves the issuance of Unsecured, Non-convertible Subordinated Bond",2025-09-25,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-22,19,announcement,financials,Q2 Financials,2025-07-29,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-23,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-07-23,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-24,19,announcement,financials,Board decision to establish a not-for-profit organization,2025-07-10,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-25,19,announcement,capital,Board approval for issuance of Zero Coupon Subordinated Bond,2025-07-10,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-26,19,announcement,dividend,Dividend Disbursement,2025-06-29,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-27,19,announcement,credit_rating,Credit Rating Result,2025-05-29,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-28,19,announcement,capital,Board approval for issuance of Subordinated Bond of BDT 800.00 Crore,2025-05-13,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-29,19,announcement,financials,Q1 Financials,2025-05-13,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-30,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-05-07,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-31,19,announcement,dividend,Resumption after Record date,2025-04-23,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-32,19,announcement,dividend,Suspension for Record date,2025-04-22,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-33,19,announcement,company_notice,Spot News,2025-04-20,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-34,19,announcement,financials,Emphasis of Matter,2025-04-09,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-35,19,announcement,company_notice,Price Limit Open,2025-03-25,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-36,19,announcement,dividend,Dividend Declaration,2025-03-25,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-37,19,announcement,board_meeting,Reschedule of Board Meeting under LR 19(1),2025-03-17,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-38,19,announcement,board_meeting,Board Meeting schedule under LR 19(1),2025-03-12,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-39,19,announcement,company_notice,Revaluation of Assets & change of Accounting Policy for Land Valuation,2025-01-30,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-40,19,announcement,company_notice,Board decision to engage qualified firm for valuation of plots of land,2024-12-01,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-41,19,announcement,financials,Q3 Financials,2024-10-31,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-42,19,announcement,board_meeting,Board Meeting schedule under LR 16(1),2024-10-24,,https://www.dse.com.bd/company/EBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-43,42,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-19,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-44,42,announcement,company_notice,Buy Confirmation of a Corporate Director,2026-10-08,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-45,42,announcement,company_notice,Buy Declaration of a Corporate Director,2026-10-05,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-46,42,announcement,company_notice,Buy Confirmation of a Corporate Director,2026-09-29,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-47,42,announcement,company_notice,Buy Confirmation of a Director,2026-09-29,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-48,42,announcement,company_notice,Buy Declaration of a Sponsor Director,2026-09-27,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-49,42,announcement,company_notice,Buy Declaration of a Director,2026-09-23,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-50,42,announcement,company_notice,Buy Declaration of a Corporate Director,2026-09-23,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-51,42,announcement,capital,Confirmation of share transfer by a Sponsor,2026-09-07,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-52,42,announcement,capital,Declaration of share transfer by a Sponsor,2026-09-03,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-53,42,announcement,financials,Q2 Financials,2026-08-02,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-54,42,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-23,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-55,42,announcement,company_notice,Buy Confirmation of a Director,2026-06-29,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-56,42,announcement,company_notice,Buy Confirmation of a Corporate Director,2026-06-29,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-57,42,announcement,dividend,Dividend Disbursement,2026-06-28,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-58,42,announcement,company_notice,Buy Confirmation of a Sponsor Director,2026-06-25,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-59,42,announcement,company_notice,Buy Confirmation of a Corporate Director,2026-06-25,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-60,42,announcement,company_notice,Buy Confirmation of a Director,2026-06-25,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-61,42,announcement,company_notice,Sale Confirmation of a Sponsor,2026-06-25,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-62,42,announcement,company_notice,Buy Declaration of a Director,2026-06-17,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-63,42,announcement,credit_rating,Credit Rating Result,2026-06-17,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-64,42,announcement,company_notice,Buy Declaration of a Sponsor Director,2026-06-17,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-65,42,announcement,company_notice,Buy Declaration of a Corporate Director,2026-06-17,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-66,42,announcement,company_notice,Sale Declaration of a Sponsor,2026-06-14,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-67,42,announcement,md_change,Appointment of CEO,2026-06-01,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-68,42,announcement,financials,Emphasis of Matter,2026-05-17,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-69,42,announcement,company_notice,Change of Head Office Address,2026-05-03,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-70,42,announcement,dividend,Resumption after Record Date,2026-04-28,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-71,42,announcement,dividend,Suspension for Record Date,2026-04-27,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-72,42,announcement,financials,Q1 Financials,2026-04-27,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-73,42,announcement,company_notice,Spot News,2026-04-23,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-74,42,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-04-20,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-75,42,announcement,company_notice,Price Limit Open,2026-04-06,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-76,42,announcement,dividend,Dividend Declaration,2026-04-06,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-77,42,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-03-29,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-78,42,announcement,md_change,Appointment of Acting CEO,2026-02-15,,https://www.dse.com.bd/company/PRIMEBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-79,18,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-25,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-80,18,announcement,dividend,Resumption after Record Date,2026-09-20,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-81,18,announcement,agm,Suspension for Record Date,2026-09-17,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-82,18,announcement,agm,Spot News,2026-09-15,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-83,18,announcement,capital,Decision to hold EGM to increase of Authorized Capital and Others,2026-08-27,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-84,18,announcement,company_notice,Board decision to purchase land,2026-08-27,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-85,18,announcement,financials,Q2 Financials,2026-07-30,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-86,18,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-26,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-87,18,announcement,dividend,Dividend Disbursement,2026-07-13,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-88,18,announcement,credit_rating,Credit Rating Result,2026-06-24,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-89,18,announcement,financials,Emphasis of Matter,2026-06-02,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-90,18,announcement,dividend,Resumption after Record Date,2026-05-19,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-91,18,announcement,dividend,Suspension for Record Date,2026-05-18,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-92,18,announcement,company_notice,Spot News,2026-05-14,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-93,18,announcement,financials,Q1 Financials,2026-04-29,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-94,18,announcement,company_notice,Price Limit Open,2026-04-29,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-95,18,announcement,dividend,Dividend Declaration,2026-04-29,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-96,18,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-04-23,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-97,18,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-22,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-98,18,announcement,md_change,Appointment of Managing Director and CEO,2026-02-08,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-99,18,announcement,financials,Q3 Financials,2025-10-28,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-100,18,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-22,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-101,18,announcement,company_notice,Clarification on recent news published in newspaper,2025-09-22,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-102,18,announcement,company_notice,Decision to purchase a commercial building for Corporate Head office,2025-08-27,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-103,18,announcement,financials,Q2 Financials,2025-07-30,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-104,18,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-07-24,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-105,18,announcement,dividend,Dividend Disbursement,2025-07-22,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-106,18,announcement,dividend,Dividend Disbursement,2025-07-07,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-107,18,announcement,credit_rating,Credit Rating Result,2025-07-02,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-108,18,announcement,dividend,Resumption after record date,2025-05-22,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-109,18,announcement,dividend,Suspension for Record Date,2025-05-21,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-110,18,announcement,company_notice,Spot News,2025-05-19,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-111,18,announcement,financials,Q1 Financials,2025-04-30,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-112,18,announcement,company_notice,Price Limit Open,2025-04-30,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-113,18,announcement,dividend,Dividend Declaration,2025-04-30,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-114,18,announcement,board_meeting,Reschedule of Board Meeting under LR 16(1),2025-04-23,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-115,18,announcement,board_meeting,Reschedule of Board Meeting under LR 19(1),2025-04-23,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-116,18,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-04-20,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-117,18,announcement,board_meeting,Board Meeting schedule under LR 19(1),2025-04-17,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-118,18,announcement,capital,BSEC's consent for issuance of 5th Subordinated Bond,2025-01-22,,https://www.dse.com.bd/company/DUTCHBANGL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-153,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-17,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-154,48,announcement,company_notice,Election of Chairman,2026-09-13,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-155,48,announcement,company_notice,Sale Declaration of a Corporate Director,2026-08-06,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-156,48,announcement,financials,Q2 Financials,2026-07-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-157,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-26,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-158,48,announcement,credit_rating,Credit Rating Result,2026-06-25,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-159,48,announcement,audit_emphasis,Qualified Opinion and Emphasis of Matter,2026-06-02,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-160,48,announcement,dividend,Resumption after Record Date,2026-05-20,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-161,48,announcement,dividend,Suspension for Record Date,2026-05-19,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-162,48,announcement,company_notice,Spot News,2026-05-14,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-163,48,announcement,capital,Prohibition on providing loan facilities to purchase securities,2026-04-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-164,48,announcement,dividend,Category Change,2026-04-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-165,48,announcement,financials,Q1 Financials,2026-04-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-166,48,announcement,company_notice,Price Limit Open,2026-04-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-167,48,announcement,dividend,Dividend Declaration,2026-04-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-168,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-04-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-169,48,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-170,48,announcement,company_notice,Appointment of Company Secretary (Current Charge),2025-12-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-171,48,announcement,md_change,Appointment of Managing Director and CEO,2025-12-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-172,48,announcement,financials,Q3 Financials (Additional Information),2025-10-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-173,48,announcement,financials,Q3 Financials,2025-10-30,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-174,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-175,48,announcement,financials,Q2 Financials,2025-07-31,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-176,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-07-29,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-177,48,announcement,company_notice,Buy Intimation,2025-07-17,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-178,48,announcement,dividend,Resumption after Record Date,2025-06-26,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-179,48,announcement,credit_rating,Credit Rating Result,2025-06-26,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-180,48,announcement,dividend,Suspension for Record Date,2025-06-25,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-181,48,announcement,company_notice,Spot News,2025-06-23,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-182,48,announcement,financials,Emphasis of Matter,2025-06-19,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-183,48,announcement,company_notice,Price Limit Open,2025-05-29,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-184,48,announcement,dividend,Dividend Declaration,2025-05-29,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-185,48,announcement,financials,Q1 Financials,2025-05-29,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-186,48,announcement,board_meeting,Reschedule of Board Meeting under LR 19(1),2025-05-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-187,48,announcement,board_meeting,Postponement of Board Meeting schedule under LR 19(1),2025-05-04,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-188,48,announcement,board_meeting,Reschedule of Board Meeting under LR 19(1),2025-04-29,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-189,48,announcement,board_meeting,Board Meeting schedule under LR 19(1),2025-04-23,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-190,48,announcement,financials,Q3 Financials,2024-10-23,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-191,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2024-10-20,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-192,48,announcement,company_notice,Election of Chairman,2024-10-01,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-193,48,announcement,company_notice,Buy Intimation,2024-09-18,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-194,48,announcement,company_notice,Buy Intimation,2024-09-05,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-195,48,announcement,capital,Transmission of deceased sponsor's shares to nominee,2024-08-22,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-196,8,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-19,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-197,8,announcement,capital,BSEC consent to issue Bond amounting to BDT 800.00 crore,2026-10-01,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-198,8,announcement,company_notice,Sale Confirmation of a Sponsor Director,2026-08-24,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-199,8,announcement,capital,Regarding the enhancement of Authorized Capital of the company,2026-08-04,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-200,8,announcement,financials,Q2 Financials,2026-07-26,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-201,8,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-19,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-202,8,announcement,dividend,Dividend Disbursement,2026-07-19,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-203,8,announcement,company_notice,Sale Declaration of a Sponsor Director,2026-07-06,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-204,8,announcement,credit_rating,Credit Rating Result,2026-06-30,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-205,8,announcement,dividend,Resumption after Record Date,2026-05-20,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-206,8,announcement,financials,Emphasis of Matter,2026-05-20,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-207,8,announcement,dividend,Suspension for Record Date,2026-05-19,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-208,8,announcement,company_notice,Spot News,2026-05-17,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-209,8,announcement,financials,Q1 Financials,2026-05-13,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-210,8,announcement,board_meeting,Reschedule of Board Meeting under LR 16(1),2026-05-07,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-211,8,announcement,capital,Board approved the issuance of Green Sustainable Subordinated Bond,2026-05-07,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-212,8,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-05-05,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-213,8,announcement,capital,Board approves increase of Authorized Capital,2026-04-30,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-214,8,announcement,company_notice,Price Limit Open,2026-04-30,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-215,8,announcement,dividend,Dividend Declaration,2026-04-30,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-216,8,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-21,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-217,8,announcement,dividend,Resumption after Record Date,2026-02-26,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-218,8,announcement,agm,Suspension for Record Date,2026-02-25,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-219,8,announcement,agm,Spot for EGM,2026-02-23,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-220,8,announcement,agm,Decision to hold EGM,2026-02-01,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-221,8,announcement,capital,Capital Injection to subsidiary Bank Asia Securities Ltd.,2025-12-03,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-222,8,announcement,financials,Q3 Financials,2025-10-27,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-223,8,announcement,financials,"Earning Disclosure Program on Q3, 2025",2025-10-26,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-224,8,announcement,capital,Confirmation of share receipt by a Sponsor,2025-10-23,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-225,8,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-21,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-226,8,announcement,capital,Declaration of share receipt by a Sponsor,2025-10-20,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-227,8,announcement,md_change,Buy Confirmation of Managing Director of the Company,2025-09-18,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-228,8,announcement,md_change,Buy Declaration of Managing Director of the Company,2025-09-08,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-229,8,announcement,company_notice,Sale confirmation of a Sponsor Director,2025-07-31,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-230,8,announcement,company_notice,Sale confirmation of a Sponsor Director,2025-07-29,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-231,8,announcement,company_notice,Sale declaration of a Sponsor Director,2025-07-28,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-232,8,announcement,financials,Q2 Financials,2025-07-28,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-233,8,announcement,dividend,Dividend Disbursement,2025-07-24,,https://www.dse.com.bd/company/BANKASIA,index,agent-extra-v5.4,2026-10-28
+extra54-dse-590,11,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-19,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-591,11,announcement,capital,BSEC's Consent for Issuance of BRAC Bank Green Bond,2026-10-01,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-592,11,announcement,financials,Earnings Disclosure Program on Half Yearly Financial Statements,2026-08-06,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-593,11,announcement,financials,Q2 Financials,2026-07-29,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-594,11,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-23,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-595,11,announcement,dividend,Dividend Disbursement,2026-06-30,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-596,11,announcement,capital,Board approval to issue BRAC Bank Green Bond,2026-05-23,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-597,11,announcement,financials,Emphasis of Matter,2026-05-20,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-598,11,announcement,financials,Disclosure Program on audited & first quarter financial statements,2026-05-17,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-599,11,announcement,dividend,Resumption after Record Date,2026-05-17,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-600,11,announcement,dividend,Suspension for Record Date,2026-05-14,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-601,11,announcement,credit_rating,Credit Rating Result,2026-05-14,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-602,11,announcement,financials,Q1 Financials,2026-05-13,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-603,11,announcement,company_notice,Spot News,2026-05-12,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-604,11,announcement,capital,Trading of the BBL 2nd Subordinated Bond,2026-05-12,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-605,11,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-05-06,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-606,11,announcement,company_notice,Price Limit Open,2026-04-27,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-607,11,announcement,dividend,Dividend Declaration,2026-04-27,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-608,11,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-20,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-609,11,announcement,financials,Earnings Disclosure Program on Third Quarter Financial Statements,2025-10-30,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-610,11,announcement,financials,Q3 Financials,2025-10-26,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-611,11,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-20,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-612,11,announcement,capital,BSEC consent of BRAC Bank Social Subordinated Bond,2025-10-05,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-613,11,announcement,md_change,Appointment of Managing Director and CEO,2025-09-04,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-614,11,announcement,financials,Earnings Disclosure Program on Half Yearly Financial Statements,2025-08-17,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-615,11,announcement,financials,Q2 Financials,2025-07-29,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-616,11,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-07-22,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-617,11,announcement,credit_rating,Sale declaration by Chairman of National Credit Ratings Limited,2025-07-20,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-618,11,announcement,dividend,Dividend Disbursement,2025-07-13,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-619,11,announcement,dividend,Dividend Disbursement,2025-06-24,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-620,11,announcement,capital,Board approval to issue BRAC Bank Social Subordinated Bond,2025-06-15,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-621,11,announcement,md_change,Appointment of Managing Director and CEO,2025-05-28,,https://www.dse.com.bd/company/BRACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-622,14,announcement,dividend,Transmission of Deceased Sponsor's Bonus Shares to Successor,2026-10-26,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-623,14,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-17,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-624,14,announcement,company_notice,Sale Declaration of a Sponsor,2026-10-15,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-625,14,announcement,agm,Cancellation of EGM scheduled to be held on 04 October 2026,2026-09-30,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-626,14,announcement,dividend,Resumption after Record Date,2026-09-06,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-627,14,announcement,dividend,Suspension for Record Date,2026-09-03,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-628,14,announcement,agm,Spot for EGM,2026-09-01,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-629,14,announcement,agm,Board decision to modify the business proposed for the EGM,2026-08-25,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-630,14,announcement,capital,"Board Decision on Authorized Capital, MOA & AOA Amendment & EGM",2026-08-16,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-631,14,announcement,financials,Event on Earnings Disclosure Q2 2026,2026-07-30,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-632,14,announcement,financials,Q2 Financials,2026-07-28,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-633,14,announcement,board_meeting,Reschedule of Board Meeting under LR 16(1),2026-07-22,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-634,14,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-21,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-635,14,announcement,dividend,Dividend Disbursement,2026-07-15,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-636,14,announcement,credit_rating,Credit Rating Result,2026-06-17,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-637,14,announcement,financials,Emphasis of Matter,2026-05-17,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-638,14,announcement,financials,Event on Earnings Disclosure Q1 2026,2026-05-04,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-639,14,announcement,dividend,Resumption after Record Date,2026-05-03,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-640,14,announcement,dividend,Suspension for Record Date,2026-04-30,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-641,14,announcement,financials,Q1 Financials,2026-04-30,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-642,14,announcement,company_notice,Spot News,2026-04-28,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-643,14,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-04-21,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-644,14,announcement,company_notice,Update of Information,2026-04-13,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-645,14,announcement,company_notice,Price Limit Open,2026-04-12,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-646,14,announcement,dividend,Dividend Declaration,2026-04-12,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-647,14,announcement,capital,"BSEC's Consent for the Issuance of Tk. 1,200 Crore Subordinated Bond",2026-04-12,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-648,14,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-02,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-649,14,announcement,company_notice,Decision to purchase land,2026-01-08,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-650,14,announcement,dividend,Confirmation of share transmission of Late Mr. Deen Mohammad,2025-12-11,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-651,14,announcement,dividend,Confirmation of share transmission of Late Mr. Deen Mohammad,2025-12-08,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-652,14,announcement,dividend,Transmission of Deceased Sponsor's Bonus Shares to Successors,2025-11-19,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-653,14,announcement,financials,Event on Earnings disclosure Q3 2025,2025-10-30,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-654,14,announcement,financials,Q3 Financials,2025-10-29,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-655,14,announcement,dividend,Transmission of Deceased Sponsor's Bonus Shares to Successors,2025-10-26,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-656,14,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-21,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-657,14,announcement,company_notice,Board approves the establishment of a new subsidiary,2025-09-28,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-658,14,announcement,capital,"Updated Bond features & approval of Tk. 1,200 Crore Subordinated Debt",2025-09-14,,https://www.dse.com.bd/company/CITYBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-979,26,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-19,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-980,26,announcement,credit_rating,Credit Rating Result,2026-08-25,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-981,26,announcement,financials,Q2 Financials,2026-07-30,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-982,26,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-26,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-983,26,announcement,md_change,Appointment of Managing Director (Acting),2026-06-28,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-984,26,announcement,agm,Regarding revised Date of the AGM,2026-06-25,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-985,26,announcement,company_notice,BB cancels appointment of 5 Independent Directors & Appoints new ED,2026-06-22,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-986,26,announcement,financials,Emphasis of Matter,2026-06-01,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-987,26,announcement,dividend,Resumption after Record Date,2026-05-21,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-988,26,announcement,dividend,Suspension for Record Date,2026-05-20,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-989,26,announcement,company_notice,Spot News,2026-05-17,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-990,26,announcement,dividend,Regarding revised Date and Venue of the AGM,2026-05-13,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-991,26,announcement,financials,Q1 Financials,2026-05-13,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-992,26,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-05-05,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-993,26,announcement,capital,Prohibition on providing loan facilities to purchase securities,2026-04-30,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-994,26,announcement,dividend,Category Change,2026-04-30,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-995,26,announcement,company_notice,Price Limit Open,2026-04-30,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-996,26,announcement,dividend,Dividend Declaration,2026-04-30,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-997,26,announcement,board_meeting,Change of Board Meeting Date under LR 19(1),2026-04-23,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-998,26,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-16,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-999,26,announcement,company_notice,Postponement of decision on onboarding a investor in mCash Ltd.,2026-03-15,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1000,26,announcement,company_notice,Board approval for onboarding a Strategic Investor in mCash Ltd.,2026-03-09,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1001,26,announcement,capital,Regarding formation of a Subsidiary Company,2026-01-25,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1002,26,announcement,credit_rating,Credit Rating Result,2025-12-29,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1003,26,announcement,agm,Announcement of AGM Date and Time,2025-12-09,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1004,26,announcement,agm,Regarding Postponement of 42nd AGM of the Company,2025-11-19,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1005,26,announcement,financials,Q3 Financials,2025-10-30,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1006,26,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-22,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1007,26,announcement,dividend,Announcement of AGM Date and Time,2025-10-14,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1008,26,announcement,dividend,Resumption after record date,2025-09-23,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1009,26,announcement,dividend,Suspension for Record Date,2025-09-22,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1010,26,announcement,company_notice,Spot News,2025-09-18,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1011,26,announcement,financials,Emphasis of Matter,2025-09-10,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1012,26,announcement,company_notice,Sale Confirmation of an Independent Director,2025-09-08,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1013,26,announcement,company_notice,Sale Declaration of an Independent Director,2025-09-03,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1014,26,announcement,financials,Q2 Financials,2025-09-01,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1015,26,announcement,financials,Q1 Financials,2025-09-01,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1016,26,announcement,company_notice,Appointment of Company Secretary,2025-08-28,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1017,26,announcement,company_notice,Price Limit Open,2025-08-27,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1018,26,announcement,dividend,Dividend Declaration,2025-08-27,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1019,26,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-08-26,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1020,26,announcement,board_meeting,Postponement of Board Meeting schedule under LR 16(1),2025-08-25,,https://www.dse.com.bd/company/ISLAMIBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1139,33,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-19,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1140,33,announcement,financials,Audited financial highlights for the first half of 2026,2026-10-01,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1141,33,announcement,capital,Completion of Transmission of Deceased Sponsor's shares to his nominees,2026-09-20,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1142,33,announcement,capital,Board Decision to raise Tier-II capital,2026-08-27,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1143,33,announcement,capital,Transmission of Deceased Sponsor's shares to his nominees,2026-08-25,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1144,33,announcement,capital,Transmission of Deceased Sponsor Director's Shares to Successors,2026-08-16,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1145,33,announcement,financials,Q2 Financials,2026-07-30,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1146,33,announcement,dividend,Dividend Disbursement,2026-07-23,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1147,33,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-22,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1148,33,announcement,dividend,Resumption after Record Date,2026-06-18,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1149,33,announcement,dividend,Suspension for Record Date,2026-06-17,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1150,33,announcement,company_notice,Spot News,2026-06-15,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1151,33,announcement,company_notice,Bangladesh Bank's approval for purchasing 1 Bigha (20 Katha) plot,2026-06-09,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1152,33,announcement,financials,Emphasis of Matter,2026-06-02,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1153,33,announcement,agm,Revised AGM Date and Time and Re-fixed Record Date,2026-06-01,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1154,33,announcement,dividend,BSEC's consent for Stock Dividend,2026-05-21,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1155,33,announcement,dividend,Resumption after Record Date,2026-05-20,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1156,33,announcement,dividend,Suspension for Record Date,2026-05-19,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1157,33,announcement,company_notice,Spot News,2026-05-17,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1158,33,announcement,credit_rating,Credit Rating Result,2026-05-17,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1159,33,announcement,financials,Q1 Financials,2026-04-30,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1160,33,announcement,company_notice,Price Limit Open,2026-04-30,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1161,33,announcement,dividend,Dividend Declaration,2026-04-30,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1162,33,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-04-22,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1163,33,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-21,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1164,33,announcement,company_notice,DSE NEWS: Withdrawal of Authorized Representative,2026-03-29,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1165,33,announcement,capital,Board Decides to raise Tier-I Capital @32% of paid-up capital,2026-01-22,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1166,33,announcement,company_notice,DSE NEWS: Withdrawal of Authorized Representatives,2025-11-09,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1167,33,announcement,company_notice,Board approved the proposal for purchasing 1 Bigha (20 Katha) plot,2025-10-30,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1168,33,announcement,financials,Q3 Financials,2025-10-30,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1169,33,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-22,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1170,33,announcement,company_notice,Sale and Buy confirmations of a sponsor and a director,2025-10-19,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1171,33,announcement,company_notice,Sale and Buy Declarations of a corporate sponsor and a director,2025-10-15,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1172,33,announcement,financials,Q2 Financials,2025-07-31,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1173,33,announcement,dividend,Dividend Disbursement,2025-07-23,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1174,33,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-07-21,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1175,33,announcement,company_notice,Sale and Buy Confirmations of a corporate sponsor and a director,2025-06-19,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1176,33,announcement,company_notice,Sale and Buy Declarations of a corporate sponsor and a director,2025-06-17,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1177,33,announcement,dividend,Resumption after record date,2025-05-22,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1178,33,announcement,dividend,Suspension for Record Date,2025-05-21,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1179,33,announcement,dividend,BSEC consent for issuance of stock dividend,2025-05-21,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1180,33,announcement,company_notice,Spot News,2025-05-19,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1181,33,announcement,credit_rating,Credit Rating Result,2025-05-15,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1182,33,announcement,company_notice,Election of Chairman,2025-05-06,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1183,33,announcement,financials,Q1 Financials,2025-05-04,,https://www.dse.com.bd/company/MTB,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1184,36,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-13,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1185,36,announcement,company_notice,DSENEWS: Withdrawal of Authorized Representative,2026-10-08,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1186,36,announcement,company_notice,DSENEWS: Withdrawal of Authorized Representative,2026-09-22,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1187,36,announcement,credit_rating,Credit Rating Result,2026-09-09,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1188,36,announcement,financials,Q2 Financials,2026-07-28,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1189,36,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-19,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1190,36,announcement,dividend,Resumption after Record Date,2026-06-15,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1191,36,announcement,dividend,Suspension for Record Date,2026-06-14,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1192,36,announcement,company_notice,Name Change of the Company,2026-06-09,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1193,36,announcement,company_notice,Spot News,2026-06-09,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1194,36,announcement,audit_emphasis,Qualified Opinion and Emphasis of Matter,2026-06-01,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1195,36,announcement,company_notice,Price Limit Open,2026-05-03,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1196,36,announcement,dividend,Dividend Declaration,2026-05-03,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1197,36,announcement,financials,Q1 Financials,2026-05-03,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1198,36,announcement,board_meeting,Reschedule of Board Meeting under LR 16(1),2026-04-28,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1199,36,announcement,board_meeting,Reschedule of Board Meeting under LR 19(1),2026-04-28,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1200,36,announcement,board_meeting,Postponement of Board Meeting schedule under LR 16(1),2026-04-26,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1201,36,announcement,board_meeting,Postponement of Board Meeting schedule under LR 19(1),2026-04-26,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1202,36,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-04-16,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1203,36,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-16,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1204,36,announcement,company_notice,Election of Chairman,2026-03-01,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1205,36,announcement,company_notice,DSENEWS: Withdrawal of Authorized Representative,2026-02-23,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1206,36,announcement,company_notice,DSENEWS: Withdrawal of Authorized Representatives,2026-01-18,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1207,36,announcement,credit_rating,Credit Rating Result,2025-11-04,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1208,36,announcement,financials,Q3 Financials,2025-11-02,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1209,36,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-21,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1210,36,announcement,financials,Q2 Financials,2025-07-23,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1211,36,announcement,agm,Regarding venue of AGM of the company,2025-07-16,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1212,36,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-07-15,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1213,36,announcement,dividend,Resumption after Record Date,2025-06-15,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1214,36,announcement,audit_emphasis,Qualified Opinion,2025-06-15,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1215,36,announcement,dividend,Suspension for Record Date,2025-06-04,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1216,36,announcement,company_notice,Spot News,2025-06-01,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1217,36,announcement,company_notice,Price Limit Open,2025-05-04,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1218,36,announcement,dividend,Dividend Declaration,2025-05-04,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1219,36,announcement,financials,Q1 Financials,2025-05-04,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1220,36,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-04-22,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1221,36,announcement,board_meeting,Board Meeting schedule under LR 19(1),2025-04-22,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1222,36,announcement,company_notice,DSENEWS: Withdrawal of Authorized Representative,2025-02-12,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1223,36,announcement,company_notice,DSENEWS: Withdrawal of Authorized Representatives,2025-02-05,,https://www.dse.com.bd/company/NBL,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1224,37,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-10-18,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1225,37,announcement,company_notice,Sale Declaration of a Sponsor,2026-10-17,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1226,37,announcement,company_notice,Sale Confirmation of a Sponsor,2026-10-08,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1227,37,announcement,company_notice,Sale declaration of a Sponsor,2026-10-04,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1228,37,announcement,capital,Confirmation of Share receipt by a Director,2026-09-13,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1229,37,announcement,capital,Declaration of Share receipt by a Director,2026-09-02,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1230,37,announcement,dividend,Resumption after Record Date,2026-08-20,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1231,37,announcement,dividend,Suspension for Record Date,2026-08-19,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1232,37,announcement,company_notice,Bangladesh Bank Approves Conversion of 20 Branches to Islamic Banking,2026-08-19,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1233,37,announcement,agm,Spot News,2026-08-17,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1234,37,announcement,dividend,Dividend Disbursement,2026-08-03,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1235,37,announcement,agm,Decision to hold EGM,2026-07-29,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1236,37,announcement,financials,Q2 Financials,2026-07-29,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1237,37,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-07-23,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1238,37,announcement,credit_rating,Credit Rating Result,2026-06-24,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1239,37,announcement,financials,Emphasis of Matter,2026-06-02,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1240,37,announcement,company_notice,Sale Confirmation of a Sponsor,2026-05-24,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1241,37,announcement,dividend,Resumption after Record Date,2026-05-21,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1242,37,announcement,dividend,Suspension for Record Date,2026-05-20,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1243,37,announcement,company_notice,Sale Declaration of a Sponsor,2026-05-19,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1244,37,announcement,company_notice,Spot News,2026-05-18,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1245,37,announcement,company_notice,Buy Confirmation of a Sponsor,2026-05-17,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1246,37,announcement,capital,Confirmation of Share Receipt by a Sponsor,2026-05-17,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1247,37,announcement,financials,Q1 Financials,2026-05-17,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1248,37,announcement,board_meeting,Reschedule of Board Meeting under LR 16(1),2026-05-13,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1249,37,announcement,capital,Declaration of Share Receipt by a Sponsor,2026-05-12,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1250,37,announcement,company_notice,Buy Declaration of a Sponsor,2026-05-10,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1251,37,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-05-06,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1252,37,announcement,company_notice,Price Limit Open,2026-04-28,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1253,37,announcement,dividend,Dividend Declaration,2026-04-28,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1254,37,announcement,board_meeting,Board Meeting schedule under LR 19(1),2026-04-19,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1255,37,announcement,company_notice,Appointment of Company Secretary (Acting),2026-01-04,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1256,37,announcement,capital,Share Transmission of Deceased Sponsor among Successors,2025-11-06,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1257,37,announcement,financials,Q3 Financials,2025-10-30,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1258,37,announcement,board_meeting,Board Meeting schedule under LR 16(1),2025-10-22,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1259,37,announcement,capital,BSEC consent of NCC Bank Non-convertible Subordinated Bond-2,2025-09-25,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1260,37,announcement,company_notice,Buy Confirmation of a Sponsor,2025-09-02,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1261,37,announcement,company_notice,Buy Declaration of a Sponsor,2025-08-21,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1262,37,announcement,company_notice,Buy Confirmation of a Sponsor,2025-08-20,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1263,37,announcement,capital,Confirmation of share receipt by a Director,2025-08-13,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1264,37,announcement,company_notice,Buy Declaration of a Sponsor,2025-08-13,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1265,37,announcement,capital,Declaration of share receipt by a Director,2025-08-12,,https://www.dse.com.bd/company/NCCBANK,index,agent-extra-v5.4,2026-10-28
+extra54-dse-1963,48,announcement,board_meeting,Board Meeting schedule under LR 16(1),2026-01-01,,https://www.dse.com.bd/company/SBACBANK,index,agent-extra-v5.4,2026-10-28
+extra54-report-1,19,report,half_yearly,Half Yearly Financial Statements 2026 (Unaudited),,2026,https://www.ebl.com.bd/./assets/reports/half/EBL-Half-Yearly-Financial-Statements-2026-Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-2,19,report,quarterly,EBL Q1 Financial Statement 2026 (Unaudited),,2026,https://www.ebl.com.bd/./assets/reports/half/EBL-Q1-Financial-Statements-2026-Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-3,19,report,audited_fs,Financial Statements 2025 (Audited),,2025,https://www.ebl.com.bd/./assets/reports/half/Financial-Statements-2025-Audited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-4,19,report,quarterly,EBL Q3 Financial Statement 2025 (Unaudited),,2025,https://www.ebl.com.bd/./assets/reports/half/EBL-Q3-FS-for-web_2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-5,19,report,half_yearly,Half Yearly Financial Statements 2025 (Unaudited),,2025,https://www.ebl.com.bd/./assets/reports/half/EBL_Q2_FS_2025_Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-6,19,report,quarterly,EBL Q1 Financial Statement 2025 (Unaudited),,2025,https://www.ebl.com.bd/./assets/reports/half/EBL-Q1-Financial-Statements-2025-Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-7,19,report,audited_fs,Financial Statements 2024 (Audited),,2024,https://www.ebl.com.bd/./assets/reports/half/Financial-Statements-2024_0512pdf.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-8,19,report,quarterly,EBL Q3 Financial Statements 2024 (Unaudited),,2024,https://www.ebl.com.bd/./assets/reports/half/EBL_Q3_Financial_Statements_2024_Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-9,19,report,half_yearly,Half Yearly Financial Statements 2024 (Unaudited),,2024,https://www.ebl.com.bd/./assets/reports/half/EBL_Q2_FS_2024_Un.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-10,19,report,quarterly,EBL Q1 Financial Statements 2024 (Unaudited),,2024,https://www.ebl.com.bd/./assets/reports/half/EBL_Q1_FS_for_web_version_2024.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-11,19,report,audited_fs,Financial Statements 2023 (Audited),,2023,https://www.ebl.com.bd/./assets/reports/half/Financial_Statements_04042023_Audited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-12,19,report,quarterly,EBL Q3 Financial Statements 2023 (Unaudited),,2023,https://www.ebl.com.bd/./assets/reports/half/EBL-Q3-FS-web-version-2023.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-13,19,report,half_yearly,Half Yearly Financial Statements 2023 (Unaudited),,2023,https://www.ebl.com.bd/./assets/reports/half/EBL_H1_FS_2023.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-14,19,report,quarterly,EBL Q1 Financial Statement 2023 (Unaudited),,2023,https://www.ebl.com.bd/./assets/reports/half/EBL_Q1_FS2023_Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-15,19,report,audited_fs,Financial Statements 2022 (Audited),,2022,https://www.ebl.com.bd/./assets/reports/half/Financial_Statements_2022_Audited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-16,19,report,quarterly,EBL Q3 Financial Statements 2022 (Unaudited),,2022,https://www.ebl.com.bd/./assets/reports/half/EBL-Q3-FS-2022.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-17,19,report,half_yearly,Half Yearly Financial Statements 2022 (Unaudited),,2022,https://www.ebl.com.bd/./assets/reports/half/Half-Yearly-Financial-Statements-2022-Unaudited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-18,19,report,quarterly,EBL Q1 Financial Statement 2022 (Unaudited),,2022,https://www.ebl.com.bd/./assets/reports/half/EBL-Q1-Financial-Statement-2022.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-19,19,report,audited_fs,Financial Statements 2021 (Audited),,2021,https://www.ebl.com.bd/./assets/reports/half/Financial_Statement__2021_Audited.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-20,19,report,quarterly,EBL Q3 Financial Statement 2021 (Unaudited),,2021,https://www.ebl.com.bd/./assets/reports/half/EBL-Q3-FS-2021.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-21,19,report,half_yearly,Half Yearly Financial Statements 2021 (Unaudited),,2021,https://www.ebl.com.bd/./assets/reports/half/EBL-Half-Yearly-Financial-Statement-2021-final.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-22,19,report,quarterly,EBL Q1 Financial Statement 2021 (Unaudited),,2021,https://www.ebl.com.bd/./assets/reports/half/EBL-Q1-FS2021v3.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-23,19,report,audited_fs,Financial Statements 2020 (Audited),,2020,https://www.ebl.com.bd/./assets/reports/half/EBL-FS-2020-PAPER-VERSION.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-24,19,report,quarterly,EBL Q3 Financial Statement 2020 (Unaudited),,2020,https://www.ebl.com.bd/./assets/reports/half/EBL_Q3_Financial_Statement_2020_v2.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-25,19,report,half_yearly,Half Yearly Financial Statements 2020 (Unaudited),,2020,https://www.ebl.com.bd/./assets/reports/half/EBL_Q2_FS_2020_For_Web_version.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-26,19,report,quarterly,EBL Q1 Financial Statement 2020 (Unaudited),,2020,https://www.ebl.com.bd/./assets/reports/half/EBL-Q1-2020-FS_v2.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-27,19,report,other,EBL At A Glance,,2026,https://www.ebl.com.bd/downloads/EBL-At-A-Glance.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-28,42,report,other,Climate Strategy,,2025,https://www.primebank.com.bd/assets/sustainable/climate-strategy/Prime-Bank-Climate-Strategy.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-30,42,report,annual_report,Annual Report 2025,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-31,42,report,annual_report,Annual Report 2024,,2024,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2024-Inner-for-web-final-5-4-25.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-32,42,report,annual_report,Annual Report 2023,,2023,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2023.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-33,42,report,annual_report,Annual Report 2022,,2022,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime_Bank_Annual_Report_2022.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-34,42,report,annual_report,Annual Report 2021,,2021,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337573-PrimeBank_Annual_Report_2021.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-35,42,report,annual_report,Annual Report 2020,,2020,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337442-Annual_Report_2020.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-36,42,report,annual_report,Annual Report 2019,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337397-Annual_Report_2019.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-37,42,report,annual_report,Annual Report 2018,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337362-Annual Report 2018.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-38,42,report,annual_report,Annual Report 2017 [Part - 2],,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337329-Annual Report (Accounts Part)-2017-p2.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-39,42,report,annual_report,Annual Report 2017 [Part - 1],,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337294-Annual Report (General Part)-2017-p1.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-40,42,report,annual_report,Annual Report 2016 [Part - 2],,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337228-Annual Report 2016-Part 2.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-41,42,report,annual_report,Annual Report 2016 [Part - 1],,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337192-Annual Report 2016-Part 1.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-42,42,report,annual_report,Annual Report 2015,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337135-Prime Bank Annual Report 2015.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-43,42,report,annual_report,Annual Report 2014,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673337065-Annual Report 2014.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-44,42,report,annual_report,Annual Report 2012,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673336865-Annual_Report_2012.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-45,42,report,annual_report,Annual Report 2011,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673336609-Annual_Report_2011.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-46,42,report,annual_report,Annual Report 2010,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673336189-Annual_Report_2010.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-47,42,report,annual_report,Annual Report 2009,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673336088-Annual_Report_2009.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-48,42,report,annual_report,Annual Report 2008,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673335977-Annual_Report_2008.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-49,42,report,annual_report,Annual Report 2007,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673335794-Annual_Report_2007.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-50,42,report,annual_report,Annual Report 2005,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673334884-Annual_Report_2005.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-51,42,report,annual_report,Annual Report 2004,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673334808-Annual_Report_2004.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-52,42,report,annual_report,Annual Report 2003,,2025,https://www.primebank.com.bd/assets/reports/annual-disclosure/1673334231-Annual_Report_2003.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-53,19,report,annual_report,EBL Annual Report 2025,,2025,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-54,19,report,annual_report,EBL Annual Report 2024,,2024,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2024.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-55,19,report,annual_report,EBL Annual Report 2023,,2023,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2023.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-56,19,report,annual_report,EBL Annual Report 2022,,2022,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2022.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-57,19,report,annual_report,EBL Annual Report 2021,,2021,https://www.ebl.com.bd/assets/reports/annual/EBL-Annual-Report-2021.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-58,42,report,annual_report,Prime Bank Annual Report 2025,,2025,https://www.primebank.com.bd/assets/reports/annual/Prime-Bank-Annual-Report-2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-59,42,report,annual_report,Prime Bank Annual Report 2023,,2023,https://www.primebank.com.bd/assets/reports/annual/Prime-Bank-Annual-Report-2023.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-60,42,report,annual_report,Prime Bank Annual Report 2022,,2022,https://www.primebank.com.bd/assets/reports/annual/Prime-Bank-Annual-Report-2022.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-61,42,report,annual_report,Prime Bank Annual Report 2021,,2021,https://www.primebank.com.bd/assets/reports/annual/Prime-Bank-Annual-Report-2021.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-62,18,report,annual_report,DBBL Annual Report 2025,,2025,https://www.dutchbanglabank.com/investor-relations/Annual-Report-2025/Annual-Report-2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-63,18,report,annual_report,DBBL Annual Report 2024,,2024,https://www.dutchbanglabank.com/investor-relations/Annual-Report-2024/Annual-Report-2024.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-64,8,report,annual_report,Bank Asia Annual Report 2025,,2025,https://www.bankasia-bd.com/assets/reports/annual/Bank-Asia-AIR-2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-65,8,report,annual_report,Bank Asia Annual Report 2024,,2024,https://www.bankasia-bd.com/assets/reports/annual/Annual_Report_2024.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-66,8,report,annual_report,Bank Asia Annual Report 2023,,2023,https://www.bankasia-bd.com/assets/reports/annual/Annual_Report_2023.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-95,14,report,annual_report,City Bank Annual Report 2025,,2025,https://citybankplc.com/admin/uploads/files/reports/annual-report/~2025~City-Bank-AR-2025.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-96,11,report,annual_report,BRAC Bank Annual Report 2025,,2025,https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/BRAC_Bank_AR_2025_Final_Version_updated_on_09.07.2026_compressed6a549062be056.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-97,37,report,annual_report,NCC Bank Annual Report 2025,,2025,https://www.nccbank.com.bd/assets/files/annual_report/NCC_Bank_AR_2025_Updated_15_06.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-report-98,33,report,annual_report,MTB Annual Report 2025,,2025,https://www.mutualtrustbank.com/wp-content/uploads/2026/06/MTB-Annual-Report-2025_Revised-_Final.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-press-21,,press,bb_notice,Disruptions in Digital Transaction of Few Banks,2026-10-06,,https://www.bb.org.bd/en/index.php/mediaroom/press_release,index,agent-extra-v5.4,2026-10-28
+extra54-press-81,,press,bb_notice,"Bangladesh Bank's bdt 3,000 crores Refinance Scheme for Establishing a Special Agricultural-Based Economic Hub in Northern Bangladesh",2026-09-02,,https://www.bb.org.bd/en/index.php/mediaroom/press_release,index,agent-extra-v5.4,2026-10-28
+extra54-press-89,,press,bb_notice,"Advisory to exercise caution regarding unauthorized mobile applications, online platforms, and illegal lending activities conducted via digital media, and to refrain from availing loans from such sources.",2026-08-27,,https://www.bb.org.bd/en/index.php/mediaroom/press_release,index,agent-extra-v5.4,2026-10-28
+extra54-press-98,,press,bb_notice,The Central Bank’s ‘Refinancing Scheme for the Agriculture and Rural Sectors’ aimed at ensuring food security and employment.,2026-08-20,,https://www.bb.org.bd/en/index.php/mediaroom/press_release,index,agent-extra-v5.4,2026-10-28
+extra54-press-137,,press,bb_notice,Warning regarding financial fraud on crypto trading/MLM platforms.,2026-07-30,,https://www.bb.org.bd/en/index.php/mediaroom/press_release,index,agent-extra-v5.4,2026-10-28
+extra54-notice-9,11,bank_notice,bb_notice,"BRPD-2 Circular Letter No. 16: Exemption from the provision of Section 23(1)(kakaka) of the Bank Company Act, 1991 (amended up to 2023) for BRAC Bank PLC.",2026-10-12,,https://www.bb.org.bd/mediaroom/circulars/brpd-2/oct122026brpd-2l16.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-10,36,bank_notice,bb_notice,BRPD-2 Circular Letter No. 14: Exemption from the provision of section 27KaKa(3) of Bank-Company Act 1991 (amended up to 2023) for opening Import LC keeping 100% margin/providing working capital facilities by National Bank Plc. in favour of Beximco LPG Unit-1 Ltd.,2026-10-12,,https://www.bb.org.bd/mediaroom/circulars/brpd-2/oct122026brpd-2l14.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-13,,rule,new_rule,BRPD-1 Circular Letter No. 35: Maintenance of Business Identification Number (BIN) Certificates for Opening Current Accounts and STD Accounts for Business Entities.,2026-10-11,,https://www.bb.org.bd/mediaroom/circulars/brpd/oct112026brpd-1l35.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-19,,rule,new_rule,BRPD-1 Circular Letter No. 34: Re-fixation of the Interest Rate and Amount of the Pre-Shipment Credit Refinancing Scheme.,2026-10-01,,https://www.bb.org.bd/mediaroom/circulars/brpd/oct012026brpd-1l34.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-63,,rule,new_rule,BRPD-1 Circular Letter No. 29: Bank Account Opening for Foreign Nationals Working in Bangladesh under the E-Visa Category,2026-08-18,,https://www.bb.org.bd/mediaroom/circulars/brpd/aug182026brpd-1l29.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-71,,rule,new_rule,"BRPD-1 Circular Letter No. 27: Deduction of source tax at the applicable rate on interest/profit paid on deposits in accordance with the Income Tax Act, 2023 and timely deposit thereof into the Government Treasury.",2026-08-10,,https://www.bb.org.bd/mediaroom/circulars/brpd/aug102026brpd-1l27.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-73,,rule,new_rule,PSD-2 Circular Letter No. 06: Determination of Fees/Charges for Bangla QR Transactions,2026-08-10,,https://www.bb.org.bd/mediaroom/circulars/psd-2/aug102026psd-2l06.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-84,,rule,new_rule,BRPD-1 Circular Letter No. 26: Regarding the Lien on Current Account Balances Maintained with Bangladesh Bank Against TT Discounting Facilities Granted to Scheduled Banks.,2026-08-03,,https://www.bb.org.bd/mediaroom/circulars/brpd/aug032026brpd-1l26.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-90,,rule,new_rule,"PSD-1 Circular Letter No. 03: Regarding ""Add Money"" from Card to MFS Personal Account",2026-07-30,,https://www.bb.org.bd/mediaroom/circulars/psd/jul302026psd-1l03.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-101,36,bank_notice,bb_notice,"BRPD-2 Circular Letter No. 09: Exemption from the provision of Section 10 of Bank Company Act, 1991 (amended up to 2023) for National Bank PLC. to allow Ijarah of one of the towers of 'NBL Twin Towers'",2026-07-21,,https://www.bb.org.bd/mediaroom/circulars/brpd-2/jul212026brpd-2l09.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-126,,rule,new_rule,PSD-2 Circular Letter No. 05: Determination of Fees/Charges for NPSB Transactions and Government Payments,2026-07-01,,https://www.bb.org.bd/mediaroom/circulars/psd-2/jul012026psd-2l05.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-132,,rule,new_rule,BRPD-1 Circular Letter No. 22: Regarding the Intermediation spread between the weighted average interest rate of advances and deposits.,2026-06-29,,https://www.bb.org.bd/mediaroom/circulars/brpd/jun292026brpd-1l22.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-165,,rule,new_rule,"PSD-1 Circular No. 03: Regarding ""Add Money"" from Card to MFS Personal Account",2026-05-19,,https://www.bb.org.bd/mediaroom/circulars/psd/may192026psd-103.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-170,,rule,new_rule,BRPD-1 Circular Letter No. 17: Interest/Profit Rate of Loan/Investment,2026-05-13,,https://www.bb.org.bd/mediaroom/circulars/brpd/may132026brpd-1l17.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-rule-218,,rule,new_rule,BRPD-1 Circular No. 09: Guidelines on Credit Card Operations of Banks,2026-03-15,,https://www.bb.org.bd/mediaroom/circulars/brpd/mar152026brpd-19e.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-419,26,bank_notice,bb_notice,DOS Circular Letter No. 11: Time Extension for Submission of Annual Audit Report of Islami Bank Bangladesh PLC,2025-06-19,,https://www.bb.org.bd/mediaroom/circulars/dos/jun192025dosl11.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-439,36,bank_notice,bb_notice,BRPD Circular Letter No. 12: Name change of National Bank Limited to National Bank PLC.,2025-05-27,,https://www.bb.org.bd/mediaroom/circulars/brpd/may272025brpdl12.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-458,14,bank_notice,bb_notice,DOS Circular Letter No. 05: Intermission of Banking Operations of City Bank PLC due to Data Centre Relocation.,2025-04-30,,https://www.bb.org.bd/mediaroom/circulars/dos/apr302025dosl05.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-568,36,bank_notice,bb_notice,DOS Circular Letter No. 29: Intermission of Banking Services of National Bank Limited due to Migration to New Core Banking Software.,2024-12-19,,https://www.bb.org.bd/mediaroom/circulars/dos/dec192024dosl29.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-581,18,bank_notice,bb_notice,DOS Circular Letter No. 27: Intermission of Core Banking Services and Agent Banking Services of Dutch-Bangla Bank PLC due to Migration to New Core Banking Software.,2024-12-04,,https://www.bb.org.bd/mediaroom/circulars/dos/dec042024dosl27.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-763,8,bank_notice,bb_notice,BRPD Circular Letter No. 20: Name change of Bank Asia Ltd to Bank Asia PLC.,2024-04-16,,https://www.bb.org.bd/mediaroom/circulars/brpd/apr162024brpdl20.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-822,48,bank_notice,bb_notice,BRPD Circular Letter No. 07: Name change of South Bangla Agriculture and Commerce Bank Ltd to SBAC Bank PLC.,2024-01-31,,https://www.bb.org.bd/mediaroom/circulars/brpd/jan312024brpdl07.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-864,14,bank_notice,bb_notice,BRPD Circular Letter No. 72: Name change of The City Bank Ltd to City Bank PLC.,2023-12-10,,https://www.bb.org.bd/mediaroom/circulars/brpd/dec102023brpdl72.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-894,42,bank_notice,bb_notice,BRPD Circular Letter No. 59: Name change of Prime Bank Ltd to Prime Bank PLC.,2023-11-19,,https://www.bb.org.bd/mediaroom/circulars/brpd/nov192023brpdl59.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-900,33,bank_notice,bb_notice,BRPD Circular Letter No. 56: Name change of Mutual Trust Bank Ltd to Mutual Trust Bank PLC.,2023-11-14,,https://www.bb.org.bd/mediaroom/circulars/brpd/nov142023brpdl56.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-901,18,bank_notice,bb_notice,BRPD Circular Letter No. 55: Name change of Dutch-Bangla Bank Ltd to Dutch-Bangla Bank PLC.,2023-11-13,,https://www.bb.org.bd/mediaroom/circulars/brpd/nov132023brpdl55.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-927,11,bank_notice,bb_notice,BRPD Circular Letter No. 45: Name change of BRAC Bank Ltd to BRAC Bank PLC.,2023-10-08,,https://www.bb.org.bd/mediaroom/circulars/brpd/oct082023brpdl45.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-929,42,bank_notice,bb_notice,DOS Circular Letter No. 23: Intermission of Banking Operations of Prime Bank Limited due to Data Centre Relocation.,2023-10-08,,https://www.bb.org.bd/mediaroom/circulars/dos/oct082023dosl23.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-957,19,bank_notice,bb_notice,BRPD Circular Letter No. 36: Name change of Eastern Bank Limited to Eastern Bank PLC.,2023-09-03,,https://www.bb.org.bd/mediaroom/circulars/brpd/sep032023brpdl36.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-986,26,bank_notice,bb_notice,BRPD Circular Letter No. 28: Name change of Islami Bank Bangladesh Limited to Islami Bank Bangladesh PLC.,2023-07-31,,https://www.bb.org.bd/mediaroom/circulars/brpd/jul312023brpdl28.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-notice-1881,33,bank_notice,bb_notice,DOS Circular Letter No. 32: DOS Circular Letter No. 32: Intermission of Banking Services of Mutual Trust Bank Ltd. due to Migration to New Core Banking Software,2020-10-22,,https://www.bb.org.bd/mediaroom/circulars/dos/oct222020dosl32.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-action-7,36,compliance,other_compliance,"ন্যাশনাল ব্যাংক পিএলসি কতৃর্ক ঋণপত্র স্থাপন/ চলতি মূলধন প্রদানে ব্যাংক কোম্পানী আইন, ১৯৯১ এর ২৭কক(৩) ধারা থেকে অব্যাহতি প্রদান প্রসঙ্গে",2026-10-12,,https://www.bb.org.bd/mediaroom/circulars/brpd-2/oct122026brpd-2l14.pdf,document,agent-extra-v5.4,2026-10-28
+extra54-action-9,11,compliance,other_compliance,"ব্যাংক-কোম্পানী আইন, ১৯৯১ (২০২৩ পযর্ন্ত্ম সংশোধিত) এর ২৩(১)(ককক) ধারার বিধান পরিপালন হতে বর্যাক ব্যাংক পিএলসি.-কে অব্যাহতি প্রদান প্রসঙ্গে",2026-10-12,,https://www.bb.org.bd/mediaroom/circulars/brpd-2/oct122026brpd-2l16.pdf,document,agent-extra-v5.4,2026-10-28

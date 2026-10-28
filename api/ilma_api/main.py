@@ -107,6 +107,10 @@ def search_institutions(
         .all()
     )
     id_list = [mid[0] for mid in matched_ids]
+    from ilma_api.extra_data import related_names
+    from ilma_api.voice_text import normalize_alias
+    query_alias=' '+normalize_alias(q)+' '
+    blocked={r.parent_bank_id for r in related_names(db) if ' '+normalize_alias(r.name)+' ' in query_alias}
     
     results = (
         db.query(Institution)
@@ -118,6 +122,7 @@ def search_institutions(
                 Institution.id.in_(id_list)
             )
         )
+        .filter(~Institution.id.in_(blocked))
         .limit(5)
         .all()
     )
@@ -137,6 +142,8 @@ def search_institutions(
 @app.get("/v1/institutions/index")
 def get_institution_index(db: Session = Depends(get_db)):
     institutions = db.query(Institution).all()
+    from ilma_api.extra_data import related_names
+    excluded=related_names(db)
     output = []
     for inst in institutions:
         aliases = [a.alias for a in inst.aliases]
@@ -148,7 +155,8 @@ def get_institution_index(db: Session = Depends(get_db)):
             "type": inst.type,
             "coverage": inst.coverage,
             "licensed": inst.licensed,
-            "aliases": aliases
+            "aliases": aliases,
+            "related_entities": [r.name for r in excluded if r.parent_bank_id==inst.id]
         })
     return output
 
@@ -349,3 +357,6 @@ def voice_acceptance_page():
 
 from ilma_api.bank_services import make_router
 app.include_router(make_router(get_db))
+
+from ilma_api.extra_routes import router as extra_router
+app.include_router(extra_router(get_db))

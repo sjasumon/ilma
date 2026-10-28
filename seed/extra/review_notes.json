@@ -1,0 +1,100 @@
+{
+  "unclassified_announcements": [],
+  "dropped_report_year_mismatch": [
+    "29"
+  ],
+  "rejected_circular_links": [
+    {
+      "circular_id": "186",
+      "bank_id": "11"
+    },
+    {
+      "circular_id": "980",
+      "bank_id": "26"
+    },
+    {
+      "circular_id": "3365",
+      "bank_id": "26"
+    },
+    {
+      "circular_id": "4256",
+      "bank_id": "26"
+    },
+    {
+      "circular_id": "4356",
+      "bank_id": "26"
+    },
+    {
+      "circular_id": "902",
+      "bank_id": "36"
+    }
+  ],
+  "missing_sources": [],
+  "duplicate_counts": {
+    "announcement": 7,
+    "report": 28,
+    "press": 5
+  },
+  "audit_retagging": [
+    {
+      "id": "13",
+      "topic": "financials"
+    },
+    {
+      "id": "34",
+      "topic": "financials"
+    },
+    {
+      "id": "68",
+      "topic": "financials"
+    },
+    {
+      "id": "89",
+      "topic": "financials"
+    },
+    {
+      "id": "159",
+      "topic": "audit_emphasis"
+    },
+    {
+      "id": "182",
+      "topic": "financials"
+    },
+    {
+      "id": "206",
+      "topic": "financials"
+    },
+    {
+      "id": "597",
+      "topic": "financials"
+    },
+    {
+      "id": "637",
+      "topic": "financials"
+    },
+    {
+      "id": "986",
+      "topic": "financials"
+    },
+    {
+      "id": "1011",
+      "topic": "financials"
+    },
+    {
+      "id": "1152",
+      "topic": "financials"
+    },
+    {
+      "id": "1194",
+      "topic": "audit_emphasis"
+    },
+    {
+      "id": "1214",
+      "topic": "audit_emphasis"
+    },
+    {
+      "id": "1239",
+      "topic": "financials"
+    }
+  ]
+}

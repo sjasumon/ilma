@@ -59,12 +59,20 @@ def view(row, today=None):
 
 def history(db,institution_id):
     rows=records(db,institution_id)
-    return dict(available=bool(rows),window=None,complete_search=False,
-        record_window=dict(start=str(min(r.first_reported_on for r in rows)),end=str(max(r.last_update_on for r in rows))) if rows else None,
-        items=[view(row) for row in rows],
-        message_bn='সরবরাহকৃত ঘটনার নথি; পূর্ণ অনুসন্ধানের সময়সীমা দেওয়া হয়নি। এটি সম্পূর্ণ ইতিহাস নয়।' if rows else 'এই ব্যাংকের ঘটনার নথি এই রপ্তানিতে নেই। পূর্ণ ইতিহাস যাচাই করা হয়নি।',
-        message_en='Supplied incident records; no complete search window was provided. This is not a complete history.' if rows else 'This export supplied no incident records for this bank. Its complete history has not been checked.')
-
+    from ilma_api.extra_data import items
+    compliance=items(db,'compliance',institution_id)
+    extra=[dict(incident_id=r.item_id,kind='other_compliance',title_bn=r.title,title_en=r.title,status='reported',
+        status_label_bn='বিশেষ অব্যাহতি',status_label_en='Special exemption',type_label_bn='বিশেষ অব্যাহতি',type_label_en='Special exemption',
+        official=True,confirmation_bn='বাংলাদেশ ব্যাংকের সরকারি নোটিশ',confirmation_en='Official Bangladesh Bank notice',
+        first_reported_on=str(r.published_on),last_update_on=str(r.published_on),older_history=False,affects_status=False,
+        sources=[dict(source_id=r.item_id,source_url=r.source_url,source_title='Bangladesh Bank',quote=r.title,page=None,published_at=str(r.published_on),checked=False)],changes=[]) for r in compliance]
+    dates=[r.first_reported_on for r in rows]+[r.published_on for r in compliance]
+    ends=[r.last_update_on for r in rows]+[r.published_on for r in compliance]
+    return dict(available=bool(rows or extra),window=None,complete_search=False,
+        record_window=dict(start=str(min(dates)),end=str(max(ends))) if dates else None,
+        items=sorted([view(row) for row in rows]+extra,key=lambda r:(r['last_update_on'],r['incident_id']),reverse=True),
+        message_bn='সরবরাহকৃত ঘটনার নথি; পূর্ণ অনুসন্ধানের সময়সীমা দেওয়া হয়নি। এটি সম্পূর্ণ ইতিহাস নয়।' if rows or extra else 'এই ব্যাংকের ঘটনার নথি এই রপ্তানিতে নেই। পূর্ণ ইতিহাস যাচাই করা হয়নি।',
+        message_en='Supplied incident records; no complete search window was provided. This is not a complete history.' if rows or extra else 'This export supplied no incident records for this bank. Its complete history has not been checked.')
 
 def voice_facts(db,institution_id,language):
     result=[]

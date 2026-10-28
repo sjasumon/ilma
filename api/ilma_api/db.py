@@ -300,6 +300,28 @@ def create_tables():
     Base.metadata.create_all(bind=engine)
     print("Database tables created successfully.")
 
+
+class ExtraItem(Base):
+    __tablename__ = 'extra_item'
+    item_id = Column(String(64), primary_key=True)
+    institution_id = Column(Integer, ForeignKey('institution.id'), nullable=True, index=True)
+    kind = Column(String(24), nullable=False, index=True)
+    topic = Column(String(40), nullable=False)
+    title = Column(Text, nullable=False)
+    published_on = Column(Date, nullable=True)
+    report_year = Column(Integer, nullable=True)
+    source_url = Column(Text, nullable=False)
+    source_kind = Column(String(16), nullable=False)
+    checked_by = Column(String(64), nullable=False)
+    checked_on = Column(Date, nullable=False)
+
+
+class RelatedEntity(Base):
+    __tablename__ = 'related_entity'
+    name = Column(String(255), primary_key=True)
+    parent_bank_id = Column(Integer, nullable=False)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "create":
         create_tables()

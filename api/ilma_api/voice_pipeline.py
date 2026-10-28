@@ -18,7 +18,7 @@ from ilma_api import settings
 from ilma_api.db import AppQuestionLog, AppRateCounter, Rate, InsuranceRule
 from ilma_api.report_card import get_institution_report_card
 from ilma_api.voice import VoiceError, MAX_UPLOAD_BYTES, convert_audio, transcribe
-from ilma_api.voice_text import VoiceContext, VoiceIntent, clean_transcript, match_candidates, decide_language, normalize_numbers, bank_name_only
+from ilma_api.voice_text import VoiceContext, VoiceIntent, clean_transcript, match_candidates, decide_language, normalize_numbers, bank_name_only, related_parent_ids
 from ilma_api.voice_diagnostics import trace_stage
 
 
@@ -267,6 +267,13 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         from ilma_api.voice_answers import numbers
         sensitive_numbers = bool(numbers(text))
         candidates = match_candidates(text, banks)
+        related=related_parent_ids(text,banks)
+        if context.bank_id in related:context=context.model_copy(update={'bank_id':None})
+        if related and not candidates:
+            outcome='no_data'
+            yield event('result', {'type':'no_data','reason':'related_entity','sources':[],'omit_history':True,
+                'text':'এটি ব্যাংকের সঙ্গে সম্পর্কিত আলাদা কোম্পানির নাম। ওই কোম্পানির ব্যাংক-অবস্থার তথ্য আমাদের কাছে নেই।' if context.ui_lang=='bn' else 'This names a separate related company. We do not have bank-status information for that company.'})
+            return
         trace_stage(diagnostic, 'matching_completed', started, candidates=len(candidates))
         language = decide_language(text, candidates, context.ui_lang)
         if language != context.ui_lang:

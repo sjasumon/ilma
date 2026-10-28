@@ -184,3 +184,5 @@ Licenses in `static/fonts/`, not newly authored font designs.
 [Home reference](design/S01-Home.html) · [Voice acceptance](docs/VOICE_ACCEPTANCE.md)
 
 Bank services v5.4 import and review notes: [implementation](docs/BANK_SERVICES_V54.md).
+
+Extra source publications and watched-bank announcements: [v5.4 notes](docs/EXTRA_DATA_V54.md).

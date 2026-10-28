@@ -54,11 +54,19 @@ def normalize_alias(value):
     return ' '.join(value.split())
 
 
+def related_parent_ids(text, banks):
+    query=' '+normalize_alias(text)+' '
+    return {bank['id'] for bank in banks if any(' '+normalize_alias(name)+' ' in query for name in bank.get('related_entities',[]))}
+
+
 def match_candidates(text, banks, scorer=None):
     query = normalize_alias(text)
     tokens = query.split()
     candidates = []
+    excluded=related_parent_ids(text,banks)
     for bank in banks:
+        if bank['id'] in excluded:
+            continue
         best, best_alias = 0, ''
         for alias in [bank['name_bn'], bank['name_en'], *bank.get('aliases', [])]:
             normalized = normalize_alias(alias)

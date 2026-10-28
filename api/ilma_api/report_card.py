@@ -203,7 +203,8 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
 
     release = db.query(Release).order_by(Release.loaded_at.desc()).first()
     from ilma_api.incidents import records
-    incident_count=len(records(db,inst.id))
+    from ilma_api.extra_data import items
+    incident_count=len(records(db,inst.id))+len(items(db,'compliance',inst.id))
     return {
         "institution": inst_dict,
         "status": {
@@ -226,8 +227,8 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         },
         "data_date": str(max((f.period_end for f in facts_rows), default=as_of)) if facts_rows else None,
         "updated_at": str(newest_checked_on) if facts_rows or ratings_rows or events_rows else None,
-        "not_checked_bn": "বাংলাদেশ ব্যাংকের ব্যবস্থা ও জরিমানা এই ডেমোতে যাচাই করা হয়নি।",
-        "not_checked_en": "Bangladesh Bank actions and penalties were not checked in this demo.",
+        "not_checked_bn": "বাংলাদেশ ব্যাংকের নোটিশ আলাদা তালিকায় আছে। তালিকা সম্পূর্ণ নয়; হাতে সূত্র যাচাই বাকি।",
+        "not_checked_en": "BB notices are listed separately. Coverage is incomplete; manual source review remains pending.",
         "release_id": release.release_id if release else None,
         "disclaimer_key": "VS-08"
     }

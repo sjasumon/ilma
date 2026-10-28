@@ -996,3 +996,6 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .catalog-variants summary { cursor:pointer; min-height:48px; padding:10px 0; font-weight:700; }
 .catalog-variants .catalog-card { margin-top:12px; }
 .catalog-variants strong { overflow-wrap:anywhere; }
+
+/* Publication links use the existing stage colour and retain their underline. */
+.publication-card .catalog-source { color:var(--stage); font-weight:700; text-underline-offset:.18em; }
