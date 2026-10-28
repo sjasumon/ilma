@@ -112,18 +112,18 @@ def test_one_plan_call_and_metadata_only_audit(db):
  ('SERVICES','এফডিআর','fdr'),('SERVICES','ডিপিএস','dps'),('SERVICES','না, কার্ড','card'),('SERVICES','home loan','home_loan'),
  ('SERVICE','তুলনা','compare'),('SERVICE','না','next'),('SERVICE','card','card'),
  ('FIGURES','অন্য ব্যাংক','ask_bank'),('NEXT','দুই','end'),('NEXT','আবার','repeat'),('BANK','পুরো রিপোর্ট','report'),
- ('BANK','থামুন','stop'),('WATCH_CONFIRM','হ্যাঁ','yes')])
+ ('BANK','থামুন','end'),('WATCH_CONFIRM','হ্যাঁ','yes')])
 def test_twenty_spoken_script_fixtures(state,reply,expected):
     assert spoken_choice(reply,Conversation(state=state,institution_id=1))==expected
 
 
-def test_watch_requires_confirmed_yes_and_six_turn_limit(db):
+def test_watch_requires_confirmed_yes_and_twenty_turn_limit(db):
     result=call(db,c=Conversation(state='BANK',institution_id=1),choice='watch',identity='x'*64)
     assert result['conversation']['state']=='WATCH_CONFIRM' and db.query(AppWatchItem).count()==0
     result=call(db,c=conv(result),choice='yes',identity='x'*64)
     assert db.query(AppWatchItem).count()==1
-    result=call(db,c=Conversation(state='BANK',institution_id=1,turn=5),choice='services')
-    assert result['action']['type']=='end' and result['conversation']['turn']==6
+    result=call(db,c=Conversation(state='BANK',institution_id=1,turn=19),choice='services')
+    assert result['action']['type']=='end' and result['conversation']['turn']==20
 
 
 def test_json_tap_request_and_input_bounds():
@@ -264,7 +264,7 @@ def test_only_missing_bank_gets_bank_question_and_pending_product_is_retained(db
     banks=routing_banks(db)
     missing=route_reply(db,'এফডিআর রেট কত',None,banks)
     assert missing['conversation']['state']=='ASK_BANK' and missing['conversation']['product']=='fdr'
-    assert 'Which bank' in missing['text']
+    assert missing['conversation']['language']=='bn' and 'ব্যাংকের নাম' in missing['text']
     resolved=route_reply(db,'Prime Bank',conv(missing),banks)
     assert resolved['conversation']['state']=='SERVICE' and resolved['conversation']['institution_id']==3
     known=route_reply(db,'আর কী আছে',Conversation(state='BANK',institution_id=3),banks)

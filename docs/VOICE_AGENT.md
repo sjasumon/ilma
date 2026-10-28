@@ -62,3 +62,16 @@ fall through to the previous bank. The nine demo banks and the existing approved
 NBL/Islami supplements retain their coverage. Bengali vowel-sign spelling
 variants (`ু`/`ূ`, `ি`/`ী`) are folded only for matching; source names and quotations
 retain their original spelling.
+
+
+## Language and loop recovery
+
+[Language/recovery specification](specs/APP_SPEC_09_language_and_recovery.md)
+updates reply precedence. Current options resolve first, then global commands
+such as details/services work across states. Unmatched replies keep state and
+bank; two consecutive misses reveal a focused typed form. A question-only output
+guard records a metadata warning and uses recovery instead. Spoken and typed
+turns select Bangla/English from the transcript; taps retain conversation.language.
+The automatic-language undo keeps the bank and repeats the answer in the restored
+language. Twenty-turn, idle and navigation bounds prevent indefinite sessions.
+No transcript or state is persisted by this feature.

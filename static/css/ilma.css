@@ -1148,3 +1148,10 @@ body { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
 #agent-inspect { margin-top: 16px; font-size: 16px; }
 #agent-inspect summary { min-height: 56px; cursor: pointer; padding: 10px; }
 #agent-panel :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+/* Keep correction and typed recovery within the existing teal/gold app frame. */
+#voice-language-chip { flex-basis:100%; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+#agent-text-form { margin:12px 0; }
+#agent-text-form label { display:block; color:var(--on-stage); }
+#agent-text-input { box-sizing:border-box; width:100%; min-height:52px; border:1px solid var(--gold-soft); border-radius:12px; padding:10px; background:var(--stage); color:var(--on-stage); font:inherit; }
+#agent-text-submit { width:100%; min-height:48px; margin-top:8px; border:1px solid var(--gold-soft); border-radius:12px; background:var(--stage); color:var(--on-stage); font:inherit; }

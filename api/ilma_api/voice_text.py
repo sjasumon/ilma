@@ -129,7 +129,8 @@ def decide_language(text, candidates, ui_lang):
     remaining = re.sub(r'\b(bank|fdr|dps|rate|plc|card|loan)\b|ব্যাংক(?:ের|ে)?|পিএলসি', ' ', remaining, flags=re.I)
     letters = [c for c in remaining if c.isalpha()]
     latin = sum('LATIN' in unicodedata.name(c, '') for c in letters)
-    return 'en' if letters and latin / len(letters) >= .7 else ui_lang
+    if not letters:return ui_lang  # A bank name alone has no language evidence.
+    return 'en' if latin / len(letters) >= .7 else 'bn'
 
 
 from ilma_api.voice_numbers import normalize_numbers
@@ -140,3 +141,8 @@ def bank_name_only(text, candidates):
     for candidate in candidates:
         remainder = remainder.replace(normalize_alias(candidate['alias']), ' ')
     return bool(candidates) and not remainder.strip()
+
+
+def turn_language(text, context, candidates=(), choice=None):
+    previous=context.conversation.language if context.conversation and context.conversation.language else context.ui_lang
+    return previous if choice is not None else decide_language(text,candidates,previous)

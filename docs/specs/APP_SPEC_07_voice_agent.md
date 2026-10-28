@@ -11,7 +11,7 @@ The server script follows BANK → DETAIL or SERVICES, then FIGURES/HISTORY,
 SERVICE, COMPARE, NEXT and ASK_BANK. A watch request adds a separate yes/no
 confirmation. Services offers FDR/DPS and two additional visible product buttons.
 There are at most two tap-count choices; product names can also be spoken.
-A conversation ends after six turns. Full report opens only on request.
+A conversation ends after twenty turns; navigation and two-minute idle also reset it. Full report opens only on request.
 
 `POST /v1/ask` accepts existing multipart text or a discrete `choice` field,
 and JSON `{choice, context}` for taps. Both `/v1/voice` and `/v1/ask` accept

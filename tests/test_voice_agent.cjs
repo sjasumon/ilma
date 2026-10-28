@@ -17,6 +17,7 @@ function fixture(){
  const native=fixture();native.panel.show(native.result,true);native.a.interrupt();await native.settle();native.panel.tap({detail:0});assert.deepEqual(native.calls.at(-1),['send','detail']);
  const timeout=fixture();timeout.panel.show(timeout.result);await timeout.advance(120000);assert.equal(timeout.panel.active,false);assert.deepEqual(timeout.calls.at(-1),['exit']);await timeout.settle();assert.ok(!timeout.calls.some(c=>c[0]==='listen'),'late audio cannot reopen mic after reset');
  const tab=fixture();tab.panel.show(tab.result);tab.panel.reset();await tab.settle();assert.equal(tab.panel.active,false);
+ const typing=fixture();typing.result.offer_typing=true;typing.panel.show(typing.result);await typing.end();await typing.advance(16000);assert.ok(!typing.calls.some(c=>['listen','question'].includes(c[0])),'typing recovery must not reopen the microphone or repeat over the keyboard');
  const {createApp}=require('./frontend_harness.cjs');const appLang=createApp();appLang.run("agentConversation={state:'BANK'};setLanguage('en')");assert.equal(appLang.run('agentConversation'),null,'changing language clears prior-language conversation');
  console.log('Voice agent lifetime passed: post-speech mic, tap/recording isolation, assistive activation, two re-asks, idle reset and stale-playback cancellation');
 })().catch(error=>{console.error(error);process.exitCode=1});

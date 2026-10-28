@@ -153,6 +153,14 @@ function voiceApp(options = {}) {
   assert.equal(english.document.documentElement.lang, 'en');
   assert.equal(english.context.openedBank, 102, 'language switch must not abort the stream');
 
+  const reverse = voiceApp();
+  reverse.run('currentLang="en";appSettings.language="en"');
+  reverse.context.fetch=async()=>response([['transcript',{text:'ইস্টার্ন ব্যাংক কেমন আছে',language:'bn'}],['result',{type:'report_card',institution_id:102,text:'পরীক্ষার উত্তর'}]]);
+  await reverse.fire('home-tap-target','click');await reverse.run('finishRecording()');
+  assert.equal(reverse.document.documentElement.lang,'bn');assert.equal(reverse.context.openedBank,102,'BN switch cannot abort delivery');
+  assert.match(reverse.node('voice-language-chip').textContent,/English-এ থাকুন/);
+  await reverse.fire('voice-language-chip','click');assert.equal(reverse.document.documentElement.lang,'en');assert.equal(reverse.node('voice-language-chip').hidden,true);
+
   const typed = voiceApp();
   typed.context.fetch = async (url, request) => { assert.equal(url, '/v1/ask'); assert.equal(request.body.get('text'), 'Pubali'); return response([['transcript', { text: 'Pubali', language: 'en' }], ['result', { type: 'report_card', institution_id: 102, text: 'Pubali information' }]]); };
   await typed.run('submitTextQuestion("Pubali")'); assert.equal(typed.context.openedBank, 102);

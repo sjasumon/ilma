@@ -127,3 +127,14 @@ full-history redacted secrets checks before every fast-forward push.
 Spark PLAN uses minimal reasoning and a 1,000-total-token cap because internal
 reasoning shares that budget with the visible plan; the initial 300-token cap
 returned no JSON. The strict 4.5-second overall deadline remains authoritative.
+
+
+## Local conversation browser preview
+
+For `tests/check_conversation_browser.py`, use a temporary loopback preview with
+DB_NAME=ilma, META_MODEL_API_KEY=, MUSE_VOICE_API_KEY=, ELEVENLABS_API_KEY=,
+TTS_PREWARM=false and API_ADMISSION_BACKEND=process. Set CORS_ORIGINS to that
+preview's exact loopback origin (for example http://127.0.0.1:8018). These
+provider-disabled overrides belong only to the preview; never clear credentials
+or weaken origins on the live service. Stop the temporary preview after checks.
+The script performs read-only public bank queries and no microphone capture.

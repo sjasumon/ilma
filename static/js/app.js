@@ -136,6 +136,7 @@ try {
 } catch { /* Preferences still work when storage is unavailable. */ }
 let lastAgentChoice = "";
 let agentConversation = null, agentPanel = null, agentPendingResult = null;
+let voiceLanguageReturn = null, voiceLanguageOverride = null;
 let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
 let currentLang = appSettings.language;
 let suppressHomeClick = false;
@@ -254,6 +255,7 @@ function saveSettings() {
 
 function setLanguage(language, announce = true) {
   if (!["bn", "en"].includes(language)) return;
+  voiceLanguageReturn=null;voiceLanguageOverride=null;document.getElementById("voice-language-chip").hidden=true;
   if (agentConversation && language !== currentLang) resetAgentConversation();
   if (isListening || recognitionStarting || isSearching) stopListening();
   stopAudio();
@@ -266,6 +268,22 @@ function setLanguage(language, announce = true) {
   window.IlmaCatalog?.relocalize();
   if (announce) document.getElementById("sr-announcer").textContent = currentLang === "bn"
     ? "ভাষা বাংলা করা হয়েছে।" : "Language changed to English.";
+}
+
+function applyTurnLanguage(language) {
+  if(!['bn','en'].includes(language))return;
+  currentLang=language;appSettings.language=language;saveSettings();updateLocalizedText();
+  if(currentTab==='detail'&&reportCardData)renderReportCard();
+  window.IlmaCatalog?.relocalize();
+}
+function undoTurnLanguage() {
+  if(!voiceLanguageReturn)return;
+  const language=voiceLanguageReturn;voiceLanguageReturn=null;voiceLanguageOverride=language;
+  applyTurnLanguage(language);document.getElementById('voice-language-chip').hidden=true;
+  if(!isSearching&&agentConversation){
+    agentConversation.language=language;voiceLanguageOverride=null;
+    void sendAgentChoice('repeat');
+  }
 }
 
 function toggleLanguage() {
@@ -843,6 +861,7 @@ async function loadBankOptions() {
 }
 
 async function sendVoiceInput(audio, text, request, choice = null) {
+  voiceLanguageReturn=null;voiceLanguageOverride=null;document.getElementById('voice-language-chip').hidden=true;
   const form = new FormData();
   if (audio) form.append("audio", audio, audio.type.includes("mp4") ? "recording.mp4" : "recording.webm");
   else if (choice) form.append("choice", choice);
@@ -921,9 +940,10 @@ async function handleVoiceEvent(name, data, audioRequest) {
     lastVoiceTranscript = data.text;
     if(agentPanel?.active)document.getElementById('agent-heard').textContent=(currentLang==='bn'?'আপনি বলেছেন: ':'You said: ')+data.text;
     if (ivr?.active) document.getElementById("ivr-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + data.text;
-    if (data.language === "en" && currentLang !== "en") {
-      currentLang = "en"; appSettings.language = "en"; saveSettings(); updateLocalizedText();
-      document.getElementById("voice-language-chip").hidden = false;
+    if (!voiceLanguageOverride && ['bn','en'].includes(data.language) && currentLang!==data.language) {
+      voiceLanguageReturn=currentLang;applyTurnLanguage(data.language);
+      const chip=document.getElementById('voice-language-chip');
+      chip.textContent=data.language==='bn'?'বাংলায় বলছেন · English-এ থাকুন':'Speaking English · বাংলায় ফিরুন';chip.hidden=false;
     }
     document.getElementById("listening-transcript").textContent = `“${data.text}”`;
     const miniTranscript = document.getElementById("mini-voice-transcript");
@@ -933,7 +953,14 @@ async function handleVoiceEvent(name, data, audioRequest) {
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? `আপনি বলেছেন: ${data.text}` : `You said: ${data.text}`;
     if (window.requestAnimationFrame) await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   }
-  if (name === 'result' && data.type === 'agent_turn') { isSearching=false;await showAgentTurn(data);return; }
+  if (name === 'result' && data.type === 'agent_turn') {
+    isSearching=false;
+    if(voiceLanguageOverride&&data.conversation.language!==voiceLanguageOverride){
+      agentConversation={...data.conversation,language:voiceLanguageOverride};voiceLanguageOverride=null;
+      return sendAgentChoice('repeat');
+    }
+    await showAgentTurn(data);return;
+  }
   if (name === 'speech' && agentPanel?.active) { void agentPanel.deliverSpeech(data);return; }
   if (name === 'speech_unavailable' && agentPanel?.active) {document.getElementById('agent-state').textContent=currentLang==='bn'?'অডিও পাওয়া যায়নি। বিকল্প বেছে নিন।':'Audio unavailable. Choose an option.';agentPanel.speechUnavailable();return;}
   if (ivr?.active && name === 'result') { ivrPendingResult = data; return; }
@@ -1468,7 +1495,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { capture: true });
   document.getElementById("voice-type").addEventListener("click", showTyping);
   document.getElementById("voice-text-form").addEventListener("submit", event => { event.preventDefault(); return submitTextQuestion(); });
-  document.getElementById("voice-language-chip").addEventListener("click", () => { setLanguage("bn"); document.getElementById("voice-language-chip").hidden = true; });
+  document.getElementById("voice-language-chip").addEventListener("click", undoTurnLanguage);
   document.getElementById("mic-permission-allow").addEventListener("click", () => {
     appSettings.micExplained = true; saveSettings(); document.getElementById("mic-permission-dialog").close(); return startListening();
   });
@@ -1757,6 +1784,7 @@ function setupGuidedVoice() {
 
 function hideAgentConversation() {
   agentConversation = null; agentPendingResult = null; lastAgentChoice = '';
+  document.getElementById('agent-text-input').value='';document.getElementById('agent-text-form').hidden=true;
   document.getElementById('agent-panel').hidden = true;
   document.getElementById('tab-home').classList.remove('agent-open');
   startExampleCycle();
@@ -1775,6 +1803,7 @@ function showAgentSource(source) {
 }
 
 async function showAgentTurn(result) {
+  if(['bn','en'].includes(result.language)&&result.language!==currentLang)applyTurnLanguage(result.language);
   const guided = Boolean(ivr?.active || agentPanel?.guided);
   if (ivr?.active) {
     ivr.active = false; ++ivr.epoch; ivr.clear(); ivrPendingResult = null;
@@ -1786,7 +1815,7 @@ async function showAgentTurn(result) {
   if (currentTab !== 'home') switchTab('home');
   agentConversation = result.conversation;
   if (agentPanel) {
-    // Playback runs independently after the complete SSE response has closed.
+    // Result text renders immediately; streamed speech is delivered separately.
     void agentPanel.show(result,guided);
   }
 }
@@ -1861,6 +1890,9 @@ function setupAgentPanel() {
       const labels = {'agent-report':bn?'পুরো রিপোর্ট দেখুন':'View full report','agent-repeat':bn?'আবার':'Repeat','agent-end':bn?'শেষ':'Finish'};
       for (const [id,text] of Object.entries(labels)) document.getElementById(id).textContent = text;
       document.getElementById('agent-report').hidden = !result.conversation.institution_id;
+      document.getElementById('agent-text-form').hidden=!result.offer_typing;
+      document.getElementById('agent-text-label').textContent=bn?'লিখে বলুন':'Type your question';
+      document.getElementById('agent-text-submit').textContent=bn?'খুঁজুন':'Search';
       document.getElementById('agent-tap').setAttribute('aria-label',result.next.question || (bn?'শেষ':'Finish'));
       const names = bn ? ['শুনেছি','বুঝেছি','খুঁজেছি','লিখেছি','যাচাই করেছি'] : ['Heard','Understood','Retrieved','Worded','Checked'];
       const trace = document.getElementById('agent-trace');trace.replaceChildren();
@@ -1876,12 +1908,13 @@ function setupAgentPanel() {
 
       document.getElementById('main-content').scrollTop = 0;
       document.getElementById('sr-announcer').textContent = result.text+' '+result.next.question;
-      document.getElementById('agent-tap').focus(); pauseGreetingCycle();
+      (result.offer_typing?document.getElementById('agent-text-input'):document.getElementById('agent-tap')).focus(); pauseGreetingCycle();
       if (result.action?.type === 'open_report') openBank(result.action.institution_id);
       if (result.action?.type === 'open_proof') showAgentSource(result.action.source);
     },
     exit: hideAgentConversation
   });
+  document.getElementById('agent-text-form').addEventListener('submit',event=>{event.preventDefault();const input=document.getElementById('agent-text-input');if(!input.value.trim())return;stopAudio();void submitTextQuestion(input.value);});
   document.getElementById('agent-tap').addEventListener('click',event=>agentPanel.tap(event));
   for (const [id,choice] of [['agent-report','report'],['agent-repeat','repeat'],['agent-end','end']]) document.getElementById(id).addEventListener('click',()=>agentPanel.choose(choice));
 }

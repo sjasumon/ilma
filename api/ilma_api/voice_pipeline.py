@@ -305,20 +305,27 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                     'The speech service returned text in an unexpected script. Check what it heard, then speak again or type a correction.') from None
             raise
         if not text and not context.choice: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
-        # A slow/failing database must never delay the recognized question.
-        if not context.choice:yield event('transcript', {'text': text, 'language': context.ui_lang})
-        if timings:
-            for frame in timings.events():yield frame
+        from ilma_api.voice_text import turn_language
         from ilma_api.ivr import match_ivr_action
         action = match_ivr_action(text, context.ivr_step) if not context.conversation else None
-        if action:
-            yield event('result', {'type': 'ivr_action', 'ivr_action': action, 'omit_history': True, 'sources': [], 'text': ''})
-            outcome = 'answered'
-            return
-        if callable(banks):
+        if not action and callable(banks):
             trace_stage(diagnostic, 'bank_index_started', started)
-            if db is not None and hasattr(db,'get_bind') and db.get_bind().dialect.name=='mysql':banks=await db_call(db,lambda owned:banks(owned))
-            else:banks=banks()
+            try:
+                if db is not None and hasattr(db,'get_bind') and db.get_bind().dialect.name=='mysql':banks=await db_call(db,lambda owned:banks(owned))
+                else:banks=banks()
+            except Exception:
+                # Preserve the recognized words even if source lookup fails.
+                if not context.choice:yield event('transcript', {'text':text,'language':turn_language(text,context)})
+                raise
+        language_candidates=match_candidates(text,banks) if text and not callable(banks) else []
+        context=context.model_copy(update={'ui_lang':turn_language(text,context,language_candidates,context.choice)})
+        if not context.choice:yield event('transcript', {'text':text,'language':context.ui_lang})
+        if timings:
+            for frame in timings.events():yield frame
+        if action:
+            yield event('result', {'type':'ivr_action','ivr_action':action,'omit_history':True,'sources':[],'text':''})
+            outcome='answered'
+            return
         if context.conversation or context.agent and context.ivr_step not in {'open','mic','language'}:
             from ilma_api.voice_agent import run_agent_turn
             agent_candidates=match_candidates(text,banks) if text else []

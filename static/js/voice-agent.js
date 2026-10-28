@@ -13,7 +13,7 @@
       if(result.action?.type==='end'){if(heard)return this.reset();this.phase='waiting';this.endTimer=this.clock.setTimeout(()=>{if(this.active&&generation===this.generation)this.reset()},4000);return;}
       if(['stop','open_report','open_proof'].includes(result.action?.type)){this.phase='waiting';return;}
       this.phase='waiting';
-      if(heard){this.phase='starting';await this.a.listen();if(!this.active||generation!==this.generation)return;this.phase=this.a.recording()?'listening':'waiting';}
+      if(heard&&!this.result.offer_typing){this.phase='starting';await this.a.listen();if(!this.active||generation!==this.generation)return;this.phase=this.a.recording()?'listening':'waiting';}
       if(this.phase==='waiting')this.silent();
     }
     async deliverSpeech(data){
@@ -23,7 +23,7 @@
       if(!this.active||generation!==this.generation)return;
       if(this.result.action?.type==='end')return this.reset();
       this.phase='waiting';
-      if(heard){this.phase='starting';await this.a.listen();if(!this.active||generation!==this.generation)return;this.phase=this.a.recording()?'listening':'waiting';}
+      if(heard&&!this.result.offer_typing){this.phase='starting';await this.a.listen();if(!this.active||generation!==this.generation)return;this.phase=this.a.recording()?'listening':'waiting';}
       if(this.phase==='waiting')this.silent();
     }
     speechUnavailable(){
@@ -51,6 +51,7 @@
     }
     silent(){
       if(!this.active)return;this.phase='waiting';this.clock.clearTimeout(this.silenceTimer);
+      if(this.result?.offer_typing)return;
       if(this.silenceRetries>=2)return;
       const generation=this.generation;
       this.silenceTimer=this.clock.setTimeout(async()=>{

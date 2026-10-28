@@ -295,3 +295,27 @@ checks above remain dated evidence, not a statement of the current architecture.
 See [VOICE_SPEED.md](VOICE_SPEED.md) for measured provider/browser timing and
 remaining real-device/accessibility acceptance. Source financial review remains
 unchanged and must not be inferred from speed tests.
+
+
+## Conversation language and loop recovery — 28 October 2026
+
+[The recovery specification](specs/APP_SPEC_09_language_and_recovery.md) adds
+current-option precedence, cross-state commands, retained context on misses,
+a metadata-only question-loop guard and inline typing after two misses.
+Transcript/result/conversation language and speech agree for spoken and typed
+questions. The client supports both automatic-switch directions and a language
+undo that retains the bank. Tap replies retain conversation language. Twenty
+turns replace the earlier six-turn bound; idle/navigation reset is unchanged.
+
+Synthetic tests cover ten consecutive replies, ambiguous “ঢাকা” twice, global
+DETAIL/services/product commands, voice and typed language cases, TTS language,
+exact consent and the question-only guard. Browser checks cover source-backed
+local read-only tools, bilingual undo, keyboard focus, retained context, inline
+typing recovery, portrait/rotation/keyboard-size/desktop/200% text and existing
+agent integration. Provider responses and microphone media in regression tests
+are synthetic; this does not establish native pronunciation, ASR accuracy or
+TalkBack/VoiceOver acceptance. Financial source review remains pending as before.
+
+Validation for this update: 231 Python tests plus 25 subtests and all seven
+frontend suites passed. Live Cloudflare conversation/frame checks passed; root,
+API docs, redoc and OpenAPI returned 200 with security headers verified.
