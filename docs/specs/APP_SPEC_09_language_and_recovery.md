@@ -62,5 +62,9 @@ Tests use handwritten synthetic database rows and synthetic media/provider
 responses. Real microphone accuracy, pronunciation and native accessibility
 acceptance are separate from these conversation checks.
 
-BRAC ASR aliases “breakbank” and “ব্রেক ব্যাংক” are user-approved match spellings
+BRAC ASR aliases “breakbank”, “break bank” and “ব্রেক ব্যাংক” are user-approved match spellings
 stored in MySQL. They do not replace the bank display/source name or add facts.
+
+Whole matched alias phrases are removed before language-letter counting. Bank
+names alone retain the conversation/UI preference; actual question words still
+determine language. The ambiguous word “break” alone requires confirmation.

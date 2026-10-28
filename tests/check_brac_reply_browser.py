@@ -11,7 +11,7 @@ with sync_playwright() as pw:
   page.evaluate('(text)=>submitTextQuestion(text)',text)
   page.wait_for_function('(state)=>!isSearching&&agentConversation?.state===state',arg=state,timeout=5000)
  bank=None
- for alias in ['breakbank','ব্রেক ব্যাংক']:
+ for alias in ['breakbank','break bank','ব্রেক ব্যাংক']:
   page.evaluate('resetAgentConversation()');reply(alias,'BANK')
   current=page.evaluate('agentConversation.institution_id');assert current and (bank is None or current==bank)
   bank=current
@@ -27,4 +27,4 @@ with sync_playwright() as pw:
  assert page.evaluate('currentLang')=='en' and page.evaluate('agentConversation.language')=='en'
  assert not errors,errors
  browser.close()
-print('BRAC reply browser passed: both ASR aliases, canonical bank label, Bangla retained for exact/fuzzy scripted replies, and English detection for a genuine question. No microphone recording used.')
+print('BRAC reply browser passed: all three ASR aliases, canonical bank label, Bangla retained for exact/fuzzy scripted replies, and English detection for a genuine question. No microphone recording used.')

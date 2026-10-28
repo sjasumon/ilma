@@ -108,7 +108,7 @@ def match_candidates(text, banks, scorer=None):
                     best, best_alias = score, alias
         if best >= 75:
             single = len(normalize_alias(best_alias).split()) == 1
-            short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
+            short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'break', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
             follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', fold_bengali_vowels(text), re.I))
             candidates.append({**{k: bank[k] for k in ('id', 'slug', 'name_bn', 'name_en', 'type', 'coverage')},
                                'licensed': bank.get('licensed', True), 'confidence': round(best / 100, 3), 'alias': best_alias,
@@ -122,10 +122,11 @@ def match_candidates(text, banks, scorer=None):
 
 def decide_language(text, candidates, ui_lang):
     remaining = normalize_alias(text)
-    aliases = sorted({c.get('alias', '') for c in candidates}, key=len, reverse=True)
+    aliases = sorted({normalize_alias(c.get('alias','')) for c in candidates},key=len,reverse=True)
+    # Remove whole matched alias phrases before counting language evidence.
+    # A bare ASR bank name, including "break bank", must leave no English votes.
     for alias in aliases:
-        if alias:
-            remaining = re.sub(re.escape(normalize_alias(alias)), ' ', remaining, flags=re.I)
+        if alias:remaining=re.sub(r'(?<!\S)'+re.escape(alias)+r'(?!\S)',' ',remaining,flags=re.I)
     remaining = re.sub(r'\b(bank|fdr|dps|rate|plc|card|loan)\b|ব্যাংক(?:ের|ে)?|পিএলসি', ' ', remaining, flags=re.I)
     letters = [c for c in remaining if c.isalpha()]
     latin = sum('LATIN' in unicodedata.name(c, '') for c in letters)

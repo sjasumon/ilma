@@ -336,3 +336,21 @@ detection. Synthetic tests cover both languages, current/global states, TTS
 language, idempotence and exact alias routing. The full suite passed 242 tests
 plus 25 subtests; all seven frontend suites passed. Live browser checks used
 typed spellings with speech disabled; they do not establish microphone accuracy.
+
+
+## Spaced BRAC alias — 28 October 2026
+
+“break bank” is added alongside “breakbank” and “ব্রেক ব্যাংক”. Matched whole
+alias phrases are removed before language-letter counting; a bank-name-only
+transcript retains the current conversation/UI language. Real question words
+still select their language. The word “break” alone requires confirmation
+instead of silently selecting BRAC. Source names and financial facts are unchanged.
+
+Synthetic text/voice-path tests verify all three spellings with both BN and EN,
+including transcript/result/TTS language. The opt-in browser check now covers the
+spaced spelling as well, using typed inputs with speech disabled. Actual phone
+recognition and native accessibility remain separate acceptance items.
+
+This update passed 256 Python tests plus 25 subtests and all seven frontend
+suites. Live typed-input browser checks verified all three aliases without
+changing Bangla, plus responsive frame and Cloudflare/API-doc security headers.

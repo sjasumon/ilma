@@ -127,11 +127,11 @@ def test_real_english_question_can_still_change_bangla_conversation_language(db)
     result=turn(db,'How is BRAC Bank doing?',Conversation(state='BANK',institution_id=1,language='bn'),ui='bn')
     assert result['language']=='en'
 
-@pytest.mark.parametrize('reply',['breakbank','ব্রেক ব্যাংক'])
+@pytest.mark.parametrize('reply',['breakbank','break bank','ব্রেক ব্যাংক'])
 def test_approved_brac_mishearing_aliases_are_idempotent_and_route(db,reply):
     from ilma_api.migrate_brac_aliases import add_aliases,SOURCE
     from ilma_api.db import Institution,InstitutionAlias
-    assert add_aliases(db)==2;db.commit();assert add_aliases(db)==0
+    assert add_aliases(db)==3;db.commit();assert add_aliases(db)==0
     bank=db.get(Institution,1)
     banks=[{**BANKS[0],'aliases':[a.alias for a in bank.aliases]} ,BANKS[1]]
     matches=match_candidates(reply,banks)
@@ -140,3 +140,31 @@ def test_approved_brac_mishearing_aliases_are_idempotent_and_route(db,reply):
     result=turn(db,reply,banks=banks)
     assert result['conversation']['institution_id']==1 and result['conversation']['state']=='BANK'
     assert bank.name_en=='BRAC Test Bank' and bank.name_bn=='পরীক্ষা ব্র্যাক ব্যাংক'
+
+
+@pytest.mark.parametrize('alias',['breakbank','break bank','ব্রেক ব্যাংক'])
+@pytest.mark.parametrize('language',['bn','en'])
+@pytest.mark.parametrize('mode',['text','voice'])
+def test_brac_name_only_preserves_preference_before_transcript_and_speech(db,alias,language,mode):
+    from ilma_api.migrate_brac_aliases import add_aliases
+    from ilma_api.db import Institution
+    add_aliases(db);db.commit()
+    banks=[{**BANKS[0],'aliases':[row.alias for row in db.get(Institution,1).aliases]}]
+    async def run():
+        speech=AsyncMock(return_value=None)
+        with patch('ilma_api.voice_pipeline.convert_audio',new=AsyncMock(return_value=wav())),patch('ilma_api.voice_pipeline.transcribe',new=AsyncMock(return_value=alias)),patch('ilma_api.audio_cache.register_speech',new=speech),patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('Bank alias must skip planner'))):
+            frames=[f async for f in run_pipeline(b'synthetic-audio' if mode=='voice' else None,alias,'audio/webm',VoiceContext(agent=True,ui_lang=language,speak=True),banks,db,mode=mode)]
+        transcript=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: transcript'))
+        result=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: result'))
+        assert transcript['language']==language and result['language']==language
+        assert result['conversation']['language']==language and result['conversation']['institution_id']==1
+        assert result['conversation']['state']=='BANK' and speech.await_args.args[1]==language
+    asyncio.run(run())
+
+
+def test_spaced_alias_is_removed_but_real_question_language_is_retained(db):
+    banks=[{**BANKS[0],'aliases':['break bank']}]
+    for text,preference,expected in [('break bank','bn','bn'),('break bank কেমন আছে','en','bn'),('Is break bank safe?','bn','en')]:
+        matches=match_candidates(text,banks)
+        assert matches[0]['id']==1 and decide_language(text,matches,preference)==expected
+    assert match_candidates('break',banks)[0]['confirm'],'A bare ambiguous word must not silently select BRAC'

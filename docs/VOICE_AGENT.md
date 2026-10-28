@@ -78,5 +78,5 @@ No transcript or state is persisted by this feature.
 
 Matched scripted replies retain the conversation language before transcript
 language selection, including “more details” in Bangla. Other questions still
-use the transcript language rule. BRAC’s two user-approved ASR spellings are
+use the transcript language rule. BRAC’s three user-approved ASR spellings are
 stored as aliases; its displayed/source names remain unchanged.

@@ -144,7 +144,7 @@ The script performs read-only public bank queries and no microphone capture.
 
 With the existing private environment, DB_NAME=ilma and the project virtualenv,
 run `PYTHONPATH=api python -m ilma_api.migrate_brac_aliases`. This idempotent
-migration adds only the two user-approved spellings to the existing bracbank
+migration adds only the three user-approved spellings to the existing bracbank
 institution. It does not create banks or change facts/source names. The standard
 voice migration also applies them, so they can be restored after a seed reload.
 Only the ilma MySQL database is permitted. Restart the application after backend

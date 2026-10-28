@@ -1,7 +1,7 @@
 """Add user-approved BRAC ASR spellings without changing source names or facts."""
 from ilma_api.db import engine, SessionLocal, Institution, InstitutionAlias
 
-ALIASES = [('breakbank','en'),('ব্রেক ব্যাংক','bn')]
+ALIASES = [('breakbank','en'),('break bank','en'),('ব্রেক ব্যাংক','bn')]
 SOURCE = 'user_report_2026-10-28'
 
 
