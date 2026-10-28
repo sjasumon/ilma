@@ -277,3 +277,8 @@ tools, source checks, scoped plans, template fallback, explicit watch yes, six
 turns and the BANK → SERVICES → SERVICE → COMPARE → BANK path. These fixtures
 do not establish real transcription accuracy or the target speech duration.
 Physical phone/eyes-closed and native screen-reader acceptance is still pending.
+
+Voice-only activation correction: a fresh browser opens normal Home. Only the
+saved `voiceonly` switch starts the guide; disabling it survives reload.
+Settings opened without changing that switch resumes the current guided step.
+Automated settings and synthetic browser regressions cover these cases.

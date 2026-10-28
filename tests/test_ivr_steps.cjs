@@ -47,5 +47,34 @@ function fixture() {
   assert.equal(report.flow.id,'next','any report tap stops playback and advances');
   const words=fixture();words.flow.enter('language');await words.endPrompt(false);await words.flow.command('two');
   assert.deepEqual(words.calls.at(-1),['action','en']);
+  const {createApp}=require('./frontend_harness.cjs');
+  function settingsApp(options={}) {
+    const app=createApp(options);
+    app.run(`window.IlmaGuidedVoice=class {
+      constructor(adapter){this.a=adapter;this.active=false;this.epoch=0;this.entered=[];}
+      clear(){}
+      enter(id){this.active=true;this.id=id;this.entered.push(id);}
+      skip(){this.active=false;this.a.exit();}
+    };setupGuidedVoice();`);
+    return app;
+  }
+  const fresh=settingsApp();
+  assert.equal(fresh.run('appSettings.voiceonly'),false);
+  assert.equal(fresh.run('ivr.active'),false,'first-use flag must not enable guided mode');
+  fresh.run('startGuidedVoice()');assert.equal(fresh.run('ivr.active'),false,'disabled mode cannot be started implicitly');
+  await fresh.fire('settings-btn','click');fresh.node('settings-voiceonly').checked=true;
+  await fresh.fire('settings-voiceonly','change');await fresh.fire('settings-close','click');
+  assert.equal(fresh.run('ivr.active'),true);assert.equal(fresh.run('ivr.id'),'open');
+  assert.equal(JSON.parse(fresh.stored.get('ilma-settings')).voiceonly,true);
+  fresh.run("ivr.enter('menu')");await fresh.fire('settings-btn','click');await fresh.fire('settings-close','click');
+  assert.equal(fresh.run('ivr.id'),'menu','unrelated settings must resume the current step');
+  await fresh.fire('settings-btn','click');fresh.node('settings-voiceonly').checked=false;
+  await fresh.fire('settings-voiceonly','change');await fresh.fire('settings-close','click');
+  assert.equal(fresh.run('ivr.active'),false);assert.equal(fresh.run('currentTab'),'home');
+  const restored=settingsApp({savedSettings:JSON.parse(fresh.stored.get('ilma-settings'))});
+  assert.equal(restored.run('ivr.active'),false,'disabled setting survives reload');
+  const enabled=settingsApp({savedSettings:{voiceonly:true,ivrFinished:false}});
+  assert.equal(enabled.run('ivr.active'),true,'explicitly saved enabled mode starts on load');
+  const blocked=settingsApp({storageBlocked:true});assert.equal(blocked.run('ivr.active'),false);
   console.log('Guided voice passed: choice timing, native activation, mic pair isolation, prompt sequencing, one silence retry, interruption, skip and spoken choices');
 })().catch(error=>{console.error(error);process.exitCode=1;});

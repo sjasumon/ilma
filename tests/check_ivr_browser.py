@@ -23,6 +23,9 @@ with sync_playwright() as p:
       window.testRecorders=[];
     ''')
     page.goto(args.base_url,wait_until='networkidle')
+    assert page.locator('#ivr-overlay').is_hidden(), 'fresh visit must use normal Home'
+    assert not readouts, 'fresh visit must not request guided audio'
+    page.locator('#settings-btn').click();page.locator('#settings-voiceonly').check();page.locator('#settings-close').click()
     page.evaluate('''()=>{window.IlmaVoiceRecorder=class {
       static supported(){return true} constructor(){window.testRecorders.push(this)}
       async start(callbacks){this.callbacks=callbacks} cancel(){}
@@ -86,7 +89,16 @@ with sync_playwright() as p:
     page.locator('#ivr-skip').click()
     assert page.locator('#ivr-overlay').is_hidden()
     assert page.evaluate("currentTab==='home' && !isListening && appSettings.ivrFinished")
+    page.reload(wait_until='networkidle');page.locator('#ivr-overlay').wait_for(state='visible')
+    page.locator('#settings-btn').click();page.locator('#settings-voiceonly').uncheck();page.locator('#settings-close').click()
+    page.locator('#ivr-overlay').wait_for(state='hidden')
+    assert page.locator('#ivr-overlay').is_hidden()
     page.reload(wait_until='networkidle');assert page.locator('#ivr-overlay').is_hidden()
+    page.locator('#settings-btn').click();page.locator('#settings-voiceonly').check();page.locator('#settings-close').click()
+    page.wait_for_function("() => ivr.id==='open' && ivr.phase==='waiting'")
+    page.locator('#settings-btn').click();page.locator('#settings-motion').uncheck();page.locator('#settings-close').click()
+    assert page.evaluate("ivr.id==='open'")
+
     for width,height in [(320,640),(844,390),(390,300),(1440,900)]:
         page.set_viewport_size({'width':width,'height':height})
         page.evaluate('startGuidedVoice()');page.locator('#ivr-overlay').wait_for(state='visible')
@@ -95,4 +107,4 @@ with sync_playwright() as p:
         page.locator('#ivr-skip').click()
     assert not errors,errors
     browser.close()
-print('Synthetic guided browser flow passed: first open, permission, language double-tap, bank choice, recording stop pair, report/next, keyboard replay, Skip persistence and viewport sizes.')
+print('Synthetic guided browser flow passed: normal first load, explicit enable, permission, choices, recording, replay, saved enable/disable after reload, unrelated settings and viewport sizes.')

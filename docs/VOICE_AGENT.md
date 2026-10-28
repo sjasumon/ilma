@@ -1,5 +1,9 @@
 # Voice agent implementation and checks
 
+Normal Home opens on a fresh visit. Guided Voice only starts only when its
+saved setting is enabled. Turning it off returns to normal Home and remains
+off after reload; unrelated settings changes do not restart the guided flow.
+
 Implemented in `api/ilma_api/voice_agent.py`, with Home adapters in `app.js` and
 conversation lifetime/tap counting in `voice-agent.js`. Public behavior and API:
 [specification](specs/APP_SPEC_07_voice_agent.md).

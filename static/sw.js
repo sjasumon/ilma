@@ -1,7 +1,7 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-voice49';
+const SHELL = 'ilma-shell-voice50';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ["/static/fonts/fonts.css?v=voice-complete-20261028-49", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-complete-20261028-49', '/static/js/ivr.js?v=voice-complete-20261028-49', '/static/js/voice-agent.js?v=voice-complete-20261028-49', '/static/js/app.js?v=voice-complete-20261028-49', '/static/js/bank-services-ui.js?v=voice-complete-20261028-49', '/static/js/voice-recorder.js?v=voice-complete-20261028-49'];
+const ASSETS = ["/static/fonts/fonts.css?v=voice-complete-20261028-50", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-complete-20261028-50', '/static/js/ivr.js?v=voice-complete-20261028-50', '/static/js/voice-agent.js?v=voice-complete-20261028-50', '/static/js/app.js?v=voice-complete-20261028-50', '/static/js/bank-services-ui.js?v=voice-complete-20261028-50', '/static/js/voice-recorder.js?v=voice-complete-20261028-50'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

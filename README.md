@@ -192,6 +192,6 @@ Bank services v5.4 import and review notes: [implementation](docs/BANK_SERVICES_
 
 Extra source publications and watched-bank announcements: [v5.4 notes](docs/EXTRA_DATA_V54.md).
 
-Guided first-use and Voice only mode: [tap-or-talk behavior and pending device acceptance](docs/TAP_OR_TALK.md).
+Optional guided Voice only mode: [tap-or-talk behavior and pending device acceptance](docs/TAP_OR_TALK.md).
 
 Home voice-agent tools, privacy and acceptance: [VOICE_AGENT.md](docs/VOICE_AGENT.md).

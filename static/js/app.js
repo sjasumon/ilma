@@ -1338,7 +1338,7 @@ function syncOrientation() {
   document.querySelector('.scr').inert=active;
   document.querySelector('.scr').classList.toggle('orientation-blocked',active);
   if(active&&!phoneLandscape){if(agentPanel?.active)agentPanel.suspend();if(ivr?.active){ivr.clear();++ivr.epoch;ivr.phase='waiting';}document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeProofModal();stopListening();stopAudio();pauseGreetingCycle();panel.focus();}
-  if(!active&&phoneLandscape){phoneLandscape=false;if(ivr?.active)ivr.enter(ivr.id);else if(appSettings.voiceonly||!appSettings.ivrFinished)startGuidedVoice();startExampleCycle();document.querySelector('.dock-item.on')?.focus();}
+  if(!active&&phoneLandscape){phoneLandscape=false;if(ivr?.active)ivr.enter(ivr.id);else if(appSettings.voiceonly)startGuidedVoice();startExampleCycle();document.querySelector('.dock-item.on')?.focus();}
   phoneLandscape=active;
 }
 
@@ -1497,7 +1497,10 @@ document.addEventListener("DOMContentLoaded", () => {
   fetch("/v1/voice/config").then(response => response.ok ? response.json() : null).then(config => { if (config) voiceConfig = config; }).catch(() => {});
 
   const settingsDialog = document.getElementById("settings-dialog");
+  let voiceOnlyBeforeSettings = appSettings.voiceonly;
   document.getElementById("settings-btn").addEventListener("click", () => {
+    voiceOnlyBeforeSettings = appSettings.voiceonly;
+    if (agentPanel?.active) agentPanel.suspend();
     stopAudio();
     stopListening();
     pauseGreetingCycle();
@@ -1507,8 +1510,16 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
   settingsDialog.addEventListener("close", () => {
-    if (appSettings.voiceonly) startGuidedVoice();
-    else if (ivr?.active) ivr.skip();
+    if (!appSettings.voiceonly) {
+      if (ivr?.active) ivr.skip();
+      if (voiceOnlyBeforeSettings && agentPanel?.active) resetAgentConversation();
+    } else if (!voiceOnlyBeforeSettings) {
+      resetAgentConversation();
+      startGuidedVoice();
+    } else if (ivr?.active && !document.hidden && !phoneLandscape) {
+      ivr.enter(ivr.id);
+    }
+    if (agentPanel?.active) agentPanel.silent();
     startExampleCycle();
     document.getElementById("settings-btn").focus();
   });
@@ -1665,7 +1676,7 @@ async function guidedAction(action) {
 }
 
 function startGuidedVoice() {
-  if (!ivr || document.hidden || phoneLandscape) return;
+  if (!ivr || !appSettings.voiceonly || document.hidden || phoneLandscape) return;
   stopListening(); switchTab('home'); pauseGreetingCycle();
   playTone(660, .08);
   return ivr.enter('open');
@@ -1735,7 +1746,7 @@ function setupGuidedVoice() {
   if (bridge?.isTouchExplorationEnabled) bridge.isTouchExplorationEnabled().then(result => {
     if (result.enabled) { appSettings.screenreader = true; updateSettingsText(); }
   }).catch(() => {});
-  if (appSettings.voiceonly || !appSettings.ivrFinished) startGuidedVoice();
+  if (appSettings.voiceonly) startGuidedVoice();
 }
 
 function hideAgentConversation() {

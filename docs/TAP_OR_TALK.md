@@ -1,7 +1,10 @@
 # Guided tap-or-talk mode
 
-The guided flow runs until first use is completed or skipped. Enabling **Voice
-only / শুধু কথায়** in Settings starts it again on each app open. The normal
+Normal Home is the default, including the first visit. The guided flow is
+opt-in: enabling **Voice only / শুধু কথায়** in Settings starts it when Settings
+closes and on later app opens. Disabling it returns to normal Home and stays
+off after reload. Opening Settings without changing this switch resumes an
+active guide instead of starting from the beginning. The normal
 Home recording, swipe language toggle, and in-place bank/services recording
 remain available after Skip. Settings also offers an explicit screen-reader
 preference; web browsers cannot reliably detect TalkBack.

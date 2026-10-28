@@ -1,5 +1,8 @@
 # Guided voice agent
 
+Normal Home opens by default. Guided Voice only is opt-in through Settings;
+the saved switch, rather than first-use completion, controls activation.
+
 The Home flow uses a stateless conversation with allowlisted tools. Models can
 select a tool and word its sourced result; deterministic rules and stored data
 supply all statuses, numbers, fees and rates. No model decides bank condition.
