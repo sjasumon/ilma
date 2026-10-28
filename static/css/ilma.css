@@ -1005,3 +1005,48 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* Publication links use the existing stage colour and retain their underline. */
 .publication-card .catalog-source { color:var(--stage); font-weight:700; text-underline-offset:.18em; }
+
+/* App chrome has its own rows; only the middle content pane may scroll. */
+html { height: 100%; overflow: hidden; }
+body { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+.scr {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  padding: env(safe-area-inset-top, 0px) 0 0;
+}
+.scr > .top-bar, .scr.home-open > .top-bar {
+  grid-row: 1;
+  position: relative;
+  inset: auto;
+  margin: 16px 14px 0;
+}
+.scr > .app-main {
+  grid-row: 2;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: 16px;
+}
+.scr > .dock, .scr.home-open > .dock {
+  grid-row: 3;
+  position: relative;
+  inset: auto;
+  transform: none;
+  justify-self: center;
+  margin: 12px auto calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 4px;
+}
+.app-main > .tab-content { min-height: 100%; flex: none; }
+.app-main > :is(#tab-services, #tab-detail, #tab-news) { padding-bottom: 24px; }
+.app-main > #tab-home .home-tap-target {
+  min-height: 0;
+  flex: 1;
+  grid-template-rows: 1fr auto auto 1.2fr;
+  align-content: stretch;
+  padding: 10px 20px 20px;
+}

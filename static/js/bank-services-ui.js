@@ -66,6 +66,7 @@
   function ask(text,tab,bank=null) { activeVoiceContext={tab,bank_id:bank}; return submitTextQuestion(text); }
   function error(root,error) { root.innerHTML=empty(error.message)+`<button type="button" class="catalog-action" data-retry>${tr('আবার চেষ্টা করুন','Try again')}</button>`;root.querySelector('[data-retry]').onclick=()=>window.IlmaCatalog.enter(currentTab); }
   function reportView(show) {
+    $('main-content').scrollTop=0;
     $('bank-list-view').hidden=show;
     $('bank-report-view').hidden=!show;
     $('bank-detail-view').hidden=true;
@@ -119,6 +120,7 @@
     }catch{$('sr-announcer').textContent=tr('নজরে রাখার পরিবর্তন সংরক্ষণ করা যায়নি।','Could not save the watch change.');}finally{button.disabled=false;}
   }
   async function showBankDetail(kind) {
+    $('main-content').scrollTop=0;
     bankPage='detail';detailKind=kind;const root=$('bank-detail-view'), request=++epoch;
     $('bank-list-view').hidden=true;$('bank-report-view').hidden=true;root.hidden=false;
     const titles={health:tr('আর্থিক অবস্থা','Financial health'),rating:tr('রেটিং','Rating'),news:tr('খবর','News'),history:tr('জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'),ask:tr('এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank')};
@@ -176,7 +178,7 @@
     $('incident-filter').onchange=render;render();
   }
 
-  async function enterServices(){$('service-voice-answer').hidden=true;++epoch;servicePage='home';bankFilter=null;renderServicesHome();if(!categories.length)try{categories=await json('/v1/services/categories');}catch{}}
+  async function enterServices(){ $('main-content').scrollTop=0;$('service-voice-answer').hidden=true;++epoch;servicePage='home';bankFilter=null;renderServicesHome();if(!categories.length)try{categories=await json('/v1/services/categories');}catch{}}
   function serviceHeader(){ $('srv-title').textContent=tr('ব্যাংক সেবা','Bank services');$('srv-subtitle').textContent=tr('একই সেবা, কোথায় খরচ কম?','Same service, where does it cost less?'); }
   function renderServicesHome(){
     $('srv-title').textContent=tr('ব্যাংক সেবা','Bank services');$('srv-subtitle').textContent=tr('একই সেবা, কোথায় খরচ কম?','Same service, where does it cost less?');
@@ -192,7 +194,7 @@
     const choices=missing?[selected,...values]:values;
     return choices.map(value=>`<option value="${E(value)}" ${String(value)===String(selected)?'selected':''}>${E(formatter(value))}${missing&&String(value)===String(selected)?' · '+tr('প্রকাশিত পছন্দ নেই','no published option'):''}</option>`).join('');
   }
-  async function openComparison(next,calculator={}){
+  async function openComparison(next,calculator={}){ $('main-content').scrollTop=0;
     if(currentTab!=='services')switchTab('services');
     choice={...next,basis:next.basis||'conventional'};bankFilter=null;servicePage='compare';
     calculatorPrefill=calculator;$('service-voice-answer').hidden=!calculator.fromVoice;
@@ -248,7 +250,7 @@
       $('service-savings').textContent=tr(`${bankName(a)}-এর ফি ${bankName(b)}-এর চেয়ে বছরে ${number(b.offer.value_num-a.offer.value_num)} টাকা কম।`,`${bankName(a)} costs BDT ${number(b.offer.value_num-a.offer.value_num)} less per year than ${bankName(b)}.`);
     }else $('service-savings').textContent='';
   }
-  async function openOffer(id){
+  async function openOffer(id){ $('main-content').scrollTop=0;
     $('service-voice-answer').hidden=true;const request=++epoch,root=$('services-catalog');servicePage='offer';root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{const data=await json('/v1/services/offers/'+encodeURIComponent(id));if(request!==epoch)return;offerDetail=data;renderOffer();}catch(e){if(request===epoch)error(root,e);}
   }
@@ -257,7 +259,7 @@
     root.innerHTML=`${back('offer-back',tr('ফিরুন','Back'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}<h3>${E(productText(data.offers[0]||{product:data.product}))}</h3>${data.offers[0]?.variant==='excluded'?`<p class="catalog-note">${tr('সীমিত বা বিশেষ কার্ড — সাধারণ গ্রাহকের তুলনায় অন্তর্ভুক্ত নয়।','Restricted or special card — excluded from retail comparisons.')}</p>`:''}${data.offers.map(row=>`<article class="catalog-card"><h3>${E(label(row.attribute))}</h3><p class="catalog-value">${valueText(row)}</p><p>${E(conditionText(row))}</p><p>${dateText(row.doc_date)} ${row.stale?tr('· পুরনো তথ্য','· Old data'):''}</p>${sourceButton(row)}</article>`).join('')}<p class="catalog-note">${tr('ব্যাংকের প্রকাশিত তালিকা থেকে। আবেদন করার আগে ব্যাংকের সাথে নিশ্চিত হোন।','From the bank’s published schedule. Confirm with the bank before applying.')}</p><button class="catalog-action" id="offer-bank-report" type="button">${tr('এই ব্যাংকের অবস্থা দেখুন','See this bank’s condition')}</button>`;
     wireSources(root,data.offers);$('offer-bank-report').onclick=()=>openBank(data.institution.id);$('offer-back').onclick=()=>bankFilter?openBankServices(bankFilter):openComparison(choice);
   }
-  async function openBankServices(id){if(currentTab!=='services')switchTab('services');bankFilter=id;servicePage='bank';const request=++epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
+  async function openBankServices(id){ $('main-content').scrollTop=0;if(currentTab!=='services')switchTab('services');bankFilter=id;servicePage='bank';const request=++epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{const data=await json(`/v1/institutions/${id}/services`);if(request!==epoch)return;bankOffers=data;renderBankServices();}catch(e){if(request===epoch)error(root,e);}
   }
   function renderBankServices(){const data=bankOffers,root=$('services-catalog'),groups=new Map();data.offers.forEach(r=>{if(!groups.has(r.group_key))groups.set(r.group_key,r);});

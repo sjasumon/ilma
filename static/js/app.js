@@ -223,6 +223,7 @@ function switchTab(tabName, keepVoiceStream = false) {
   if (targetPanel) {
     targetPanel.classList.add("active");
     if (tabName === "home") fitGreetingLine();
+    document.getElementById("main-content").scrollTop = 0;
     window.scrollTo(0, 0);
     const srAnnounce = document.getElementById("sr-announcer");
     if (srAnnounce) {
