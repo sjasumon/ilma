@@ -283,6 +283,19 @@ class AppContent(Base):
     status = Column(Enum("draft", "reviewed", "live", name="content_status"), nullable=False, default="draft")
 
 
+class AppModelCall(Base):
+    __tablename__ = 'app_model_call'
+    call_id = Column(BigInteger().with_variant(Integer, 'sqlite'), primary_key=True, autoincrement=True)
+    turn_id = Column(String(32), nullable=False, index=True)
+    stage = Column(String(8), nullable=False)
+    model = Column(String(128), nullable=False)
+    latency_ms = Column(Integer, nullable=False)
+    status = Column(String(16), nullable=False)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
 class AppRateCounter(Base):
     __tablename__ = "app_rate_counter"
     key = Column(String(80), primary_key=True)

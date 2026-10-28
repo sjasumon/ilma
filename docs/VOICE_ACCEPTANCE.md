@@ -269,3 +269,11 @@ documented in [TAP_OR_TALK.md](TAP_OR_TALK.md). Automated timing and synthetic
 browser checks are separate from real microphone/provider and screen-reader
 acceptance. New clip pronunciation review and physical TalkBack/VoiceOver
 walkthroughs remain pending; no native wrapper is present in this repository.
+
+## Scripted voice agent
+
+See [VOICE_AGENT.md](VOICE_AGENT.md). Automated fixtures cover the allowlisted
+tools, source checks, scoped plans, template fallback, explicit watch yes, six
+turns and the BANK → SERVICES → SERVICE → COMPARE → BANK path. These fixtures
+do not establish real transcription accuracy or the target speech duration.
+Physical phone/eyes-closed and native screen-reader acceptance is still pending.

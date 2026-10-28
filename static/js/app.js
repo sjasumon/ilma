@@ -134,6 +134,8 @@ try {
     for (const key of ["swipe", "speak", "slow", "micExplained", "voiceonly", "screenreader", "ivrFinished", "ivrLanguageChosen"]) if (typeof saved[key] === "boolean") appSettings[key] = saved[key];
   }
 } catch { /* Preferences still work when storage is unavailable. */ }
+let lastAgentChoice = "";
+let agentConversation = null, agentPanel = null, agentPendingResult = null;
 let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
 let currentLang = appSettings.language;
 let suppressHomeClick = false;
@@ -206,6 +208,7 @@ async function requestReadout(kind, institutionId = null) {
 }
 
 function switchTab(tabName, keepVoiceStream = false) {
+  if (agentConversation && currentTab !== tabName) resetAgentConversation();
   currentTab = tabName;
   document.querySelector(".scr").classList.toggle("home-open", tabName === "home");
   document.querySelector(".scr").classList.toggle("report-open", tabName === "detail");
@@ -250,6 +253,7 @@ function saveSettings() {
 
 function setLanguage(language, announce = true) {
   if (!["bn", "en"].includes(language)) return;
+  if (agentConversation && language !== currentLang) resetAgentConversation();
   if (isListening || recognitionStarting || isSearching) stopListening();
   stopAudio();
   currentLang = language;
@@ -484,7 +488,7 @@ function stopGreetingCycle() {
 }
 
 function startExampleCycle() {
-  if (ivr?.active) return;
+  if (ivr?.active || agentPanel?.active) return;
   document.getElementById("home-orb").setAttribute("data-reduced-motion", String(greetingMotionReduced()));
   pauseGreetingCycle();
   if (currentTab !== "home" || isListening || recognitionStarting || isSearching || document.hidden || document.getElementById("settings-dialog").open || document.getElementById("voice-feedback").open || document.getElementById("mini-voice-modal")?.open) return;
@@ -543,6 +547,7 @@ function setWaveformState(state) {
 }
 
 function setVoiceState(text) {
+  if (agentPanel?.active) document.getElementById("agent-state").textContent = text;
   document.getElementById("home-idle-view").hidden = true;
   document.getElementById("home-listening-view").hidden = false;
   document.getElementById("listening-state-text").textContent = text;
@@ -590,7 +595,7 @@ async function startListening() {
   try {
     await recorder.start({
       silenceMs: voiceConfig.silence_ms,
-      maxMs: ivr?.active ? 6000 : 15000,
+      maxMs: ivr?.active || agentPanel?.active ? 6000 : 15000,
       onLevel: level => {
         if (!greetingMotionReduced()) document.getElementById("home-orb").style.setProperty("--wave-level", String(1 + Math.min(.65, level * 8)));
       },
@@ -655,6 +660,11 @@ async function finishRecording() {
 }
 
 function showVoiceFallback(code = "unmatched") {
+  if (agentPanel?.active) {
+    document.getElementById('agent-state').textContent = currentLang === 'bn' ? 'কথা শোনা যায়নি। একটি বিকল্প বেছে নিন বা আবার বলুন।' : 'Could not hear a reply. Choose an option or try speaking again.';
+    if (!['no_speech','no-speech'].includes(code)) agentPanel.repeated = true;
+    agentPanel.silent(); return;
+  }
   if (ivr?.active) {
     document.getElementById('ivr-status').textContent = ['no_speech','no-speech'].includes(code)
       ? (currentLang === 'bn' ? 'কথা শোনা যায়নি। এখন এক বা দুইবার চাপুন।' : 'No speech heard. Tap once or twice now.')
@@ -830,11 +840,12 @@ async function loadBankOptions() {
   } catch { /* Existing cached selector/report stays usable offline. */ }
 }
 
-async function sendVoiceInput(audio, text, request) {
+async function sendVoiceInput(audio, text, request, choice = null) {
   const form = new FormData();
   if (audio) form.append("audio", audio, audio.type.includes("mp4") ? "recording.mp4" : "recording.webm");
+  else if (choice) form.append("choice", choice);
   else form.append("text", text);
-  form.append("context", JSON.stringify({ ...activeVoiceContext, ui_lang: currentLang, history: voiceHistory.slice(-3), speak: Boolean(audio && appSettings.speak && !ivr?.active), ...(ivr?.active ? { ivr_step: ivr.id } : {}) }));
+  form.append("context", JSON.stringify({ ...activeVoiceContext, agent: currentTab === "home", ...(agentConversation ? {conversation: agentConversation} : {}), ui_lang: currentLang, history: voiceHistory.slice(-3), speak: Boolean(appSettings.speak && (currentTab === 'home' || audio) && (!ivr?.active || ['menu','name','confirm'].includes(ivr.id))), ...(ivr?.active ? { ivr_step: ivr.id } : {}) }));
   const controller = new AbortController();
   voiceAbort = controller;
   const audioRequest = playbackRequest;
@@ -898,11 +909,13 @@ async function sendVoiceInput(audio, text, request) {
     try { await reader?.cancel(); } catch {}
     reader?.releaseLock?.();
   }
+  if (request === voiceRequest && agentPendingResult) { const result = agentPendingResult; agentPendingResult = null; await showAgentTurn(result); }
 }
 
 async function handleVoiceEvent(name, data, audioRequest) {
   if (name === "error") throw new Error(data.code);
   if (name === "transcript") {
+    lastAgentChoice = "";
     lastVoiceTranscript = data.text;
     if (ivr?.active) document.getElementById("ivr-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + data.text;
     if (data.language === "en" && currentLang !== "en") {
@@ -917,6 +930,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? `আপনি বলেছেন: ${data.text}` : `You said: ${data.text}`;
     if (window.requestAnimationFrame) await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   }
+  if (name === 'result' && data.type === 'agent_turn') { agentPendingResult = data; return; }
   if (ivr?.active && name === 'result') { ivrPendingResult = data; return; }
   if (ivr?.active && name === 'speech') return;
   if (name === "result") {
@@ -1162,7 +1176,7 @@ function openProofModal(title, quote, url, page, pubDate, conversionNote = "") {
   document.getElementById("modal-title").textContent = title || "নথি ও প্রমাণের তথ্য";
   document.getElementById("modal-meta").textContent = currentLang === "bn" ? `পৃষ্ঠা: ${page || "—"} · নথির তারিখ: ${pubDate || "—"}` : `Page: ${page || "—"} · Document date: ${pubDate || "—"}`;
   if (conversionNote) document.getElementById("modal-meta").textContent += ' · ' + conversionNote;
-  
+
   const quoteDiv = document.getElementById("modal-quote");
   quoteDiv.innerHTML = quote
     ? String(quote).split(/([0-9০-৯][0-9০-৯,.]*)/g).map(part => /^[0-9০-৯]/.test(part) ? `<mark class="quote-highlight">${escapeHTML(part)}</mark>` : escapeHTML(part)).join("")
@@ -1323,7 +1337,7 @@ function syncOrientation() {
   panel.hidden=!active;
   document.querySelector('.scr').inert=active;
   document.querySelector('.scr').classList.toggle('orientation-blocked',active);
-  if(active&&!phoneLandscape){if(ivr?.active){ivr.clear();++ivr.epoch;ivr.phase='waiting';}document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeProofModal();stopListening();stopAudio();pauseGreetingCycle();panel.focus();}
+  if(active&&!phoneLandscape){if(agentPanel?.active)agentPanel.suspend();if(ivr?.active){ivr.clear();++ivr.epoch;ivr.phase='waiting';}document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeProofModal();stopListening();stopAudio();pauseGreetingCycle();panel.focus();}
   if(!active&&phoneLandscape){phoneLandscape=false;if(ivr?.active)ivr.enter(ivr.id);else if(appSettings.voiceonly||!appSettings.ivrFinished)startGuidedVoice();startExampleCycle();document.querySelector('.dock-item.on')?.focus();}
   phoneLandscape=active;
 }
@@ -1337,7 +1351,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener?.("resize", fitGreetingLine);
   document.fonts?.ready.then(fitGreetingLine);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { if (ivr?.active) { ivr.clear(); ++ivr.epoch; ivr.phase = "waiting"; } stopListening(); stopAudio(); pauseGreetingCycle(); }
+    if (document.hidden) { if (agentPanel?.active) agentPanel.suspend(); if (ivr?.active) { ivr.clear(); ++ivr.epoch; ivr.phase = "waiting"; } stopListening(); stopAudio(); pauseGreetingCycle(); }
     else startExampleCycle();
   });
   window.matchMedia?.("(prefers-reduced-motion: reduce)")?.addEventListener?.("change", startExampleCycle);
@@ -1550,6 +1564,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   calculateInsuranceSplit();
   calculateRealReturn();
+  setupAgentPanel();
   setupGuidedVoice();
 });
 
@@ -1561,7 +1576,7 @@ function ivrCopy(id) {
   return text.replace('{bank}', candidate?.[currentLang === 'bn' ? 'name_bn' : 'name_en'] || '');
 }
 
-async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId) {
+async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, audioUrl = null) {
   stopAudio();
   const controller = new AbortController(), player = document.getElementById('ilma-player');
   let resolveAudio, timer;
@@ -1579,8 +1594,9 @@ async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId) {
   (async () => {
     try {
       const clip = prompt !== 'ivr_confirm' && fixedClips[`${currentLang}:${prompt}`];
-      let url = clip && (player.canPlayType?.('audio/ogg; codecs="opus"') ? clip.url : clip.fallback_url);
+      let url = audioUrl || clip && (player.canPlayType?.('audio/ogg; codecs="opus"') ? clip.url : clip.fallback_url);
       if (!url) {
+        if (kind === 'agent') throw Error('speech_unavailable');
         const response = await fetch('/v1/speech', { method: 'POST', signal: controller.signal,
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, prompt, institution_id: bankId, language: currentLang }) });
         if (!response.ok) throw Error('speech_unavailable');
@@ -1720,4 +1736,127 @@ function setupGuidedVoice() {
     if (result.enabled) { appSettings.screenreader = true; updateSettingsText(); }
   }).catch(() => {});
   if (appSettings.voiceonly || !appSettings.ivrFinished) startGuidedVoice();
+}
+
+function hideAgentConversation() {
+  agentConversation = null; agentPendingResult = null; lastAgentChoice = '';
+  document.getElementById('agent-panel').hidden = true;
+  document.getElementById('tab-home').classList.remove('agent-open');
+  startExampleCycle();
+}
+
+function resetAgentConversation() {
+  if (agentPanel?.active) agentPanel.reset();
+  else hideAgentConversation();
+}
+
+function showAgentSource(source) {
+  agentPanel?.suspend(); stopListening(); stopAudio();
+  const date = source.published_at ? new Intl.DateTimeFormat(currentLang === 'bn' ? 'bn-BD' : 'en-GB', {dateStyle:'long'}).format(new Date(source.published_at+'T00:00:00')) : '';
+  openProofModal(source.source_title || (currentLang === 'bn' ? 'অবস্থার নিয়ম ও সূত্র' : 'Status rules and sources'),source.quote || (source.inputs || []).map(row => row[currentLang === 'bn' ? 'text_bn' : 'text_en']).join('\n'),source.source_url,source.page ? (currentLang === 'bn' ? toBnDigits(source.page) : source.page) : null,date,
+    currentLang === 'bn' ? 'মূল পাতার হাইলাইট করা ছবি পাওয়া যাচ্ছে না।' : 'A highlighted source-page image is unavailable.');
+}
+
+async function showAgentTurn(result) {
+  const guided = Boolean(ivr?.active || agentPanel?.guided);
+  if (ivr?.active) {
+    ivr.active = false; ++ivr.epoch; ivr.clear(); ivrPendingResult = null;
+    document.getElementById('ivr-overlay').hidden = true;
+    document.getElementById('main-content').classList.remove('ivr-active');
+    document.querySelectorAll('.tab-content').forEach(el => { el.inert = false; });
+    appSettings.ivrFinished = true; saveSettings();
+  }
+  if (currentTab !== 'home') switchTab('home');
+  agentConversation = result.conversation;
+  if (agentPanel) {
+    // Playback runs independently after the complete SSE response has closed.
+    void agentPanel.show(result,guided);
+  }
+}
+
+async function sendAgentChoice(choice) {
+  if (!agentConversation) return;
+  lastAgentChoice = agentPanel?.result?.next?.options.find(option => option.value === choice)?.label || choice;
+  stopListening(); stopAudio();
+  const request = ++voiceRequest; isSearching = true;
+  document.getElementById('agent-state').textContent = T[currentLang].checkingText;
+  try { await sendVoiceInput(null,null,request,choice); }
+  catch (error) { if (request === voiceRequest) { stopListening(); showVoiceFallback(error.message); } }
+}
+
+function setupAgentPanel() {
+  if (!window.IlmaAgentPanel) return;
+  agentPanel = new window.IlmaAgentPanel({
+    cancel: stopListening, interrupt: stopAudio,
+    recording: () => isListening, finish: finishRecording,
+    assistive: () => appSettings.screenreader,
+    send: sendAgentChoice,
+    async listen() {
+      if (document.hidden || phoneLandscape || currentTab !== 'home') return;
+      activeVoiceContext = {tab:'home',bank_id:null};
+      return startListening();
+    },
+    play: audio => playGuidedSpeech('agent',null,null,audio),
+    async question(state) {
+      stopAudio();
+      const request = playbackRequest;
+      try {
+        const response = await fetch('/v1/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'agent_question',agent_state:state,language:currentLang})});
+        if (!response.ok || request !== playbackRequest) return false;
+        const data = await response.json();
+        if (request !== playbackRequest) return false;
+        return playGuidedSpeech('agent',null,null,data.audio_url);
+      } catch { return false; }
+    },
+    render(result) {
+      const bn = currentLang === 'bn';
+      document.getElementById('tab-home').classList.add('agent-open');
+      document.getElementById('agent-panel').hidden = false;
+      document.getElementById('agent-heard').textContent = lastAgentChoice ? (bn ? 'আপনি বেছেছেন: ' : 'You chose: ')+lastAgentChoice : lastVoiceTranscript ? (bn ? 'আপনি বলেছেন: ' : 'You said: ')+lastVoiceTranscript : '';
+      const sentences = document.getElementById('agent-sentences'); sentences.replaceChildren();
+      for (const sentence of result.sentences) {
+        const article = document.createElement('article'),text = document.createElement('p');
+        text.textContent = sentence.text; article.appendChild(text);
+        for (const id of sentence.fact_ids) {
+          const fact = result.facts.find(f => f.fact_id === id);
+          if (fact?.status) { const chip = document.createElement('span'); chip.className = 'agent-chip';chip.textContent = fact.status[bn ? 'label_bn' : 'label_en'] || (bn ? 'অবস্থা যাচাই হয়নি' : 'Condition unverified');article.appendChild(chip); }
+          const button = document.createElement('button'); button.type = 'button';button.className = 'agent-source';button.textContent = bn ? 'সূত্র ›' : 'Source ›';
+          button.addEventListener('click',() => showAgentSource(fact?.source || sentence.source || {})); article.appendChild(button);
+        }
+        sentences.appendChild(article);
+      }
+      document.getElementById('agent-check-label').textContent = result.checked === 'model' ? (bn ? 'সূত্র মিলিয়ে যাচাই করা হয়েছে' : 'Claims checked against cited facts') : (bn ? 'নির্দিষ্ট সূত্রের ভাষা ব্যবহার করা হয়েছে' : 'Using sourced template wording');
+      document.getElementById('agent-question').textContent = result.next.question;
+      document.getElementById('agent-state').textContent = result.speech ? '' : (bn ? 'অডিও পাওয়া যাচ্ছে না। বিকল্প বেছে নিন।' : 'Audio unavailable. Choose an option.');
+      const options = document.getElementById('agent-options'); options.replaceChildren();
+      for (const option of result.next.options.slice(0,4)) {
+        const button = document.createElement('button');button.type = 'button';button.textContent = option.label;
+        button.addEventListener('click',()=>agentPanel.choose(option.value)); options.appendChild(button);
+      }
+      const labels = {'agent-report':bn?'পুরো রিপোর্ট দেখুন':'View full report','agent-repeat':bn?'আবার':'Repeat','agent-end':bn?'শেষ':'Finish'};
+      for (const [id,text] of Object.entries(labels)) document.getElementById(id).textContent = text;
+      document.getElementById('agent-report').hidden = !result.conversation.institution_id;
+      document.getElementById('agent-tap').setAttribute('aria-label',result.next.question || (bn?'শেষ':'Finish'));
+      const names = bn ? ['শুনেছি','বুঝেছি','খুঁজেছি','লিখেছি','যাচাই করেছি'] : ['Heard','Understood','Retrieved','Worded','Checked'];
+      const trace = document.getElementById('agent-trace');trace.replaceChildren();
+      for (const [index,step] of result.trace.steps.entries()) {
+        const li = document.createElement('li');
+        const status = step.status === 'ok' ? (bn?'সম্পন্ন':'complete') : step.status === 'skipped' ? (bn?'দরকার হয়নি':'not needed') : step.status === 'template' ? (bn?'নির্দিষ্ট ভাষা':'template') : (bn?'পাওয়া যায়নি':'unavailable');
+        li.textContent = `${names[index] || step.stage}: ${step.model} · ${bn ? toBnDigits(step.ms) : step.ms} ${bn?'মিলিসেকেন্ড':'ms'} · ${status}${step.tool ? ' · '+step.tool : ''}${step.fact_count != null ? ' · '+(bn ? toBnDigits(step.fact_count)+'টি তথ্য' : step.fact_count+' facts') : ''}`;
+        trace.appendChild(li);
+      }
+      document.getElementById('agent-rule-notice').textContent = result.trace.status_rule_notice;
+      const audio = result.trace.audio;
+      document.getElementById('agent-audio-note').textContent = audio?.duration_ms ? (bn ? 'অডিও: '+toBnDigits((audio.duration_ms/1000).toFixed(1))+' সেকেন্ড' : 'Audio: '+(audio.duration_ms/1000).toFixed(1)+' seconds') + (audio.status === 'over_target' ? (bn ? ' · লক্ষ্যের চেয়ে দীর্ঘ' : ' · longer than target') : '') : '';
+
+      document.getElementById('main-content').scrollTop = 0;
+      document.getElementById('sr-announcer').textContent = result.text+' '+result.next.question;
+      document.getElementById('agent-tap').focus(); pauseGreetingCycle();
+      if (result.action?.type === 'open_report') openBank(result.action.institution_id);
+      if (result.action?.type === 'open_proof') showAgentSource(result.action.source);
+    },
+    exit: hideAgentConversation
+  });
+  document.getElementById('agent-tap').addEventListener('click',event=>agentPanel.tap(event));
+  for (const [id,choice] of [['agent-report','report'],['agent-repeat','repeat'],['agent-end','end']]) document.getElementById(id).addEventListener('click',()=>agentPanel.choose(choice));
 }

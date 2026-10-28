@@ -137,6 +137,7 @@ node tests/test_frontend.cjs
 node tests/test_greeting_cycle.cjs
 node tests/test_voice_search.cjs
 node tests/test_ivr_steps.cjs
+node tests/test_voice_agent.cjs
 node tests/test_audio_recorder.cjs
 node tests/test_offline.cjs
 python3 ops/check_repo.py
@@ -192,3 +193,5 @@ Bank services v5.4 import and review notes: [implementation](docs/BANK_SERVICES_
 Extra source publications and watched-bank announcements: [v5.4 notes](docs/EXTRA_DATA_V54.md).
 
 Guided first-use and Voice only mode: [tap-or-talk behavior and pending device acceptance](docs/TAP_OR_TALK.md).
+
+Home voice-agent tools, privacy and acceptance: [VOICE_AGENT.md](docs/VOICE_AGENT.md).

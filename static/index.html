@@ -20,8 +20,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-47">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-47">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-49">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-49">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -97,6 +97,18 @@
           <button id="btn-stop-listening" class="btn-stop-listening" type="button" aria-label="থামুন">থামুন (Stop)</button>
         </div>
       </div>
+      <section id="agent-panel" hidden aria-labelledby="agent-title">
+        <h2 id="agent-title">ইলমা</h2>
+        <p id="agent-heard"></p>
+        <div id="agent-sentences"></div>
+        <p id="agent-check-label"></p>
+        <button id="agent-tap" type="button"><span id="agent-question"></span><span id="agent-state" role="status" aria-live="polite"></span></button>
+        <div id="agent-options"></div>
+        <button id="agent-report" class="agent-link" type="button">পুরো রিপোর্ট দেখুন</button>
+        <button id="agent-repeat" class="agent-link" type="button">আবার</button>
+        <button id="agent-end" class="agent-link" type="button">শেষ</button>
+        <details id="agent-inspect"><summary>ⓘ</summary><ol id="agent-trace"></ol><p id="agent-rule-notice"></p><p id="agent-audio-note"></p></details>
+      </section>
     </section>
 
     <!-- TAB 2: BANK SERVICES -->
@@ -378,9 +390,10 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-47"></script>
-  <script src="/static/js/ivr.js?v=voice-complete-20261028-47"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261028-47"></script>
-  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-47"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-49"></script>
+  <script src="/static/js/ivr.js?v=voice-complete-20261028-49"></script>
+  <script src="/static/js/voice-agent.js?v=voice-complete-20261028-49"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261028-49"></script>
+  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-49"></script>
 </body>
 </html>

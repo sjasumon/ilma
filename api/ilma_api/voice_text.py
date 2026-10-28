@@ -4,6 +4,7 @@ import unicodedata
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 from ilma_api.voice import VoiceError
+from ilma_api.voice_agent import Conversation, Choice
 
 
 class VoiceContext(BaseModel):
@@ -13,6 +14,9 @@ class VoiceContext(BaseModel):
     ui_lang: Literal['bn', 'en'] = 'bn'
     history: list[dict[str, str]] = Field(default_factory=list, max_length=3)
     speak: bool = True
+    agent: bool = False
+    conversation: Conversation | None = None
+    choice: Choice | None = None
     ivr_step: Literal['open', 'mic', 'language', 'menu', 'name', 'confirm', 'report', 'next'] | None = None
 
 

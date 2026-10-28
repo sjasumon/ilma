@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict');
+const {AgentPanel}=require('../static/js/voice-agent.js');
+function fixture(){
+ let time=0,id=0,mic=false,complete;const timers=new Map(),calls=[];
+ const clock={now:()=>time,setTimeout(fn,ms){timers.set(++id,{fn,at:time+ms});return id},clearTimeout(id){timers.delete(id)}};
+ const a={cancel(){mic=false},interrupt(){if(complete){const end=complete;complete=null;end(false)}},render(r){calls.push(['render',r])},play(){return new Promise(resolve=>{complete=resolve})},async listen(){mic=true;calls.push(['listen'])},recording:()=>mic,assistive:()=>false,finish(){mic=false;calls.push(['finish'])},send(choice){calls.push(['send',choice])},async question(){calls.push(['question']);return true},exit(){calls.push(['exit'])}};
+ const panel=new AgentPanel(a,clock),settle=async()=>{for(let i=0;i<10;i++)await Promise.resolve()};
+ const result={speech:'synthetic',next:{question:'Choose',options:[{value:'detail'},{value:'services'}]},conversation:{state:'BANK'}};
+ return{panel,calls,a,result,settle,async end(){complete(true);complete=null;await settle()},async advance(ms){time+=ms;for(const [id,t] of [...timers])if(t.at<=time){timers.delete(id);await t.fn()}await settle()}};
+}
+(async()=>{
+ const app=fixture();app.panel.show(app.result,true);assert.equal(app.calls.filter(c=>c[0]==='listen').length,0);await app.end();assert.equal(app.a.recording(),true);
+ app.panel.tap({detail:1});await app.advance(200);app.panel.tap({detail:2});assert.deepEqual(app.calls.at(-1),['finish']);assert.ok(!app.calls.some(c=>c[0]==='send'));
+ app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,1);app.a.cancel();app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,1);
+ const choice=fixture();choice.panel.show(choice.result,true);choice.a.interrupt();await choice.settle();choice.panel.tap({detail:1});await choice.advance(449);assert.ok(!choice.calls.some(c=>c[0]==='send'));await choice.advance(1);assert.deepEqual(choice.calls.at(-1),['send','detail']);
+ const two=fixture();two.panel.show(two.result,true);two.a.interrupt();await two.settle();two.panel.tap({detail:1});await two.advance(100);two.panel.tap({detail:2});assert.deepEqual(two.calls.at(-1),['send','services']);
+ const native=fixture();native.panel.show(native.result,true);native.a.interrupt();await native.settle();native.panel.tap({detail:0});assert.deepEqual(native.calls.at(-1),['send','detail']);
+ const timeout=fixture();timeout.panel.show(timeout.result);await timeout.advance(120000);assert.equal(timeout.panel.active,false);assert.deepEqual(timeout.calls.at(-1),['exit']);await timeout.settle();assert.ok(!timeout.calls.some(c=>c[0]==='listen'),'late audio cannot reopen mic after reset');
+ const tab=fixture();tab.panel.show(tab.result);tab.panel.reset();await tab.settle();assert.equal(tab.panel.active,false);
+ const {createApp}=require('./frontend_harness.cjs');const appLang=createApp();appLang.run("agentConversation={state:'BANK'};setLanguage('en')");assert.equal(appLang.run('agentConversation'),null,'changing language clears prior-language conversation');
+ console.log('Voice agent lifetime passed: post-speech mic, tap/recording isolation, assistive activation, one re-ask, idle reset and stale-playback cancellation');
+})().catch(error=>{console.error(error);process.exitCode=1});

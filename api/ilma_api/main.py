@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from unicodedata import normalize
 from typing import Literal
@@ -293,6 +294,8 @@ async def _voice_request(request, db, mode):
         from ilma_api import settings
         identifier = request.headers.get('x-ilma-device', '')[:80] or (request.client.host if request.client else 'anonymous')
         device_hash = hmac.new(settings.VOICE_LOG_SALT.encode(), (datetime.utcnow().strftime('%Y-%m') + identifier).encode(), hashlib.sha256).hexdigest()[:16]
+        watch_device=request.headers.get('x-ilma-device','')
+        watch_identity = hmac.new(settings.VOICE_LOG_SALT.encode(), ('watch:'+watch_device).encode(), hashlib.sha256).hexdigest() if re.fullmatch('[a-zA-Z0-9_-]{20,80}',watch_device) else None
         bind = db.get_bind()
         # Streaming opens its own session; release the request session now so
         # a slow voice stream does not hold a pooled connection for its whole
@@ -306,7 +309,7 @@ async def _voice_request(request, db, mode):
             # Own the session through streaming, independent of FastAPI's
             # dependency cleanup timing. Drop the outer raw-audio reference.
             with Session(bind=bind) as stream_db:
-                pipeline = run_pipeline(audio, text, mime, context, lambda: get_institution_index(stream_db), stream_db, mode, device_hash, diagnostic=diagnostic)
+                pipeline = run_pipeline(audio, text, mime, context, lambda: get_institution_index(stream_db), stream_db, mode, device_hash, diagnostic=diagnostic, watch_identity=watch_identity)
                 audio = None
                 try:
                     async for chunk in pipeline:
@@ -339,13 +342,16 @@ async def ask_voice(request: Request, db: Session = Depends(get_db)):
 from pydantic import BaseModel, model_validator
 
 class ReadoutRequest(BaseModel):
-    kind: Literal['report_card', 'insurance', 'news', 'ivr', 'reasons', 'sources']
+    kind: Literal['report_card', 'insurance', 'news', 'ivr', 'reasons', 'sources', 'agent_question']
+    agent_state: Literal['BANK','DETAIL','FIGURES','HISTORY','SERVICES','SERVICE','COMPARE','NEXT','ASK_BANK','WATCH_CONFIRM'] | None = None
     prompt: Literal['ivr_open', 'ivr_mic', 'ivr_lang', 'ivr_menu', 'ivr_name', 'ivr_confirm', 'ivr_next', 'ivr_chose_bn', 'ivr_chose_en', 'ivr_chose_bank', 'ivr_chose_services', 'ivr_yes', 'ivr_no', 'ivr_ready', 'ivr_repeat_hint'] | None = None
     institution_id: int | None = None
     language: Literal['bn', 'en'] = 'bn'
 
     @model_validator(mode='after')
     def guided_prompt_scope(self):
+        if (self.kind == 'agent_question') != (self.agent_state is not None):
+            raise ValueError('A script state is required only for agent question readouts.')
         if (self.kind == 'ivr') != (self.prompt is not None):
             raise ValueError('Guided readouts require an allowlisted prompt; other readouts do not accept prompts.')
         return self
@@ -355,7 +361,7 @@ class ReadoutRequest(BaseModel):
 async def speech_readout(payload: ReadoutRequest, db: Session = Depends(get_db)):
     from ilma_api.voice_pipeline import readout
     try:
-        result = await readout(payload.kind, payload.institution_id, payload.language, db, payload.prompt)
+        result = await readout(payload.kind, payload.institution_id, payload.language, db, payload.prompt, payload.agent_state)
         if not result['audio_url']:
             return JSONResponse(status_code=503, content={'error': {'code': 'speech_unavailable',
                 'message_bn': 'পড়ে শোনানোর সেবা এখন চালু নেই।', 'message_en': 'Spoken playback is not available.'}})

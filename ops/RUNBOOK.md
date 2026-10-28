@@ -68,3 +68,24 @@ blindly: imports and private diagnostic writes are not code changes.
 The 27 October canary validated `26f729e` against the current schema. Public
 traffic switching and off-host restore remain to rehearse. Production switch and
 outstanding acceptance are tracked in `docs/RELEASE_HARDENING.md`.
+
+## Guided voice-agent audit schema
+
+Before serving the voice-agent backend, run the additive migration with the
+existing private environment and project virtualenv:
+
+```sh
+PYTHONPATH=api python -m ilma_api.migrate_agent
+```
+
+It creates only `app_model_call`, checks that MySQL database name is `ilma`,
+and leaves financial, incident, service and watch records unchanged. Restart
+the existing application system service after backend updates. Keep `.env`
+ignored and mode 0600. `MUSE_CHECK_MODEL` is optional; unset uses Spark for a
+separate claim-check call. Never print provider keys or database credentials.
+
+For a model-off acceptance run, use an isolated preview with
+`META_MODEL_API_KEY=` and `MUSE_VOICE_API_KEY=`; tap choices must traverse the
+script with templates and no Muse model calls. TTS, if configured, remains a
+separate paid provider call. Never disable model credentials on the shared
+live service just to test this path.

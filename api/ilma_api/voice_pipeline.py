@@ -32,6 +32,18 @@ ADVICE = re.compile(r'সবচেয়ে (?:ভালো|ভাল|নির�
 def parse_request(content_type, body, mode):
     if len(body) > MAX_UPLOAD_BYTES:
         raise VoiceError('audio_too_large', 413, 'রেকর্ডিংটি খুব বড়।', 'Upload is too large.')
+    if mode == 'text' and content_type.split(';')[0] == 'application/json':
+        try:
+            fields=json.loads(body)
+            if not isinstance(fields,dict) or set(fields)-{'text','choice','context'}:raise ValueError('fields')
+            context=VoiceContext.model_validate({**fields.get('context',{}),**({'choice':fields['choice']} if 'choice' in fields else {})})
+            text=fields.get('text','')
+            if not isinstance(text,str) or len(text.encode())>8000 or (not text.strip() and not context.choice):raise ValueError('input')
+            if len(json.dumps(fields.get('context',{})).encode())>16384 or any(len(k)>40 or len(v)>2000 for exchange in context.history for k,v in exchange.items()):raise ValueError('context')
+            if context.choice and (not context.conversation or text.strip()):raise ValueError('conversation')
+            return None,text,'',context
+        except (ValueError,TypeError,ValidationError):
+            raise VoiceError('invalid_request',400,'অনুরোধটি সঠিক নয়।','Invalid agent request.') from None
     if '\n' in content_type or '\r' in content_type or not content_type.startswith('multipart/form-data'):
         raise VoiceError('invalid_request', 400, 'অনুরোধটি সঠিক নয়।', 'Use multipart/form-data.')
     message = BytesParser(policy=policy.default).parsebytes(b'Content-Type: ' + content_type.encode('ascii', 'replace') + b'\r\n\r\n' + body)
@@ -40,7 +52,7 @@ def parse_request(content_type, body, mode):
     fields, mime = {}, ''
     for part in message.iter_parts():
         name = part.get_param('name', header='content-disposition')
-        if name not in {'audio', 'context', 'text'} or name in fields or part.is_multipart():
+        if name not in {'audio', 'context', 'text', 'choice'} or name in fields or part.is_multipart():
             raise VoiceError('invalid_request', 400, 'অনুরোধটি সঠিক নয়।', 'Invalid upload fields.')
         fields[name] = part.get_payload(decode=True) or b''
         if name == 'audio': mime = part.get_content_type()
@@ -50,9 +62,12 @@ def parse_request(content_type, body, mode):
             raise ValueError('context')
         if any(len(key) > 40 or len(value) > 2000 for exchange in context.history for key, value in exchange.items()):
             raise ValueError('history')
-        if mode == 'voice' and (not fields.get('audio') or 'text' in fields): raise ValueError('audio')
-        if mode == 'text' and (not fields.get('text') or 'audio' in fields): raise ValueError('text')
-        if mode == 'text' and len(fields['text']) > 8000: raise ValueError('text')
+        if 'choice' in fields:
+            context=VoiceContext.model_validate({**context.model_dump(), 'choice':fields['choice'].decode('utf-8')})
+        if context.choice and not context.conversation:raise ValueError('conversation')
+        if mode == 'voice' and (not fields.get('audio') or 'text' in fields or 'choice' in fields or context.choice): raise ValueError('audio')
+        if mode == 'text' and ((not fields.get('text') and not context.choice) or 'audio' in fields or ('text' in fields and context.choice)): raise ValueError('text')
+        if mode == 'text' and len(fields.get('text',b'')) > 8000: raise ValueError('text')
     except (ValidationError, ValueError):
         raise VoiceError('invalid_request', 400, 'অনুরোধটি সঠিক নয়।', 'Invalid voice context or input.') from None
     return fields.get('audio'), fields.get('text', b'').decode('utf-8', errors='replace'), mime, context
@@ -262,9 +277,10 @@ def consume_question(db, device_hash):
         raise VoiceError('daily_limit', 429, 'আজকের প্রশ্নের সীমা শেষ। ব্যাংকের অবস্থা, বীমা ও হার দেখা যাবে।', 'Daily question limit reached. Status, insurance and rate lookups remain available.')
 
 
-async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', device_hash=None, diagnostic=None):
+async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', device_hash=None, diagnostic=None, watch_identity=None):
     started, intent, institution, outcome = time.monotonic(), 'unclear', None, 'error'
     fact_ids = []
+    asr_ms = 0
     try:
         if mode == 'voice':
             trace_stage(diagnostic, 'conversion_started', started, uploaded_bytes=len(audio), mime=mime)
@@ -275,7 +291,9 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             trace_stage(diagnostic, 'asr_started', started, duration_ms=duration_ms, language=context.ui_lang)
             audio = None
             try:
+                asr_started=time.monotonic()
                 text = await transcribe(wav, context.ui_lang, [])
+                asr_ms=round((time.monotonic()-asr_started)*1000)
                 if diagnostic is not None: diagnostic['meta_transcript'] = text
                 trace_stage(diagnostic, 'asr_completed', started)
             finally: del wav
@@ -288,11 +306,11 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                     'ভয়েস সেবা অন্য লিপিতে কথা লিখেছে। নিচের লেখা দেখুন, আবার বলুন বা সংশোধন করে লিখুন।',
                     'The speech service returned text in an unexpected script. Check what it heard, then speak again or type a correction.') from None
             raise
-        if not text: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
+        if not text and not context.choice: raise VoiceError('no_speech', 422, 'বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Not understood. Speak again or type.')
         # A slow/failing database must never delay the recognized question.
-        yield event('transcript', {'text': text, 'language': context.ui_lang})
+        if not context.choice:yield event('transcript', {'text': text, 'language': context.ui_lang})
         from ilma_api.ivr import match_ivr_action
-        action = match_ivr_action(text, context.ivr_step)
+        action = match_ivr_action(text, context.ivr_step) if not context.conversation else None
         if action:
             yield event('result', {'type': 'ivr_action', 'ivr_action': action, 'omit_history': True, 'sources': [], 'text': ''})
             outcome = 'answered'
@@ -300,6 +318,38 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         if callable(banks):
             trace_stage(diagnostic, 'bank_index_started', started)
             banks = banks()
+        if context.conversation or context.agent and context.ivr_step not in {'open','mic','language'}:
+            from ilma_api.voice_agent import run_agent_turn
+            agent_candidates=match_candidates(text,banks) if text else []
+            if related_parent_ids(text,banks):
+                yield event('result',{'type':'no_data','omit_history':True,'sources':[],'text':'এটি আলাদা সম্পর্কিত কোম্পানির নাম। ব্যাংকের অবস্থা বলা যাবে না।' if context.ui_lang=='bn' else 'This names a separate related company. Bank-condition data does not apply.'})
+                return
+            if len(agent_candidates)==1 and agent_candidates[0].get('licensed') is False:
+                yield event('result',{'type':'not_licensed','omit_history':True,'sources':[],'text':'এটি লাইসেন্সপ্রাপ্ত ব্যাংক বা আর্থিক প্রতিষ্ঠান নয়।' if context.ui_lang=='bn' else 'This is not marked as a licensed bank or finance company.'})
+                return
+            # Refusals remain deterministic and are never sent to the planner.
+            if ADVICE.search(text):
+                yield event('result', {'type':'refused','omit_history':True,'sources':[], 'text':'ব্যাংক বেছে দেওয়া বা টাকা রাখার পরামর্শ দেওয়া হয় না।' if context.ui_lang=='bn' else 'ILMA does not recommend where to deposit money.'})
+                return
+            agent_started=time.monotonic()
+            result=await run_agent_turn(text,context,banks,db,agent_candidates,context.choice,watch_identity)
+            for step in result['trace']['steps']:
+                if step['stage']=='ASR':
+                    step.update(model=settings.MUSE_VOICE_MODEL if mode=='voice' else 'none',status='ok' if mode=='voice' else 'skipped',ms=asr_ms)
+            yield event('progress', {'stage':'agent_tools_complete'})
+            # A separate frame resets the bounded stream watchdog before TTS.
+            spoken=result.pop('speech_text')
+            if context.speak and spoken and (not result.get('action') or result['action']['type'] not in {'stop','open_report'}):
+                tts_started=time.monotonic();result['speech']=await speech(spoken,context.ui_lang)
+                from ilma_api.agent_audio import normalize_agent_audio
+                result['speech'],audio_measurement=await normalize_agent_audio(result['speech'])
+                result['trace']['audio']=audio_measurement
+                result['trace']['tts']={'model':settings.ELEVENLABS_MODEL,'ms':round((time.monotonic()-tts_started)*1000),'status':'ok' if result['speech'] else 'unavailable'}
+            result['trace']['total_ms']=round((time.monotonic()-agent_started)*1000)
+            yield event('result',result)
+            intent='voice_agent';institution=result['conversation']['institution_id'];outcome='answered'
+            fact_ids=[f['fact_id'] for f in result['facts']]
+            return
         if not banks:
             yield event('result', {
                 'type': 'no_data', 'reason': 'bank_dataset_empty', 'omit_history': True,
@@ -418,8 +468,11 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         log_outcome(db, mode, intent, institution, outcome, started, device_hash, fact_ids)
 
 
-async def readout(kind, institution_id, language, db, prompt=None):
-    if kind == 'ivr':
+async def readout(kind, institution_id, language, db, prompt=None, agent_state=None):
+    if kind == 'agent_question':
+        from ilma_api.voice_agent import script_next
+        result={'text':script_next(agent_state,language)['question']}
+    elif kind == 'ivr':
         from ilma_api.voice_assets import CATALOG
         pair = CATALOG.get(prompt) if prompt and prompt.startswith('ivr_') else None
         if not pair:

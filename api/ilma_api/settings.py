@@ -20,6 +20,7 @@ MUSE_VOICE_MODEL = os.getenv("MUSE_VOICE_MODEL", "")
 
 MUSE_SPARK_API_URL = os.getenv("MUSE_SPARK_API_URL", "https://api.meta.ai/v1/chat/completions")
 MUSE_SPARK_MODEL = os.getenv("MUSE_SPARK_MODEL", "muse-spark-1.3")
+MUSE_CHECK_MODEL = os.getenv("MUSE_CHECK_MODEL") or MUSE_SPARK_MODEL
 VOICE_SILENCE_MS = max(1500, min(4000, int(os.getenv("VOICE_SILENCE_MS", "1500"))))
 FFMPEG_BINARY = os.getenv("FFMPEG_BINARY", "ffmpeg")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
