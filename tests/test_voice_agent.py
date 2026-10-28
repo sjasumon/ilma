@@ -291,3 +291,16 @@ def test_bare_product_without_bank_is_remembered(db):
     assert result['conversation']['state']=='ASK_BANK' and result['conversation']['product']=='fdr'
     result=route_reply(db,'City Bank',conv(result),banks)
     assert result['conversation']['state']=='SERVICE' and result['conversation']['institution_id']==4
+
+
+def test_explicit_bank_survives_rejected_plan_and_overrides_previous_bank(db):
+    banks=routing_banks(db)
+    from ilma_api.voice_text import match_candidates
+    for previous in (None,3):
+        client,_=model_client({'agent_plan':{'tool':'bank_summary','args':{'institution_id':3 if previous else 999},'option':None}})
+        with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
+            c=Conversation(state='BANK',institution_id=previous)
+            result=asyncio.run(run_agent_turn('সিটি ব্যাংকের সম্পর্কে বলুন',context(c),banks,db,match_candidates('সিটি ব্যাংকের সম্পর্কে বলুন',banks),client=client))
+        assert result['conversation']['institution_id']==4
+        assert result['conversation']['state']=='BANK'
+        assert 'Which bank' not in result['text']

@@ -400,15 +400,15 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
     language=context.ui_lang;bn=language=='bn';tap=choice is not None
     trace.append({'stage':'ASR','model':settings.MUSE_VOICE_MODEL if getattr(context,'input_mode',None)=='voice' else 'none','ms':0,'status':'skipped' if tap else 'transcript_received'})
     if c.turn>=6:choice='end';tap=True
-    ids={row['id'] for row in candidates}
-    if c.institution_id:
-        if db.get(Institution,c.institution_id):ids.add(c.institution_id)
-        else:c=c.model_copy(update={'institution_id':None,'last_tool':None})
+    if c.institution_id and not db.get(Institution,c.institution_id):
+        c=c.model_copy(update={'institution_id':None,'last_tool':None})
     chosen=choice or spoken_choice(text,c)
     matched_choice=chosen
     # A resolved spoken option is exactly a tap: no PLAN, SAY or CHECK call.
     if chosen is not None:tap=True
     candidates=[] if chosen is not None else list(candidates)
+    ids={row['id'] for row in candidates}
+    if not candidates and c.institution_id:ids.add(c.institution_id)
     unavailable=outside_demo(text,candidates,c,db) if chosen not in {'end','stop','ask_bank','listen','no','next'} else None
     plan=None;invalid=False;direct_service=False
     if candidates and (len(candidates)>1 or (candidates[0].get('confirm') and candidates[0]['id']!=c.institution_id) or candidates[0]['confidence']<.9):
@@ -427,6 +427,8 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
             c=c.model_copy(update={'product':plan.args.product});plan=None
         if plan is None and len(candidates)==1:
             plan=Plan(tool='bank_summary',args=ToolArgs(institution_id=id))
+        if len(candidates)==1:
+            c=c.model_copy(update={'institution_id':id})
     from ilma_api.voice_text import bank_name_only
     skip_plan=tap or direct_service or unavailable is not None or (len(candidates)==1 and bank_name_only(text,list(candidates)))
     if not invalid and not skip_plan:
