@@ -22,7 +22,7 @@
     async enter(id, repeated = false) {
       if (!IVR_STEPS[id]) return;
       this.clear(); this.a.cancel(); this.active = true; this.id = id;
-      this.repeated = repeated; const epoch = ++this.epoch;
+      this.silenceRetries = repeated ? (this.silenceRetries || 0) + 1 : 0; const epoch = ++this.epoch;
       this.phase = 'speaking'; this.a.render(id); this.a.announce(id);
       const heard = await this.a.prompt(id);
       if (!this.active || epoch !== this.epoch) return;
@@ -41,7 +41,7 @@
     }
     wait() {
       this.clock.clearTimeout(this.silenceTimer); this.phase = 'waiting';
-      if (this.repeated || !IVR_STEPS[this.id].onSilence) return;
+      if (this.silenceRetries >= 2 || !IVR_STEPS[this.id].onSilence) return;
       const epoch = this.epoch;
       this.silenceTimer = this.clock.setTimeout(() => {
         if (this.active && epoch === this.epoch) this.enter(this.id, true);
@@ -85,7 +85,7 @@
       if (IVR_STEPS[this.id].words[action]) return this.choose(action === 'bn' ? 1 : 2);
       if (action === 'again') return this.enter(this.id);
       if (action === 'name') return this.enter('name');
-      if (action === 'stop') { this.clear(); ++this.epoch; this.a.cancel(); this.a.interrupt(); this.repeated = true; return this.wait(); }
+      if (action === 'stop') { this.clear(); ++this.epoch; this.a.cancel(); this.a.interrupt(); this.silenceRetries = 2; return this.wait(); }
       return this.a.read(action);
     }
     skip() {

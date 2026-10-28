@@ -1,5 +1,7 @@
 /* Short-lived microphone audio. No storage, browser speech service or API keys. */
 (function () {
+  let fallbackContext=null;
+  function sharedContext(){if(window.IlmaAudioSession)return window.IlmaAudioSession.getContext();if(!fallbackContext||fallbackContext.state==='closed'){const C=window.AudioContext||window.webkitAudioContext;fallbackContext=new C()}return fallbackContext}
   class VoiceRecorder {
     static supported() {
       return Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && (window.AudioContext || window.webkitAudioContext));
@@ -9,9 +11,9 @@
       this.chunks = [];
       this.finishing = false;
     }
-    async start({ onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500, maxMs = 15000 }) {
+    async start({ onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500, maxMs = 15000, noSpeechMs = 6000 }) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.context = new AudioContext();
+      this.context = sharedContext();
       // Resume during the user's tap, before waiting for the permission prompt.
       const resume = this.context.resume();
       resume.catch(() => {});
@@ -30,11 +32,11 @@
         });
         // Prevent an unhandled rejection if recording is cancelled before finish.
         this.stopped.catch(() => {});
-        const source = this.context.createMediaStreamSource(this.stream);
+        const source = this.source = this.context.createMediaStreamSource(this.stream);
         this.analyser = this.context.createAnalyser();
         this.analyser.fftSize = 1024;
         source.connect(this.analyser);
-        const mute = this.context.createGain();
+        const mute = this.mute = this.context.createGain();
         mute.gain.value = 0;
         this.analyser.connect(mute).connect(this.context.destination);
         this.media.start();
@@ -50,10 +52,10 @@
           if (!noiseFloor && noiseCount) { noiseFloor = noiseTotal / noiseCount; if (noiseFloor > .035) onNoise(); }
           if (rms > Math.max(.015, Math.min(.03, noiseFloor * 1.8))) lastSpeech = now;
           if (lastSpeech !== null && now - lastSpeech >= silenceMs) this.complete(onComplete);
-          else if (lastSpeech === null && now - started >= 6000) { this.cancel(); onError('no-speech'); }
+          else if (lastSpeech === null && now - started >= noSpeechMs) { this.cancel(); onError('no-speech'); }
         }, 100);
         this.deadline = setTimeout(() => {
-          if (maxMs <= 6000 && lastSpeech === null) { this.cancel(); onError('no-speech'); }
+          if (lastSpeech === null) { this.cancel(); onError('no-speech'); }
           else this.complete(onComplete);
         }, Math.min(15000, Math.max(1000, maxMs)));
       } catch (error) {
@@ -88,7 +90,7 @@
     cleanup() {
       this.clearTimers();
       this.stream?.getTracks().forEach(track => track.stop());
-      if (this.context && this.context.state !== 'closed') this.context.close().catch(() => {});
+      this.source?.disconnect?.();this.analyser?.disconnect?.();this.mute?.disconnect?.();
       this.chunks = [];
     }
     cancel() {

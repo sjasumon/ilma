@@ -306,7 +306,7 @@ class AppRateCounter(Base):
 for table in Base.metadata.tables.values():
     table.dialect_options["mysql"]["charset"] = "utf8mb4"
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 5}, pool_recycle=1800)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 5,"read_timeout":5,"write_timeout":5}, pool_recycle=1800)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():

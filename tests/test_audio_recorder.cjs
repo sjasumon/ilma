@@ -57,9 +57,12 @@ function createRecorder({ permissionError = null, stopStalls = false } = {}) {
   assert.ok(noSpeech.stopped());
   assert.equal(noSpeech.timers(), 0);
 
+  const patient=createRecorder();let patientError;
+  await patient.recorder.start({noSpeechMs:8000,maxMs:15000,onComplete(){},onError(code){patientError=code}});
+  patient.sample(6100,0);assert.equal(patientError,undefined);patient.sample(8100,0);assert.equal(patientError,'no-speech');
   const cap = createRecorder(); let capped = 0;
   await cap.recorder.start({ onComplete: () => capped++, onError() {} });
-  cap.limit(); assert.equal(capped, 1); cap.recorder.cancel(); assert.ok(cap.stopped());
+  cap.sample(400,.1);cap.limit(); assert.equal(capped, 1); cap.recorder.cancel(); assert.ok(cap.stopped());
   const guidedQuiet = createRecorder(); let guidedError;
   await guidedQuiet.recorder.start({ maxMs: 6000, onComplete() { throw Error('silent IVR audio must not upload'); }, onError: code => guidedError = code });
   guidedQuiet.limit(); assert.equal(guidedError, 'no-speech'); assert.ok(guidedQuiet.stopped());
@@ -68,7 +71,7 @@ function createRecorder({ permissionError = null, stopStalls = false } = {}) {
   guidedSpeech.sample(400, .1); guidedSpeech.limit(); assert.equal(guidedCompleted, 1); guidedSpeech.recorder.cancel();
   const blocked = createRecorder({ permissionError: 'NotAllowedError' });
   await assert.rejects(blocked.recorder.start({ onComplete() {}, onError() {} }), { name: 'NotAllowedError' });
-  assert.equal(blocked.recorder.context.state, 'closed');
+  assert.equal(blocked.recorder.context.state, 'running');
   const stalled = createRecorder({stopStalls:true});
   await stalled.recorder.start({onComplete(){},onError(){}});
   const rejected = assert.rejects(stalled.recorder.finish(), /recording_finalize_timeout/);

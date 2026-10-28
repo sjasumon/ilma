@@ -11,12 +11,12 @@ function fixture(){
 (async()=>{
  const app=fixture();app.panel.show(app.result,true);assert.equal(app.calls.filter(c=>c[0]==='listen').length,0);await app.end();assert.equal(app.a.recording(),true);
  app.panel.tap({detail:1});await app.advance(200);app.panel.tap({detail:2});assert.deepEqual(app.calls.at(-1),['finish']);assert.ok(!app.calls.some(c=>c[0]==='send'));
- app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,1);app.a.cancel();app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,1);
+ app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,1);app.a.cancel();app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,2);app.a.cancel();app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,2);
  const choice=fixture();choice.panel.show(choice.result,true);choice.a.interrupt();await choice.settle();choice.panel.tap({detail:1});await choice.advance(449);assert.ok(!choice.calls.some(c=>c[0]==='send'));await choice.advance(1);assert.deepEqual(choice.calls.at(-1),['send','detail']);
  const two=fixture();two.panel.show(two.result,true);two.a.interrupt();await two.settle();two.panel.tap({detail:1});await two.advance(100);two.panel.tap({detail:2});assert.deepEqual(two.calls.at(-1),['send','services']);
  const native=fixture();native.panel.show(native.result,true);native.a.interrupt();await native.settle();native.panel.tap({detail:0});assert.deepEqual(native.calls.at(-1),['send','detail']);
  const timeout=fixture();timeout.panel.show(timeout.result);await timeout.advance(120000);assert.equal(timeout.panel.active,false);assert.deepEqual(timeout.calls.at(-1),['exit']);await timeout.settle();assert.ok(!timeout.calls.some(c=>c[0]==='listen'),'late audio cannot reopen mic after reset');
  const tab=fixture();tab.panel.show(tab.result);tab.panel.reset();await tab.settle();assert.equal(tab.panel.active,false);
  const {createApp}=require('./frontend_harness.cjs');const appLang=createApp();appLang.run("agentConversation={state:'BANK'};setLanguage('en')");assert.equal(appLang.run('agentConversation'),null,'changing language clears prior-language conversation');
- console.log('Voice agent lifetime passed: post-speech mic, tap/recording isolation, assistive activation, one re-ask, idle reset and stale-playback cancellation');
+ console.log('Voice agent lifetime passed: post-speech mic, tap/recording isolation, assistive activation, two re-asks, idle reset and stale-playback cancellation');
 })().catch(error=>{console.error(error);process.exitCode=1});

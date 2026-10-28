@@ -96,7 +96,7 @@ def test_crar_glossary_definition_is_corrected(sessions):
         assert glossary_facts('CRAR মানে কি?', 'bn', db)[0]['text'].startswith('ঝুঁকিভিত্তিক সম্পদের তুলনায়')
 
 
-def test_intent_retries_one_quick_failure():
+def test_intent_failure_is_bounded_to_one_request():
     calls = []
     def provider(request):
         calls.append(1)
@@ -107,7 +107,9 @@ def test_intent_retries_one_quick_failure():
         with patch.object(settings, 'META_MODEL_API_KEY', 'test-only'):
             async with httpx.AsyncClient(transport=httpx.MockTransport(provider)) as client:
                 return await understand('What is the weather?', [], VoiceContext(), client)
-    assert asyncio.run(check()).intent == 'out_of_scope' and len(calls) == 2
+    from ilma_api.voice import VoiceError
+    with pytest.raises(VoiceError) as error:asyncio.run(check())
+    assert error.value.code=='intent_unavailable' and len(calls)==1
 
 
 def test_number_grouping():

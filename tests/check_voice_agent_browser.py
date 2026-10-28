@@ -34,8 +34,8 @@ with httpx.Client(timeout=35) as client, sync_playwright() as p:
         frames=response.text.split('\n\n');result=next(json.loads(line[6:]) for frame in frames if frame.startswith('event: result') for line in frame.splitlines() if line.startswith('data: '))
         assert result['type']=='agent_turn',result.get('type')
         assert all(step['model'] in {'none','script','template','code','database/rules'} for step in result['trace']['steps'])
-        result['speech']='data:audio/mpeg;base64,AA=='
-        route.fulfill(content_type='text/event-stream',body='event: transcript\ndata: '+json.dumps({'text':bank['name_en'],'language':'en'})+'\n\nevent: result\ndata: '+json.dumps(result)+'\n\n')
+        result['audio_pending']=True
+        route.fulfill(content_type='text/event-stream',body='event: transcript\ndata: '+json.dumps({'text':bank['name_en'],'language':'en'})+'\n\nevent: result\ndata: '+json.dumps(result)+'\n\nevent: speech\ndata: '+json.dumps({'audio_url':'data:audio/mpeg;base64,AA==','audio_urls':['data:audio/mpeg;base64,AA==']})+'\n\n')
     page.route('**/v1/voice',handle);page.route('**/v1/ask',handle)
     page.route('**/v1/speech',lambda route:route.fulfill(json={'audio_url':'data:audio/mpeg;base64,AA==','text':'Synthetic question playback'}))
     page.goto(base,wait_until='networkidle')

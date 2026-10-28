@@ -25,9 +25,9 @@ activation. Tapping a spoken question interrupts it and still chooses. Any tap
 during the report stops playback and moves to Next.
 
 Microphone windows start only after successful prompt playback ends and last
-at most six seconds. If the device blocks playback or microphone access, the
+up to fifteen seconds, allowing eight seconds to start speaking. If the device blocks playback or microphone access, the
 question remains readable and tap choices/Skip work. If no speech is heard,
-wait eight seconds and repeat that question once, then wait quietly. During a
+wait eight seconds and repeat that question up to twice, then wait quietly. During a
 recording window, stop recording first to use physical tap choices. Screen-reader
 users can answer by voice or use native button activation. The option labels
 are kept together in `updateSettingsText` for later naming changes.
@@ -43,7 +43,7 @@ local browser settings; no new database tables or user audio storage are added.
 ## Validation and remaining acceptance
 
 - `node tests/test_ivr_steps.cjs`: deterministic timing, recording/choice isolation,
-  interruption, one silence repeat, native activation, and Skip cancellation.
+  interruption, two silence repeats, native activation, and Skip cancellation.
 - Python `tests/test_ivr.py`: scoped command matching, no partial bank-name
   interception, early pipeline dispatch, dynamic confirmation and dated sources.
 - `tests/check_ivr_browser.py`: opt-in browser integration with explicitly

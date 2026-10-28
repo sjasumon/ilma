@@ -32,23 +32,21 @@ Exact current option labels, their short synonyms and one/two/yes/no resolve
 before PLAN and follow the tap path. Explicit product questions bypass PLAN and
 use the named bank, or the current conversation bank when none is named.
 Unsupported named banks report missing coverage instead of asking which bank.
-PLAN uses Muse Spark for other free-form replies, with deterministic aliases as
-fallback. Single bank names and tap choices skip PLAN. Tap
-turns also skip SAY/CHECK and use sourced templates. For model wording, the
-code checks citations, numbers, percentages, names, vocabulary and advice words;
-a separate CHECK call must pass before `checked=model` is returned. Rejection,
-unavailability or malformed output uses a template. `MUSE_CHECK_MODEL` selects
-the checker; empty uses the same configured Spark model for a separate call,
-not a claim of an independent model family. Only call metadata is logged.
+The [speed specification](APP_SPEC_08_speed.md) supersedes the initial model-call
+and timing policy. Simple factual turns and options skip models. Other free
+replies use at most one Spark PLAN call with deterministic fallback. All wording
+uses sourced templates with local validation; no serial SAY/CHECK requests run.
+Only model-call metadata is logged.
 
 Home keeps conversation state in memory, clears it on tab changes and after two
-minutes idle, and opens a six-second microphone window after successful speech
-playback. Silence re-asks the question once after eight seconds, then waits.
+minutes idle, and opens the microphone after successful speech playback. Allow
+eight seconds to begin speaking and fifteen seconds total. Silence can re-ask
+twice, waiting eight seconds before each re-ask, then remains quiet.
 The existing guided-mode tap timing distinguishes two choices from a recording
 stop pair. Explicit option buttons work without physical tap counting.
 
-Target: a short spoken summary and follow-up in less than twenty seconds of
-audio. Real provider/device timing and native accessibility acceptance remain
+Target: a short spoken summary and follow-up in at most eight seconds of
+audio at normal playback. Real provider/device timing and native accessibility acceptance remain
 separate from synthetic tests. A highlighted original-page snapshot service is
 not available: proof uses the existing quoted source sheet and original link,
 with the missing image stated explicitly. Source/manual financial review remains

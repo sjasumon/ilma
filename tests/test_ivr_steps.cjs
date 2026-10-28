@@ -38,7 +38,8 @@ function fixture() {
   const silence=fixture();silence.flow.enter('menu');await silence.endPrompt();silence.a.cancel();silence.flow.silent();
   await silence.advance(7999);assert.equal(silence.count('prompt'),1);
   await silence.advance(1);assert.equal(silence.count('prompt'),2);await silence.endPrompt();silence.a.cancel();silence.flow.silent();
-  await silence.advance(60000);assert.equal(silence.count('prompt'),2,'re-ask once, then quiet');
+  await silence.advance(8000);assert.equal(silence.count('prompt'),3);await silence.endPrompt();silence.a.cancel();silence.flow.silent();
+  await silence.advance(60000);assert.equal(silence.count('prompt'),3,'re-ask twice, then quiet');
   const interrupt=fixture();interrupt.flow.enter('menu');interrupt.flow.tap({detail:1});await interrupt.advance(450);
   assert.deepEqual(interrupt.calls.at(-1),['action','bank']);assert.equal(interrupt.count('listen'),0,'interrupt also counts as choice');
   const skip=fixture();skip.flow.enter('name');skip.flow.tap({detail:1});skip.flow.skip();await skip.advance(60000);
@@ -76,5 +77,5 @@ function fixture() {
   const enabled=settingsApp({savedSettings:{voiceonly:true,ivrFinished:false}});
   assert.equal(enabled.run('ivr.active'),true,'explicitly saved enabled mode starts on load');
   const blocked=settingsApp({storageBlocked:true});assert.equal(blocked.run('ivr.active'),false);
-  console.log('Guided voice passed: choice timing, native activation, mic pair isolation, prompt sequencing, one silence retry, interruption, skip and spoken choices');
+  console.log('Guided voice passed: choice timing, native activation, mic pair isolation, prompt sequencing, two silence retries, interruption, skip and spoken choices');
 })().catch(error=>{console.error(error);process.exitCode=1;});

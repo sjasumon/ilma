@@ -8,7 +8,7 @@ from fastapi import FastAPI, Depends, Query, HTTPException, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
+from ilma_api.compression import StreamingSafeGZipMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, inspect
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,7 +20,24 @@ from ilma_api import settings
 from ilma_api.admission import ProviderAdmissionMiddleware
 from ilma_api.security_headers import SecurityHeadersMiddleware
 
-app = FastAPI(
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app):
+    from ilma_api import http_clients
+    await http_clients.start()
+    import asyncio
+    from ilma_api.tts_warmup import warm,maintain
+    background=[asyncio.create_task(warm()),asyncio.create_task(maintain())]
+    try:yield
+    finally:
+        from ilma_api.audio_cache import get_store
+        for task in background:task.cancel()
+        await asyncio.gather(*background,return_exceptions=True)
+        await get_store().close()
+        await http_clients.stop()
+
+app = FastAPI(lifespan=lifespan,
     title="ILMA Banking API",
     description="Factual, transparent banking health check API for Bangladesh",
     version="1.0.0"
@@ -36,7 +53,7 @@ app.add_middleware(
 )
 app.add_middleware(SecurityHeadersMiddleware)
 # Compress text responses; text/event-stream is excluded so voice answers still stream.
-app.add_middleware(GZipMiddleware, minimum_size=1024)
+app.add_middleware(StreamingSafeGZipMiddleware, minimum_size=1024)
 
 def get_db():
     db = SessionLocal()
@@ -273,20 +290,30 @@ def get_banking_news(db: Session = Depends(get_db)):
     return news_items
 
 
+@app.get('/v1/audio/{token}.mp3',include_in_schema=False)
+async def voice_audio(token:str):
+    from ilma_api.audio_cache import audio_response
+    return await audio_response(token)
+
+
 @app.get("/v1/voice/config")
 def voice_config():
     from ilma_api import settings
-    return {"silence_ms": settings.VOICE_SILENCE_MS, "max_ms": 15000, "no_speech_ms": 6000}
+    return {"silence_ms": settings.VOICE_SILENCE_MS, "max_ms": 15000, "no_speech_ms": 6000,"agent_no_speech_ms":8000}
 
 
 async def _voice_request(request, db, mode):
     from ilma_api.voice_pipeline import parse_request, run_pipeline
+    from ilma_api.voice_timings import VoiceTimings
+    import time
+    timings=VoiceTimings(request.scope.get('ilma_started'))
     body = bytearray()
     try:
         async for chunk in request.stream():
             if len(body) + len(chunk) > MAX_UPLOAD_BYTES:
                 raise VoiceError("audio_too_large", 413, "রেকর্ডিংটি খুব বড়।", "Upload is too large.")
             body.extend(chunk)
+        timings.mark('upload_done',ms=round((request.scope.get('ilma_upload_done',time.monotonic())-timings.started)*1000,2))
         audio, text, mime, context = parse_request(request.headers.get("content-type", ""), bytes(body), mode)
         body.clear()
         import hashlib, hmac
@@ -309,7 +336,7 @@ async def _voice_request(request, db, mode):
             # Own the session through streaming, independent of FastAPI's
             # dependency cleanup timing. Drop the outer raw-audio reference.
             with Session(bind=bind) as stream_db:
-                pipeline = run_pipeline(audio, text, mime, context, lambda: get_institution_index(stream_db), stream_db, mode, device_hash, diagnostic=diagnostic, watch_identity=watch_identity)
+                pipeline = run_pipeline(audio, text, mime, context, lambda session=stream_db: get_institution_index(session), stream_db, mode, device_hash, diagnostic=diagnostic, watch_identity=watch_identity, timings=timings)
                 audio = None
                 try:
                     async for chunk in pipeline:
@@ -317,7 +344,10 @@ async def _voice_request(request, db, mode):
                         yield chunk
                 finally:
                     await pipeline.aclose()
-                    if diagnostic is not None: save_capture(diagnostic, bind)
+                    timings.finish()
+                    if diagnostic is not None:
+                        import asyncio
+                        await asyncio.shield(asyncio.to_thread(save_capture,diagnostic,bind))
         return StreamingResponse(stream_response(),
             media_type="text/event-stream", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
     except SQLAlchemyError:

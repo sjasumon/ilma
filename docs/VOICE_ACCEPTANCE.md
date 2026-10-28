@@ -282,3 +282,16 @@ Voice-only activation correction: a fresh browser opens normal Home. Only the
 saved `voiceonly` switch starts the guide; disabling it survives reload.
 Settings opened without changing that switch resumes the current guided step.
 Automated settings and synthetic browser regressions cover these cases.
+
+
+## Speed update — 28 October 2026
+
+The [speed specification](specs/APP_SPEC_08_speed.md) supersedes earlier latency,
+serial model wording/check and microphone-window descriptions in this record.
+Answers now precede streamed/cached speech, simple factual turns use templates,
+and free turns use at most one bounded Spark PLAN. Agent/guided recording allows
+8 seconds to start and 15 seconds total, with two silence re-asks. Historical
+checks above remain dated evidence, not a statement of the current architecture.
+See [VOICE_SPEED.md](VOICE_SPEED.md) for measured provider/browser timing and
+remaining real-device/accessibility acceptance. Source financial review remains
+unchanged and must not be inferred from speed tests.

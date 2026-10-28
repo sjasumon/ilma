@@ -1,7 +1,5 @@
-"""Pre-provider admission for the single-worker deployment; no device-ID trust.
-
-Counters are process-local and reset on restart. Run one worker/replica until a
-shared ingress limiter is deployed. All protected routes share the same budget.
+"""Provider admission before uploads; process-local for development or atomic
+MySQL budgets shared across production workers. All routes share a budget.
 """
 import asyncio
 import hashlib
@@ -65,7 +63,11 @@ class Admission:
 class ProviderAdmissionMiddleware:
     def __init__(self, app, admission=None):
         self.app = app
-        self.admission = admission or Admission()
+        if admission is not None:self.admission=admission
+        elif settings.API_ADMISSION_BACKEND=='mysql':
+            from ilma_api.shared_admission import SharedAdmission
+            self.admission=SharedAdmission()
+        else:self.admission=Admission()
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http' or scope['method'] != 'POST' or scope['path'].rstrip('/') not in PROTECTED:
@@ -80,7 +82,8 @@ class ProviderAdmissionMiddleware:
                     'request_limited': 'অনুরোধের সীমা হয়েছে। একটু পরে চেষ্টা করুন।',
                     'upload_timeout': 'আপলোডে সময় বেশি লাগছে। আবার চেষ্টা করুন।',
                     'audio_too_large': 'অনুরোধটি খুব বড়।',
-                    'invalid_request': 'অনুরোধটি সঠিক নয়।'}[code]}}, status_code=status, headers=headers)(scope, receive, send)
+                    'invalid_request': 'অনুরোধটি সঠিক নয়।',
+                    'admission_unavailable':'ভয়েস সেবা এখন পাওয়া যাচ্ছে না।'}[code]}}, status_code=status, headers=headers)(scope, receive, send)
 
         headers = dict(scope.get('headers', []))
         origin = headers.get(b'origin', b'').decode('latin-1')
@@ -88,9 +91,13 @@ class ProviderAdmissionMiddleware:
             return await reject(403, 'origin_denied', 'This origin is not allowed.')
         # Never use X-Ilma-Device or parse untrusted forwarded headers here.
         client = scope.get('client')
-        key, retry = self.admission.enter(client[0] if client else 'unknown')
+        try:
+            if getattr(self.admission,'shared',False):key,retry=await asyncio.to_thread(self.admission.enter,client[0] if client else 'unknown')
+            else:key,retry=self.admission.enter(client[0] if client else 'unknown')
+        except Exception:return await reject(503,'admission_unavailable','Voice admission is unavailable; try again shortly.')
         if key is None:
             return await reject(429, 'request_limited', 'Service request limit reached. Try again shortly.', retry)
+        scope['ilma_started']=time.monotonic()
         body = bytearray()
         try:
             limit = MAX_UPLOAD_BYTES if scope['path'].rstrip('/') in {'/v1/voice', '/v1/ask'} else 16384
@@ -115,6 +122,7 @@ class ProviderAdmissionMiddleware:
                 body.extend(chunk.get('body', b''))
                 if not chunk.get('more_body', False):
                     break
+            scope['ilma_upload_done']=time.monotonic()
             delivered = False
 
             async def buffered_receive():
@@ -130,4 +138,7 @@ class ProviderAdmissionMiddleware:
             await self.app(scope, buffered_receive, send)
         finally:
             body.clear()
-            self.admission.leave(key)
+            if getattr(self.admission,'shared',False):
+                try:await asyncio.shield(asyncio.to_thread(self.admission.leave,key))
+                except Exception:pass  # bounded leases expire if a worker exits
+            else:self.admission.leave(key)

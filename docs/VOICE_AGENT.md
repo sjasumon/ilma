@@ -9,11 +9,11 @@ conversation lifetime/tap counting in `voice-agent.js`. Public behavior and API:
 [specification](specs/APP_SPEC_07_voice_agent.md).
 
 Every result has ASR, PLAN, ACT, SAY and CHECK trace rows with actual model names,
-measured times and skipped/unavailable states. Tool facts retain their source
-and uncertainty. Model wording is limited to three fifteen-word sentences and
-is checked conservatively; templates preserve source wording when a paraphrase
-cannot be verified. The inspection panel never labels a template as model
-verified. It does not display prompts, credentials or model response bodies.
+measured times and skipped/unavailable states. Simple factual turns and current
+options use sourced templates. Other free replies use at most one Spark PLAN
+call; SAY is a template and CHECK is local validation. Full facts retain their
+sources and uncertainty. The inspection panel does not label templates as model
+verified or display prompts, credentials or response bodies.
 
 Service comparison uses the existing curated selector, then requires the same
 basis, unit, attribute, tenor, network/tier and normalized published condition.
@@ -37,22 +37,18 @@ python tests/check_voice_agent_browser.py --base-url http://127.0.0.1:8018
 
 The browser check uses synthetic media/recorder/provider responses. The spoken
 reply fixtures test scripted matching, not microphone recognition accuracy.
-Real phone audio, under-twenty-second speech duration, native TalkBack/VoiceOver,
-new fixed-clip pronunciation review and highlighted original-page images remain
-acceptance items. No native wrapper or snapshot generation is claimed here.
+Real phone audio, native TalkBack/VoiceOver, new fixed-clip pronunciation review
+and highlighted original-page images remain acceptance items. No native wrapper
+or snapshot generation is claimed here.
 
-Agent speech is measured after synthesis. Small overruns use a bounded tempo
-adjustment of at most 15%, aiming at nineteen seconds without truncating words.
-Longer speech is left intact and marked `over_target` in the trace; measurement
-unavailability is explicit. The user's slower playback preference is preserved.
-The timing target applies to normal playback, not the deliberately slower mode.
-
-Live smoke check on 28 October 2026: the model-free Bangla BRAC summary
-measured 19.932 seconds of generated audio at normal playback. This is one
-sample, not a guarantee for all answers or slow mode. A separate live SAY
-response failed the conservative local check and correctly used the template;
-it was not labelled model-verified. Real microphone and device acceptance
-remain pending.
+[Speed specification](specs/APP_SPEC_08_speed.md) supersedes the earlier
+nineteen-second speech target and serial model wording/check policy. Text is
+shown before speech; public source speech is streamed/cached in short segments.
+Bank summaries speak status, one reason and a short next question. Insurance is
+spoken only when asked. The full sourced card stays on screen. Agent recording
+allows eight seconds to start and fifteen seconds total, with two silence
+re-asks. The target is eight seconds of speech at normal playback; the slower
+preference deliberately takes longer. See [measurements](VOICE_SPEED.md).
 
 ## Reply resolution
 

@@ -10,8 +10,8 @@ All provider-producing POST routes (`voice`, `ask`, `speech`, service `readout`)
 now share pre-provider admission: 12 requests/client/minute, 60 global/minute,
 1,000 global/day, 2 active/client and 4 active/global. These are configurable
 ceilings, not a promise of provider billing limits. Invalid requests also consume
-admission. Quotas are process-local and reset on restart: this deployment must
-remain one Uvicorn worker/replica until limits move to a shared trusted ingress.
+admission. As of the speed update, atomic MySQL counters/leases share quotas across two
+workers. Process-local admission remains a single-worker development option.
 Clients behind a shared address share its allowance. No device-ID or raw
 forwarded-header value is used by the middleware.
 
@@ -131,3 +131,7 @@ acceptance remain launch work. Never commit backup files or test recordings.
    `VOICE_DIAGNOSTICS_ENABLED=false`, restart, verify no new samples are captured,
    and apply the agreed deletion policy to existing samples, exports and backups.
    Do not disable the authorized diagnostic test prematurely.
+
+The 28 October speed update replaces the earlier one-worker configuration with
+shared ilma MySQL admission and the versioned speed drop-in. Historical canary
+checks above retain their original context. See [VOICE_SPEED.md](VOICE_SPEED.md).

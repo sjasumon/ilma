@@ -2,8 +2,8 @@
 
 Runtime database is **ilma**. Never use another project's database. Current host:
 `/home/ubuntu/shared/all_projects/ilma`, venv `/home/ubuntu/venv`, app port 8001 on
-loopback, public HTTPS through `cloudflared-app.service`. Keep one worker/replica:
-admission counters are process-local; deploy shared ingress limits before scaling.
+loopback, public HTTPS through `cloudflared-app.service`. Use the versioned speed drop-in for two workers with shared MySQL admission;
+process-local admission is restricted to a single development worker.
 
 ## Check and recover
 
@@ -81,11 +81,49 @@ PYTHONPATH=api python -m ilma_api.migrate_agent
 It creates only `app_model_call`, checks that MySQL database name is `ilma`,
 and leaves financial, incident, service and watch records unchanged. Restart
 the existing application system service after backend updates. Keep `.env`
-ignored and mode 0600. `MUSE_CHECK_MODEL` is optional; unset uses Spark for a
-separate claim-check call. Never print provider keys or database credentials.
+ignored and mode 0600. The current agent uses one PLAN call at most and local template validation;
+`MUSE_CHECK_MODEL` is reserved legacy configuration. Never print provider keys or database credentials.
 
 For a model-off acceptance run, use an isolated preview with
 `META_MODEL_API_KEY=` and `MUSE_VOICE_API_KEY=`; tap choices must traverse the
 script with templates and no Muse model calls. TTS, if configured, remains a
 separate paid provider call. Never disable model credentials on the shared
 live service just to test this path.
+
+
+## Voice latency service configuration
+
+Install the versioned `ops/ilma-speed.conf` as a systemd drop-in for the existing
+application service, then daemon-reload and restart. It runs two uvicorn workers,
+enables background public speech warmup and selects shared MySQL admission.
+Keep the existing private environment and restrict the database to `ilma`.
+A stable private VOICE_LOG_SALT is mandatory for shared admission. Verify a
+second limiter instance rejects a simultaneous client lease before enabling
+multiple workers. Never run multiple production workers with process admission.
+
+CacheDirectory creates private `/var/cache/ilma`; speech is under `tts/`, separate
+from the repository, diagnostic recordings and static assets. Opaque tickets
+expire after ten minutes. Maintenance bounds reusable public speech to thirty
+days / 128 MiB. Cache identity includes voice/model/speed/text/language, so
+updated facts produce new speech. Warmup acquires one cross-worker lock, runs in
+the background, and skips existing clips. Set TTS_PREWARM=false to suppress new
+warmup provider calls; normal speech still works. Keep ownership/modes private.
+Never copy this cache or the private environment into Git.
+
+Inspect metadata-only `voice_timings` service log entries by request ID. Each
+contains stage duration/elapsed values and skipped stages; no transcript or raw
+provider body is logged. `sent` records answer text delivery. tts_done records
+server cache/generation completion, not device playback. Cache hits are visible
+in X-ILMA-Cache on the private no-store audio response. Do not gzip or buffer
+`/v1/audio/` or SSE at the reverse proxy. Audio tickets are intentionally omitted
+from API docs and must not be cached by the service worker or Cloudflare.
+
+After restart, verify two worker processes, page/API docs headers on the live
+Cloudflare host, a streaming audio response and a simultaneous page GET. Follow
+[VOICE_SPEED.md](../docs/VOICE_SPEED.md) for measurement definitions and remaining
+phone/ASR acceptance. Run the documented full Python/frontend suites, policy and
+full-history redacted secrets checks before every fast-forward push.
+
+Spark PLAN uses minimal reasoning and a 1,000-total-token cap because internal
+reasoning shares that budget with the visible plan; the initial 300-token cap
+returned no JSON. The strict 4.5-second overall deadline remains authoritative.

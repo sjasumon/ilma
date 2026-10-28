@@ -170,7 +170,8 @@ try {
 
 function playTone(freq = 600, duration = 0.08) {
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioCtx = window.IlmaAudioSession ? window.IlmaAudioSession.getContext() : new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume?.().catch(()=>{});
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = "sine";
@@ -181,7 +182,7 @@ function playTone(freq = 600, duration = 0.08) {
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
-    osc.onended = () => audioCtx.close();
+    osc.onended = () => {osc.disconnect?.();gain.disconnect?.();if(!window.IlmaAudioSession)audioCtx.close();};
   } catch (e) {}
 }
 
@@ -595,7 +596,8 @@ async function startListening() {
   try {
     await recorder.start({
       silenceMs: voiceConfig.silence_ms,
-      maxMs: ivr?.active || agentPanel?.active ? 6000 : 15000,
+      maxMs: 15000,
+      noSpeechMs: currentTab==='home'||ivr?.active||agentPanel?.active ? 8000 : 6000,
       onLevel: level => {
         if (!greetingMotionReduced()) document.getElementById("home-orb").style.setProperty("--wave-level", String(1 + Math.min(.65, level * 8)));
       },
@@ -662,14 +664,14 @@ async function finishRecording() {
 function showVoiceFallback(code = "unmatched") {
   if (agentPanel?.active) {
     document.getElementById('agent-state').textContent = currentLang === 'bn' ? 'কথা শোনা যায়নি। একটি বিকল্প বেছে নিন বা আবার বলুন।' : 'Could not hear a reply. Choose an option or try speaking again.';
-    if (!['no_speech','no-speech'].includes(code)) agentPanel.repeated = true;
+    if (!['no_speech','no-speech'].includes(code)) agentPanel.silenceRetries = 2;
     agentPanel.silent(); return;
   }
   if (ivr?.active) {
     document.getElementById('ivr-status').textContent = ['no_speech','no-speech'].includes(code)
       ? (currentLang === 'bn' ? 'কথা শোনা যায়নি। এখন এক বা দুইবার চাপুন।' : 'No speech heard. Tap once or twice now.')
       : (currentLang === 'bn' ? 'ভয়েস পাওয়া যাচ্ছে না। এক বা দুইবার চাপুন, অথবা এড়িয়ে যান।' : 'Voice unavailable. Tap once or twice, or Skip.');
-    if (!['no_speech','no-speech'].includes(code)) ivr.repeated = true;
+    if (!['no_speech','no-speech'].includes(code)) ivr.silenceRetries = 2;
     ivr.silent(); return;
   }
 
@@ -791,7 +793,7 @@ function stopAudio() {
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || /^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || ""))) return;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -917,6 +919,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
   if (name === "transcript") {
     lastAgentChoice = "";
     lastVoiceTranscript = data.text;
+    if(agentPanel?.active)document.getElementById('agent-heard').textContent=(currentLang==='bn'?'আপনি বলেছেন: ':'You said: ')+data.text;
     if (ivr?.active) document.getElementById("ivr-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + data.text;
     if (data.language === "en" && currentLang !== "en") {
       currentLang = "en"; appSettings.language = "en"; saveSettings(); updateLocalizedText();
@@ -930,7 +933,9 @@ async function handleVoiceEvent(name, data, audioRequest) {
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? `আপনি বলেছেন: ${data.text}` : `You said: ${data.text}`;
     if (window.requestAnimationFrame) await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   }
-  if (name === 'result' && data.type === 'agent_turn') { agentPendingResult = data; return; }
+  if (name === 'result' && data.type === 'agent_turn') { isSearching=false;await showAgentTurn(data);return; }
+  if (name === 'speech' && agentPanel?.active) { void agentPanel.deliverSpeech(data);return; }
+  if (name === 'speech_unavailable' && agentPanel?.active) {document.getElementById('agent-state').textContent=currentLang==='bn'?'অডিও পাওয়া যায়নি। বিকল্প বেছে নিন।':'Audio unavailable. Choose an option.';agentPanel.speechUnavailable();return;}
   if (ivr?.active && name === 'result') { ivrPendingResult = data; return; }
   if (ivr?.active && name === 'speech') return;
   if (name === "result") {
@@ -1459,6 +1464,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const player = document.getElementById("ilma-player");
     suppressReadoutClick = Boolean(player.src && !player.paused && event.target?.closest?.(".btn-primary-listen"));
     if (!ivr?.active) stopAudio();
+    window.IlmaAudioSession?.unlock(document.getElementById("ilma-player"));
   }, { capture: true });
   document.getElementById("voice-type").addEventListener("click", showTyping);
   document.getElementById("voice-text-form").addEventListener("submit", event => { event.preventDefault(); return submitTextQuestion(); });
@@ -1614,7 +1620,7 @@ async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, aud
         url = (await response.json()).audio_url;
       }
       if (controller.signal.aborted) return;
-      if (!(url?.startsWith('data:audio/mpeg;base64,') || /^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || ''))) throw Error('speech_unavailable');
+      if (!(url?.startsWith('data:audio/mpeg;base64,') || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || '') || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || '')))) throw Error('speech_unavailable');
       player.src = url; player.playbackRate = appSettings.slow ? .85 : 1;
       await player.play();
     } catch { done(false); }
@@ -1807,8 +1813,16 @@ function setupAgentPanel() {
       activeVoiceContext = {tab:'home',bank_id:null};
       return startListening();
     },
-    play: audio => playGuidedSpeech('agent',null,null,audio),
+    async play(audio) {
+      const generation=agentPanel.generation;
+      for(const url of (Array.isArray(audio)?audio:[audio])) {
+        if(!agentPanel.active||generation!==agentPanel.generation)return false;
+        if(!await playGuidedSpeech('agent',null,null,url))return false;
+      }
+      return true;
+    },
     async question(state) {
+      if(!appSettings.speak&&!appSettings.voiceonly)return false;
       stopAudio();
       const request = playbackRequest;
       try {
@@ -1838,7 +1852,7 @@ function setupAgentPanel() {
       }
       document.getElementById('agent-check-label').textContent = result.checked === 'model' ? (bn ? 'সূত্র মিলিয়ে যাচাই করা হয়েছে' : 'Claims checked against cited facts') : (bn ? 'নির্দিষ্ট সূত্রের ভাষা ব্যবহার করা হয়েছে' : 'Using sourced template wording');
       document.getElementById('agent-question').textContent = result.next.question;
-      document.getElementById('agent-state').textContent = result.speech ? '' : (bn ? 'অডিও পাওয়া যাচ্ছে না। বিকল্প বেছে নিন।' : 'Audio unavailable. Choose an option.');
+      document.getElementById('agent-state').textContent = result.speech || result.audio_pending ? '' : (bn ? 'অডিও পাওয়া যাচ্ছে না। বিকল্প বেছে নিন।' : 'Audio unavailable. Choose an option.');
       const options = document.getElementById('agent-options'); options.replaceChildren();
       for (const option of result.next.options.slice(0,4)) {
         const button = document.createElement('button');button.type = 'button';button.textContent = option.label;

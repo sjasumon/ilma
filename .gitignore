@@ -52,3 +52,8 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 # Preserve the private original; publish the neutral specification in docs/specs.
 /docs/APP_SPEC_07_voice_agent.md
+
+/docs/APP_SPEC_08_speed.md
+
+# Private incoming functional review; preserve the original on the shared workspace.
+/docs/FIX_09_language_and_loop.md

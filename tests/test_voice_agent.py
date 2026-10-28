@@ -71,13 +71,13 @@ def test_failed_say_uses_actual_template(db,text):
         result=call(db,'BRAC Bank',candidates=[dict(BANKS[0],confidence=1,confirm=False,alias='BRAC Bank')],client=client)
     assert result['checked']=='template'
     assert result['sentences'][0]['text']==bank_summary(db,1)[0]['text_en']
-    assert len(calls)==1
+    assert len(calls)==0
 
 @pytest.mark.parametrize('plan',[{'tool':'raw_sql','args':{},'option':None},{'tool':'bank_summary','args':{'institution_id':999},'option':None},{'tool':'bank_summary','args':{'institution_id':1,'product':'crypto'},'option':None}])
 def test_invalid_plan_clarifies_without_running_tool(db,plan):
     client,calls=model_client({'agent_plan':plan})
     with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
-        result=call(db,'tell me about this bank',Conversation(state='BANK',institution_id=1),client=client)
+        result=call(db,'interpret the disclosure',Conversation(state='BANK',institution_id=1),client=client)
     assert result['conversation']['state']=='BANK'
     assert result['conversation']['institution_id']==1
     assert all(f['fact_id'].startswith('script:') for f in result['facts'])
@@ -97,19 +97,13 @@ def test_full_tap_path_without_any_model_call(db):
     assert all(f.get('status') for f in result['facts'] if f['fact_id'].startswith('status:'))
 
 
-def test_second_claim_check_and_metadata_only_audit(db):
-    client,calls=model_client({'agent_say':{'sentences':[{'text':'BRAC Test Bank: Strong','fact_ids':['status:1']}]},'agent_check':{'ok':True,'bad_sentence_ids':[]}})
-    # The rules may classify sparse synthetic data as no_data; use the actual label.
-    expected=bank_summary(db,1)[0]['text_en']
-    def handler(request):
-        body=json.loads(request.content);calls.append(body)
-        output={'sentences':[{'text':expected,'fact_ids':['status:1']}]} if body['response_format']['json_schema']['name']=='agent_say' else {'ok':True,'bad_sentence_ids':[]}
-        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(output)}}]})
-    client=httpx.AsyncClient(transport=httpx.MockTransport(handler))
+def test_one_plan_call_and_metadata_only_audit(db):
+    client,calls=model_client({'agent_plan':{'tool':'bank_reasons','args':{'institution_id':1},'option':None}})
     with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
-        result=call(db,'BRAC Bank',candidates=[dict(BANKS[0],confidence=1,confirm=False,alias='BRAC Bank')],client=client)
-    assert result['checked']=='model'
-    assert db.query(AppModelCall).count()==2
+        result=call(db,'explain the disclosure',Conversation(state='BANK',institution_id=1),client=client)
+    assert result['checked']=='template' and result['conversation']['state']=='DETAIL'
+    assert len(calls)==1 and calls[0]['max_tokens']==1000 and calls[0]['temperature']==0 and calls[0]['reasoning_effort']=='minimal'
+    assert db.query(AppModelCall).count()==1
     assert not {'prompt','text','transcript','response','audio'} & set(AppModelCall.__table__.columns.keys())
 
 @pytest.mark.parametrize('state,reply,expected',[
@@ -167,12 +161,11 @@ def test_spoken_bank_alias_and_comparison_conditions(db):
     assert all(f['institution_id']!=1 for f in service_compare(db,'fdr'))
 
 
-def test_model_check_rejection_uses_template(db):
-    expected=bank_summary(db,1)[0]['text_en']
-    client,_=model_client({'agent_say':{'sentences':[{'text':expected,'fact_ids':['status:1']}]},'agent_check':{'ok':False,'bad_sentence_ids':[0]}})
+def test_free_question_uses_one_plan_and_no_followup_wording_model(db):
+    client,calls=model_client({'agent_plan':{'tool':'bank_figures','args':{'institution_id':1,'figure':'npl_ratio'},'option':None}})
     with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
-        result=call(db,'BRAC Bank',candidates=[dict(BANKS[0],confidence=1,confirm=False,alias='BRAC Bank')],client=client)
-    assert result['checked']=='template'
+        result=call(db,'explain the figures',Conversation(state='BANK',institution_id=1),client=client)
+    assert len(calls)==1 and result['checked']=='template'
     assert [s['stage'] for s in result['trace']['steps']]==['ASR','PLAN','ACT','SAY','CHECK']
 
 
@@ -300,7 +293,12 @@ def test_explicit_bank_survives_rejected_plan_and_overrides_previous_bank(db):
         client,_=model_client({'agent_plan':{'tool':'bank_summary','args':{'institution_id':3 if previous else 999},'option':None}})
         with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
             c=Conversation(state='BANK',institution_id=previous)
-            result=asyncio.run(run_agent_turn('সিটি ব্যাংকের সম্পর্কে বলুন',context(c),banks,db,match_candidates('সিটি ব্যাংকের সম্পর্কে বলুন',banks),client=client))
+            result=asyncio.run(run_agent_turn('সিটি ব্যাংকের ব্যাখ্যা দিন',context(c),banks,db,match_candidates('সিটি ব্যাংকের ব্যাখ্যা দিন',banks),client=client))
         assert result['conversation']['institution_id']==4
         assert result['conversation']['state']=='BANK'
         assert 'Which bank' not in result['text']
+
+
+@pytest.mark.parametrize('reply,expected',[('আরো বিস্তারিত','detail'),('আরও বিস্তারীত','detail'),('more detals','detail'),('ব্যাংকের মূলধন কত',None),('আরো বিস্তারিত বলবেন না',None),('yess',None),('watchh',None)])
+def test_short_option_spelling_tolerance_never_fuzzes_consent(reply,expected):
+    assert spoken_choice(reply,Conversation(state='BANK',institution_id=1))==expected

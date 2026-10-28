@@ -60,6 +60,9 @@ async def transcribe(audio: bytes, language: str, keywords: list[str], client=No
             if response.status_code not in (429, 500) or attempt == 2:
                 return response
             await asyncio.sleep(2 * (attempt + 1))
+    if client is None:
+        from ilma_api.http_clients import shared
+        client=shared()
     try:
         if client is None:
             async with httpx.AsyncClient(timeout=httpx.Timeout(8, connect=5), follow_redirects=False) as http:
