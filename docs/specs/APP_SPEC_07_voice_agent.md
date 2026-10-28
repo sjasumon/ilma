@@ -28,8 +28,12 @@ cohort. Products, terms, card tiers and networks are validated enums/bounds.
 Models cannot supply SQL, URLs or arbitrary tool text. Watch writes require an
 explicit yes from the user and the existing device-scoped watch identity.
 
-PLAN uses Muse Spark for free-form replies, with deterministic aliases and
-script replies as fallback. Single bank names and tap choices skip PLAN. Tap
+Exact current option labels, their short synonyms and one/two/yes/no resolve
+before PLAN and follow the tap path. Explicit product questions bypass PLAN and
+use the named bank, or the current conversation bank when none is named.
+Unsupported named banks report missing coverage instead of asking which bank.
+PLAN uses Muse Spark for other free-form replies, with deterministic aliases as
+fallback. Single bank names and tap choices skip PLAN. Tap
 turns also skip SAY/CHECK and use sourced templates. For model wording, the
 code checks citations, numbers, percentages, names, vocabulary and advice words;
 a separate CHECK call must pass before `checked=model` is returned. Rejection,

@@ -379,16 +379,15 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         language = decide_language(text, candidates, context.ui_lang)
         if language != context.ui_lang:
             yield event('transcript', {'text': text, 'language': language})
-        if not candidates:
-            from ilma_api.other_banks import find_other_bank
-            other = find_other_bank(text)
-            if other:
-                outcome = 'no_data'
-                count = len(banks)
-                yield event('result', {'type': 'not_in_demo', 'offer_bank_list': True, 'omit_history': sensitive_numbers, 'language': language, 'sources': [],
-                    'text': f'{other[0]} এখনো ডেমোতে নেই; ডেমোতে {to_bn_digits(count)}টি ব্যাংক আছে।' if language == 'bn'
-                        else f'{other[1]} is not in the demo yet; the demo has {count} banks.'})
-                return
+        from ilma_api.other_banks import find_other_bank
+        other = find_other_bank(text)
+        if other:
+            outcome = 'no_data'
+            yield event('match', {'intent':'unclear','institution_ids':[c['id'] for c in candidates], 'confidence':candidates[0]['confidence'] if candidates else 0})
+            yield event('result', {'type': 'not_in_demo', 'offer_bank_list': True, 'omit_history': sensitive_numbers, 'language': language, 'sources': [],
+                'text': 'এই ব্যাংকের তথ্য এখনো যোগ হয়নি।' if language == 'bn'
+                    else 'Information for this bank has not been added yet.'})
+            return
         if not candidates and context.bank_id and context.tab == 'bank':
             bank = next((bank for bank in banks if bank['id'] == context.bank_id), None)
             if bank: candidates = [{**bank, 'alias': '', 'confidence': 1, 'confirm': False}]

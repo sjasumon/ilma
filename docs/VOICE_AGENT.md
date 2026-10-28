@@ -53,3 +53,16 @@ sample, not a guarantee for all answers or slow mode. A separate live SAY
 response failed the conservative local check and correctly used the template;
 it was not labelled model-verified. Real microphone and device acceptance
 remain pending.
+
+## Reply resolution
+
+Current option labels (Bangla/English), one/two, yes/no and known option synonyms
+resolve before PLAN and use exactly the tap path, including template wording.
+A free-form bank-and-product question routes directly to that bank's service
+tool; product-only follow-ups retain the current bank and current product/term.
+A bank question is asked only when no current or named bank is available.
+Recognized out-of-demo names return “এই ব্যাংকের তথ্য এখনো যোগ হয়নি।” and never
+fall through to the previous bank. The nine demo banks and the existing approved
+NBL/Islami supplements retain their coverage. Bengali vowel-sign spelling
+variants (`ু`/`ূ`, `ি`/`ী`) are folded only for matching; source names and quotations
+retain their original spelling.

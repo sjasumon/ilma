@@ -50,8 +50,13 @@ def clean_transcript(text):
     return cleaned
 
 
+def fold_bengali_vowels(value):
+    # ASR spelling tolerance is only for matching; stored/source text stays intact.
+    return unicodedata.normalize('NFC',value).translate(str.maketrans({'ূ':'ু','ী':'ি'}))
+
+
 def normalize_alias(value):
-    value = unicodedata.normalize('NFC', value).lower().translate(str.maketrans('০১২৩৪৫৬৭৮৯', '0123456789'))
+    value = fold_bengali_vowels(value).lower().translate(str.maketrans('০১২৩৪৫৬৭৮৯', '0123456789'))
     value = re.sub(r'ব্যাংক(?:ের|ে)?', ' ', value)
     value = re.sub(r'\b(bank|plc|ltd|limited)\b|পিএলসি|লিমিটেড', ' ', value)
     value = re.sub(r'[-–—]?এর(?=\s|$)|[-–—]?এর(?=[?!।])', ' ', value)
@@ -104,7 +109,7 @@ def match_candidates(text, banks, scorer=None):
         if best >= 75:
             single = len(normalize_alias(best_alias).split()) == 1
             short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
-            follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', text, re.I))
+            follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', fold_bengali_vowels(text), re.I))
             candidates.append({**{k: bank[k] for k in ('id', 'slug', 'name_bn', 'name_en', 'type', 'coverage')},
                                'licensed': bank.get('licensed', True), 'confidence': round(best / 100, 3), 'alias': best_alias,
                                'confirm': bool(short_name and single and not follows)})

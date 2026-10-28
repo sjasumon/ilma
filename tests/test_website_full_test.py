@@ -77,7 +77,7 @@ def test_islami_bad_loans_are_labelled_as_calculated(sessions):
 def test_known_bank_outside_the_demo_says_so(sessions):
     result = ask(sessions, 'পূবালী ব্যাংক কেমন আছে?')['result']
     assert result['type'] == 'not_in_demo' and result['offer_bank_list']
-    assert result['text'] == 'পূবালী ব্যাংক এখনো ডেমোতে নেই; ডেমোতে ১১টি ব্যাংক আছে।'
+    assert result['text'] == 'এই ব্যাংকের তথ্য এখনো যোগ হয়নি।'
     assert find_other_bank('Dhaka Bank') and not find_other_bank('ঢাকায় থাকি') and not find_other_bank('one more question')
     # Names overlapping demo aliases are not listed, so a demo bank is never hidden.
     assert ask(sessions, 'Eastern Bank', 'en')['result']['type'] == 'report_card'

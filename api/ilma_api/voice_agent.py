@@ -256,12 +256,54 @@ def spoken_choice(text,conversation):
     global_words={'আবার':'repeat','again':'repeat','থামুন':'stop','stop':'stop','পুরো রিপোর্ট':'report','full report':'report','শেষ':'end','end':'end','finish':'end','নজরে রাখো':'watch','watch':'watch','সূত্র':'proof','source':'proof'}
     if value in global_words:return global_words[value]
     options=script_next(conversation.state,'en')['options']
+    for language in ('bn','en'):
+        for option in script_next(conversation.state,language)['options']:
+            if value==' '.join(option['label'].casefold().strip(' .!?,।').split()):return option['value']
+    if len(options)==2:
+        if value in {'হ্যাঁ','হ্যা','yes'}:return options[0]['value']
+        if value in {'না','no'}:return options[1]['value']
     for group,n in [(('এক','একবার','one','1','১'),0),(('দুই','দুবার','two','2','২'),1)]:
         if value in group and len(options)>n:return options[n]['value']
     aliases={'detail':('বিস্তারিত','আরও বিস্তারিত','details','more details','কারণ'), 'services':('সেবা','ব্যাংকের সেবা','services','bank services'), 'figures':('হিসাব','আর্থিক হিসাব','figures'), 'history':('আগের ঘটনা','ইতিহাস','history'), 'fdr':('এফডিআর','fdr','fixed deposit'), 'dps':('ডিপিএস','dps'), 'card':('কার্ড','না, কার্ড','card','no, card'), 'home_loan':('লোন','গৃহঋণ','loan','home loan'), 'compare':('তুলনা','compare','comparison'), 'ask_bank':('অন্য ব্যাংক','নতুন ব্যাংক','another bank','new bank'), 'next':('না','no'), 'yes':('হ্যাঁ','হ্যা','yes'), 'no':('না','no')}
     allowed={o['value'] for o in options}|{'fdr','dps','card','home_loan'}
     for action,words in aliases.items():
         if value in words and action in allowed:return action
+    return None
+
+
+def service_request(text,c,institution_id):
+    """Recognize only bounded service fields, never values or financial answers."""
+    patterns=[('loan_against_fdr',r'against.*fdr|এফডিআর.*বিপরীতে'),
+        ('fdr',r'\bfdr\b|fixed deposits?|এফ\s*ডি\s*আর'),('dps',r'\bdps\b|ডি\s*পি\s*এস'),
+        ('card',r'\bcards?\b|কার্ড'),('home_loan',r'home loans?|গৃহঋণ'),
+        ('auto_loan',r'(?:auto|car) loans?|গাড়ির ঋণ'),('personal_loan',r'personal loans?|ব্যক্তিগত ঋণ'),
+        ('savings',r'savings|সঞ্চয়|সঞ্চয়|সেভিংস')]
+    product=next((product for product,pattern in patterns if re.search(pattern,text,re.I)),None)
+    if product is None and re.search(r'\brate|\bfee|হার|রেট|ফি',text,re.I):product=c.product
+    if product is None:return None
+    from ilma_api.voice_text import normalize_numbers
+    normalized=normalize_numbers(text).translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
+    months=re.search(r'\b(\d+)\s*(?:months?|মাস)',normalized,re.I)
+    years=re.search(r'\b(\d+)\s*(?:years?|বছর)',normalized,re.I)
+    tenor=int(months[1]) if months else int(years[1])*12 if years else c.tenor
+    if not 1<=tenor<=600:return None
+    tier=next((value for pattern,value in [(r'signature|সিগনেচার','Signature'),(r'platinum|প্লাটিনাম','Platinum'),(r'gold|গোল্ড','Gold'),(r'world|ওয়ার্ল্ড','World'),(r'infinite|ইনফিনিট','Infinite'),(r'classic|ক্লাসিক','Classic'),(r'titanium|টাইটানিয়াম','Titanium')] if re.search(pattern,text,re.I)),c.tier)
+    network='Mastercard' if re.search(r'mastercard|মাস্টারকার্ড',text,re.I) else 'Amex' if re.search(r'amex|আমেক্স',text,re.I) else 'Visa' if re.search(r'visa|ভিসা',text,re.I) else c.network
+    return Plan(tool='service_detail',args=ToolArgs(institution_id=institution_id,product=product,tenor=tenor,tier=tier,network=network))
+
+
+def outside_demo(text,candidates,c,db):
+    from ilma_api.bank_services import DEMO_CODES
+    from ilma_api.other_banks import find_other_bank
+    allowed=DEMO_CODES|{'nbl','islamibank'}
+    # Known non-demo names must not fall through to a contextual demo bank.
+    named=find_other_bank(text)
+    unsupported=[row for row in candidates if row['slug'] not in allowed]
+    if unsupported:return unsupported[0]['id']
+    if named:return 0
+    if not candidates and c.institution_id:
+        bank=db.get(Institution,c.institution_id)
+        if bank and bank.slug not in allowed:return bank.id
     return None
 
 
@@ -359,17 +401,34 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
     trace.append({'stage':'ASR','model':settings.MUSE_VOICE_MODEL if getattr(context,'input_mode',None)=='voice' else 'none','ms':0,'status':'skipped' if tap else 'transcript_received'})
     if c.turn>=6:choice='end';tap=True
     ids={row['id'] for row in candidates}
-    if c.institution_id and any(b['id']==c.institution_id for b in banks):ids.add(c.institution_id)
+    if c.institution_id:
+        if db.get(Institution,c.institution_id):ids.add(c.institution_id)
+        else:c=c.model_copy(update={'institution_id':None,'last_tool':None})
     chosen=choice or spoken_choice(text,c)
-    plan=None;invalid=False
-    if candidates and (len(candidates)>1 or candidates[0].get('confirm') or candidates[0]['confidence']<.9):
+    matched_choice=chosen
+    # A resolved spoken option is exactly a tap: no PLAN, SAY or CHECK call.
+    if chosen is not None:tap=True
+    candidates=[] if chosen is not None else list(candidates)
+    unavailable=outside_demo(text,candidates,c,db) if chosen not in {'end','stop','ask_bank','listen','no','next'} else None
+    plan=None;invalid=False;direct_service=False
+    if candidates and (len(candidates)>1 or (candidates[0].get('confirm') and candidates[0]['id']!=c.institution_id) or candidates[0]['confidence']<.9):
         invalid=True
-    elif len(candidates)==1:
-        plan=Plan(tool='bank_summary',args=ToolArgs(institution_id=candidates[0]['id']))
     elif chosen and chosen not in {'stop','report','ask_bank','next','listen','no'}:
         plan=choice_plan(chosen,c,db)
+        if plan is None and c.institution_id is None and chosen in {'fdr','dps','card','home_loan'}:
+            c=c.model_copy(update={'product':chosen})
+    elif not chosen:
+        id=candidates[0]['id'] if len(candidates)==1 else c.institution_id
+        plan=service_request(text,c,id)
+        if plan is None and len(candidates)==1 and c.state=='ASK_BANK' and c.institution_id is None and c.product:
+            plan=Plan(tool='service_detail',args=ToolArgs(institution_id=id,product=c.product))
+        direct_service=plan is not None
+        if plan and id is None:
+            c=c.model_copy(update={'product':plan.args.product});plan=None
+        if plan is None and len(candidates)==1:
+            plan=Plan(tool='bank_summary',args=ToolArgs(institution_id=id))
     from ilma_api.voice_text import bank_name_only
-    skip_plan=tap or (len(candidates)==1 and bank_name_only(text,list(candidates))) or chosen in {'repeat','stop','report','end','proof','watch'}
+    skip_plan=tap or direct_service or unavailable is not None or (len(candidates)==1 and bank_name_only(text,list(candidates)))
     if not invalid and not skip_plan:
         proposed=await model_call('PLAN',{'reply':text,'conversation':c.model_dump(),'allowed_options':script_next(c.state,language),'matched_bank_ids':list(ids),'products':list(Product.__args__),'tools':list(TOOLS)},Plan,db,trace,turn_id,client)
         if proposed is not None:
@@ -382,16 +441,23 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
         ids.update(r['id'] for r in comparison(db,c.product or 'fdr',c.tenor,c.tier,c.network,c.basis,c.institution_id))
     if plan and not validate_plan(plan,ids,c):invalid=True;plan=None
     if not any(s['stage']=='PLAN' for s in trace):trace.append({'stage':'PLAN','model':'script','ms':0,'status':'skipped'})
-    explicit_yes = choice == 'yes' or not tap and text.casefold().strip(' .!?,।') in {'yes','হ্যাঁ','হ্যা'}
+    explicit_yes = matched_choice == 'yes'
     action=None;facts=[];tool='clarify';state=c.state
-    if invalid:
-        state='ASK_BANK';facts=[control('clarify','কোন ব্যাংক? পুরো নাম বলুন।','Which bank? Say its full name.')]
+    if unavailable is not None:
+        c=c.model_copy(update={'institution_id':unavailable or None,'last_tool':None})
+        state='NEXT';plan=None
+        facts=[control('not_in_demo','এই ব্যাংকের তথ্য এখনো যোগ হয়নি।','Information for this bank has not been added yet.')]
+    elif invalid:
+        state='BANK' if c.institution_id else 'ASK_BANK'
+        facts=[control('clarify_topic','আরও বিস্তারিত, না ব্যাংকের সেবা?','More details, or bank services?')] if c.institution_id else [control('clarify','কোন ব্যাংক? পুরো নাম বলুন।','Which bank? Say its full name.')]
+
     elif chosen=='report' and c.institution_id:
         action={'type':'open_report','institution_id':c.institution_id};facts=[control('report','পুরো রিপোর্ট পর্দায় আছে।','The full report is on screen.')]
     elif chosen=='stop':
         action={'type':'stop'};facts=[control('stop','পড়া থামানো হয়েছে।','Playback stopped.')]
     elif chosen in {'ask_bank','listen'}:
         state='ASK_BANK';facts=[]
+        if chosen=='ask_bank':c=c.model_copy(update={'institution_id':None,'product':None,'last_tool':None})
     elif chosen=='repeat' and not c.last_tool:
         state=c.state;facts=[]
     elif chosen in {'next','no'}:
@@ -421,7 +487,8 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
             trace.append({'stage':'ACT','model':'database/rules','tool':tool,'ms':round((time.monotonic()-execute)*1000),'status':'ok' if facts else 'unavailable','fact_count':len(facts)})
             if id:c=c.model_copy(update={'institution_id':id})
     else:
-        state='ASK_BANK';facts=[control('clarify','কোন ব্যাংক? পুরো নাম বলুন।','Which bank? Say its full name.')]
+        state='BANK' if c.institution_id else 'ASK_BANK'
+        facts=[control('clarify_topic','আরও বিস্তারিত, না ব্যাংকের সেবা?','More details, or bank services?')] if c.institution_id else [control('clarify','কোন ব্যাংক? পুরো নাম বলুন।','Which bank? Say its full name.')]
     if not facts and state not in {'ASK_BANK','WATCH_CONFIRM','NEXT'}:facts=[control('missing','এই তথ্য পাওয়া যায়নি। সূত্র যাচাই বাকি।','This information is unavailable. Source review remains pending.')]
     if not any(s['stage']=='ACT' for s in trace):trace.append({'stage':'ACT','model':'script','tool':tool,'ms':0,'status':'ok','fact_count':len(facts)})
     wording=None

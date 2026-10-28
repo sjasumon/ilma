@@ -78,7 +78,8 @@ def test_invalid_plan_clarifies_without_running_tool(db,plan):
     client,calls=model_client({'agent_plan':plan})
     with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
         result=call(db,'tell me about this bank',Conversation(state='BANK',institution_id=1),client=client)
-    assert result['conversation']['state']=='ASK_BANK'
+    assert result['conversation']['state']=='BANK'
+    assert result['conversation']['institution_id']==1
     assert all(f['fact_id'].startswith('script:') for f in result['facts'])
     assert len(calls)==1
 
@@ -201,3 +202,92 @@ def test_audio_target_without_truncating_content():
     assert audio.startswith('data:audio/mpeg;base64,')
     assert metadata['original_duration_ms']>20000 and metadata['duration_ms']<20000
     assert 1<metadata['tempo']<=1.15
+
+
+def routing_banks(db):
+    """Extra handwritten test banks: rates below are synthetic, not bank data."""
+    additions=[]
+    for id,slug,en,bn,aliases,rate in [
+        (3,'primebank','Prime Test Bank','পরীক্ষা প্রাইম ব্যাংক',['Prime Bank','প্রাইম ব্যাংক','প্রাইম'],5.5),
+        (4,'citybank','City Test Bank','পরীক্ষা সিটি ব্যাংক',['City Bank','সিটি ব্যাংক','সিটি'],6.5),
+        (5,'pubali','Pubali Test Bank','পরীক্ষা পূবালী ব্যাংক',['Pubali Bank','পূবালী ব্যাংক'],None),
+        (6,'rupali','Rupali Test Bank','পরীক্ষা রূপালী ব্যাংক',['Rupali Bank','রূপালী ব্যাংক'],None)]:
+        db.add(Institution(id=id,slug=slug,name_en=en,name_bn=bn,type='bank',islamic=False,licensed=True,listed=False,coverage='full' if rate else 'licence_only'))
+        additions.append(dict(id=id,slug=slug,name_en=en,name_bn=bn,type='bank',coverage='full' if rate else 'licence_only',aliases=aliases))
+        if rate is not None:
+            db.add(ServiceOffer(offer_id=f'synthetic-routing-{id}',institution_id=id,category='deposit',product='Synthetic test deposit',product_type='fdr',network=None,tier=None,tenor_months=12,attribute='rate',value_num=rate,value_text=str(rate),unit='pct_year',condition='Synthetic test terms',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/synthetic.pdf',page=1,quote=f'Synthetic rate {rate}%',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='test-fixture',checked_on=date(2026,10,1)))
+    db.commit();return BANKS+additions
+
+
+def route_reply(db,text,c,banks):
+    from ilma_api.voice_text import match_candidates
+    with patch.object(settings,'META_MODEL_API_KEY',''):
+        return asyncio.run(run_agent_turn(text,context(c),banks,db,match_candidates(text,banks)))
+
+@pytest.mark.parametrize('reply,expected,state',[
+ ('আরও বিস্তারিত','detail','DETAIL'),('More details','detail','DETAIL'),('সেবা','services','SERVICES'),
+ ('ব্যাংকের সেবা','services','SERVICES'),('এক','detail','DETAIL'),('দুই','services','SERVICES'),
+ ('হ্যাঁ','detail','DETAIL'),('না','services','SERVICES')])
+def test_spoken_options_are_taps_before_any_model_or_fuzzy_bank(db,reply,expected,state):
+    banks=routing_banks(db)
+    # Deliberate fuzzy bank noise must not override an exact scripted choice.
+    noisy=[dict(banks[3],confidence=.8,confirm=True,alias='সিটি')]
+    with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('No model for an option'))):
+        result=asyncio.run(run_agent_turn(reply,context(Conversation(state='BANK',institution_id=3)),banks,db,noisy))
+    assert result['conversation']['state']==state
+    assert result['conversation']['institution_id']==3
+    assert result['checked']=='template'
+
+
+def test_product_questions_keep_prime_and_switch_only_for_named_city(db):
+    banks=routing_banks(db);c=Conversation(state='BANK',institution_id=3)
+    prime=route_reply(db,'এফডিআর রেট কত',c,banks)
+    assert prime['conversation']['state']=='SERVICE' and prime['conversation']['institution_id']==3
+    assert any(f['fact_id']=='synthetic-routing-3' for f in prime['facts'])
+    city=route_reply(db,'সিটি ব্যাংকের এফডিআর রেট কত',conv(prime),banks)
+    assert city['conversation']['state']=='SERVICE' and city['conversation']['institution_id']==4
+    assert any(f['fact_id']=='synthetic-routing-4' for f in city['facts'])
+    followup=route_reply(db,'রেট কত',conv(city),banks)
+    assert followup['conversation']['institution_id']==4 and followup['conversation']['product']=='fdr'
+    assert any(f['fact_id']=='synthetic-routing-4' for f in followup['facts'])
+    assert all(step['model']=='script' for step in city['trace']['steps'] if step['stage']=='PLAN')
+
+@pytest.mark.parametrize('reply',['পুবালী ব্যাংক','পূবালি ব্যাংক','রুপালী ব্যাংক','রূপালি ব্যাংক','Pubali Bank','Rupali Bank'])
+def test_unsupported_names_never_fall_back_to_prime(db,reply):
+    banks=routing_banks(db)
+    result=route_reply(db,reply,Conversation(state='BANK',institution_id=3),banks)
+    assert result['text']=='Information for this bank has not been added yet.'
+    assert result['conversation']['institution_id']!=3
+    assert 'Which bank' not in result['text']+' '+result['next']['question']
+    assert all(f['fact_id']=='script:not_in_demo' for f in result['facts'])
+    with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('No model for coverage'))):
+        bn_context=VoiceContext(agent=True,ui_lang='bn',conversation=Conversation(state='BANK',institution_id=3))
+        from ilma_api.voice_text import match_candidates
+        bangla=asyncio.run(run_agent_turn(reply,bn_context,banks,db,match_candidates(reply,banks)))
+    assert bangla['text']=='এই ব্যাংকের তথ্য এখনো যোগ হয়নি।'
+
+
+def test_only_missing_bank_gets_bank_question_and_pending_product_is_retained(db):
+    banks=routing_banks(db)
+    missing=route_reply(db,'এফডিআর রেট কত',None,banks)
+    assert missing['conversation']['state']=='ASK_BANK' and missing['conversation']['product']=='fdr'
+    assert 'Which bank' in missing['text']
+    resolved=route_reply(db,'Prime Bank',conv(missing),banks)
+    assert resolved['conversation']['state']=='SERVICE' and resolved['conversation']['institution_id']==3
+    known=route_reply(db,'আর কী আছে',Conversation(state='BANK',institution_id=3),banks)
+    assert known['conversation']['institution_id']==3 and 'Which bank' not in known['text']
+
+
+def test_spoken_watch_yes_is_explicit_choice_but_model_yes_is_not(db):
+    banks=routing_banks(db)
+    with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('No model for yes'))):
+        result=asyncio.run(run_agent_turn('এক',context(Conversation(state='WATCH_CONFIRM',institution_id=3)),banks,db,watch_identity='s'*64))
+    assert db.get(AppWatchItem,('s'*64,3)) is not None
+
+
+def test_bare_product_without_bank_is_remembered(db):
+    banks=routing_banks(db)
+    result=route_reply(db,'এফডিআর',None,banks)
+    assert result['conversation']['state']=='ASK_BANK' and result['conversation']['product']=='fdr'
+    result=route_reply(db,'City Bank',conv(result),banks)
+    assert result['conversation']['state']=='SERVICE' and result['conversation']['institution_id']==4

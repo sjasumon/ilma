@@ -188,6 +188,9 @@ class TestMetaVoice(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(parsed[0][1]['text'], text)
                     matched = next(data['institution_ids'] for event, data in parsed if event == 'event: match')
                     self.assertEqual(matched, expected)
+                    if 102 in expected:
+                        result=next(data for event,data in parsed if event=='event: result')
+                        self.assertEqual(result['type'],'not_in_demo')
                 from sqlalchemy.exc import OperationalError
                 with patch('ilma_api.main.get_institution_index', side_effect=OperationalError('private details', {}, Exception())), patch('ilma_api.voice_pipeline.convert_audio', new=AsyncMock(return_value=wav())), patch('ilma_api.voice_pipeline.transcribe', new=AsyncMock(return_value='Pubali Bank')):
                     unavailable = await voice_input(incoming(wav()), db)
