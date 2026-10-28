@@ -149,3 +149,22 @@ institution. It does not create banks or change facts/source names. The standard
 voice migration also applies them, so they can be restored after a seed reload.
 Only the ilma MySQL database is permitted. Restart the application after backend
 updates; verify both spellings route to BRAC and scripted replies retain language.
+
+
+## Connected speech cache and review
+
+The current warmup builds whole first-answer paragraphs for eleven covered banks
+in both languages, plus full questions and guided prompts. It runs in the
+background and skips existing text/voice/model/speed cache entries. It can take
+several minutes after a wording/data change; service readiness does not imply
+warmup completion. The same private cache limits and shared generation locks
+apply. Do not publish audio files or raw review artifacts.
+
+For full read-only source checks, run `tests/check_answer_wording.py` against a
+loopback preview with Meta/ASR/TTS disabled and its exact origin allowed. It writes
+review paragraphs under /tmp, outside the published tree. For actual one-clip
+playback, enable TTS only on that preview and run
+`tests/check_answer_playback_browser.py`; it uses a synthetic recorder, can incur
+TTS on a cache miss, and must not be described as real microphone acceptance.
+Stop the temporary preview after verification. Never change live credentials
+just to run these checks.

@@ -44,8 +44,9 @@ or snapshot generation is claimed here.
 [Speed specification](specs/APP_SPEC_08_speed.md) supersedes the earlier
 nineteen-second speech target and serial model wording/check policy. Text is
 shown before speech; public source speech is streamed/cached in short segments.
-Bank summaries speak status, one reason and a short next question. Insurance is
-spoken only when asked. The full sourced card stays on screen. Agent recording
+The [connected-wording specification](specs/APP_SPEC_10_answer_wording.md) now
+supersedes short field-fragment speech. Bank introductions explain the status and
+one reason, include qualified protection once per bank, and ask a full question. The full sourced card stays on screen. Agent recording
 allows eight seconds to start and fifteen seconds total, with two silence
 re-asks. The target is eight seconds of speech at normal playback; the slower
 preference deliberately takes longer. See [measurements](VOICE_SPEED.md).
@@ -80,3 +81,15 @@ Matched scripted replies retain the conversation language before transcript
 language selection, including “more details” in Bangla. Other questions still
 use the transcript language rule. BRAC’s three user-approved ASR spellings are
 stored as aliases; its displayed/source names remain unchanged.
+
+
+## Connected narration
+
+The visible answer and `speech` text are one paragraph; the original exact source
+card sits below it. The speech event supplies one MP3, not three fragments.
+Follow-ups track selected spoken facts and move to new information; explicit
+replay and direct figure questions can repeat requested facts. Insurance now
+ends with a related next-bank question, while FDR answers describe the selected
+rate and a conditional fixed example without health labels. See
+[APP_SPEC_10](specs/APP_SPEC_10_answer_wording.md) and the acceptance record for
+actual durations and remaining listening/comprehension work.

@@ -249,7 +249,7 @@ def test_product_questions_keep_prime_and_switch_only_for_named_city(db):
 def test_unsupported_names_never_fall_back_to_prime(db,reply):
     banks=routing_banks(db)
     result=route_reply(db,reply,Conversation(state='BANK',institution_id=3),banks)
-    assert result['text']=='Information for this bank has not been added yet.'
+    assert result['text'].startswith('Information for this bank has not been added yet.')
     assert result['conversation']['institution_id']!=3
     assert 'Which bank' not in result['text']+' '+result['next']['question']
     assert all(f['fact_id']=='script:not_in_demo' for f in result['facts'])
@@ -257,7 +257,7 @@ def test_unsupported_names_never_fall_back_to_prime(db,reply):
         bn_context=VoiceContext(agent=True,ui_lang='bn',conversation=Conversation(state='BANK',institution_id=3))
         from ilma_api.voice_text import match_candidates
         bangla=asyncio.run(run_agent_turn(reply,bn_context,banks,db,match_candidates(reply,banks)))
-    assert bangla['text']=='এই ব্যাংকের তথ্য এখনো যোগ হয়নি।'
+    assert bangla['text'].startswith('এই ব্যাংকের তথ্য এখনো যোগ হয়নি।')
 
 
 def test_only_missing_bank_gets_bank_question_and_pending_product_is_retained(db):

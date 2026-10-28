@@ -57,3 +57,6 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 # Private incoming functional review; preserve the original on the shared workspace.
 /docs/FIX_09_language_and_loop.md
+
+# Private incoming wording review; public implementation notes are separate.
+/docs/FIX_10_answer_wording.md

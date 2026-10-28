@@ -52,7 +52,7 @@ with httpx.Client(timeout=35) as client, sync_playwright() as p:
         assert page.locator('#agent-options button').count()<=4
     assert choices==['services','fdr','compare','bank']
     assert 'conversation' not in page.evaluate("localStorage.getItem('ilma-settings')")
-    page.locator('#agent-sentences .agent-source').first.click();page.locator('#proof-modal.open').wait_for();page.locator('#proof-modal-close').click()
+    page.locator('#agent-card summary').click();page.locator('#agent-sentences .agent-source').first.click();page.locator('#proof-modal.open').wait_for();page.locator('#proof-modal-close').click()
     page.locator('.dock [data-tab="services"]').click();assert page.evaluate('agentConversation===null')
     page.locator('.dock [data-tab="home"]').click();begin()
     page.locator('#agent-report').click();page.wait_for_function("()=>currentTab==='detail' && agentConversation===null")

@@ -42,7 +42,8 @@ def test_real_seed_insurance_has_official_source_and_qualified_payment_steps():
         assert '৯.২৫%' in answer['text']
         assert 'সেপ্টেম্বর' in answer['text']
         assert '2026-' not in answer['text']
-        assert 'ব্যাংকের অবস্থা যাচাই হয়নি' in answer['text']
-        assert 'ব্যাংকের অবস্থা যাচাই হয়নি' in answer['speech_text']
+        assert 'ব্যাংকের অবস্থা যাচাই হয়নি' in answer['card_text']
+        assert answer['bank_warnings'] and 'যাচাই হয়নি' in answer['bank_warnings'][0]
+        assert 'যাচাই হয়নি' not in answer['speech_text']
         assert all(source['source_title_bn'] for source in answer['sources'])
     engine.dispose()

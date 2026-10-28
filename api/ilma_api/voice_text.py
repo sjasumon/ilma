@@ -73,11 +73,12 @@ def match_candidates(text, banks, scorer=None):
     query = normalize_alias(text)
     tokens = query.split()
     candidates = []
+    matched_windows={}
     excluded=related_parent_ids(text,banks)
     for bank in banks:
         if bank['id'] in excluded:
             continue
-        best, best_alias = 0, ''
+        best, best_alias, best_window = 0, '', None
         for alias in [bank['name_bn'], bank['name_en'], *bank.get('aliases', [])]:
             normalized = normalize_alias(alias)
             if len(normalized) < 2 or normalized in {'bank', 'ব্যাংক', 'plc'}:
@@ -105,14 +106,33 @@ def match_candidates(text, banks, scorer=None):
                     if score == 100 and len(window) != len(normalized):
                         score = 85
                 if score > best:
-                    best, best_alias = score, alias
+                    best, best_alias, best_window = score, alias, (start,start+width)
         if best >= 75:
+            matched_windows[bank['id']]=best_window
             single = len(normalize_alias(best_alias).split()) == 1
             short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'break', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
             follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', fold_bengali_vowels(text), re.I))
             candidates.append({**{k: bank[k] for k in ('id', 'slug', 'name_bn', 'name_en', 'type', 'coverage')},
                                'licensed': bank.get('licensed', True), 'confidence': round(best / 100, 3), 'alias': best_alias,
                                'confirm': bool(short_name and single and not follows)})
+    # A full exact name outranks a shorter alias embedded inside it, such as
+    # National inside National Credit and Commerce Bank. A separate occurrence
+    # outside the full name still denotes a second bank and must be retained.
+    def exact_spans(alias):
+        words=normalize_alias(alias).split()
+        return [(start,start+len(words)) for start in range(len(tokens)) if words and tokens[start:start+len(words)]==words]
+    exact={row['id']:exact_spans(row['alias']) for row in candidates if row['confidence']==1}
+    def embedded(row):
+        spans=exact.get(row['id'],[])
+        return bool(spans) and all(any(a<=start and end<=b and b-a>end-start for id,others in exact.items() if id!=row['id'] for a,b in others) for start,end in spans)
+    candidates=[row for row in candidates if not embedded(row)]
+    # Near matches entirely inside an exact name are spelling alternatives, not
+    # a second named bank. Keep near matches occurring elsewhere in the query.
+    def fuzzy_inside_exact(row):
+        if row['confidence']==1:return False
+        start,end=matched_windows[row['id']]
+        return any(a<=start and end<=b for id,spans in exact.items() if id!=row['id'] for a,b in spans)
+    candidates=[row for row in candidates if not fuzzy_inside_exact(row)]
     candidates.sort(key=lambda c: (-c['confidence'], c['id']))
     if not candidates:
         return []

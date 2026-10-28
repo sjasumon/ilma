@@ -28,6 +28,8 @@ class Conversation(BaseModel):
     turn: int = Field(default=0, ge=0, le=20)
     language: Literal['bn','en'] | None = None
     misses: int = Field(default=0, ge=0, le=2)
+    spoken_fact_ids: list[str] = Field(default_factory=list, max_length=128)
+    insurance_bank_ids: list[int] = Field(default_factory=list, max_length=20)
     tenor: int = Field(default=12, ge=1, le=600)
     tier: Literal['Classic','Gold','Platinum','Signature','World','Infinite','Titanium'] = 'Gold'
     network: Literal['Visa','Mastercard','Amex'] = 'Visa'
@@ -71,7 +73,7 @@ SCRIPT = {
  'FIGURES': ('এই ব্যাংকের সেবা, না অন্য ব্যাংক?', 'This bank’s services, or another bank?', [('ব্যাংকের সেবা','Bank services','services'),('অন্য ব্যাংক','Another bank','ask_bank')]),
  'HISTORY': ('এই ব্যাংকের সেবা, না অন্য ব্যাংক?', 'This bank’s services, or another bank?', [('ব্যাংকের সেবা','Bank services','services'),('অন্য ব্যাংক','Another bank','ask_bank')]),
  'SERVICES': ('কোন সেবা জানতে চান? এফডিআর, ডিপিএস, কার্ড, না লোন? বলুন।', 'Which service: FDR, DPS, card, or home loan?', [('এফডিআর','FDR','fdr'),('ডিপিএস','DPS','dps'),('কার্ড','Card','card'),('গৃহঋণ','Home loan','home_loan')]),
- 'SERVICE': ('অন্য ব্যাংকের সাথে তুলনা করবেন?', 'Compare with other banks?', [('তুলনা','Compare','compare'),('না','No','next')]),
+ 'SERVICE': ('অন্য ব্যাংকের সাথে তুলনা করবেন?', 'Compare with other banks?', [('মিলিয়ে দেখুন','Compare','compare'),('না','No','next')]),
  'COMPARE': ('এর মধ্যে কোনো ব্যাংকের অবস্থা শুনবেন?', 'Hear the first bank’s condition?', [('প্রথম ব্যাংক','First bank','bank'),('না','No','next')]),
  'NEXT': ('অন্য কিছু জানতে চান?', 'Anything else?', [('অন্য ব্যাংক','Another bank','ask_bank'),('শেষ','Finish','end')]),
  'ASK_BANK': ('কোন ব্যাংকের কথা জানতে চান? নাম বলুন।', 'Which bank? Say its name.', [('নাম বলুন','Say a name','listen'),('শেষ','Finish','end')]),
@@ -263,7 +265,7 @@ def spoken_choice(text,conversation):
     from rapidfuzz.fuzz import ratio
     def normalized(value):return ' '.join(fold_bengali_vowels(value).casefold().strip(' .!?,।').split())
     value=normalized(text)
-    aliases={'detail':('বিস্তারিত','আরও বিস্তারিত','আরো বিস্তারিত','details','more details','কারণ'), 'services':('সেবা','ব্যাংকের সেবা','services','bank services'), 'figures':('হিসাব','আর্থিক হিসাব','figures'), 'history':('আগের ঘটনা','ইতিহাস','খবর','history','news'), 'fdr':('এফডিআর','fdr','fixed deposit'), 'dps':('ডিপিএস','dps'), 'card':('কার্ড','না, কার্ড','card','no, card'), 'home_loan':('লোন','গৃহঋণ','loan','home loan'), 'compare':('তুলনা','compare','comparison'), 'ask_bank':('অন্য ব্যাংক','নতুন ব্যাংক','another bank','new bank'), 'next':('না','no'), 'yes':('হ্যাঁ','হ্যা','yes'), 'no':('না','no')}
+    aliases={'detail':('বিস্তারিত','আরও বিস্তারিত','আরো বিস্তারিত','details','more details','কারণ','আরও শুনতে চাই','কারণ শুনব','why','reasons'), 'services':('সেবা','ব্যাংকের সেবা','services','bank services'), 'figures':('হিসাব','আর্থিক হিসাব','আয় ব্যয়ের হিসাব','আয় ব্যয়','figures','financial figures'), 'history':('আগের ঘটনা','ইতিহাস','ঘটনা','খবর','history','news','past events'), 'fdr':('এফডিআর','fdr','fixed deposit'), 'dps':('ডিপিএস','dps'), 'card':('কার্ড','না, কার্ড','card','no, card'), 'home_loan':('লোন','গৃহঋণ','loan','home loan'), 'compare':('তুলনা','মিলিয়ে দেখুন','মিলিয়ে দেখুন','compare','comparison'), 'ask_bank':('অন্য ব্যাংক','নতুন ব্যাংক','another bank','new bank'), 'next':('না','no'), 'yes':('হ্যাঁ','হ্যা','yes'), 'no':('না','no')}
     options=script_next(conversation.state,'en')['options']
     current={o['value']:[o['value']] for o in options}
     for language in ('bn','en'):
@@ -284,7 +286,7 @@ def spoken_choice(text,conversation):
         return scores[0][1] if scores and scores[0][0]>=92 and (len(scores)==1 or scores[0][0]-scores[1][0]>=8) else None
     matched=fuzzy(current)
     if matched:return matched
-    global_words={'আবার':'repeat','again':'repeat','repeat':'repeat','থামুন':'end','stop':'end','পুরো রিপোর্ট':'report','full report':'report','শেষ':'end','end':'end','finish':'end','নজরে রাখো':'watch','watch':'watch','সূত্র':'proof','source':'proof','বীমা':'insurance','বিমা':'insurance','insurance':'insurance'}
+    global_words={'আবার':'repeat','again':'repeat','repeat':'repeat','থামুন':'end','stop':'end','পুরো রিপোর্ট':'report','full report':'report','শেষ':'end','end':'end','finish':'end','নজরে রাখো':'watch','watch':'watch','সূত্র':'proof','source':'proof','বীমা':'insurance','বিমা':'insurance','insurance':'insurance','deposit insurance':'insurance','what is deposit insurance':'insurance','deposit protection':'insurance','আমানত সুরক্ষা':'insurance','আমানত বীমা':'insurance'}
     if value in global_words:return global_words[value]
     global_actions=safe-{'compare'}|{'ask_bank'}
     for action,words in aliases.items():
@@ -541,7 +543,7 @@ def execute_turn(db,prepared,proposed,trace):
                 c=c.model_copy(update={'product':product,**{k:v for k,v in params.items() if k!='basis'}})
                 state=STATE_TOOL[tool]
             elif tool=='bank_figures':facts=bank_figures(db,id,args.get('figure'));state='FIGURES'
-            else:facts=TOOLS[tool](db,id);state=STATE_TOOL.get(tool,('BANK' if id else 'NEXT') if tool=='insurance' else c.state)
+            else:facts=TOOLS[tool](db,id);state=STATE_TOOL.get(tool,'NEXT' if tool=='insurance' else c.state)
             trace.append({'stage':'ACT','model':'database/rules','tool':tool,'ms':round((time.monotonic()-execute)*1000),'status':'ok' if facts else 'unavailable','fact_count':len(facts)})
             if id:c=c.model_copy(update={'institution_id':id})
     else:
@@ -572,9 +574,13 @@ def render_turn(db,executed,trace,language):
         c,facts=missed_reply(executed['previous'].model_copy(update={'turn':c.turn,'language':language}));c=c.model_copy(update={'state':executed['previous_state']})
         sentences=template_sentences(facts,language);text_out=' '.join(s['text'] for s in sentences)
         state=c.state;tool='clarify';action=None;next_question=script_next(state,language)
-    from ilma_api.short_speech import parts
-    speech_parts=parts(db,facts,{**c.model_dump(),'language':language},next_question['question'],tool,action)
-    return dict(type='agent_turn',language=language,offer_typing=c.misses>=2,sentences=sentences,facts=facts,checked=checked,next=next_question,conversation=c.model_dump(),action=action,text=text_out,sources=[f['source'] for f in facts],speech=None,speech_parts=speech_parts,speech_text=' '.join(speech_parts),trace={'steps':trace,'total_ms':0,'status_rule_notice':'কোনো এআই মডেল ব্যাংকের অবস্থা ঠিক করে না।' if bn else 'No AI model decides a bank’s condition.'},omit_history=True)
+    if tool=='service_detail' and all(f['fact_id'].startswith('script:') for f in facts):
+        next_question['question']='অন্য ব্যাংকের এই সেবার তথ্য দেখবেন?' if bn else 'Would you like to see this service at other banks?'
+    from ilma_api.answer_wording import compose
+    narration=compose(db,facts,c.model_dump(),next_question['question'],tool,action,repeat=executed['chosen']=='repeat' or bool(plan and plan.tool=='bank_figures' and plan.args.figure))
+    c=c.model_copy(update={'spoken_fact_ids':list(dict.fromkeys([*c.spoken_fact_ids,*narration.fact_ids]))[:128], 'insurance_bank_ids':narration.insurance_bank_ids[:20]})
+    return dict(type='agent_turn',language=language,offer_typing=c.misses>=2,sentences=sentences,facts=facts,checked=checked,next=next_question,conversation=c.model_dump(),action=action,text=narration.speech,speech=narration.speech,speech_format='paragraph',speech_fact_ids=narration.fact_ids,sources=[f['source'] for f in facts],speech_text=narration.speech,speech_parts=[narration.speech],trace={'steps':trace,'total_ms':0,'status_rule_notice':'কোনো এআই মডেল ব্যাংকের অবস্থা ঠিক করে না।' if bn else 'No AI model decides a bank’s condition.'},omit_history=True)
+
 
 
 async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None):

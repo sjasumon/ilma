@@ -1155,3 +1155,7 @@ body { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
 #agent-text-form label { display:block; color:var(--on-stage); }
 #agent-text-input { box-sizing:border-box; width:100%; min-height:52px; border:1px solid var(--gold-soft); border-radius:12px; padding:10px; background:var(--stage); color:var(--on-stage); font:inherit; }
 #agent-text-submit { width:100%; min-height:48px; margin-top:8px; border:1px solid var(--gold-soft); border-radius:12px; background:var(--stage); color:var(--on-stage); font:inherit; }
+
+#agent-answer { font-size:clamp(18px,4.8vw,23px); line-height:1.75; color:var(--on-stage); overflow-wrap:anywhere; }
+#agent-card { margin-block:16px; }
+#agent-card summary { min-height:48px; padding:10px 0; color:var(--gold-soft); cursor:pointer; }

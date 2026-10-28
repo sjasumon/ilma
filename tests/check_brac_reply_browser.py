@@ -15,13 +15,13 @@ with sync_playwright() as pw:
   page.evaluate('resetAgentConversation()');reply(alias,'BANK')
   current=page.evaluate('agentConversation.institution_id');assert current and (bank is None or current==bank)
   bank=current
-  assert 'ব্র্যাক' in page.locator('#agent-sentences').inner_text()
+  assert 'ব্র্যাক' in page.locator('#agent-answer').inner_text()
   assert page.evaluate('currentLang')=='bn'
  for text in ['more details','more detals']:
   reply(text,'DETAIL')
   assert page.evaluate('agentConversation.language')=='bn' and page.evaluate('currentLang')=='bn'
   assert page.locator('html').get_attribute('lang')=='bn' and page.locator('#voice-language-chip').is_hidden()
-  assert re.search('[\u0980-\u09ff]',page.locator('#agent-sentences').inner_text())
+  assert re.search('[\u0980-\u09ff]',page.locator('#agent-answer').inner_text())
   assert page.evaluate('agentConversation.institution_id')==bank
  reply('How is BRAC Bank doing?','BANK')
  assert page.evaluate('currentLang')=='en' and page.evaluate('agentConversation.language')=='en'

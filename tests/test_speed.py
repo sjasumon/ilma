@@ -25,7 +25,7 @@ def test_result_is_available_before_audio_generation_finishes(db):
                 frame=await pipeline.__anext__()
                 if frame.startswith('event: result'):result=json.loads(frame.split('data: ',1)[1])
             assert result['type']=='agent_turn' and result['audio_pending']
-            assert 'speech' not in result
+            assert result['speech']==result['text'] and result['speech_format']=='paragraph'
             assert (await pipeline.__anext__()).startswith('event: speech')
             task=asyncio.create_task(pipeline.__anext__());await asyncio.sleep(.01)
             assert not task.done(),'audio completion must remain independent from the delivered result'

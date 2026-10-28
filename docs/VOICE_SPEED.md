@@ -152,3 +152,8 @@ The BRAC “breakbank” recognition failure recorded above predates the subsequ
 user-approved alias update. “breakbank” and “ব্রেক ব্যাংক” now match BRAC exactly
 in the database index. This improves routing for those transcripts; it is not
 a claim of improved upstream ASR accuracy. See [voice acceptance](VOICE_ACCEPTANCE.md).
+
+The later [connected-wording update](specs/APP_SPEC_10_answer_wording.md) replaces
+these short three-segment answers with one complete paragraph/clip. The six-second
+figures above are historical and do not describe the new paragraph duration.
+See VOICE_ACCEPTANCE.md for the longer measured playback and remaining target.

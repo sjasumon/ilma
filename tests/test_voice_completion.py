@@ -22,20 +22,6 @@ from ilma_api.replay_voice import read_manifest, summarize, public_transcript
 
 
 class TestVoiceCompletion(unittest.TestCase):
-    def test_report_speech_is_short_complete_and_keeps_full_visible_evidence(self):
-        card = {'institution': {'name_bn': 'ইস্টার্ন ব্যাংক', 'name_en': 'Eastern Bank'},
-            'status': {'label_bn': 'শক্তিশালী', 'label_en': 'Strong'},
-            'reasons': [{'text_bn': 'মূলধন ১৫ শতাংশ।', 'text_en': 'Capital 15%.'},
-                        {'text_bn': 'খেলাপি ঋণ ২ শতাংশ।', 'text_en': 'Bad loans 2%.'}],
-            'insurance': {'text_bn': 'বীমার তথ্য নেই।', 'text_en': 'Insurance unavailable.'}}
-        with patch('ilma_api.voice_pipeline.get_institution_report_card', return_value=card):
-            for language in ['bn', 'en']:
-                result = build_result(VoiceIntent(intent='bank_status', institution_ids=[1]), [], language, None)
-                self.assertIn(card['reasons'][1]['text_' + language], result['text'])
-                self.assertIn(card['reasons'][0]['text_' + language], result['speech_text'])
-                self.assertNotIn(card['reasons'][1]['text_' + language], result['speech_text'])
-                self.assertLess(len(result['speech_text']), len(result['text']))
-
     def test_empty_grounded_provider_choices_fall_back_to_facts(self):
         async def check():
             facts = [{'fact_id': 'npl', 'text': 'Bad loans 2.24%.'}]

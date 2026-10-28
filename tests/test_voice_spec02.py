@@ -56,6 +56,19 @@ class TestVoiceText(unittest.TestCase):
                 self.assertEqual(found[0]['id'], id)
         self.assertEqual(match_candidates('unknown institution', BANKS, scorer=exact_score), [])
 
+    def test_full_ncc_name_does_not_match_embedded_national_alias(self):
+        banks=[bank(1,'National Credit and Commerce Bank','ন্যাশনাল ক্রেডিট অ্যান্ড কমার্স ব্যাংক'),bank(2,'National Bank','ন্যাশনাল ব্যাংক')]
+        for text in ['National Credit and Commerce Bank','ন্যাশনাল ক্রেডিট অ্যান্ড কমার্স ব্যাংক']:
+            self.assertEqual([r['id'] for r in match_candidates(text,banks,scorer=exact_score)],[1])
+        both=match_candidates('National Credit and Commerce Bank and National Bank',banks,scorer=exact_score)
+        self.assertEqual({r['id'] for r in both},{1,2})
+
+    def test_full_sbac_name_does_not_pick_a_fuzzy_dutch_bangla_fragment(self):
+        banks=[bank(1,'South Bangla Agriculture and Commerce Bank','সাউথ বাংলা এগ্রিকালচার অ্যান্ড কমার্স ব্যাংক'),bank(2,'Dutch-Bangla Bank','ডাচ বাংলা ব্যাংক')]
+        self.assertEqual([r['id'] for r in match_candidates('South Bangla Agriculture and Commerce Bank',banks)],[1])
+        both=match_candidates('South Bangla Agriculture and Commerce Bank and Dutch Bangla Bank',banks)
+        self.assertEqual({r['id'] for r in both},{1,2})
+
     def test_language_rule(self):
         for text, expected in [('Eastern Bank কি নিরাপদ?', 'bn'), ('IFIC Bank-এর FDR rate কত?', 'bn'),
                                ('is জনতা ব্যাংক safe?', 'en'), ('Is Sonali Bank safe?', 'en')]:

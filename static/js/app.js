@@ -1006,6 +1006,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
       document.getElementById("service-voice-answer").hidden = false;
       document.getElementById("service-heard").textContent = (currentLang === "bn" ? "আপনি বলেছেন: " : "You said: ") + lastVoiceTranscript;
       document.getElementById("service-voice-text").textContent = data.text;
+      const verification=document.getElementById("service-voice-verification");verification.textContent=(data.bank_warnings||[]).join(" ");verification.hidden=!data.bank_warnings?.length;
       const sources = document.getElementById("service-voice-sources"); sources.replaceChildren();
       (data.sources || []).forEach(source => {
         const url = source.source_url;
@@ -1867,6 +1868,9 @@ function setupAgentPanel() {
       document.getElementById('tab-home').classList.add('agent-open');
       document.getElementById('agent-panel').hidden = false;
       document.getElementById('agent-heard').textContent = lastAgentChoice ? (bn ? 'আপনি বেছেছেন: ' : 'You chose: ')+lastAgentChoice : lastVoiceTranscript ? (bn ? 'আপনি বলেছেন: ' : 'You said: ')+lastVoiceTranscript : '';
+      document.getElementById('agent-answer').textContent=result.speech||result.text;
+      document.getElementById('agent-card-label').textContent=bn?'সঠিক অঙ্ক ও সূত্র দেখুন':'See exact figures and sources';
+      document.getElementById('agent-card').open=false;
       const sentences = document.getElementById('agent-sentences'); sentences.replaceChildren();
       for (const sentence of result.sentences) {
         const article = document.createElement('article'),text = document.createElement('p');
@@ -1879,9 +1883,9 @@ function setupAgentPanel() {
         }
         sentences.appendChild(article);
       }
-      document.getElementById('agent-check-label').textContent = result.checked === 'model' ? (bn ? 'সূত্র মিলিয়ে যাচাই করা হয়েছে' : 'Claims checked against cited facts') : (bn ? 'নির্দিষ্ট সূত্রের ভাষা ব্যবহার করা হয়েছে' : 'Using sourced template wording');
-      document.getElementById('agent-question').textContent = result.next.question;
-      document.getElementById('agent-state').textContent = result.speech || result.audio_pending ? '' : (bn ? 'অডিও পাওয়া যাচ্ছে না। বিকল্প বেছে নিন।' : 'Audio unavailable. Choose an option.');
+      document.getElementById('agent-check-label').textContent = result.checked === 'model' ? (bn ? 'সূত্র মিলিয়ে যাচাই করা হয়েছে' : 'Claims checked against cited facts') : (bn ? 'সূত্রের তথ্য সহজ করে বোঝানো হয়েছে' : 'Explained using sourced facts');
+      document.getElementById('agent-question').textContent = bn?'ট্যাপ করে উত্তর দিন':'Tap to reply';
+      document.getElementById('agent-state').textContent = result.audio_pending || /^data:audio\//.test(result.speech||'') ? '' : (bn ? 'অডিও পাওয়া যাচ্ছে না। বিকল্প বেছে নিন।' : 'Audio unavailable. Choose an option.');
       const options = document.getElementById('agent-options'); options.replaceChildren();
       for (const option of result.next.options.slice(0,4)) {
         const button = document.createElement('button');button.type = 'button';button.textContent = option.label;
@@ -1893,7 +1897,7 @@ function setupAgentPanel() {
       document.getElementById('agent-text-form').hidden=!result.offer_typing;
       document.getElementById('agent-text-label').textContent=bn?'লিখে বলুন':'Type your question';
       document.getElementById('agent-text-submit').textContent=bn?'খুঁজুন':'Search';
-      document.getElementById('agent-tap').setAttribute('aria-label',result.next.question || (bn?'শেষ':'Finish'));
+      document.getElementById('agent-tap').setAttribute('aria-label',bn?'ট্যাপ করে উত্তর দিন':'Tap to reply');
       const names = bn ? ['শুনেছি','বুঝেছি','খুঁজেছি','লিখেছি','যাচাই করেছি'] : ['Heard','Understood','Retrieved','Worded','Checked'];
       const trace = document.getElementById('agent-trace');trace.replaceChildren();
       for (const [index,step] of result.trace.steps.entries()) {
@@ -1907,8 +1911,8 @@ function setupAgentPanel() {
       document.getElementById('agent-audio-note').textContent = audio?.duration_ms ? (bn ? 'অডিও: '+toBnDigits((audio.duration_ms/1000).toFixed(1))+' সেকেন্ড' : 'Audio: '+(audio.duration_ms/1000).toFixed(1)+' seconds') + (audio.status === 'over_target' ? (bn ? ' · লক্ষ্যের চেয়ে দীর্ঘ' : ' · longer than target') : '') : '';
 
       document.getElementById('main-content').scrollTop = 0;
-      document.getElementById('sr-announcer').textContent = result.text+' '+result.next.question;
-      (result.offer_typing?document.getElementById('agent-text-input'):document.getElementById('agent-tap')).focus(); pauseGreetingCycle();
+      document.getElementById('sr-announcer').textContent = result.speech||result.text;
+      if(result.offer_typing)document.getElementById('agent-text-input').focus();else document.getElementById('agent-tap').focus({preventScroll:true}); pauseGreetingCycle();
       if (result.action?.type === 'open_report') openBank(result.action.institution_id);
       if (result.action?.type === 'open_proof') showAgentSource(result.action.source);
     },

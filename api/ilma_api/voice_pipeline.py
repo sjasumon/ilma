@@ -151,6 +151,12 @@ def build_result(intent, candidates, language, db, question=""):
         from ilma_api.voice_facts import detail_facts, glossary_facts
         facts = glossary_facts(question, language, db) if intent.intent == 'explain_word' else detail_facts(question, institution, language, db) if institution else []
         if facts:
+            if intent.intent=='bank_detail':
+                from ilma_api.answer_wording import compose
+                items=[{'fact_id':f['fact_id'],'text_bn':f['text'],'text_en':f['text'],'source':f,'unconfirmed':f.get('unconfirmed',False),'institution_id':institution} for f in facts]
+                tool='bank_history' if re.search(r'history|news|incident|fraud|penalty|ইতিহাস|ঘটনা|জালিয়াতি|জরিমানা',question,re.I) else 'bank_figures'
+                paragraph=compose(db,items,{'state':'DETAIL','institution_id':institution,'language':language},'',tool).speech
+                return {'type':'ask_answer','institution_id':institution,'text':paragraph,'speech_text':paragraph,'card_text':' '.join(f['text'] for f in facts),'sources':facts,'disclaimer':disclaimer}
             return {'type': 'ask_answer', 'institution_id': institution, 'text': ' '.join(fact['text'] for fact in facts),
                     'sources': facts, '_facts': facts, 'disclaimer': disclaimer}
         if intent.intent == 'explain_word' or re.search(r'npl|crar|capital|profit|rating|fraud|\bloan\b|\bcard\b|লোন|কার্ড|খেলাপি|মূলধন|মুনাফা|রেটিং|জালিয়াতি|প্রভিশন', question, re.I):
@@ -167,16 +173,12 @@ def build_result(intent, candidates, language, db, question=""):
                        ' '.join(reason['text_bn' if bn else 'text_en'] for reason in card.get('reasons', [])[:3]))
         insurance_line=card.get('insurance',{}).get('text_bn' if bn else 'text_en')
         if insurance_line:summary += ' ' + insurance_line
-        # Keep the full sourced report on screen; speak a short, complete summary
-        # instead of waiting for three reasons and an unavailable-insurance note.
-        spoken = summary
-        if card.get('status'):
-            spoken = card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + ('। ' if bn else '. ')
-            if card.get('reasons'):
-                spoken += card['reasons'][0]['text_bn' if bn else 'text_en'] + ' '
-        spoken += ' আরও তথ্য পর্দায় আছে। এটি আর্থিক পরামর্শ নয়।' if bn else ' More details are on screen. This is not financial advice.'
+        # Preserve the exact report separately from its connected narration.
+        from ilma_api.answer_wording import compose
+        from ilma_api.voice_agent import bank_summary
+        spoken=compose(db,bank_summary(db,institution),{'state':'BANK','institution_id':institution,'language':language},'','bank_summary').speech
         return {'type': 'report_card', 'institution_id': institution, 'url': f'/v1/institutions/{institution}/report-card',
-                'text': summary + ' ' + disclaimer, 'speech_text': spoken, 'sources': card.get('reasons', []), 'disclaimer': disclaimer}
+                'text':spoken,'speech_text':spoken,'card_text':summary+' '+disclaimer,'sources':card.get('reasons',[]),'disclaimer':disclaimer}
     if intent.intent == 'rates' and institution:
         if intent.product is None and re.search(r'\bloan\b|\bcard\b|লোন|কার্ড', question, re.I):
             return {'type': 'service_answer', 'text': missing, 'sources': []}
@@ -202,7 +204,10 @@ def build_result(intent, candidates, language, db, question=""):
         bank = db.query(Institution).filter_by(id=institution).first() if institution else None
         rule = db.query(InsuranceRule).filter_by(inst_type=bank.type if bank else 'bank').first()
         src = source_fields(rule.source) if rule else None
-        return {'type': 'service_answer', 'text': (rule.text_bn if bn else rule.text_en) if rule and src else missing, 'sources': [src] if src else []}
+        from ilma_api.answer_wording import compose
+        from ilma_api.voice_agent import insurance
+        paragraph=compose(db,insurance(db,institution),{'state':'NEXT','institution_id':institution,'language':language},'','insurance').speech
+        return {'type':'service_answer','text':paragraph,'speech_text':paragraph,'card_text':(rule.text_bn if bn else rule.text_en) if rule and src else missing,'sources':[src] if src else []}
     if intent.intent == 'service_compare':
         return {'type': 'services', 'text': 'হিসাব করতে ব্যাংক সেবা খুলুন।' if bn else 'Open Bank services to calculate.',
                 'product': intent.product, 'period_months': intent.period_months, 'amount_bdt': intent.amount_bdt, 'sources': []}
@@ -352,7 +357,6 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             yield event('progress', {'stage':'agent_tools_complete'})
             spoken=result.pop('speech_text')
             speech_parts=result.pop('speech_parts',[spoken])
-            result.pop('speech',None)
             result['audio_pending']=bool(context.speak and spoken and (not result.get('action') or result['action']['type'] not in {'stop','open_report'}))
             intent='voice_agent';institution=result['conversation']['institution_id'];outcome='answered'
             yield event('result',result)
@@ -558,6 +562,7 @@ def readout_result(kind, institution_id, language, db, prompt=None, agent_state=
         result = {'text': text or ('এই তথ্য পাওয়া যাচ্ছে না।' if language == 'bn' else 'This information is unavailable.')}
     elif kind == 'report_card':
         result = build_result(VoiceIntent(intent='bank_status', institution_ids=[institution_id] if institution_id else []), [], language, db)
+        result['text']=result.get('card_text',result['text'])
     elif kind == 'insurance':
         result = build_result(VoiceIntent(intent='insurance', institution_ids=[institution_id] if institution_id else []), [], language, db)
     else:

@@ -11,17 +11,17 @@ with sync_playwright() as pw:
   page.evaluate('(text)=>submitTextQuestion(text)',text)
   try:page.wait_for_function('(state)=>!isSearching&&agentConversation?.state===state',arg=state,timeout=5000)
   except Exception:raise AssertionError((state,page.evaluate('()=>({currentTab,isSearching,conversation:agentConversation,feedback:document.getElementById("voice-feedback-message").textContent})'),errors)) from None
-  assert page.locator('#agent-sentences').inner_text().strip()
+  assert page.locator('#agent-answer').inner_text().strip()
  reply('ব্র্যাক ব্যাংক কেমন আছে','BANK');bank=page.evaluate('agentConversation.institution_id');assert bank
  assert page.evaluate('currentLang')=='bn'
  assert 'English-এ থাকুন' in page.locator('#voice-language-chip').inner_text()
  page.locator('#voice-language-chip').click();page.wait_for_function("()=>!isSearching&&agentConversation?.language==='en'")
  assert page.evaluate('currentLang')=='en' and page.evaluate('agentConversation.institution_id')==bank
- assert 'BRAC' in page.locator('#agent-sentences').inner_text()
+ assert 'BRAC' in page.locator('#agent-answer').inner_text()
  for text,state in [('আরও বিস্তারিত','DETAIL'),('ব্যাংকের সেবা','SERVICES'),('details','DETAIL'),('more details','DETAIL'),('এফডিআর রেট কত','SERVICE'),('আরও বিস্তারিত','DETAIL')]:
   previous=page.locator('#agent-question').inner_text();reply(text,state)
   assert page.evaluate('agentConversation.institution_id')==bank
-  assert page.locator('#agent-sentences').inner_text().strip()!=previous.strip()
+  assert page.locator('#agent-answer').inner_text().strip()!=previous.strip()
  reply('ঢাকা','DETAIL');assert page.locator('#agent-text-form').is_hidden()
  reply('ঢাকা','DETAIL');assert page.locator('#agent-text-form').is_visible()
  assert page.locator('#agent-text-input').evaluate('(el)=>document.activeElement===el')

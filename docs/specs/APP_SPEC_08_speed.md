@@ -87,3 +87,8 @@ A live minimal-effort probe at 300 tokens spent 298 on reasoning and returned
 no content. At 1,000 total tokens it completed valid JSON using 541 tokens
 (476 reasoning, 65 visible). This measured exception to the original 300-token
 proposal preserves usable intent output: [official Meta guidance](https://dev.meta.ai/docs/reasoning).
+
+[APP_SPEC_10](APP_SPEC_10_answer_wording.md) supersedes the three-segment short
+narration policy. The immediate-text, streamed-URL and bounded-provider policy
+remains. Its complete explanations have measured durations above eight seconds;
+that earlier playback target is not claimed as passed.

@@ -47,7 +47,7 @@ def test_question_only_guard_uses_feedback_and_preserves_state(db,caplog):
         question=script_next(c.state,'en')['question']
         with patch.dict('ilma_api.voice_agent.TOOLS',bank_reasons=lambda db,id:[control('synthetic',question,question)]):
             result=turn(db,'details',c)
-    assert result['conversation']['state']=='DETAIL' and result['text']=='I did not understand.'
+    assert result['conversation']['state']=='DETAIL' and result['text'].startswith('I did not understand.')
     assert 'voice_agent_question_loop' in caplog.text
 
 

@@ -8,16 +8,15 @@ def demo_phrases():
     from sqlalchemy.orm import Session
     from ilma_api.db import engine
     from ilma_api.bank_services import demo_banks
-    from ilma_api.voice_agent import bank_summary,bank_reasons,insurance
+    from ilma_api.voice_agent import bank_summary,insurance
     from ilma_api.short_speech import parts,QUESTIONS
     if engine.dialect.name!='mysql' or engine.url.database!='ilma':return []
     phrases=[]
     with Session(engine) as db:
         for lang,index in [('bn',0),('en',1)]:
-            for bank in demo_banks(db):
-                for state,tool,facts in [('BANK','bank_summary',bank_summary(db,bank.id)),('DETAIL','bank_reasons',bank_reasons(db,bank.id))]:
-                    lines=parts(db,facts,{'state':state,'institution_id':bank.id,'language':lang},QUESTIONS[state][index],tool)
-                    phrases.extend((line,lang) for line in lines)
+            for bank in demo_banks(db,include_incident_banks=True):
+                lines=parts(db,bank_summary(db,bank.id),{'state':'BANK','institution_id':bank.id,'language':lang},QUESTIONS['BANK'][index],'bank_summary')
+                phrases.extend((line,lang) for line in lines)
             phrases.extend((question[index],lang) for question in QUESTIONS.values())
             from ilma_api.voice_assets import CATALOG
             phrases.extend((pair[index],lang) for key,pair in CATALOG.items() if key.startswith('ivr_') and key!='ivr_confirm')

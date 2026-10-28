@@ -369,3 +369,56 @@ Validation: 257 Python tests plus 27 subtests, all seven frontend suites, and
 live EBL reason/card checks passed, including rotation, keyboard-sized viewport,
 desktop, 200% text and Cloudflare/API-doc security headers. This is a wording
 correction, not independent regulatory or financial-source acceptance.
+
+
+## Connected answer wording — 28 October 2026
+
+Bank answers now connect the assessment to an explanation, explain rounded
+ratios/profits in ordinary language, retain years and source qualifications,
+and end with a complete polite question. Exact source sentences and figures
+remain unchanged in an expandable card. DETAIL/FIGURES progress to unexplained
+facts; ordinary follow-ups do not repeat insurance. Explicit repeat or a direct
+figure/insurance question can still retrieve the requested information.
+
+FDR answers stay on the product, term and published rate, with a conditional
+fixed example before tax. Publication dates are described as schedule dates,
+not invented effective dates. Unverified bank-condition notices remain visible
+separately from service speech. Full-report playback retains the exact card.
+Legacy bank answers and comparison readouts also use connected narration.
+
+Full-name matching checks found and corrected NCC/National and SBAC/Dutch-Bangla
+alias overlaps. Generic deposit-insurance requests now outrank spurious weak
+bank matches and retain the current bank. Separately named banks still require
+disambiguation. Existing
+BRAC spellings and scripted-option language retention passed browser checks.
+
+One full paragraph is delivered as text before a single cached MP3 URL. Actual
+Bangla recordings measured 10.9–32.5 seconds across seven sourced paragraphs;
+Prime’s introduction was 31.2 seconds, its FDR answer 22.5 seconds and qualified
+insurance answer 23.5 seconds. The eight-second target is **not met**. Shortening
+requires moving content to later turns, not removing eligibility conditions,
+increasing playback speed or claiming an unmeasured pass. These are synthesized
+clips, not human microphone recordings. A cached Chromium playback check showed
+text at 154 ms, playback at 186 ms, end at 31,461 ms and microphone activation
+at 31,462 ms, with one audio URL and no scroll displacement. Cold synthesis
+previously took about 5–15 seconds, while streaming first bytes in 0.7–1.6 seconds.
+Seventy public-source/approved-prompt phrases, including all eleven bank
+introductions in both languages, were prewarmed privately. Cache misses and new
+voice settings can still require synthesis.
+
+The opt-in source-backed review covers all eleven introductions in BN/EN and
+Prime’s details → figures → history → FDR → insurance sequence in both languages.
+It checks paragraph/card identity, source IDs, retained language, next questions
+and repeated-fact suppression. Source-backed checks use read-only database data;
+regression fixtures remain handwritten and synthetic. Browser checks also cover
+source sheets, report navigation, cold load, rotation, keyboard-size viewport,
+desktop and 200% text. Native phones, TalkBack/VoiceOver, independent lay-listener
+comprehension and financial-source acceptance remain pending. This update does
+not establish ASR accuracy or blanket production readiness.
+
+Validation for this update: 271 Python tests plus 27 subtests and all seven
+frontend suites passed. Thirty-two source-backed paragraph checks passed.
+Live Cloudflare checks verified the sourced conversation flow, English
+introduction, every-tab responsive chrome and root/API-doc security headers.
+The eight-second duration and native/independent listener acceptance remain
+open as described above.

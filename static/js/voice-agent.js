@@ -8,7 +8,7 @@
       this.clear();this.a.interrupt();this.active=true;this.result=result;this.guided=guided;this.silenceRetries=0;
       const generation=++this.generation;this.a.render(result);if(!this.active||generation!==this.generation)return;this.phase='speaking';this.idle();
       if(result.audio_pending){this.phase='audio-wait';return;}
-      const heard=await this.a.play(result.speech);
+      const heard=result.speech_format==='paragraph'?false:await this.a.play(result.speech);
       if(!this.active||generation!==this.generation)return;
       if(result.action?.type==='end'){if(heard)return this.reset();this.phase='waiting';this.endTimer=this.clock.setTimeout(()=>{if(this.active&&generation===this.generation)this.reset()},4000);return;}
       if(['stop','open_report','open_proof'].includes(result.action?.type)){this.phase='waiting';return;}

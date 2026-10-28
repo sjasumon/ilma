@@ -83,11 +83,14 @@ class TestServicesSeed(unittest.TestCase):
 
     def test_comparison_readout_uses_only_source_backed_rows(self):
         from unittest.mock import patch, AsyncMock
-        with patch('ilma_api.voice_pipeline.speech',new=AsyncMock(return_value='data:audio/mpeg;base64,dGVzdA==')) as speak:
+        with patch('ilma_api.audio_cache.register_speech',new=AsyncMock(return_value={'audio_url':'/v1/audio/'+'a'*32+'.mp3','audio_urls':['/v1/audio/'+'a'*32+'.mp3']})) as speak:
             response=self.client.post('/v1/services/readout',json=dict(product_type='card',network='Visa',tier='Signature',language='en'))
         self.assertEqual(response.status_code,200)
-        spoken=speak.await_args.args[0]
-        self.assertIn('5000',spoken)
+        spoken=speak.await_args.args[0][0]
+        self.assertNotIn('5000',spoken)  # waiver arithmetic is not the published annual fee
+        self.assertIn('10000',spoken)
+        self.assertEqual(response.json()['text'],spoken)
+        self.assertEqual(len(response.json()['audio_urls']),1)
         self.assertIn('7000',spoken)
         self.assertNotIn('20000',spoken)  # stale DBBL is not in the first three or savings line
 
@@ -97,12 +100,12 @@ class TestServicesSeed(unittest.TestCase):
         self.assertEqual(result['comparison']['network'],'Visa')
         self.assertEqual(result['comparison']['tier'],'Signature')
         self.assertTrue(result['sources'])
-        self.assertNotIn('10000',result['text'])
-        self.assertIn('7000',result['speech_text'])
-        self.assertIn('10000',result['speech_text'])
-        self.assertNotIn('12000',result['speech_text'])
-        self.assertNotIn('20000',result['speech_text'])
-        self.assertLess(len(result['speech_text']),len(result['text']))
+        self.assertIn('১০০০০',result['speech_text'])
+        self.assertIn('৭০০০',result['speech_text'])
+        self.assertIn('১০০০০',result['speech_text'])
+        self.assertNotIn('১২০০০',result['speech_text'])
+        self.assertNotIn('২০০০০',result['speech_text'])
+        self.assertEqual(result['speech_text'],result['text']);self.assertTrue(result['card_text'])
         with Session(self.engine) as db:
             sms=voice_service_result('SMS alert fees',VoiceIntent(intent='service_compare',product='account_fee',service_attribute='sms_alert_fee'),VoiceContext(tab='services'),db,'en')
         self.assertEqual(sms['comparison']['product_type'],'account_fee')
