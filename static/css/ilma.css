@@ -148,6 +148,27 @@ body {
   color: var(--on-stage-2);
   letter-spacing: 1.5px;
 }
+.brand-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+}
+.brand-tagline {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--on-stage-2);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand-tagline:lang(en) {
+  font-family: var(--latin);
+}
 
 .pill {
   min-height: 40px;
@@ -703,11 +724,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 body { font-size: 20px; line-height: 1.6; }
 button, input, select { font: inherit; }
 .scr { min-height: 100svh; overflow-x: clip; padding-bottom: 0; }
-.top-bar { position: relative; inset: auto; margin: 20px 16px 0 20px; gap: 16px; }
+.top-bar { position: sticky; top: 0; z-index: 60; margin: 16px 14px 0 14px; padding: 10px 12px; gap: 16px; background: rgba(30, 69, 66, 0.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-radius: 18px; }
 .wordmark { flex-wrap: wrap; min-width: 0; }
 .wordmark span, .pill { font-size: 16px; }
 .pill { min-height: 48px; flex-shrink: 0; }
 .tab-content { flex: 1; min-width: 0; padding-bottom: 24px; }
+/* Fixed bottom dock floats above content: keep the last card clear of it. */
+:is(#tab-services, #tab-detail, #tab-news) { padding-bottom: 120px; }
 #tab-home.active { display: flex; flex-direction: column; }
 .home-tap-target { position: relative; inset: auto; flex: 1; min-height: 440px; padding: 0 20px 28px; }
 .orb-svg { width: min(280px, 100%); height: auto; margin-top: 44px; }
@@ -741,7 +764,7 @@ button, input, select { font: inherit; }
 label:has(#tin-check) { min-height: 56px; }
 .modal-sheet > div { gap: 12px; flex-wrap: wrap; }
 #proof-modal-close, #proof-close-btn, #modal-link { min-height: 48px; min-width: 48px; }
-.dock { position: sticky; left: auto; transform: none; bottom: 0; width: calc(100% - 24px); margin: 0 12px; max-width: none; height: auto; min-height: 80px; padding: 8px 4px max(8px, env(safe-area-inset-bottom)); border-radius: 28px; gap: 8px; }
+.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(12px, env(safe-area-inset-bottom)); bottom: calc(12px + env(safe-area-inset-bottom, 0px) + 100lvh - 100dvh); width: calc(100% - 24px); margin: 0; max-width: 388px; height: auto; min-height: 80px; padding: 8px 4px max(8px, env(safe-area-inset-bottom)); border-radius: 28px; gap: 8px; }
 .dock button.dock-item { min-width: 0; min-height: 64px; align-self: stretch; padding: 4px 0; }
 .dock svg { flex-shrink: 0; }
 .dock span { font-size: 16px; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; text-align: center; }
@@ -812,9 +835,9 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* Header language and settings controls; the four-tab dock is unchanged. */
 .top-bar { flex-wrap: wrap; }
-.header-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
-.header-actions .pill { min-width: 56px; min-height: 56px; padding: 8px 12px; }
-.settings-button { width: 56px; min-height: 56px; display: grid; place-items: center; border: 1px solid rgba(246,240,228,.4); border-radius: 50%; color: var(--on-stage); background: var(--stage-lo); cursor: pointer; }
+.header-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; flex-shrink: 0; }
+.header-actions .pill { min-width: 48px; min-height: 48px; height: 48px; padding: 8px 12px; flex-shrink: 0; }
+.settings-button { width: 48px; height: 48px; min-width: 48px; min-height: 48px; display: grid; place-items: center; border: 1px solid rgba(246,240,228,.4); border-radius: 50%; color: var(--on-stage); background: var(--stage-lo); cursor: pointer; flex-shrink: 0; }
 .settings-button svg { width: 24px; height: 24px; }
 #tab-home, #home-tap-target { touch-action: pan-y pinch-zoom; }
 #home-tap-target { touch-action: manipulation; }
@@ -836,24 +859,22 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   --home-orb-size: min(170px, 25dvh);
   --home-center-y: max(calc(96px + var(--home-orb-size) / 2), calc(50dvh - clamp(32px, 6dvh, 60px)));
 }
+/* Top header stays sticky/fixed on Home identically to every other screen */
 .scr.home-open .top-bar {
-  position: absolute;
-  top: max(20px, env(safe-area-inset-top));
-  left: 20px;
-  right: 16px;
-  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: 60;
 }
-#tab-home.active { padding-bottom: 0; }
+#tab-home.active { padding-bottom: 0; flex: 1; display: flex; flex-direction: column; }
 #tab-home .home-tap-target {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: calc(var(--home-center-y) - var(--home-orb-size) / 2) var(--home-orb-size) auto;
-  align-content: start;
-  align-items: start;
+  grid-template-rows: 1fr auto auto 1.2fr;
+  align-content: stretch;
   justify-items: center;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: 0 20px calc(112px + env(safe-area-inset-bottom));
+  flex: 1;
+  min-height: 0;
+  padding: 10px 20px calc(108px + env(safe-area-inset-bottom));
 }
 #tab-home .home-waveform {
   grid-column: 1;
@@ -862,16 +883,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   height: var(--home-orb-size);
   margin: 0;
 }
-#home-idle-view, #home-listening-view { grid-column: 1; grid-row: 3; }
-.scr.home-open .dock {
-  position: fixed;
-  left: 50%;
-  bottom: max(12px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  width: calc(100% - 24px);
-  max-width: 388px;
-  margin: 0;
-}
+#home-idle-view, #home-listening-view { grid-column: 1; grid-row: 3; padding-top: 10px; }
 
 #voice-feedback { margin: auto; width: calc(100% - 32px); max-width: 440px; max-height: 85vh; max-height: 85dvh; overflow-y: auto; padding: 22px; color: var(--on-stage); background: var(--stage-lo); border: 1px solid var(--on-stage-2); border-radius: 24px; font: 18px/1.6 var(--body); }
 #voice-feedback p { font-size: 18px; color: var(--on-stage); }
@@ -912,6 +924,18 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 #voice-feedback p { overflow-wrap: anywhere; }
 #voice-feedback #voice-transcript { padding: 12px; border-left: 3px solid var(--gold); border-radius: 8px; background: var(--stage); color: var(--on-stage); white-space: pre-wrap; }
 #voice-feedback .btn-stop-listening { display: block; min-height: 48px; margin: 16px auto; padding: 8px 20px; }
+#mini-voice-modal { margin: auto; width: calc(100% - 48px); max-width: 340px; padding: 20px; color: var(--on-stage); background: var(--stage-lo); border: 1px solid var(--on-stage-2); border-radius: 24px; text-align: center; font: 18px/1.6 var(--body); }
+#mini-voice-modal::backdrop { background: rgba(6,17,15,.78); }
+.mini-voice-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mini-voice-heading h2 { margin: 0; color: var(--gold); font: 600 20px/1.5 var(--body); }
+#mini-voice-modal .settings-close { background: var(--stage); color: var(--on-stage); border: 1px solid var(--on-stage-2); flex-shrink: 0; }
+.mini-voice-wave { width: 100%; height: 84px; }
+#mini-voice-state { margin: 8px 0 2px; font-weight: 600; font-size: 20px; color: var(--gold); }
+#mini-voice-prompt { margin: 0 0 6px; font-size: 16px; color: var(--on-stage-2); }
+#mini-voice-transcript { margin: 0 0 6px; min-height: 28px; font-size: 19px; color: #FFF; overflow-wrap: anywhere; }
+#mini-voice-transcript:empty { display: none; }
+#mini-voice-stop { display: block; min-height: 48px; margin: 12px auto 0; padding: 8px 20px; background: var(--stage); color: var(--on-stage); border: 1px solid var(--gold-soft); }
+#mini-voice-modal :focus-visible { outline: 3px solid var(--gold) !important; outline-offset: 3px; }
 #voice-feedback input { font-size: 18px; }
 #voice-answer-sources a { display: block; min-height: 48px; color: var(--link); overflow-wrap: anywhere; }
 #voice-feedback :focus-visible { outline: 3px solid var(--gold) !important; outline-offset: 3px; }
@@ -1005,6 +1029,57 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* Publication links use the existing stage colour and retain their underline. */
 .publication-card .catalog-source { color:var(--stage); font-weight:700; text-underline-offset:.18em; }
+
+/* Unified Home theme: Services, Banks and News share Home's dark teal. */
+:is(#tab-services, #tab-detail, #tab-news) {
+  color-scheme: dark;
+  color: var(--on-stage);
+  --ivory: transparent;
+  --ivory-2: rgba(246, 240, 228, 0.08);
+  --paper: rgba(246, 240, 228, 0.06);
+  --line: rgba(246, 240, 228, 0.22);
+  --ink: var(--on-stage);
+  --ink-2: var(--on-stage-2);
+  --link: var(--cyan);
+}
+:is(#tab-services, #tab-detail, #tab-news) .sheet {
+  background: transparent;
+  box-shadow: none;
+}
+:is(#tab-services, #tab-detail, #tab-news) .sheet-title {
+  color: var(--gold);
+}
+:is(#tab-services, #tab-detail, #tab-news) .btn-primary-listen {
+  border: 1px solid rgba(246, 203, 85, 0.5);
+}
+:is(#tab-services, #tab-detail, #tab-news) .btn-secondary-watch {
+  color: var(--on-stage);
+  border-color: var(--on-stage);
+}
+:is(#tab-services, #tab-detail, #tab-news) .catalog-tile span {
+  color: var(--gold);
+}
+:is(#tab-services, #tab-detail, #tab-news) .q-pill.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #06110F;
+}
+:is(#tab-services, #tab-detail, #tab-news) .calc-field,
+:is(#tab-services, #tab-detail, #tab-news) .input-select,
+:is(#tab-services, #tab-detail, #tab-news) .catalog-search input,
+:is(#tab-services, #tab-detail, #tab-news) .catalog-selectors select {
+  background: rgba(6, 17, 15, 0.55);
+  color: var(--on-stage);
+}
+:is(#tab-services, #tab-detail, #tab-news) ::placeholder {
+  color: var(--on-stage-2);
+}
+:is(#tab-services, #tab-detail, #tab-news) #tin-check {
+  accent-color: var(--gold);
+}
+:is(#tab-services, #tab-detail, #tab-news) .publication-card .catalog-source {
+  color: var(--cyan);
+}
 
 /* App chrome has its own rows; only the middle content pane may scroll. */
 html { height: 100%; overflow: hidden; }

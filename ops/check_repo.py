@@ -15,7 +15,7 @@ PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
 UNAPPROVED_BRANDS = ('cl' + 'aude', 'anth' + 'ropic')
 PRIVATE_PREFIXES = ('private-reference/', 'bank and bank service menu/',
     'ilma-agent/', 'ilma_waveform_agent_handoff/', 'tests/fixtures/export_v5_2/',
-    'voice-diagnostics/', 'voice-backups/', 'voice-drafts/', 'audio/', 'feedback/')
+    'voice-diagnostics/', 'voice-backups/', 'voice-drafts/', 'audio/', 'feedback/', 'muse/')
 DEBUG_ASSETS = {'design/error.png', 'design/error1.png', 'design/e1.png', 'design/search.png'}
 PRIVATE_COLUMNS = {'local_path', 'sha256', 'obtained_by', 'run_id', 'article_text'}
 

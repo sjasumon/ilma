@@ -20,8 +20,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-45">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-45">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-46">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-46">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -41,9 +41,12 @@
   <div class="scr home-open">
     <!-- Top Bar matching S01-Home.html -->
     <header class="top-bar">
-      <div class="wordmark" aria-label="ইলমা ILMA">
-        <b>ইলমা</b>
-        <span id="wm-sub">ILMA</span>
+      <div class="brand-stack">
+        <div class="wordmark" aria-label="ইলমা ILMA">
+          <b>ইলমা</b>
+          <span id="wm-sub">ILMA</span>
+        </div>
+        <p class="brand-tagline" id="wm-tagline" lang="bn">আপনার সঞ্চয়ের বিশ্বস্ত সাথী</p>
       </div>
       <div class="header-actions">
         <button class="pill latin" id="lang-btn" aria-label="Switch to English" aria-pressed="false">EN</button>
@@ -272,6 +275,19 @@
           </form>
         </dialog>
 
+    <dialog id="mini-voice-modal" class="mini-voice-modal" aria-labelledby="mini-voice-title" hidden>
+      <div class="mini-voice-heading"><h2 id="mini-voice-title">প্রশ্ন বলুন</h2><button id="mini-voice-close" class="settings-close" type="button" aria-label="বন্ধ করুন">×</button></div>
+      <svg id="mini-voice-wave" class="home-waveform mini-voice-wave" data-state="idle" viewBox="0 0 300 90" role="presentation" aria-hidden="true" preserveAspectRatio="none">
+        <path class="line baseline" d="M4 46 H296"/>
+        <path class="line gold" d="M4 46 C40 45 70 46 96 56 S140 66 170 40 S220 24 250 40 S280 44 296 46"/>
+        <path class="line cyan" d="M4 46 C44 47 70 38 100 40 S150 64 185 52 S230 36 296 46"/>
+      </svg>
+      <p id="mini-voice-state" role="status" aria-live="polite">শুনছি…</p>
+      <p id="mini-voice-prompt">ব্যাংকের নাম বা প্রশ্ন বলুন</p>
+      <p id="mini-voice-transcript" aria-live="polite"></p>
+      <button id="mini-voice-stop" class="btn-stop-listening" type="button">থামুন ও খুঁজুন</button>
+    </dialog>
+
     <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
       <div class="settings-heading">
         <h2 id="settings-title">সেটিংস</h2>
@@ -355,8 +371,8 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-45"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261028-45"></script>
-  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-45"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-46"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261028-46"></script>
+  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-46"></script>
 </body>
 </html>

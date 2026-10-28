@@ -36,8 +36,8 @@ assert.ok(!element('ret-result-box').innerHTML.includes('NaN'));
 console.log('Frontend runtime regressions passed');
 const html = fs.readFileSync('static/index.html', 'utf8');
 assert.match(html, /id="home-listening-view" hidden/);
-assert.match(html, /ilma\.css\?v=voice-complete-20261028-45/);
-assert.match(html, /app\.js\?v=voice-complete-20261028-45/);
+assert.match(html, /ilma\.css\?v=voice-complete-20261028-46/);
+assert.match(html, /app\.js\?v=voice-complete-20261028-46/);
 assert.match(html, /id="home-tap-target" class="home-speak-button"/);
 console.log('Home visibility and asset-version regressions passed');
 
@@ -51,3 +51,15 @@ run('currentLang = "bn"; stopGreetingCycle()');
 assert.equal(element('home-greeting-line').textContent, run('T.bn.homeIdle'));
 assert.ok(!html.includes('id="home-example"'));
 console.log('Bilingual greeting regressions passed');
+
+const css = fs.readFileSync('static/css/ilma.css', 'utf8');
+assert.ok(css.includes(':is(#tab-services, #tab-detail, #tab-news)'), 'unified dark theme scope missing');
+assert.ok(css.includes('--ink: var(--on-stage)'), 'unified dark theme ink missing');
+const appSrc = fs.readFileSync('static/js/app.js', 'utf8');
+assert.ok(appSrc.includes('var(--good-on-stage)'), 'calculator results must use on-stage tokens');
+assert.ok(appSrc.includes('background: var(--paper)'), 'news cards must follow the tab theme');
+assert.ok(!appSrc.includes('background: #FFF'), 'no white cards on the dark tabs');
+assert.ok(!appSrc.includes('color: #555') && !appSrc.includes('color: #666'), 'no dark-grey notes on the dark tabs');
+console.log('Unified Home theme regressions passed');
+
+// Header/dock geometry and content scrolling are checked by check_app_frame.py.

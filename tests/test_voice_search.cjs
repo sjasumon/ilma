@@ -166,3 +166,46 @@ function voiceApp(options = {}) {
   assert.equal(unknown.node('voice-feedback').hidden, true);
   console.log('Spec 02 voice UI passed: permission explanation, compressed upload/context, fragmented UTF-8 SSE, input-based routing, automatic language switch, typing and errors');
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+(async () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync('static/index.html', 'utf8');
+  assert.match(html, /id="mini-voice-modal"/);
+  assert.match(html, /id="mini-voice-state"/);
+  assert.match(html, /id="mini-voice-stop"/);
+  assert.match(html, /id="mini-voice-close"/);
+
+  const services = voiceApp();
+  services.context.fetch = async () => response([
+    ['transcript', { text: 'আমানত বীমা কত?', language: 'bn' }],
+    ['result', { type: 'service_answer', text: 'আমানত বীমা ২ লাখ টাকা পর্যন্ত।', sources: [] }]
+  ]);
+  services.run('switchTab("services")');
+  assert.equal(services.run('currentTab'), 'services');
+  await services.fire('services-voice-btn', 'click');
+  assert.equal(services.run('currentTab'), 'services', 'services voice must not jump to home');
+  assert.equal(services.run('activeVoiceContext.tab'), 'services');
+  assert.equal(services.run('isListening'), true);
+  assert.equal(services.node('mini-voice-modal').open, true);
+  assert.match(services.node('mini-voice-state').textContent, /শুনছি/);
+  await services.run('finishRecording()');
+  assert.equal(services.node('service-voice-answer').hidden, false);
+  assert.match(services.node('service-voice-text').textContent, /আমানত বীমা/);
+  assert.equal(services.node('mini-voice-modal').open, false, 'answer is shown inline, the mini modal closes');
+  const completedRequest = services.run('voiceRequest');
+  await services.fire('mini-voice-modal', 'close');
+  assert.equal(services.run('voiceRequest'), completedRequest, 'a delayed programmatic close must not cancel the completed request');
+  assert.equal(services.run('currentTab'), 'services');
+
+  const bank = voiceApp();
+  bank.run('currentTab = "detail"');
+  await bank.fire('bank-voice-btn', 'click');
+  assert.equal(bank.run('currentTab'), 'detail', 'bank voice must not jump to home');
+  assert.equal(bank.run('activeVoiceContext.tab'), 'bank');
+  assert.equal(bank.run('isListening'), true);
+  assert.equal(bank.node('mini-voice-modal').open, true);
+  await bank.fire('mini-voice-close', 'click');
+  assert.equal(bank.run('isListening'), false);
+  assert.equal(bank.node('mini-voice-modal').open, false);
+  console.log('Services/bank in-place voice modal passed: no tab jump, record in modal, inline answer');
+})().catch(error => { console.error(error); process.exitCode = 1; });

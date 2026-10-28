@@ -39,3 +39,6 @@ CODE_REVIEW_*.md
 WEBSITE_FULL_TEST_*.md
 docs/review_muse.md
 feedback/
+
+# Private reference screenshots; never publish.
+muse/
