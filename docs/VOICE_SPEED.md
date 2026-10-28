@@ -147,3 +147,8 @@ review. References: [models](https://elevenlabs.io/docs/overview/models),
 
 Final documented suites: 207 Python tests plus 25 subtests, all seven frontend
 Node suites, repository policy and redacted full-history secrets checks.
+
+The BRAC “breakbank” recognition failure recorded above predates the subsequent
+user-approved alias update. “breakbank” and “ব্রেক ব্যাংক” now match BRAC exactly
+in the database index. This improves routing for those transcripts; it is not
+a claim of improved upstream ASR accuracy. See [voice acceptance](VOICE_ACCEPTANCE.md).

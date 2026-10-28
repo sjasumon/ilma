@@ -145,4 +145,9 @@ def bank_name_only(text, candidates):
 
 def turn_language(text, context, candidates=(), choice=None):
     previous=context.conversation.language if context.conversation and context.conversation.language else context.ui_lang
-    return previous if choice is not None else decide_language(text,candidates,previous)
+    if choice is not None:return previous
+    if context.conversation:
+        from ilma_api.voice_agent import spoken_choice
+        # Scripted replies follow the tap path, including its language.
+        if spoken_choice(text,context.conversation) is not None:return previous
+    return decide_language(text,candidates,previous)

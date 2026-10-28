@@ -319,3 +319,20 @@ TalkBack/VoiceOver acceptance. Financial source review remains pending as before
 Validation for this update: 231 Python tests plus 25 subtests and all seven
 frontend suites passed. Live Cloudflare conversation/frame checks passed; root,
 API docs, redoc and OpenAPI returned 200 with security headers verified.
+
+
+## BRAC aliases and scripted-reply language — 28 October 2026
+
+The user-approved spellings “breakbank” and “ব্রেক ব্যাংক” are stored as BRAC
+aliases in ilma, tagged with user-report provenance. An idempotent migration
+adds them without replacing source names or financial facts. The standard voice
+migration also reapplies them after seed reloads.
+
+Matched scripted replies retain conversation language before the transcript
+language event is emitted, including current options, fuzzy synonyms and global
+navigation commands. “more details” in a Bangla conversation therefore retains
+Bangla text, narration and next options. Genuine questions still use language
+detection. Synthetic tests cover both languages, current/global states, TTS
+language, idempotence and exact alias routing. The full suite passed 242 tests
+plus 25 subtests; all seven frontend suites passed. Live browser checks used
+typed spellings with speech disabled; they do not establish microphone accuracy.

@@ -138,3 +138,14 @@ preview's exact loopback origin (for example http://127.0.0.1:8018). These
 provider-disabled overrides belong only to the preview; never clear credentials
 or weaken origins on the live service. Stop the temporary preview after checks.
 The script performs read-only public bank queries and no microphone capture.
+
+
+## BRAC ASR alias update
+
+With the existing private environment, DB_NAME=ilma and the project virtualenv,
+run `PYTHONPATH=api python -m ilma_api.migrate_brac_aliases`. This idempotent
+migration adds only the two user-approved spellings to the existing bracbank
+institution. It does not create banks or change facts/source names. The standard
+voice migration also applies them, so they can be restored after a seed reload.
+Only the ilma MySQL database is permitted. Restart the application after backend
+updates; verify both spellings route to BRAC and scripted replies retain language.

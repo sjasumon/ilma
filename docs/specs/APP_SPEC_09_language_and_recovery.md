@@ -5,7 +5,10 @@ result-first streaming and model-call limits in APP_SPEC_08.
 
 ## Turn language
 
-Spoken and typed replies use the same transcript language rule: remove matched
+Matched scripted replies, including current option labels, fuzzy synonyms and
+global navigation commands, retain the conversation language exactly like taps.
+A reply such as “more details” is not evidence of a language change. Other spoken
+and typed questions use the same transcript language rule: remove matched
 bank aliases and common English product loanwords, then count alphabetic letters.
 At least 70% Latin means English; otherwise use Bangla. When a bank name alone
 leaves no language evidence, retain the conversation language or UI preference.
@@ -58,3 +61,6 @@ rotation, keyboard resize and large text.
 Tests use handwritten synthetic database rows and synthetic media/provider
 responses. Real microphone accuracy, pronunciation and native accessibility
 acceptance are separate from these conversation checks.
+
+BRAC ASR aliases “breakbank” and “ব্রেক ব্যাংক” are user-approved match spellings
+stored in MySQL. They do not replace the bank display/source name or add facts.

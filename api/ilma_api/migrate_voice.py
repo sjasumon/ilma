@@ -54,11 +54,12 @@ def add_aliases(db):
                     lang='bn' if any('\u0900' <= c <= '\u09ff' for c in alias) else 'en', source='asr_test_2026-10-25'))
                 existing.add(alias)
                 added += 1
-    return added
+    from ilma_api.migrate_brac_aliases import add_aliases as add_brac_aliases
+    return added+add_brac_aliases(db)
 
 
 def migrate():
-    if engine.dialect.name != 'mysql': raise SystemExit('Voice runtime migration requires MySQL.')
+    if engine.dialect.name != 'mysql' or engine.url.database!='ilma': raise SystemExit('Voice runtime migration requires the ilma MySQL database.')
     schema = inspect(engine)
     if not schema.has_table('institution') or not schema.has_table('institution_alias'):
         raise SystemExit('Create/load the verified bank schema first; no sample institutions will be inserted.')

@@ -94,7 +94,7 @@ def test_speech_registration_uses_detected_language(db):
     async def run():
         register=AsyncMock(return_value=None)
         with patch('ilma_api.audio_cache.register_speech',new=register):
-            frames=[f async for f in run_pipeline(None,'ব্যাংকের সেবা','',VoiceContext(agent=True,ui_lang='en',speak=True,conversation=Conversation(state='DETAIL',institution_id=1,language='en')),BANKS,db,mode='text')]
+            frames=[f async for f in run_pipeline(None,'BRAC Bank কেমন আছে','',VoiceContext(agent=True,ui_lang='en',speak=True,conversation=Conversation(state='DETAIL',institution_id=1,language='en')),BANKS,db,mode='text')]
         assert register.await_count==1 and register.await_args.args[1]=='bn'
         assert any(f.startswith('event: speech_unavailable') for f in frames)
     asyncio.run(run())
@@ -106,3 +106,37 @@ def test_unrecognized_single_word_is_a_miss_without_model_guessing(db):
             return await run_agent_turn('অর্থহীনশব্দ',VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(state='DETAIL',institution_id=1,language='bn')),BANKS,db,[])
     result=asyncio.run(run())
     assert result['conversation']['state']=='DETAIL' and result['conversation']['misses']==1
+
+
+@pytest.mark.parametrize('reply,language',[('more details','bn'),('more detals','bn'),('আরও বিস্তারিত','en'),('two','bn')])
+@pytest.mark.parametrize('state',['BANK','DETAIL'])
+def test_current_option_reply_keeps_language_in_transcript_answer_and_speech(db,reply,language,state):
+    async def run():
+        register=AsyncMock(return_value=None)
+        ctx=VoiceContext(agent=True,ui_lang=language,speak=True,conversation=Conversation(state=state,institution_id=1,language=language))
+        with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('No model for options'))),patch('ilma_api.audio_cache.register_speech',new=register):
+            frames=[f async for f in run_pipeline(None,reply,'',ctx,BANKS,db,mode='text')]
+        transcript=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: transcript'))
+        result=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: result'))
+        assert transcript['language']==language and result['language']==language and result['conversation']['language']==language
+        assert register.await_args.args[1]==language and result['conversation']['institution_id']==1
+    asyncio.run(run())
+
+
+def test_real_english_question_can_still_change_bangla_conversation_language(db):
+    result=turn(db,'How is BRAC Bank doing?',Conversation(state='BANK',institution_id=1,language='bn'),ui='bn')
+    assert result['language']=='en'
+
+@pytest.mark.parametrize('reply',['breakbank','ব্রেক ব্যাংক'])
+def test_approved_brac_mishearing_aliases_are_idempotent_and_route(db,reply):
+    from ilma_api.migrate_brac_aliases import add_aliases,SOURCE
+    from ilma_api.db import Institution,InstitutionAlias
+    assert add_aliases(db)==2;db.commit();assert add_aliases(db)==0
+    bank=db.get(Institution,1)
+    banks=[{**BANKS[0],'aliases':[a.alias for a in bank.aliases]} ,BANKS[1]]
+    matches=match_candidates(reply,banks)
+    assert len(matches)==1 and matches[0]['id']==1 and matches[0]['confidence']==1 and not matches[0]['confirm']
+    assert {a.source for a in bank.aliases}=={SOURCE}
+    result=turn(db,reply,banks=banks)
+    assert result['conversation']['institution_id']==1 and result['conversation']['state']=='BANK'
+    assert bank.name_en=='BRAC Test Bank' and bank.name_bn=='পরীক্ষা ব্র্যাক ব্যাংক'

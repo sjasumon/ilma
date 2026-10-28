@@ -75,3 +75,8 @@ turns select Bangla/English from the transcript; taps retain conversation.langua
 The automatic-language undo keeps the bank and repeats the answer in the restored
 language. Twenty-turn, idle and navigation bounds prevent indefinite sessions.
 No transcript or state is persisted by this feature.
+
+Matched scripted replies retain the conversation language before transcript
+language selection, including “more details” in Bangla. Other questions still
+use the transcript language rule. BRAC’s two user-approved ASR spellings are
+stored as aliases; its displayed/source names remain unchanged.
