@@ -48,6 +48,22 @@ class TestStatusRules(unittest.TestCase):
         self.assertEqual(res.code, "watch")
         self.assertEqual(res.reasons[0]["rule"], "W1")
 
+    def test_developing_outlook_is_a_watch_reason(self):
+        inst = {"id": 101, "slug": "test-bank", "type": "bank", "coverage": "full"}
+        data = {
+            "facts": {
+                "crar": {"fact_id": "f1", "value": 0.14, "period": "2025", "period_end": date(2025, 12, 31), "source_info": {}},
+                "npl_ratio": {"fact_id": "f2", "value": 0.03, "period": "2025", "period_end": date(2025, 12, 31), "basis": "solo_calculated", "source_info": {}}
+            },
+            "ratings": [{"fact_id": "r1", "agency": "CRISL", "long_term": "A", "rated_on": date(2026, 8, 25), "outlook": "developing", "source_info": {}}],
+            "events": [], "rates": {}, "median_12m_fdr": 0.08
+        }
+        res = evaluate(inst, data, as_of=date(2026, 10, 27))
+        self.assertEqual(res.code, "watch")
+        self.assertEqual(res.reasons[0]["rule"], "W3")
+        self.assertIn("পূর্বাভাস অনিশ্চিত", res.reasons[0]["text_bn"])
+        self.assertNotIn("P3", [r["rule"] for r in res.reasons])
+
     def test_high_npl_and_crar(self):
         inst = {"id": 101, "slug": "test-bank", "type": "bank", "coverage": "full"}
         data = {
@@ -88,6 +104,48 @@ class TestStatusRules(unittest.TestCase):
         res_high = evaluate(inst, data, as_of=date(2026, 10, 27))
         self.assertEqual(res_high.code, "high")
         self.assertEqual(res_high.reasons[0]["rule"], "H1")
+
+    def test_future_event_does_not_trigger_high(self):
+        inst = {"id": 101, "slug": "test-bank", "name_bn": "টেস্ট ব্যাংক", "name_en": "Test Bank", "type": "bank", "coverage": "full"}
+        data = {
+            "facts": {
+                "crar": {"fact_id": "f1", "value": 0.15, "period": "2025", "period_end": date(2025, 12, 31), "source_info": {}},
+                "npl_ratio": {"fact_id": "f2", "value": 0.03, "period": "2025", "period_end": date(2025, 12, 31), "source_info": {}},
+            },
+            "ratings": [],
+            "events": [
+                {"event_id": "e-future", "type": "administrator", "official": True, "event_date": date(2027, 5, 1), "source_info": {}},
+            ],
+            "rates": {},
+            "median_12m_fdr": 0.08
+        }
+        res = evaluate(inst, data, as_of=date(2026, 10, 27))
+        self.assertNotEqual(res.code, "high")
+        self.assertNotIn("H1", [r["rule"] for r in res.reasons])
+
+    def test_watch_w2_has_no_advice_word(self):
+        inst = {"id": 101, "slug": "test-bank", "name_bn": "টেস্ট ব্যাংক", "name_en": "Test Bank", "type": "bank", "coverage": "full"}
+        data = {
+            "facts": {
+                "crar": {"fact_id": "f1", "value": 0.11, "period": "2025", "period_end": date(2025, 12, 31), "source_info": {}},
+                "npl_ratio": {"fact_id": "f2", "value": 0.03, "period": "2025", "period_end": date(2025, 12, 31), "source_info": {}},
+            },
+            "ratings": [],
+            "events": [],
+            "rates": {},
+            "median_12m_fdr": 0.08
+        }
+        res = evaluate(inst, data, as_of=date(2026, 10, 27))
+        self.assertEqual(res.code, "watch")
+        for reason in res.reasons:
+            self.assertNotIn("নিরাপদ", reason["text_bn"])
+            self.assertNotIn("safe", reason["text_en"].lower())
+
+    def test_missing_rules_version_is_loud(self):
+        inst = {"id": 101, "slug": "test-bank", "type": "bank", "coverage": "full"}
+        data = {"facts": {}, "ratings": [], "events": [], "rates": {}, "median_12m_fdr": 0.08}
+        with self.assertRaises(KeyError):
+            evaluate(inst, data, date(2026, 10, 27), cfg={"crar_min": 0.10})
 
 if __name__ == "__main__":
     unittest.main()

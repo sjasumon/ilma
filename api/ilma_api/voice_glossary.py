@@ -1,11 +1,16 @@
-"""Authored glossary text from FRD §21.2, not model-generated financial facts."""
+"""Authored glossary text from FRD §21.2, not model-generated financial facts.
+
+An entry's optional fourth value is its content version; corrected wording gets a
+new version so existing databases pick it up while the old row stays auditable.
+"""
 TERMS = [
-    (['npl', 'খেলাপি ঋণ'], 'যে ঋণের টাকা সময়মতো ফেরত আসছে না।', 'Loans whose repayments are not arriving on time.'),
-    (['crar', 'capital adequacy', 'মূলধন'], 'ব্যাংকের নিজের টাকা, যা ক্ষতি সামলাতে কাজে লাগে।', 'The bank’s own funds that help absorb losses.'),
+    (['npl', 'খেলাপি ঋণ'], 'যে ঋণের কিস্তি নির্ধারিত সময় পেরিয়েও ফেরত আসেনি; মোট ঋণের শতাংশ হিসেবে দেখানো হয়।', 'Loans whose repayments are overdue beyond the set period, shown as a share of total loans.', 2),
+    (['crar', 'capital adequacy', 'মূলধন'], 'ঝুঁকিভিত্তিক সম্পদের তুলনায় ব্যাংকের মূলধনের অনুপাত; বেশি হলে ক্ষতি সামলানোর সামর্থ্য বেশি।', 'The bank’s capital as a share of its risk-weighted assets; a higher ratio means more capacity to absorb losses.', 2),
     (['provision', 'প্রভিশন'], 'ক্ষতির আশঙ্কায় আগে থেকে আলাদা করে রাখা টাকা।', 'Money set aside in advance for possible losses.'),
-    (['deposit insurance', 'আমানত বিমা', 'আমানত বীমা'], 'ব্যাংক বন্ধ হলে আইন অনুযায়ী যত টাকা ফেরত পাবেন।', 'The amount repayable under the law if a bank closes.'),
-    (['credit rating', 'রেটিং'], 'ব্যাংকের আর্থিক শক্তির মূল্যায়ন, করে রেটিং সংস্থা।', 'A rating agency’s assessment of a bank’s financial strength.'),
+    (['deposit insurance', 'আমানত বিমা', 'আমানত বীমা'], 'ব্যাংক বন্ধ হলে আইন অনুযায়ী সর্বোচ্চ যত টাকা ফেরত পাওয়ার কথা।', 'The maximum amount repayable under the law if a bank closes.', 2),
+    (['credit rating', 'রেটিং'], 'ব্যাংক দেনা শোধ করতে পারবে কি না, সে বিষয়ে রেটিং সংস্থার মতামত; এটি আমানতের নিশ্চয়তা নয়।', 'A rating agency’s opinion of whether a bank can repay its obligations; it is not a deposit guarantee.', 2),
     (['negative outlook', 'নেতিবাচক দৃষ্টিভঙ্গি'], 'সামনে রেটিং কমতে পারে বলে সংস্থা মনে করছে।', 'The agency considers that the rating could fall.'),
+    (['developing outlook', 'অনিশ্চিত পূর্বাভাস'], 'রেটিং বাড়বে না কমবে, সংস্থা এখনো নিশ্চিত নয়।', 'The agency is not yet sure whether the rating will rise or fall.'),
     (['liquidity support', 'তারল্য সহায়তা'], 'টাকার টানাটানিতে বাংলাদেশ ব্যাংক থেকে নেওয়া ধার।', 'Borrowing from Bangladesh Bank when funds are tight.'),
     (['administrator', 'প্রশাসক'], 'ব্যাংক চালাতে বাংলাদেশ ব্যাংকের নিযুক্ত ব্যক্তি।', 'A person appointed by Bangladesh Bank to run the bank.'),
     (['merger', 'resolution', 'একীভূত', 'পুনর্গঠন'], 'দুর্বল ব্যাংককে অন্য ব্যাংকের সঙ্গে মেলানো বা নতুন করে গড়া।', 'Combining a weak bank with another bank or restructuring it.'),
@@ -27,11 +32,12 @@ TERMS = [
 def add_glossary(db):
     from ilma_api.db import AppContent
     added = 0
-    for aliases, bn, en in TERMS:
+    for aliases, bn, en, *revision in TERMS:
+        version = revision[0] if revision else 1
         for alias in aliases:
             for language, text in [('bn', bn), ('en', en)]:
                 key = 'glossary:' + alias
-                if db.get(AppContent, (key, language, 1)) is None:
-                    db.add(AppContent(content_key=key, lang=language, version=1, text=text, status='live'))
+                if db.get(AppContent, (key, language, version)) is None:
+                    db.add(AppContent(content_key=key, lang=language, version=version, text=text, status='live'))
                     added += 1
     return added

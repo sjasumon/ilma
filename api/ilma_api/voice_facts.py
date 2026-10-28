@@ -2,6 +2,10 @@
 import re
 from ilma_api.db import Fact, Rating, Event, AppContent
 from ilma_api.voice_text import normalize_alias
+from ilma_api.rules.reasons import format_date, format_number, to_bn_digits
+
+OUTLOOKS = {'stable': ('স্থির', 'stable'), 'positive': ('ইতিবাচক', 'positive'), 'negative': ('নেতিবাচক', 'negative'),
+            'developing': ('অনিশ্চিত', 'developing (uncertain)')}
 
 TOPICS = [
     ('npl_ratio', r'\bnpl\b|খেলাপি|bad loan|non.performing'),
@@ -25,7 +29,9 @@ def detail_facts(text, institution_id, language, db):
     if re.search(r'rating|রেটিং', text, re.I):
         row = db.query(Rating).filter_by(institution_id=institution_id).order_by(Rating.rated_on.desc()).first()
         if row and row.source:
-            rows.append({'text': f"{row.agency}: {row.long_term} ({row.rated_on})", **provenance(row.source, row.fact_id)})
+            outlook = OUTLOOKS.get(row.outlook or '', (row.outlook, row.outlook))[0 if bn else 1]
+            rows.append({'text': f"{row.agency}: {row.long_term}" + (f", {'পূর্বাভাস' if bn else 'outlook'} {outlook}" if outlook else '')
+                         + f" ({format_date(row.rated_on, bn=bn)})", **provenance(row.source, row.fact_id)})
         return rows
     news = bool(re.search(r'\bnews\b|খবর|সংবাদ', text, re.I))
     if news or re.search(r'fraud|incident|penalty|history|জালিয়াতি|জালিয়াতি|জরিমানা|ইতিহাস|সর্বশেষ ঘটনা', text, re.I):
@@ -48,8 +54,16 @@ def detail_facts(text, institution_id, language, db):
         if not re.search(pattern, text, re.I): continue
         row = db.query(Fact).filter_by(institution_id=institution_id, metric=metric).order_by(Fact.period_end.desc()).first()
         if not row or not row.source: continue
-        value = format(row.value * 100, '.2f').rstrip('0').rstrip('.') + '%' if row.unit == 'ratio' else format(row.value, 'f').split('.')[0] + (' টাকা' if bn else ' BDT')
-        rows.append({'text': f"{LABELS[metric][0 if bn else 1]}: {value} ({row.period})", **provenance(row.source, row.fact_id)})
+        if row.unit == 'ratio':
+            value = format_number(row.value * 100, bn=bn) + '%'
+        else:
+            value = format_number(row.value / 10_000_000, bn=bn) + (' কোটি টাকা' if bn else ' crore BDT')
+        label = LABELS[metric][0 if bn else 1]
+        if metric == 'net_profit' and row.value < 0:
+            label = 'নিট লোকসান' if bn else 'Net loss'
+            value = value.lstrip('-')
+        note = ('; নিরীক্ষকের প্রতিবেদন থেকে হিসাব করা' if bn else "; calculated from the auditor's report") if row.basis.endswith('_calculated') else ''
+        rows.append({'text': f"{label}: {value} ({to_bn_digits(row.period) if bn else row.period}{note})", **provenance(row.source, row.fact_id)})
     return rows
 
 

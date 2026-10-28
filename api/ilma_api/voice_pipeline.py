@@ -20,6 +20,13 @@ from ilma_api.report_card import get_institution_report_card
 from ilma_api.voice import VoiceError, MAX_UPLOAD_BYTES, convert_audio, transcribe
 from ilma_api.voice_text import VoiceContext, VoiceIntent, clean_transcript, match_candidates, decide_language, normalize_numbers, bank_name_only, related_parent_ids
 from ilma_api.voice_diagnostics import trace_stage
+from ilma_api.rules.reasons import to_bn_digits
+
+
+# ILMA never ranks or recommends banks. Answer immediately, without a model call.
+ADVICE = re.compile(r'সবচেয়ে (?:ভালো|ভাল|নিরাপদ|সেরা) ব্যাংক|সেরা ব্যাংক|কোন ব্যাংকে (?:টাকা )?রাখ|কোথায় টাকা রাখ|'
+    r'কোন ব্যাংক(?:টি|টা)? (?:সবচেয়ে )?(?:ভালো|ভাল|নিরাপদ|সেরা)|\b(?:best|safest|top) banks?\b|which bank should|'
+    r'where should i (?:keep|put|deposit|save)|recommend (?:a |me a |any )?bank', re.I)
 
 
 def parse_request(content_type, body, mode):
@@ -55,10 +62,20 @@ def event(name, payload):
     return 'event: ' + name + '\ndata: ' + json.dumps(payload, ensure_ascii=False) + '\n\n'
 
 
+INTENT_TIMEOUT_SECONDS = 12
+FIGURE = re.compile(r'\bnpl\b|খেলাপি|bad loans?|non.performing|\bcrar\b|capital ratio|মূলধন|net profit|\bprofit\b|মুনাফা|লোকসান|\bloss\b|রেটিং|\brating\b', re.I)
+# Words that make "profit"/"rate" a deposit or service question rather than a bank figure.
+SERVICE_WORDS = re.compile(r'হার|\brates?\b|\bfdr\b|\bdps\b|এফডিআর|ডিপিএস|সঞ্চয়|\bsavings\b|কার্ড|\bcards?\b|লোন|গৃহঋণ|'
+    r'\b(?:home|car|auto|personal|sme) loans?\b|\bfees?\b|ফি\s|ফি$|ফি[?।]|বীমা|বিমা|insurance|সুরক্ষ|কিস্তি|\bemi\b', re.I)
+
+
 async def understand(text, candidates, context, client=None):
     ids = [candidate['id'] for candidate in candidates]
     if bank_name_only(text, candidates) and len(ids) == 1:
         return VoiceIntent(intent='bank_status', institution_ids=ids)
+    # One named bank plus one stored figure needs no model: answer from the database.
+    if len(ids) == 1 and FIGURE.search(text) and not SERVICE_WORDS.search(text):
+        return VoiceIntent(intent='bank_detail', institution_ids=ids)
     # Standard mode keeps users' questions out of model-training contributions.
     if not settings.META_MODEL_API_KEY or 'contributor' in settings.MUSE_SPARK_MODEL.lower():
         raise VoiceError('voice_unconfigured', 503, 'ভয়েস সেবা প্রস্তুত নয়।', 'Configure Muse Spark in Standard mode.')
@@ -77,19 +94,40 @@ async def understand(text, candidates, context, client=None):
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'voice_intent', 'strict': True, 'schema': schema}}}
     async def send(http):
         return await http.post(settings.MUSE_SPARK_API_URL, headers={'Authorization': f'Bearer {settings.META_MODEL_API_KEY}'}, json=payload)
+    async def send_with_retry(http):
+        # One retry for quick transient failures; a slow first attempt is not repeated.
+        started = time.monotonic()
+        for attempt in range(2):
+            try:
+                response = await send(http)
+            except (httpx.ConnectError, httpx.RemoteProtocolError):
+                if attempt or time.monotonic() - started > 4: raise
+                continue
+            if response.status_code in (429, 500, 502, 503) and not attempt and time.monotonic() - started <= 4:
+                await asyncio.sleep(.5)
+                continue
+            return response
+    reason = 'invalid'
     try:
         if client is None:
-            async with httpx.AsyncClient(timeout=8, follow_redirects=False) as http:
-                response = await send(http)
-        else: response = await send(client)
-        if response.status_code != 200: raise ValueError('provider')
+            async with httpx.AsyncClient(timeout=httpx.Timeout(INTENT_TIMEOUT_SECONDS, connect=5), follow_redirects=False) as http:
+                response = await send_with_retry(http)
+        else: response = await send_with_retry(client)
+        if response.status_code != 200:
+            reason = f'status_{response.status_code}'
+            raise ValueError('provider')
         intent = VoiceIntent.model_validate_json(response.json()['choices'][0]['message']['content'])
         allowed = set(ids) | ({context.bank_id} if context.bank_id is not None else set())
         if any(id not in allowed for id in intent.institution_ids): raise ValueError('institution')
         if not intent.institution_ids and intent.intent in {'bank_status', 'bank_detail', 'rates'} and len(ids) == 1:
             intent.institution_ids = ids
         return intent
-    except (httpx.HTTPError, ValueError, KeyError, TypeError, IndexError):
+    except (httpx.HTTPError, ValueError, KeyError, TypeError, IndexError) as error:
+        if isinstance(error, httpx.TimeoutException): reason = 'timeout'
+        elif isinstance(error, httpx.HTTPError): reason = 'connection'
+        # Log only the failure class: never the question, response body or key.
+        import logging
+        logging.getLogger(__name__).warning('voice_intent_failed reason=%s', reason)
         raise VoiceError('intent_unavailable', 502, 'প্রশ্নটি বুঝতে পারিনি। আবার বলুন বা লিখুন।', 'Could not understand the question. Please try again or type.') from None
 
 
@@ -119,7 +157,7 @@ def build_result(intent, candidates, language, db, question=""):
         if not card.get('status'):
             summary = card.get('message_bn' if bn else 'message_en', missing)
         else:
-            summary = (card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + '। ' +
+            summary = (card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + ('। ' if bn else '. ') +
                        ' '.join(reason['text_bn' if bn else 'text_en'] for reason in card.get('reasons', [])[:3]))
         insurance_line=card.get('insurance',{}).get('text_bn' if bn else 'text_en')
         if insurance_line:summary += ' ' + insurance_line
@@ -127,7 +165,7 @@ def build_result(intent, candidates, language, db, question=""):
         # instead of waiting for three reasons and an unavailable-insurance note.
         spoken = summary
         if card.get('status'):
-            spoken = card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + '। '
+            spoken = card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + ('। ' if bn else '. ')
             if card.get('reasons'):
                 spoken += card['reasons'][0]['text_bn' if bn else 'text_en'] + ' '
         spoken += ' আরও তথ্য পর্দায় আছে। এটি আর্থিক পরামর্শ নয়।' if bn else ' More details are on screen. This is not financial advice.'
@@ -266,6 +304,13 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             return
         from ilma_api.voice_answers import numbers
         sensitive_numbers = bool(numbers(text))
+        if ADVICE.search(text):
+            language = decide_language(text, [], context.ui_lang)
+            intent, outcome = 'out_of_scope', 'refused'
+            yield event('result', {'type': 'refused', 'offer_bank_list': True, 'omit_history': True, 'language': language, 'sources': [],
+                'text': 'আমি কোনো ব্যাংক সুপারিশ করি না, তবে যেকোনো ব্যাংকের অবস্থা দেখাতে পারি। নিচে ব্যাংকের তালিকা খুলুন।' if language == 'bn'
+                    else 'I do not recommend banks, but I can show the condition of any listed bank. Open the bank list below.'})
+            return
         candidates = match_candidates(text, banks)
         related=related_parent_ids(text,banks)
         if context.bank_id in related:context=context.model_copy(update={'bank_id':None})
@@ -278,6 +323,16 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         language = decide_language(text, candidates, context.ui_lang)
         if language != context.ui_lang:
             yield event('transcript', {'text': text, 'language': language})
+        if not candidates:
+            from ilma_api.other_banks import find_other_bank
+            other = find_other_bank(text)
+            if other:
+                outcome = 'no_data'
+                count = len(banks)
+                yield event('result', {'type': 'not_in_demo', 'offer_bank_list': True, 'omit_history': sensitive_numbers, 'language': language, 'sources': [],
+                    'text': f'{other[0]} এখনো ডেমোতে নেই; ডেমোতে {to_bn_digits(count)}টি ব্যাংক আছে।' if language == 'bn'
+                        else f'{other[1]} is not in the demo yet; the demo has {count} banks.'})
+                return
         if not candidates and context.bank_id and context.tab == 'bank':
             bank = next((bank for bank in banks if bank['id'] == context.bank_id), None)
             if bank: candidates = [{**bank, 'alias': '', 'confidence': 1, 'confirm': False}]

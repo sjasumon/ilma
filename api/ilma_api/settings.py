@@ -1,4 +1,6 @@
+import logging
 import os
+import secrets
 from ilma_api.database_config import build_database_url
 from pathlib import Path
 from dotenv import load_dotenv
@@ -25,11 +27,22 @@ ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "")
 ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_v3")
 SPEECH_TIMEOUT_SECONDS = max(5, min(25, int(os.getenv("SPEECH_TIMEOUT_SECONDS", "25"))))
 
-VOICE_LOG_SALT = os.getenv("VOICE_LOG_SALT") or __import__("secrets").token_hex(32)
+VOICE_LOG_SALT = os.getenv("VOICE_LOG_SALT", "")
+if not VOICE_LOG_SALT:
+    # Watch-list identities and voice rate buckets are HMACs under this salt.
+    # A fallback keeps CI/test runs working, but production must pin a stable
+    # value in the private .env or every restart wipes users' watch lists.
+    VOICE_LOG_SALT = secrets.token_hex(32)
+    if os.getenv("ILMA_ENV", "production") == "production":
+        logging.getLogger(__name__).warning(
+            "VOICE_LOG_SALT is not set; generated an ephemeral salt — "
+            "watch lists and rate buckets will reset on restart.")
 
 # Diagnostic recordings require BOTH switches; never enable in production.
 ILMA_ENV = os.getenv("ILMA_ENV", "production")
 VOICE_DIAGNOSTICS_ENABLED = os.getenv("VOICE_DIAGNOSTICS_ENABLED", "false").lower() == "true"
+# The /voice-test acceptance page is only served when explicitly enabled.
+VOICE_TEST_PAGE_ENABLED = os.getenv("VOICE_TEST_PAGE_ENABLED", "false").lower() == "true"
 
 # Single-worker provider admission budgets. Restrict origins even during diagnostics.
 CORS_ORIGINS = [value.strip().rstrip('/') for value in os.getenv(

@@ -58,12 +58,16 @@ def convert(path, output, checked_on):
     def source(identifier,url,title,publisher,published=None,page=None):
         result['source'].append(dict(source_id=identifier,url=url,title=title[:255],publisher=publisher,published_at=published,
             page=page,checked_by='agent-v6.2',checked_on=checked_on))
+    amounts = {}
     for row in data['weak_bank_figures']:
         if row['bank_code'] not in added: raise ValueError('Unexpected supplemental bank.')
         if row['year']!='2025':raise ValueError('v6.2 source bindings are for 2025 audited figures.')
         metric = {'CRAR':'crar','NPL_RATIO':'npl_ratio','PROFIT_AFTER_TAX':'net_profit'}.get(row['metric_name'])
+        if row['metric_name'] in {'CLASSIFIED_INVESTMENT','GROSS_INVESTMENT'}:
+            amounts.setdefault(row['bank_code'],{})[row['metric_name']] = row
+            continue
         if not metric:
-            notes['withheld_metrics'].append(dict(bank=row['bank_code'],metric=row['metric_name'],reason='Not an explicit supported ratio; no derived NPL is invented.'))
+            notes['withheld_metrics'].append(dict(bank=row['bank_code'],metric=row['metric_name'],reason='Not an explicit supported figure.'))
             continue
         ratio = metric!='net_profit'
         value = Decimal(row['ratio_pct'])/100 if ratio else Decimal(row['metric_value'])
@@ -78,6 +82,26 @@ def convert(path, output, checked_on):
         result['fact'].append(dict(fact_id=identifier,institution_id=ids[row['bank_code']],metric=metric,value=value,
             unit='ratio' if ratio else 'bdt',period=row['year'],period_end=row['year']+'-12-31',source_id=identifier,
             quote=quote,basis=row['basis'],checked_by='agent-v6.2',checked_on=checked_on))
+    # Owner-approved derivation: the auditor's opinion states both amounts, so
+    # classified ÷ gross investment is published as a labelled calculated ratio.
+    for code,pair in amounts.items():
+        explicit = any(f['institution_id']==ids[code] and f['metric']=='npl_ratio' for f in result['fact'])
+        if explicit or set(pair)!={'CLASSIFIED_INVESTMENT','GROSS_INVESTMENT'}:
+            notes['withheld_metrics'].extend(dict(bank=code,metric=name,reason='No complete classified/gross pair or an explicit ratio exists.') for name in pair)
+            continue
+        classified,gross = pair['CLASSIFIED_INVESTMENT'],pair['GROSS_INVESTMENT']
+        value = (Decimal(classified['metric_value'])/Decimal(gross['metric_value'])).quantize(Decimal('0.0001'))
+        crore = lambda row: f"{Decimal(row['metric_value'])/10000000:,.2f}"
+        binding = bindings[(code,'financial')]
+        identifier = 'v62-fin-'+code.lower()+'-npl_ratio'
+        source(identifier,binding['url'],added[code]['name_en']+' · 2025 auditor opinion (calculated ratio)',binding['publisher'],page=int(classified['page_no']))
+        quote = (classified['quote']+'\n'+gross['quote']+'\nCalculation: '+crore(classified)+' ÷ '+crore(gross)
+            +' = '+format(value*100,'.2f')+'% (calculated from the auditor\'s report)')
+        result['fact'].append(dict(fact_id=identifier,institution_id=ids[code],metric='npl_ratio',value=value,
+            unit='ratio',period=classified['year'],period_end=classified['year']+'-12-31',source_id=identifier,
+            quote=quote,basis=classified['basis']+'_calculated',checked_by='agent-v6.2',checked_on=checked_on))
+        notes.setdefault('derived_metrics',[]).append(dict(bank=code,metric='npl_ratio',value=str(value),
+            inputs=['CLASSIFIED_INVESTMENT','GROSS_INVESTMENT'],reason='Owner approved on 28 October 2026: both amounts are quoted in the auditor opinion.'))
     for row in data['weak_bank_ratings']:
         if row['target_type'].casefold()!='entity' or row['is_current']!='1': continue
         binding = bindings[(row['bank_code'],'rating')]

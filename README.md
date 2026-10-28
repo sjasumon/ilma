@@ -122,6 +122,9 @@ Host-specific services, private backups and deployment commands belong in
 | `POST /v1/voice`, `/v1/ask` | Audio/text with SSE transcript and answer |
 | `POST /v1/speech`, `/v1/services/readout` | Spoken readouts |
 
+The public demo sits behind Cloudflare bot protection, which may block scripted
+clients (for example Python `urllib`). Use a browser, or run the API locally.
+
 ## Tests and repository checks
 
 Install **development** dependencies and run pytest; unittest discovery alone

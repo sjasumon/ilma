@@ -33,3 +33,9 @@ ilma_seed_input_*.zip
 /APP_SPEC_05_bank_services.md
 ilma_extra_input_*.zip
 /APP_SPEC_06_extra_data.md
+
+# Private incoming reviews and feedback remain in the shared workspace.
+CODE_REVIEW_*.md
+WEBSITE_FULL_TEST_*.md
+docs/review_muse.md
+feedback/

@@ -25,6 +25,20 @@ def format_percent(ratio: float | Decimal, bn: bool = False) -> str:
         return to_bn_digits(text)
     return text
 
+def format_number(value: int | float | Decimal, bn: bool = False, group: bool = True) -> str:
+    """Up to two decimals with lakh/crore grouping (7,000 · 10,000 · 2,429.87)."""
+    number = Decimal(str(value))
+    text = f"{abs(number):.2f}".rstrip("0").rstrip(".")
+    whole, dot, fraction = text.partition(".")
+    if group and len(whole) > 3:
+        head, groups = whole[:-3], [whole[-3:]]
+        while head:
+            groups.insert(0, head[-2:])
+            head = head[:-2]
+        whole = ",".join(groups)
+    text = ("-" if number < 0 else "") + whole + dot + fraction
+    return to_bn_digits(text) if bn else text
+
 def format_crore(taka: int | float | Decimal, bn: bool = False) -> str:
     crore = abs(float(taka)) / 10_000_000.0
     text = f"{crore:.2f}".rstrip("0").rstrip(".")

@@ -43,7 +43,9 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
         with open(cfg_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
             
-    rules_version = cfg.get("rules_version", "2026.10-v1")
+    # rules_version has no default: serving statuses stamped with a version
+    # that never shipped would mislabel every report card.
+    rules_version = cfg["rules_version"]
     crar_min = cfg.get("crar_min", 0.10)
     crar_buffer = cfg.get("crar_buffer", 0.025)
     npl_high = cfg.get("npl_high", 0.25)
@@ -57,7 +59,10 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
 
     facts = data.get("facts", {}) # metric -> row
     ratings = data.get("ratings", []) # sorted desc by rated_on
-    events = data.get("events", []) # sorted desc by event_date
+    # Defence in depth for B1: the loaders reject future-dated events, but a
+    # future row must never flip a status window even if one slips through.
+    events = [ev for ev in data.get("events", []) # sorted desc by event_date
+              if not ev.get("event_date") or ev.get("event_date") <= as_of]
     rates = data.get("rates", {})
     share_price_flag = data.get("share_price_flag")
     median_fdr = data.get("median_12m_fdr", 0.0)
@@ -132,6 +137,10 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
 
     # H4: latest npl_ratio >= 0.25
     npl_row = facts.get("npl_ratio")
+    # Ratios derived from quoted amounts are labelled, never shown as reported.
+    calculated = bool(npl_row and str(npl_row.get("basis") or "").endswith("_calculated"))
+    calc_bn = ", নিরীক্ষকের প্রতিবেদন থেকে হিসাব করা" if calculated else ""
+    calc_en = ", calculated from the auditor's report" if calculated else ""
     if npl_row and npl_row.get("value") is not None:
         npl_val = float(npl_row["value"])
         if npl_val >= npl_high:
@@ -143,8 +152,8 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
                 rule_id="H4",
                 fact_or_event_id=npl_row.get("fact_id"),
                 source_info=npl_row.get("source_info", {}),
-                text_bn=f"খেলাপি ঋণ {pct_bn}% — প্রতি ১০০ টাকার ঋণে {pct_bn} টাকা ফেরত আসছে না ({period_bn})।",
-                text_en=f"Bad loans {pct_en}% — of every Tk 100 lent, Tk {pct_en} is not being repaid ({period})."
+                text_bn=f"খেলাপি ঋণ {pct_bn}% — প্রতি ১০০ টাকার ঋণে {pct_bn} টাকা ফেরত আসছে না ({period_bn}{calc_bn})।",
+                text_en=f"Bad loans {pct_en}% — of every Tk 100 lent, Tk {pct_en} is not being repaid ({period}{calc_en})."
             ))
 
     # H5: latest long-term rating BB+ or lower
@@ -173,8 +182,8 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
                 rule_id="W1",
                 fact_or_event_id=npl_row.get("fact_id"),
                 source_info=npl_row.get("source_info", {}),
-                text_bn=f"খেলাপি ঋণ {format_percent(npl_val, bn=True)}% ({period_bn})।",
-                text_en=f"Bad loans {format_percent(npl_val)}% ({period})."
+                text_bn=f"খেলাপি ঋণ {format_percent(npl_val, bn=True)}% ({period_bn}{calc_bn})।",
+                text_en=f"Bad loans {format_percent(npl_val)}% ({period}{calc_en})."
             ))
 
     # W2: crar_min <= crar < crar_min + crar_buffer
@@ -187,11 +196,11 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
                 rule_id="W2",
                 fact_or_event_id=crar_row.get("fact_id"),
                 source_info=crar_row.get("source_info", {}),
-                text_bn=f"মূলধন অনুপাত {format_percent(crar_val, bn=True)}%, নিরাপদ সীমার কাছাকাছি ({period_bn})।",
+                text_bn=f"মূলধন অনুপাত {format_percent(crar_val, bn=True)}%, ন্যূনতম সীমার কাছাকাছি ({period_bn})।",
                 text_en=f"Capital ratio {format_percent(crar_val)}%, close to the minimum ({period})."
             ))
 
-    # W3: rating downgrade within 12m or outlook negative or latest rating BBB+, BBB, BBB-
+    # W3: rating downgrade within 12m, outlook negative/developing, or latest rating BBB+, BBB, BBB-
     if latest_rating:
         lt = latest_rating.get("long_term", "")
         agency = latest_rating.get("agency", "")
@@ -203,6 +212,11 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
             is_w3 = True
             ot_bn = ", পূর্বাভাস নেতিবাচক"
             ot_en = ", outlook negative"
+        elif outlook == "developing":
+            # Developing means the agency sees the direction as uncertain.
+            is_w3 = True
+            ot_bn = ", পূর্বাভাস অনিশ্চিত"
+            ot_en = ", outlook developing (uncertain)"
         elif lt in {"BBB+", "BBB", "BBB-"}:
             is_w3 = True
         

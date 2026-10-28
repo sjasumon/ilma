@@ -41,7 +41,11 @@ def test_sourced_high_cards_and_service_baseline(engine):
         assert all(r['source_url'] and r['quote'] for r in nbl['reasons']+islami['reasons'])
         assert db.scalar(select(Fact.value).where(Fact.institution_id==36,Fact.metric=='crar'))==__import__('decimal').Decimal('-.0548')
         assert db.scalar(select(Fact.value).where(Fact.institution_id==36,Fact.metric=='net_profit'))==-24298700000
-        assert not db.query(Fact).filter_by(institution_id=26,metric='npl_ratio').first()
+        npl=db.query(Fact).filter_by(institution_id=26,metric='npl_ratio').one()
+        assert npl.value==__import__('decimal').Decimal('.4966') and npl.basis=='solo_calculated'
+        assert '94,322.59' in npl.quote and '189,951.52' in npl.quote
+        assert [r['rule'] for r in islami['reasons']]==['H3','H4','W3']
+        assert 'হিসাব করা' in islami['reasons'][1]['text_bn'] and 'অনিশ্চিত' in islami['reasons'][2]['text_bn']
         assert db.query(Rating).filter_by(institution_id=26).one().outlook=='developing'
         assert db.query(BankIncident).count()==19
         assert not db.query(BankIncident).filter(BankIncident.incident_id.contains('CITYBANK_EMBEZZLE_2026')).first()

@@ -101,3 +101,13 @@ def test_stream_slot_held_until_completion_and_cancellation():
         except asyncio.CancelledError: pass
         assert gate.active == 0
     asyncio.run(run())
+
+
+def test_leave_unknown_key_is_safe():
+    gate = Admission(lambda: 0)
+    gate.leave("missing-key")
+    assert gate.active == 0
+    key, _ = gate.enter("a")
+    gate.leave(key)
+    gate.leave(key)
+    assert gate.active == 0

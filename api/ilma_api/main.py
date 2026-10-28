@@ -7,6 +7,7 @@ from fastapi import FastAPI, Depends, Query, HTTPException, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, inspect
 from sqlalchemy.exc import SQLAlchemyError
@@ -33,6 +34,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(SecurityHeadersMiddleware)
+# Compress text responses; text/event-stream is excluded so voice answers still stream.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 def get_db():
     db = SessionLocal()
@@ -43,8 +46,22 @@ def get_db():
 
 # Static assets directory
 STATIC_DIR = Path(__file__).parent.parent.parent / "static"
+
+
+class AppStaticFiles(StaticFiles):
+    """Versioned assets are immutable; the acceptance page is hidden unless enabled."""
+    async def get_response(self, path, scope):
+        if path == 'voice-test.html' and not settings.VOICE_TEST_PAGE_ENABLED:
+            raise HTTPException(status_code=404)
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            versioned = b'v=' in scope.get('query_string', b'')
+            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable' if versioned else 'public, max-age=86400'
+        return response
+
+
 if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    app.mount("/static", AppStaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/", include_in_schema=False)
 def serve_index():
@@ -99,11 +116,13 @@ def search_institutions(
             for i in insts
         ]
     
-    query_str = f"%{normalize('NFC', q.strip()).lower()}%"
+    # Escape LIKE wildcards so "%" or "_" searches for those characters literally.
+    term = normalize('NFC', q.strip()).lower().replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    query_str = f"%{term}%"
     # Search in institution names or aliases
     matched_ids = (
         db.query(InstitutionAlias.institution_id)
-        .filter(InstitutionAlias.alias.ilike(query_str))
+        .filter(InstitutionAlias.alias.ilike(query_str, escape='\\'))
         .all()
     )
     id_list = [mid[0] for mid in matched_ids]
@@ -116,9 +135,9 @@ def search_institutions(
         db.query(Institution)
         .filter(
             or_(
-                Institution.name_bn.ilike(query_str),
-                Institution.name_en.ilike(query_str),
-                Institution.slug.ilike(query_str),
+                Institution.name_bn.ilike(query_str, escape='\\'),
+                Institution.name_en.ilike(query_str, escape='\\'),
+                Institution.slug.ilike(query_str, escape='\\'),
                 Institution.id.in_(id_list)
             )
         )
@@ -275,6 +294,11 @@ async def _voice_request(request, db, mode):
         identifier = request.headers.get('x-ilma-device', '')[:80] or (request.client.host if request.client else 'anonymous')
         device_hash = hmac.new(settings.VOICE_LOG_SALT.encode(), (datetime.utcnow().strftime('%Y-%m') + identifier).encode(), hashlib.sha256).hexdigest()[:16]
         bind = db.get_bind()
+        # Streaming opens its own session; release the request session now so
+        # a slow voice stream does not hold a pooled connection for its whole
+        # duration. FastAPI's dependency cleanup close after this is a safe
+        # no-op on an already-closed session.
+        db.close()
         async def stream_response():
             nonlocal audio
             from ilma_api.voice_diagnostics import start_capture, capture_event, save_capture
@@ -350,8 +374,21 @@ def service_worker():
                         headers={'Cache-Control': 'no-cache', 'Service-Worker-Allowed': '/'})
 
 
+@app.get('/favicon.ico', include_in_schema=False)
+def favicon():
+    return FileResponse(STATIC_DIR / 'icons/favicon.ico', media_type='image/x-icon', headers={'Cache-Control': 'public, max-age=604800'})
+
+
+@app.get('/manifest.webmanifest', include_in_schema=False)
+def web_manifest():
+    return FileResponse(STATIC_DIR / 'manifest.webmanifest', media_type='application/manifest+json', headers={'Cache-Control': 'public, max-age=86400'})
+
+
 @app.get('/voice-test', include_in_schema=False)
 def voice_acceptance_page():
+    # Physical-device acceptance page: off unless explicitly enabled for a test window.
+    if not settings.VOICE_TEST_PAGE_ENABLED:
+        raise HTTPException(status_code=404)
     return FileResponse(STATIC_DIR / 'voice-test.html', headers={'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex'})
 
 

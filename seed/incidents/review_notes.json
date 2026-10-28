@@ -2,18 +2,7 @@
   "excluded_single_source": [
     "CITYBANK_EMBEZZLE_2026"
   ],
-  "withheld_metrics": [
-    {
-      "bank": "ISLAMIBANK",
-      "metric": "CLASSIFIED_INVESTMENT",
-      "reason": "Not an explicit supported ratio; no derived NPL is invented."
-    },
-    {
-      "bank": "ISLAMIBANK",
-      "metric": "GROSS_INVESTMENT",
-      "reason": "Not an explicit supported ratio; no derived NPL is invented."
-    }
-  ],
+  "withheld_metrics": [],
   "status_corrections": [
     {
       "incident": "ISLAMIBANK_SCAM_2022",
@@ -24,6 +13,18 @@
       "incident": "PRIMEBANK_EMBEZZLE_2014",
       "supplied": "charged",
       "published": "reported"
+    }
+  ],
+  "derived_metrics": [
+    {
+      "bank": "ISLAMIBANK",
+      "metric": "npl_ratio",
+      "value": "0.4966",
+      "inputs": [
+        "CLASSIFIED_INVESTMENT",
+        "GROSS_INVESTMENT"
+      ],
+      "reason": "Owner approved on 28 October 2026: both amounts are quoted in the auditor opinion."
     }
   ]
 }

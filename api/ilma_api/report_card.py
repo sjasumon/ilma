@@ -54,6 +54,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
                 "unit": f.unit,
                 "period": f.period,
                 "period_end": f.period_end,
+                "basis": f.basis,
                 "quote": f.quote,
                 "source_info": {
                     "source_id": src.source_id if src else None,
@@ -146,8 +147,10 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         }
 
     # The current service export supersedes legacy deposit-rate fixtures.
+    # unit='pct_year' is load-bearing: value_num is divided by 100 below, so a
+    # bdt-unit row must never enter the median or a bank's own rate.
     service_rates = db.query(ServiceOffer).filter_by(product_type='fdr', tenor_months=12,
-        attribute='rate', basis='conventional', hidden=False).all()
+        attribute='rate', basis='conventional', hidden=False, unit='pct_year').all()
     if service_rates:
         chosen = {}
         eligible = [row for row in service_rates if row.value_num is not None and not row.stale and (as_of-row.doc_date).days<=365]

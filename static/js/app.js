@@ -13,7 +13,7 @@ const T = {
     tryExamples: [
       "যেমন বলুন: “ইস্টার্ন ব্যাংক কেমন আছে?”",
       "যেমন বলুন: “ডাচ-বাংলা ব্যাংকের খেলাপি ঋণ কত?”",
-      "যেমন বলুন: “পূবালী ব্যাংকে ৫ লাখ টাকা রাখলে কতটা নিরাপদ?”",
+      "যেমন বলুন: “আমার টাকা কি বীমা করা আছে?”",
       "যেমন বলুন: “ব্র্যাক ব্যাংকের ক্রেডিট রেটিং কী?”"
     ],
     tabs: {
@@ -28,7 +28,7 @@ const T = {
       listenBtn: "নিয়ম পড়ে শুনুন",
       insHeading: "আমানত সুরক্ষা হিসাব (Insurance Explainer)",
       insDesc: "“Tk 2 lakh of your Tk 5 lakh is covered” — কোনো অ্যাকাউন্ট বা ব্যক্তিগত তথ্য ছাড়াই হিসাব করুন।",
-      amtLabel: "জমা টাকার পরিমাণ (BDT):",
+      amtLabel: "উদাহরণের পরিমাণ (BDT):",
       typeLabel: "প্রতিষ্ঠানের ধরন:",
       optBank: "বাণিজ্যিক ব্যাংক (আইন ২০২৬ প্রযোজ্য)",
       optNbfi: "আর্থিক প্রতিষ্ঠান - NBFI (বীমা কার্যকর ১ জুলাই ২০২৮)",
@@ -38,7 +38,7 @@ const T = {
       nbfiNote: "আর্থিক প্রতিষ্ঠানের (NBFI) আমানত বর্তমানে বীমা সুবিধার আওতাভুক্ত নয়। ১ জুলাই ২০২৮ থেকে কার্যকর হবে।",
       retHeading: "এফডিআর ও প্রকৃত মুনাফা ক্যালকুলেটর (Real Return)",
       retDesc: "উৎস কর (AIT) ও বর্তমান মুদ্রাস্ফীতি (৯.৮%) সমন্বয়ের পর আপনার কত টাকা লাভ থাকবে?",
-      retAmtLabel: "আমানত বা এফডিআর (টাকা):",
+      retAmtLabel: "উদাহরণ — আমানত/এফডিআর (টাকা):",
       retRateLabel: "বার্ষিক মুনাফার হার (%):",
       retTenorLabel: "মেয়াদ:",
       tinLabel: "টিআইএন (TIN) সার্টিফিকেট আছে (১০% কর, না থাকলে ১৫%)",
@@ -72,7 +72,7 @@ const T = {
     tryExamples: [
       "Try: “How is Eastern Bank doing?”",
       "Try: “What is Dutch-Bangla Bank's bad loan ratio?”",
-      "Try: “Is Tk 5 Lakh safe in Pubali Bank?”",
+      "Try: “Is my money insured?”",
       "Try: “What is BRAC Bank's credit rating?”"
     ],
     tabs: {
@@ -87,7 +87,7 @@ const T = {
       listenBtn: "Listen to guide",
       insHeading: "Deposit Insurance Breakdown",
       insDesc: "“Tk 2 lakh of your Tk 5 lakh is covered” — calculate without account or personal details.",
-      amtLabel: "Deposit Amount (BDT):",
+      amtLabel: "Example amount (BDT):",
       typeLabel: "Institution Type:",
       optBank: "Commercial Bank (Act 2026 applicable)",
       optNbfi: "NBFI - Financial Institution (Coverage starts 1 July 2028)",
@@ -97,7 +97,7 @@ const T = {
       nbfiNote: "NBFI deposits are currently not insured; coverage begins 1 July 2028.",
       retHeading: "FDR & Real Return Calculator",
       retDesc: "What purchasing power remains after withholding tax (AIT) and 9.8% inflation?",
-      retAmtLabel: "Deposit / FDR (BDT):",
+      retAmtLabel: "Example — deposit / FDR (BDT):",
       retRateLabel: "Annual Interest / Profit Rate (%):",
       retTenorLabel: "Tenor:",
       tinLabel: "Has TIN certificate (10% tax, otherwise 15%)",
@@ -380,6 +380,8 @@ function updateLocalizedText() {
   document.getElementById("lbl-tin").textContent = t.services.tinLabel;
 
   document.getElementById("card-why-heading").textContent = t.detail.whyHeading;
+  for (const code of ["strong", "watch", "high"]) document.getElementById(`scale-label-${code}`).textContent = STATUS_WORDS[code][currentLang === "bn" ? 0 : 1];
+  document.querySelectorAll(".pin-note").forEach(note => { note.textContent = currentLang === "bn" ? "পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না" : "We never ask for your PIN, OTP or account number"; note.lang = currentLang; });
   document.getElementById("card-checks-heading").textContent = t.detail.checksHeading;
   document.getElementById("lbl-listen-rpt").textContent = t.detail.listenReport;
   document.getElementById("lbl-watch-rpt").textContent = t.detail.watchReport;
@@ -594,7 +596,8 @@ function showVoiceFallback(code = "unmatched") {
   const bn = currentLang === "bn";
   voiceFailures++;
   const transcript = document.getElementById("voice-transcript");
-  transcript.hidden = false;
+  // Offline, nothing was recorded, so a "no transcript" line would only confuse.
+  transcript.hidden = code === "offline" && !lastVoiceTranscript;
   transcript.textContent = lastVoiceTranscript
     ? (bn ? "আপনি বলেছেন: " : "You said: ") + `“${lastVoiceTranscript}”`
     : (bn ? "এই চেষ্টায় কোনো প্রতিলিপি পাওয়া যায়নি।" : "No transcript was received for this attempt.");
@@ -602,7 +605,7 @@ function showVoiceFallback(code = "unmatched") {
     request_limited: bn ? "অনুরোধের সীমা হয়েছে। একটু পরে আবার চেষ্টা করুন।" : "The service request limit was reached. Please wait before trying again.",
     upload_timeout: bn ? "আপলোডে সময় বেশি লাগছে। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।" : "The upload timed out. Check your connection and try again.",
     origin_denied: bn ? "অ্যাপের অনুমোদিত ঠিকানা থেকে খুলুন।" : "Open the app from its approved address.",
-    offline: bn ? "ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আবার চেষ্টা করুন।" : "You are offline. Reconnect to use voice search.",
+    offline: bn ? "কথা বলতে ইন্টারনেট লাগবে; আগে দেখা ব্যাংক অফলাইনে দেখা যাবে।" : "Voice needs the internet. Banks you viewed before are available offline.",
     unclear: bn ? "বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Not understood. Please speak again or type.",
     transcript_language_mismatch: bn ? "ভয়েস সেবা অন্য লিপিতে কথা লিখেছে। উপরের লেখা দেখুন, আবার বলুন বা লিখে সংশোধন করুন।" : "The speech service returned text in an unexpected script. Check the text above, then speak again or type a correction.",
     intent_unavailable: bn ? "প্রশ্নটি বুঝতে পারিনি। আবার বলুন বা লিখুন।" : "Could not understand the question. Speak again or type.",
@@ -724,7 +727,13 @@ function playFixedClip(key) {
 
 function syncConnectivity() {
   const offline = navigator.onLine === false;
-  for (const id of ["home-tap-target", "bank-voice-btn", "services-voice-btn"]) document.getElementById(id).setAttribute("aria-disabled", String(offline));
+  // Mic controls stay operable offline: activating one explains that voice needs
+  // the internet, which aria-disabled would hide from touch and screen-reader users.
+  for (const id of ["home-tap-target", "bank-voice-btn", "services-voice-btn"]) {
+    const control = document.getElementById(id);
+    control.removeAttribute?.("aria-disabled");
+    if (offline) control.setAttribute("aria-describedby", "offline-note"); else control.removeAttribute?.("aria-describedby");
+  }
   const note = document.getElementById("offline-note");
   note.textContent = currentLang === "bn" ? "অফলাইন — আগের ব্যাংকের তথ্য দেখা যাবে" : "Offline — saved bank reports are available";
   note.hidden = !offline;
@@ -782,7 +791,7 @@ async function sendVoiceInput(audio, text, request) {
         const data = block.match(/^data: (.+)$/m)?.[1];
         if (request !== voiceRequest) { await reader.cancel(); return; }
         if (data) {
-          armTimeout(30000);
+          armTimeout(45000);
           let parsed;
           try { parsed = JSON.parse(data); } catch { throw new Error("voice_incomplete_response"); }
           await handleVoiceEvent(name, parsed, audioRequest);
@@ -841,6 +850,12 @@ async function handleVoiceEvent(name, data, audioRequest) {
       link.textContent = (currentLang === "bn" ? "সূত্র: " : "Source: ") + (currentLang==='bn'?(source.source_title_bn||`মূল নথি ${toBnDigits(index+1)}`):(source.source_title_en||source.source_title||source.fact_id||'')); allSources.appendChild(link);
     });
     const list = document.getElementById("voice-matches"); list.replaceChildren();
+    if (data.offer_bank_list) {
+      const button = document.createElement("button"); button.type = "button"; button.className = "voice-bank-choice";
+      button.textContent = currentLang === "bn" ? "ব্যাংকের তালিকা দেখুন" : "See the bank list";
+      button.addEventListener("click", () => { closeVoiceFeedback(); currentBankId = null; switchTab("detail"); });
+      list.appendChild(button);
+    }
     (data.candidates || []).forEach(bank => {
       const button = document.createElement("button"); button.type = "button"; button.className = "voice-bank-choice";
       button.textContent = currentLang === "bn" ? bank.name_bn : bank.name_en;
@@ -908,6 +923,7 @@ async function loadReportCard(bankId) {
   document.getElementById("card-status-meaning").textContent = "";
   document.getElementById("scale-marker").className = "scale-marker hidden";
   ["reasons-list", "checks-list", "card-insurance-line"].forEach(id => document.getElementById(id).replaceChildren());
+  showReportError("");
   if (!bankId) return;
   try {
     const res = await fetch(`/v1/institutions/${bankId}/report-card`);
@@ -917,12 +933,43 @@ async function loadReportCard(bankId) {
     reportCardData = data;
     reportCardData._offline = res.headers?.get("X-ILMA-Offline") === "1";
     renderReportCard();
+    document.getElementById("card-bank-name").focus({ preventScroll: true });
   } catch (err) {
     if (request !== reportRequest) return;
-    const message = currentLang === "bn" ? "তথ্য লোড করা যায়নি। ব্যাংক বেছে নিয়ে আবার চেষ্টা করুন।" : "Could not load data. Select a bank to try again.";
-    document.getElementById("card-bank-name").textContent = message;
+    const message = navigator.onLine === false
+      ? (currentLang === "bn" ? "এই ব্যাংকের তথ্য অফলাইনে নেই। ইন্টারনেট চালু হলে দেখুন।" : "This bank's report is not saved for offline use. Connect to the internet to view it.")
+      : (currentLang === "bn" ? "তথ্য লোড করা যায়নি। ব্যাংকের তালিকায় ফিরে আবার চেষ্টা করুন।" : "Could not load data. Go back to the bank list and try again.");
+    showReportError(message);
     document.getElementById("sr-announcer").textContent = message;
   }
+}
+
+// A failed load hides the status panel and sheet, so no empty card or Listen/Watch buttons remain.
+function showReportError(message) {
+  const error = document.getElementById("bank-report-error");
+  error.textContent = message;
+  error.hidden = !message;
+  document.getElementById("card-status-panel").hidden = Boolean(message);
+  document.getElementById("card-sheet").hidden = Boolean(message);
+  if (message) document.getElementById("card-bank-name").textContent = currentLang === "bn" ? "তথ্য পাওয়া যায়নি" : "Report unavailable";
+}
+
+const STATUS_WORDS = { strong: ["ভালো অবস্থা", "Strong"], watch: ["সতর্ক থাকুন", "Watch"], high: ["ঝুঁকি বেশি", "High risk"] };
+// Short names for the rules behind a card, so the summary repeats its actual reasons.
+const REASON_PHRASES = {
+  H1: ["নিয়ন্ত্রক পদক্ষেপ", "regulatory action"], H2: ["টাকা তোলায় সীমা", "withdrawal limits"],
+  H3: ["মূলধন ঘাটতি", "a capital shortfall"], H4: ["উচ্চ খেলাপি ঋণ", "high bad loans"], H5: ["দুর্বল রেটিং", "a low credit rating"],
+  W1: ["খেলাপি ঋণ বেশি", "elevated bad loans"], W2: ["মূলধন ন্যূনতম সীমার কাছাকাছি", "capital close to the minimum"],
+  W3: ["রেটিং নিয়ে সতর্কতা", "a rating caution"], W4: ["জরিমানা বা মামলা", "a penalty or legal case"],
+  W5: ["প্রভিশন ঘাটতি", "a provision shortfall"], W6: ["লোকসান", "a loss"], W7: ["গড়ের চেয়ে অনেক বেশি আমানতের হার", "deposit rates far above the median"],
+  W8: ["জরুরি তারল্য সহায়তা", "emergency liquidity support"], W9: ["শেয়ারের দাম অভিহিত মূল্যের নিচে", "shares trading below face value"]
+};
+
+function reasonSummary(reasons, isBn) {
+  const phrases = [...new Set((reasons || []).map(reason => REASON_PHRASES[reason.rule]?.[isBn ? 0 : 1]).filter(Boolean))];
+  if (!phrases.length) return "";
+  const joined = phrases.length === 1 ? phrases[0] : phrases.slice(0, -1).join(", ") + (isBn ? " ও " : " and ") + phrases[phrases.length - 1];
+  return isBn ? `${joined}।` : `${joined[0].toUpperCase()}${joined.slice(1)}.`;
 }
 
 function escapeHTML(value) {
@@ -955,9 +1002,9 @@ function renderReportCard() {
   if (statusCode === "strong") {
     meaningEl.textContent = isBn ? "আইনি মূলধন পর্যাপ্ত ও খেলাপি ঋণ স্বাভাবিক সীমার মধ্যে রয়েছে।" : "Capital is sound and non-performing loans are well-controlled.";
   } else if (statusCode === "watch") {
-    meaningEl.textContent = isBn ? "কিছু সূচকে সতর্কতা লক্ষ্য করা গেছে, নিয়মিত নজর রাখা প্রয়োজন।" : "Caution indicated in certain metrics; monitoring recommended.";
+    meaningEl.textContent = reasonSummary(data.reasons, isBn) || (isBn ? "কিছু সূচকে সতর্কতা লক্ষ্য করা গেছে, নিয়মিত নজর রাখা প্রয়োজন।" : "Caution indicated in certain metrics; monitoring recommended.");
   } else if (statusCode === "high") {
-    meaningEl.textContent = isBn ? "উচ্চ খেলাপি ঋণ বা নিয়ন্ত্রক পদক্ষেপ রয়েছে।" : "High bad loans or critical regulatory intervention recorded.";
+    meaningEl.textContent = reasonSummary(data.reasons, isBn) || (isBn ? "ঝুঁকির সংকেত পাওয়া গেছে; কারণগুলো নিচে দেখুন।" : "Risk signals were found; see the reasons below.");
   } else {
     meaningEl.textContent = isBn ? "নিরীক্ষিত আর্থিক তথ্য এখনও পর্যাপ্ত নয়।" : "Audited financial reports are not yet fully available.";
   }
@@ -1021,7 +1068,7 @@ function renderReportCard() {
   const sr = document.getElementById("sr-announcer");
   if (sr) {
     sr.textContent = isBn
-      ? `অবস্থা: ${status.label_bn}। কারণ ${(data.reasons || []).length}টি। ${data.institution.name_bn}।`
+      ? `অবস্থা: ${status.label_bn}। কারণ ${toBnDigits((data.reasons || []).length)}টি। ${data.institution.name_bn}।`
       : `Status: ${status.label_en}. ${(data.reasons || []).length} reasons. ${data.institution.name_en}.`;
   }
 }
@@ -1160,7 +1207,7 @@ async function loadNews() {
         <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
           ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
         </span>
-        <h3 style="font-family: var(--display); font-size: 20px; font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h3>
+        <h2 style="font-family: var(--display); font-size: 20px; font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
         ${isBn&&!/[\u0980-\u09ff]/.test(n.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}
         <div style="font-size: 14px; color: #666; display: flex; justify-content: space-between;">
           <span>${escapeHTML(n.publisher || '—')}</span>

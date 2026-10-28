@@ -15,7 +15,7 @@ PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
 UNAPPROVED_BRANDS = ('cl' + 'aude', 'anth' + 'ropic')
 PRIVATE_PREFIXES = ('private-reference/', 'bank and bank service menu/',
     'ilma-agent/', 'ilma_waveform_agent_handoff/', 'tests/fixtures/export_v5_2/',
-    'voice-diagnostics/', 'voice-backups/', 'voice-drafts/', 'audio/')
+    'voice-diagnostics/', 'voice-backups/', 'voice-drafts/', 'audio/', 'feedback/')
 DEBUG_ASSETS = {'design/error.png', 'design/error1.png', 'design/e1.png', 'design/search.png'}
 PRIVATE_COLUMNS = {'local_path', 'sha256', 'obtained_by', 'run_id', 'article_text'}
 
@@ -31,7 +31,7 @@ def tree_errors(files):
     for name, content in files.items():
         path = Path(name)
         if (name.startswith(PRIVATE_PREFIXES) or name.startswith(('ilma_incidents_input_','ilma_seed_input_','ilma_extra_input_')) or name in DEBUG_ASSETS or
-            path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_')) or (path.name.startswith('.env') and path.name != '.env.example') or
+            path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_', 'CODE_REVIEW_', 'WEBSITE_FULL_TEST_')) or name=='docs/review_muse.md' or (path.name.startswith('.env') and path.name != '.env.example') or
             name.endswith(('.sql', '.sql.gz'))):
             errors.append(f'Private/unwanted path tracked: {name}')
         try:

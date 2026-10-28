@@ -4,8 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ILMA · Your trusted savings companion</title>
-  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-38">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-38">
+  <meta name="description" content="ব্যাংকের নাম বলুন, সূত্রসহ আর্থিক অবস্থা জানুন। Say a Bangladeshi bank's name to see its sourced financial status. Information, not financial advice.">
+  <meta name="theme-color" content="#1E4542">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/static/icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ILMA · ইলমা">
+  <meta property="og:title" content="ILMA · ইলমা — bank status by voice">
+  <meta property="og:description" content="Say a Bangladeshi bank's name in Bangla or English to see its financial status with sources. Information, not financial advice.">
+  <meta property="og:url" content="https://app.sumon.me/">
+  <meta property="og:image" content="https://app.sumon.me/static/icons/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=voice-complete-20261028-39">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=voice-complete-20261028-39">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -22,7 +38,7 @@
   <a href="#main-content" class="skip-link">মূল বিষয়ে যান (Skip to content)</a>
   <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
 
-  <div class="scr home-open" id="main-content" role="main" tabindex="-1">
+  <div class="scr home-open">
     <!-- Top Bar matching S01-Home.html -->
     <header class="top-bar">
       <div class="wordmark" aria-label="ইলমা ILMA">
@@ -39,6 +55,7 @@
       <p id="offline-note" role="status" hidden></p>
     </header>
 
+    <main id="main-content" class="app-main" tabindex="-1">
     <!-- TAB 1: S-01 HOME & S-02 LISTENING -->
     <section id="tab-home" class="tab-content active" aria-label="হোম">
       <div class="home-tap-target">
@@ -96,7 +113,7 @@
             “Tk 2 lakh of your Tk 5 lakh is covered” — কোনো অ্যাকাউন্ট বা ব্যক্তিগত তথ্য ছাড়াই হিসাব করুন।
           </p>
 
-          <label class="calc-label" for="ins-amt-input" id="srv-amt-label">জমা টাকার পরিমাণ (BDT):</label>
+          <label class="calc-label" for="ins-amt-input" id="srv-amt-label">উদাহরণের পরিমাণ (BDT):</label>
           <input type="number" id="ins-amt-input" min="0" class="calc-field" value="500000" step="50000">
 
           <div class="quick-pills">
@@ -123,7 +140,7 @@
             উৎস কর (AIT) ও বর্তমান মুদ্রাস্ফীতি (৯.৮%) সমন্বয়ের পর আপনার কত টাকা লাভ থাকবে?
           </p>
 
-          <label class="calc-label" for="ret-amt-input" id="srv-ret-amt-lbl">আমানত বা এফডিআর (টাকা):</label>
+          <label class="calc-label" for="ret-amt-input" id="srv-ret-amt-lbl">উদাহরণ — আমানত/এফডিআর (টাকা):</label>
           <input type="number" id="ret-amt-input" min="0" class="calc-field" value="100000" step="10000">
 
           <label class="calc-label" for="ret-rate-input" id="srv-ret-rate-lbl">বার্ষিক মুনাফার হার (%):</label>
@@ -148,7 +165,7 @@
         </div>
 
         <div style="margin-top: 20px; font-size: 14px; color: var(--ink-2);">
-          🔒 পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না (FRD DAT-01)
+          🔒 <span class="pin-note">পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না</span>
         </div>
       </div>
     </section>
@@ -172,7 +189,8 @@
       </div>
 
       <!-- Teal Status Panel on --stage-lo (#0F2624) -->
-      <div class="status-panel-lo" role="region" aria-label="ব্যাংকের স্বাস্থ্য অবস্থা">
+      <p id="bank-report-error" class="catalog-empty" role="alert" hidden></p>
+      <div class="status-panel-lo" id="card-status-panel" role="region" aria-label="ব্যাংকের স্বাস্থ্য অবস্থা">
         <div class="status-mark" id="card-status-mark" aria-hidden="true">✓</div>
         <div class="status-word strong" id="card-status-word">ভালো অবস্থা</div>
         <p class="status-meaning" id="card-status-meaning">আইনি মূলধন পর্যাপ্ত ও খেলাপি ঋণ স্বাভাবিক সীমার মধ্যে রয়েছে।</p>
@@ -187,20 +205,18 @@
           <div class="scale-marker pos-strong" id="scale-marker"></div>
         </div>
         <div class="scale-labels" aria-hidden="true">
-          <span>ভালো অবস্থা</span>
-          <span>সতর্ক থাকুন</span>
-          <span>ঝুঁকি বেশি</span>
+          <span id="scale-label-strong">ভালো অবস্থা</span>
+          <span id="scale-label-watch">সতর্ক থাকুন</span>
+          <span id="scale-label-high">ঝুঁকি বেশি</span>
         </div>
       </div>
 
-      <!-- Ivory Sheet -->
-      <div class="sheet">
-        <div class="insurance-banner" id="card-insurance-line">
-          🛡️ আমানত সুরক্ষা আইন ২০২৬ অনুযায়ী প্রতি গ্রাহকের সর্বোচ্চ ২ লাখ টাকা পর্যন্ত শতভাগ আমানত বীমা দ্বারা সুরক্ষিত (১৭ কর্মদিবসের মধ্যে প্রদানযোগ্য)।
-        </div>
-
+      <!-- Ivory Sheet: the reasons are the answer; insurance follows them. -->
+      <div class="sheet" id="card-sheet">
         <h2 class="sheet-title" id="card-why-heading">কেন এই অবস্থা? (৩টি প্রধান কারণ)</h2>
         <div id="reasons-list" role="list" aria-label="৩টি মূল কারণ"></div>
+
+        <div class="insurance-banner" id="card-insurance-line"></div>
 
         <div style="margin: 20px 0 28px; display: flex; gap: 10px; flex-wrap: wrap;">
           <button id="btn-listen-report" class="btn-primary-listen" aria-label="রিপোর্ট কার্ড পড়ে শুনুন">
@@ -218,7 +234,7 @@
           এটি তথ্য, পরামর্শ নয়। টাকা রাখার আগে ব্যাংকে হার ও নিয়ম নিশ্চিত হয়ে নিন।
         </div>
         <div style="margin-top: 10px; font-size: 13px; color: var(--ink-2);">
-          🔒 পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না
+          🔒 <span class="pin-note">পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না</span>
         </div>
       </div>
       </div>
@@ -239,6 +255,7 @@
         <div id="news-feed" role="list" aria-label="সংবাদ ও সার্কুলারের তালিকা"></div>
       </div>
     </section>
+    </main>
 
         <dialog id="voice-feedback" class="voice-feedback" aria-labelledby="voice-dialog-title" hidden>
           <div class="voice-dialog-heading"><h2 id="voice-dialog-title">ভয়েস অনুসন্ধান</h2><button id="voice-dialog-close" class="settings-close" type="button" aria-label="বন্ধ করুন">×</button></div>
@@ -338,8 +355,8 @@
     </nav>
   </div>
 
-  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-38"></script>
-  <script src="/static/js/app.js?v=voice-complete-20261028-38"></script>
-  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-38"></script>
+  <script src="/static/js/voice-recorder.js?v=voice-complete-20261028-39"></script>
+  <script src="/static/js/app.js?v=voice-complete-20261028-39"></script>
+  <script src="/static/js/bank-services-ui.js?v=voice-complete-20261028-39"></script>
 </body>
 </html>

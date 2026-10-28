@@ -70,6 +70,16 @@ class TestAPI(unittest.TestCase):
         self.assertNotIn('/v1/services/insurance-split',paths)
         self.assertNotIn('/v1/services/calculate-return',paths)
 
+    def test_seed_fixtures_are_not_marked_as_verified(self):
+        from ilma_api.db import Release, Source, Fact
+        note = self.db.query(Release).filter_by(release_id="seed-2026-10-27-01").first().note
+        self.assertIn("fixture", note.lower())
+        self.assertNotIn("verified", note.lower())
+        rows = self.db.query(Source).all() + self.db.query(Fact).all()
+        self.assertTrue(rows)
+        for row in rows:
+            self.assertNotEqual(row.checked_by.casefold(), "sumon")
+
     def test_licence_only_has_no_status(self):
         from ilma_api.db import Institution
         from ilma_api.main import get_report_card

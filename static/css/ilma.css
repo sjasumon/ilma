@@ -997,5 +997,11 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .catalog-variants .catalog-card { margin-top:12px; }
 .catalog-variants strong { overflow-wrap:anywhere; }
 
+/* Tab panels sit in their own main landmark, beside the header and dock. */
+.app-main { display: flex; flex-direction: column; flex: 1; min-width: 0; width: 100%; }
+.app-main:focus { outline: none; }
+#reasons-list + .insurance-banner { margin: 16px 0 0; }
+#bank-report-error { margin: 16px 20px; color: var(--on-stage); }
+
 /* Publication links use the existing stage colour and retain their underline. */
 .publication-card .catalog-source { color:var(--stage); font-weight:700; text-underline-offset:.18em; }

@@ -75,7 +75,11 @@ def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
             item['renewal_offer']=offer_view(renewal) if renewal else None
             item['range_max']=offer_view(high) if high else None
         else:
-            item['state']='checking' if any(r.hidden for r in candidates) else 'not_published' if bank.slug=='dutchbangl' and product_type in {'fdr','dps','savings'} else 'missing'
+            # The export converter slugs codes as code.lower() ('dutchbangl')
+            # while legacy fixtures use hyphenated slugs ('dutch-bangla-bank');
+            # match both spellings so the state is identical on either database.
+            slug_key=bank.slug.replace('-','')
+            item['state']='checking' if any(r.hidden for r in candidates) else 'not_published' if slug_key in {'dutchbangl','dutchbanglabank'} and product_type in {'fdr','dps','savings'} else 'missing'
         rows.append(item)
     descending=product_type in {'fdr','dps','savings'}
     def sorting_value(row):
@@ -201,19 +205,19 @@ def make_router(get_db):
     @router.post('/v1/services/readout')
     async def comparison_readout(payload:ReadComparison,db:Session=Depends(get_db)):
         from ilma_api.voice_pipeline import speech
-        from ilma_api.rules.reasons import format_date
+        from ilma_api.rules.reasons import format_date, format_number
         result=compare(db,**payload.model_dump(exclude={'language'}))
         visible=[bank for bank in result['rows'] if bank.get('offer',{}).get('value_num') is not None]
         bn=payload.language=='bn'
         def spoken_name(bank):
             aliases=[a.alias for a in db.get(Institution,bank['id']).aliases if bool(re.search('[\u0980-\u09ff]',a.alias))==bn]
             return min(aliases,key=len,default=bank['name_bn' if bn else 'name_en'])
-        lines=[f"{spoken_name(bank)}: {bank['offer']['value_num']:g} {('শতাংশ' if bn else 'percent per year') if bank['offer']['unit']=='pct_year' else ('টাকা' if bn else 'taka') if bank['offer']['unit']=='bdt' else bank['offer']['unit']}, {format_date(bank['offer']['doc_date'],bn=bn)}"+(' পুরনো তথ্য।' if bn else ' Old data.')*int(bank['offer']['stale'])+((' ব্যাংকের অবস্থা যাচাই হয়নি।' if bn else ' Bank condition is unverified.') if bank['status']['code']=='no_data' else '') for bank in visible[:3]]
+        lines=[f"{spoken_name(bank)}: {format_number(bank['offer']['value_num'],group=False)} {('শতাংশ' if bn else 'percent per year') if bank['offer']['unit']=='pct_year' else ('টাকা' if bn else 'taka') if bank['offer']['unit']=='bdt' else bank['offer']['unit']}, {format_date(bank['offer']['doc_date'],bn=bn)}"+(' পুরনো তথ্য।' if bn else ' Old data.')*int(bank['offer']['stale'])+((' ব্যাংকের অবস্থা যাচাই হয়নি।' if bn else ' Bank condition is unverified.') if bank['status']['code']=='no_data' else '') for bank in visible[:3]]
         fresh=[bank for bank in visible if not bank['offer']['stale']]
         if payload.product_type=='card' and result['choice']['attribute'] in {'annual_fee','renewal_fee'} and len(fresh)>1:
             cheapest,expensive=min(fresh,key=lambda b:b['offer']['value_num']),max(fresh,key=lambda b:b['offer']['value_num'])
             difference=expensive['offer']['value_num']-cheapest['offer']['value_num']
-            lines.insert(0,f"{spoken_name(cheapest)}-এর বার্ষিক ফি {spoken_name(expensive)}-এর চেয়ে {difference:g} টাকা কম।" if bn else f"{spoken_name(cheapest)} costs {difference:g} BDT less per year than {spoken_name(expensive)}.")
+            lines.insert(0,f"{spoken_name(cheapest)}-এর বার্ষিক ফি {spoken_name(expensive)}-এর চেয়ে {format_number(difference,group=False)} টাকা কম।" if bn else f"{spoken_name(cheapest)} costs {format_number(difference,group=False)} BDT less per year than {spoken_name(expensive)}.")
         lines.insert(0,' '.join(str(v) for v in (payload.network,payload.tier,payload.product_type) if v))
         audio=await speech('। '.join(lines),'bn' if bn else 'en') if lines else None
         if not audio:raise HTTPException(503,'Spoken playback unavailable')
@@ -224,7 +228,7 @@ def make_router(get_db):
 def voice_service_result(question,intent,context,db,language):
     """Deterministic navigation/fact templates after intent; no invented offers."""
     text=question.lower()
-    from ilma_api.rules.reasons import format_date, to_bn_digits
+    from ilma_api.rules.reasons import format_date, format_number
     product=intent.product
     account_attribute=intent.service_attribute
     if product is None:
@@ -253,8 +257,8 @@ def voice_service_result(question,intent,context,db,language):
     if intent.institution_ids:rows=[bank for bank in rows if bank['id'] in intent.institution_ids]
     sources=[];lines=[];spoken=[]
     for bank in rows[:3]:
-        row=bank['offer'];value=f"{row['value_num']:g}" if row['value_num'] is not None else row['value_text']
-        display_value=to_bn_digits(value) if language=='bn' else value
+        row=bank['offer'];value=format_number(row['value_num'],group=False) if row['value_num'] is not None else row['value_text']
+        display_value=format_number(row['value_num'],bn=language=='bn') if row['value_num'] is not None else row['value_text']
         warning=(' · ব্যাংকের অবস্থা যাচাই হয়নি' if language=='bn' else ' · Bank condition is unverified') if bank['status']['code']=='no_data' else ''
         lines.append(f"{bank['name_bn' if language=='bn' else 'name_en']}: {display_value}{'%' if row['unit']=='pct_year' else (' টাকা' if language=='bn' else ' BDT') if row['unit']=='bdt' else ''} ({format_date(row['doc_date'],bn=language=='bn')})"+(' · '+('পুরনো তথ্য' if language=='bn' else 'old data') if row['stale'] else '')+warning)
         aliases=[a.alias for a in db.get(Institution,bank['id']).aliases if bool(re.search('[\u0980-\u09ff]',a.alias))==(language=='bn')]

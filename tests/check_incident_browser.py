@@ -24,8 +24,9 @@ with sync_playwright() as p:
         assert page.locator('#card-status-word').inner_text()==('ঝুঁকি বেশি' if language=='bn' else 'High risk')
         page.locator('[data-bank-detail="history"]').click()
         page.locator('#incident-filter').wait_for()
-        assert page.locator('#incident-rows article').count()==5
-        assert page.locator('#incident-rows [data-source]').count()==8
+        expected=page.request.get(args.base_url+'/v1/institutions/36/history').json()['items']
+        assert page.locator('#incident-rows article').count()==len(expected)
+        assert page.locator('#incident-rows [data-source]').count()==sum(len(r['sources']) for r in expected)
         page.locator('#incident-filter').select_option('audit_warning')
         assert page.locator('#incident-rows article').count()==2
         page.locator('#incident-rows [data-source]').first.click()
@@ -36,8 +37,9 @@ with sync_playwright() as p:
         page.locator('.dock [data-tab="detail"]').click()
         page.locator('[data-bank="26"]').click()
         page.locator('[data-bank-detail="health"]').click()
-        page.locator('#bank-detail-body [data-source]').wait_for()
-        assert ('খেলাপি ঋণ: তথ্য নেই' if language=='bn' else 'Bad loans: No data') in page.locator('#bank-detail-body').inner_text()
+        page.locator('#bank-detail-body [data-source]').first.wait_for()
+        assert ('৪৯.৬৬%' if language=='bn' else '49.66%') in page.locator('#bank-detail-body').inner_text()
+        assert ('নিরীক্ষকের প্রতিবেদন থেকে হিসাব করা' if language=='bn' else 'calculated from the auditor’s report') in page.locator('#bank-detail-body').inner_text()
     for width,height in [(320,640),(740,360),(1440,900)]:
         page.set_viewport_size({'width':width,'height':height})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
@@ -46,4 +48,4 @@ with sync_playwright() as p:
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     assert not errors,errors
     browser.close()
-print('Incident UI passed: BN/EN, two High cards, 11 banks, history filters/sources, missing NPL, phone/rotation/desktop.')
+print('Incident UI passed: BN/EN, two High cards, 11 banks, history filters/sources, labelled calculated NPL, phone/rotation/desktop.')

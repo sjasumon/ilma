@@ -9,11 +9,16 @@ The supplement adds National Bank and Islami Bank to the nine-bank catalogue.
 Existing rule thresholds are unchanged. Audited 2025 capital ratios support
 High status for both banks; National Bank also has a sourced bad-loan ratio and
 loss. National Bank's negative capital ratio is preserved. Profit is already
-in BDT in the input; it is not multiplied a second time. Islami Bank's
-classified/gross investment amounts are withheld: no NPL ratio is inferred.
-Ratings preserve the supplied agency, dates and Developing outlook.
+in BDT in the input; it is not multiplied a second time. Islami Bank has no
+explicit bad-loan ratio. On 28 October 2026 Sumon approved publishing one
+calculated from the two amounts quoted in the auditor's opinion (page 1):
+classified investments Tk 94,322.59 crore ÷ gross investment Tk 189,951.52
+crore = 49.66%. The row has basis `solo_calculated`, quotes both inputs and is
+shown as "calculated from the auditor's report"; the loader recomputes it.
+Ratings preserve the supplied agency, dates and Developing outlook. From rules
+`2026.10-v2`, a developing outlook is a Watch-type reason ("outlook uncertain").
 
-There are 19 incident records, 34 source links and 23 dated status updates.
+There are 19 incident records, 41 sources (34 incident links) and 23 dated status updates.
 The single-source City Bank embezzlement item is excluded. The Islami Bank
 2022 probe and Prime Bank 2014 charge-sheet approval are conservatively
 published as reported; the quoted evidence does not establish the supplied

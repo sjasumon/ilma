@@ -114,7 +114,12 @@ thresholds are evaluated, not assumed from the previous synthetic baseline.
 
 ## Real people and phone checks
 
-Open `/voice-test` on the HTTPS host. It is a recording-only acceptance page:
+The acceptance page is disabled by default. For an authorized physical-device
+test window, set `VOICE_TEST_PAGE_ENABLED=true` in the private environment and
+restart the service, then open `/voice-test` on the HTTPS host. When disabled,
+both `/voice-test` and `/static/voice-test.html` return 404. Turn the flag off
+and restart after the window. This explicit switch is separate from diagnostic
+audio retention. The page is a recording-only acceptance tool:
 recordings stay in browser memory until explicitly downloaded and are never
 uploaded by that page. Obtain participant consent. Use the builder, a woman and a
 person over 60; use codes, not real names. Download at least 20 samples, covering

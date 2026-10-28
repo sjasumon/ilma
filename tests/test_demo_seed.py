@@ -52,3 +52,26 @@ class TestDemoSeed(unittest.TestCase):
             self.assertTrue(all(item['source_url'] and not item['official'] for item in news))
             self.assertTrue(all('not confirmed' in item['summary_en'] for item in news))
         engine.dispose()
+
+    def test_future_event_is_rejected_at_import(self):
+        import csv
+        import json as json_lib
+        import tempfile
+        engine=create_engine('sqlite://')
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            def write(name,fields,rows):
+                with (root/name).open('w',newline='',encoding='utf-8') as handle:
+                    writer=csv.DictWriter(handle,fieldnames=fields)
+                    writer.writeheader();writer.writerows(rows)
+            write('institution.csv',['id','slug','name_bn','name_en','type','islamic','licensed','listed','coverage'],
+                [dict(id='1',slug='testbank',name_bn='টেস্ট ব্যাংক',name_en='Test Bank One',type='bank',islamic='false',licensed='true',listed='true',coverage='full')])
+            write('source.csv',['source_id','url','title','publisher','published_at','page','checked_by','checked_on'],
+                [dict(source_id='src-1',url='https://example.example/ar',title='AR',publisher='Bank',published_at='',page='',checked_by='tester',checked_on='2026-10-26')])
+            write('event.csv',['event_id','institution_id','type','title_bn','title_en','status','official','event_date','last_update','checked_by','checked_on'],
+                [dict(event_id='ev-future',institution_id='1',type='other',title_bn='ভবিষ্যৎ',title_en='Future',status='reported',official='true',event_date='2027-06-01',last_update='2027-06-01',checked_by='tester',checked_on='2026-10-26')])
+            write('institution_alias.csv',['institution_id','alias','lang','source'],[])
+            (root/'release.json').write_text(json_lib.dumps({'release_id':'test-future','export_date':'2026-10-27'}))
+            with self.assertRaisesRegex(ValueError,'future'):
+                load(root,engine)
+        engine.dispose()

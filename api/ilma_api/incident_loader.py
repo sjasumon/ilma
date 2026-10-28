@@ -3,6 +3,7 @@ import argparse
 from datetime import date
 from decimal import Decimal
 import json
+import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -70,6 +71,13 @@ def load(directory,engine):
         quoted=quote_numbers(row['quote'])
         expected=abs(row['value'])*(100 if row['unit']=='ratio' else Decimal('0.0000001'))
         if expected not in quoted:raise ValueError('Figure absent from source quotation.')
+        if row['basis'].endswith('_calculated'):
+            # A calculated ratio must reproduce from inputs that are themselves quoted.
+            match=re.search(r'Calculation: ([\d,]+\.\d+) ÷ ([\d,]+\.\d+) = (\d+\.\d+)%',row['quote'])
+            if row['metric']!='npl_ratio' or not match:raise ValueError('Calculated figure lacks its calculation.')
+            numerator,denominator=(Decimal(part.replace(',','')) for part in match.groups()[:2])
+            if not {numerator,denominator}<=quote_numbers(row['quote'].split('\nCalculation:')[0]):raise ValueError('Calculation inputs are not quoted.')
+            if (numerator/denominator).quantize(Decimal('0.0001'))!=row['value']:raise ValueError('Calculated figure does not reproduce.')
     for row in data['rating']:
         if row['institution_id'] not in ids or row['source_id'] not in sources or not row['quote']:raise ValueError('Invalid rating reference.')
     by_incident={};links=set()

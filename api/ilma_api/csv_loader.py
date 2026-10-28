@@ -53,6 +53,8 @@ def load(directory, engine):
         if path.exists(): data[name] = [typed(model, row) for row in read(path)]
     ids = {row['id'] for row in data.get('institution', [])}
     sources = {row['source_id'] for row in data.get('source', [])}
+    release = json.loads((directory / 'release.json').read_text())
+    export_date = date.fromisoformat(release['export_date'])
     seen = set()
     for name, rows in data.items():
         for row in rows:
@@ -60,6 +62,11 @@ def load(directory, engine):
             def fail(message): errors.append(f'{name}/{key}: {message}')
             if name == 'institution' and 'demo' in row['name_en'].lower(): fail('sample bank is forbidden')
             if 'institution_id' in row and row['institution_id'] not in ids: fail('unknown institution')
+            if name == 'event':
+                # A future-dated row would flip status windows (H1/H2/W4/W8);
+                # reject it here rather than serving it as current risk.
+                for field in ('event_date', 'last_update'):
+                    if row.get(field) and row[field] > export_date: fail(f'future {field}')
             if name in ('source','fact','rating','service_offer'):
                 for field in ('checked_by','checked_on'):
                     if not row.get(field): fail('missing ' + field)
@@ -84,7 +91,6 @@ def load(directory, engine):
                 if row.get('value_num') is not None and row['value_num'] < 0: fail('negative service value')
     if errors: raise ValueError('\n'.join(errors))
     prepare_schema(engine)
-    release = json.loads((directory / 'release.json').read_text())
     with Session(engine) as db:
         try:
             if 'service_offer' in data:

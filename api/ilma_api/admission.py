@@ -55,8 +55,11 @@ class Admission:
 
     def leave(self, key):
         with self.lock:
-            self.clients[key][2] -= 1
-            self.active -= 1
+            row = self.clients.get(key)
+            if row is None:
+                return
+            row[2] = max(0, row[2] - 1)
+            self.active = max(0, self.active - 1)
 
 
 class ProviderAdmissionMiddleware:

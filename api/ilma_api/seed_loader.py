@@ -1,3 +1,10 @@
+"""Synthetic test fixtures for the sqlite test-suite only.
+
+Nothing in this module is a supplied export and nothing here is manually
+reviewed: every row is labelled checked_by="test-fixture" so fixture data can
+never light up the verified checkmark. seed_data() refuses any non-SQLite
+database, which keeps these fixtures out of the production MySQL database.
+"""
 from datetime import date, datetime
 from decimal import Decimal
 from ilma_api.db import (
@@ -8,13 +15,15 @@ from ilma_api.db import (
 def seed_data():
     db = SessionLocal()
     try:
+        if db.get_bind().dialect.name != "sqlite":
+            raise RuntimeError("seed_data() loads synthetic test fixtures; refusing non-SQLite database.")
         # 1. Release
         rel = db.query(Release).filter_by(release_id="seed-2026-10-27-01").first()
         if not rel:
             rel = Release(
                 release_id="seed-2026-10-27-01",
                 loaded_at=datetime.utcnow(),
-                note="Verified baseline seed data for banks, insurance rules and health metrics"
+                note="Synthetic test fixtures for banks, insurance rules and health metrics; not a supplied export, manual review not applicable"
             )
             db.add(rel)
 
@@ -28,7 +37,7 @@ def seed_data():
                 publisher="Bangladesh Bank",
                 published_at=date(2026, 1, 15),
                 page=1,
-                checked_by="Sumon",
+                checked_by="test-fixture",
                 checked_on=date(2026, 10, 26)
             )
             db.add(src_bb_act)
@@ -64,24 +73,24 @@ def seed_data():
 
         # 3. Sources
         sources_data = [
-            ("src-ebl-ar-2025", "https://www.ebl.com.bd/financials/annual-report-2025", "EBL Annual Report 2025", "Eastern Bank PLC", date(2026, 4, 15), 42, "Sumon", date(2026, 10, 26)),
-            ("src-ebl-rating-2026", "https://crab.com.bd/ratings/ebl-2026", "CRAB Credit Rating Announcement EBL 2026", "Credit Rating Agency of Bangladesh", date(2026, 6, 20), 1, "Sumon", date(2026, 10, 26)),
-            ("src-ebl-rate-2026", "https://www.ebl.com.bd/rates", "EBL Deposit Rates Schedule Oct 2026", "Eastern Bank PLC", date(2026, 10, 1), 1, "Sumon", date(2026, 10, 26)),
+            ("src-ebl-ar-2025", "https://www.ebl.com.bd/financials/annual-report-2025", "EBL Annual Report 2025", "Eastern Bank PLC", date(2026, 4, 15), 42, "test-fixture", date(2026, 10, 26)),
+            ("src-ebl-rating-2026", "https://crab.com.bd/ratings/ebl-2026", "CRAB Credit Rating Announcement EBL 2026", "Credit Rating Agency of Bangladesh", date(2026, 6, 20), 1, "test-fixture", date(2026, 10, 26)),
+            ("src-ebl-rate-2026", "https://www.ebl.com.bd/rates", "EBL Deposit Rates Schedule Oct 2026", "Eastern Bank PLC", date(2026, 10, 1), 1, "test-fixture", date(2026, 10, 26)),
 
-            ("src-pubali-ar-2025", "https://www.pubalibangla.com/financials", "Pubali Bank PLC Annual Report 2025", "Pubali Bank PLC", date(2026, 4, 20), 38, "Sumon", date(2026, 10, 26)),
-            ("src-pubali-rating-2026", "https://crislbd.com/ratings/pubali-2026", "CRISL Credit Rating Announcement Pubali Bank", "Credit Rating Information and Services Ltd", date(2026, 5, 18), 1, "Sumon", date(2026, 10, 26)),
-            ("src-pubali-rate-2026", "https://www.pubalibangla.com/rates", "Pubali Bank Interest Rates Schedule Oct 2026", "Pubali Bank PLC", date(2026, 10, 1), 1, "Sumon", date(2026, 10, 26)),
+            ("src-pubali-ar-2025", "https://www.pubalibangla.com/financials", "Pubali Bank PLC Annual Report 2025", "Pubali Bank PLC", date(2026, 4, 20), 38, "test-fixture", date(2026, 10, 26)),
+            ("src-pubali-rating-2026", "https://crislbd.com/ratings/pubali-2026", "CRISL Credit Rating Announcement Pubali Bank", "Credit Rating Information and Services Ltd", date(2026, 5, 18), 1, "test-fixture", date(2026, 10, 26)),
+            ("src-pubali-rate-2026", "https://www.pubalibangla.com/rates", "Pubali Bank Interest Rates Schedule Oct 2026", "Pubali Bank PLC", date(2026, 10, 1), 1, "test-fixture", date(2026, 10, 26)),
 
-            ("src-dbbl-ar-2025", "https://www.dutchbanglabank.com/investor-relations", "Dutch-Bangla Bank PLC Annual Report 2025", "Dutch-Bangla Bank PLC", date(2026, 4, 25), 46, "Sumon", date(2026, 10, 26)),
-            ("src-dbbl-rating-2026", "https://crab.com.bd/ratings/dbbl-2026", "CRAB Rating DBBL 2026", "Credit Rating Agency of Bangladesh", date(2026, 6, 10), 1, "Sumon", date(2026, 10, 26)),
-            ("src-dbbl-rate-2026", "https://www.dutchbanglabank.com/rates", "DBBL Deposit Rates Oct 2026", "Dutch-Bangla Bank PLC", date(2026, 10, 1), 1, "Sumon", date(2026, 10, 26)),
+            ("src-dbbl-ar-2025", "https://www.dutchbanglabank.com/investor-relations", "Dutch-Bangla Bank PLC Annual Report 2025", "Dutch-Bangla Bank PLC", date(2026, 4, 25), 46, "test-fixture", date(2026, 10, 26)),
+            ("src-dbbl-rating-2026", "https://crab.com.bd/ratings/dbbl-2026", "CRAB Rating DBBL 2026", "Credit Rating Agency of Bangladesh", date(2026, 6, 10), 1, "test-fixture", date(2026, 10, 26)),
+            ("src-dbbl-rate-2026", "https://www.dutchbanglabank.com/rates", "DBBL Deposit Rates Oct 2026", "Dutch-Bangla Bank PLC", date(2026, 10, 1), 1, "test-fixture", date(2026, 10, 26)),
 
-            ("src-brac-ar-2025", "https://www.bracbank.com/en/investor-relations", "BRAC Bank PLC Annual Report 2025", "BRAC Bank PLC", date(2026, 4, 18), 50, "Sumon", date(2026, 10, 26)),
-            ("src-brac-rating-2026", "https://crislbd.com/ratings/brac-2026", "CRISL Credit Rating BRAC Bank 2026", "Credit Rating Information and Services Ltd", date(2026, 5, 30), 1, "Sumon", date(2026, 10, 26)),
-            ("src-brac-rate-2026", "https://www.bracbank.com/rates", "BRAC Bank Rate Card Oct 2026", "BRAC Bank PLC", date(2026, 10, 1), 1, "Sumon", date(2026, 10, 26)),
+            ("src-brac-ar-2025", "https://www.bracbank.com/en/investor-relations", "BRAC Bank PLC Annual Report 2025", "BRAC Bank PLC", date(2026, 4, 18), 50, "test-fixture", date(2026, 10, 26)),
+            ("src-brac-rating-2026", "https://crislbd.com/ratings/brac-2026", "CRISL Credit Rating BRAC Bank 2026", "Credit Rating Information and Services Ltd", date(2026, 5, 30), 1, "test-fixture", date(2026, 10, 26)),
+            ("src-brac-rate-2026", "https://www.bracbank.com/rates", "BRAC Bank Rate Card Oct 2026", "BRAC Bank PLC", date(2026, 10, 1), 1, "test-fixture", date(2026, 10, 26)),
 
-            ("src-bb-circ-2026-01", "https://www.bb.org.bd/mediaroom/circulars/brpd/oct2026_01.pdf", "BRPD Circular No. 18: Sound Capital & Liquidity Guidelines", "Bangladesh Bank", date(2026, 10, 15), 2, "Sumon", date(2026, 10, 26)),
-            ("src-bb-circ-2026-02", "https://www.bb.org.bd/mediaroom/circulars/dfim/oct2026_04.pdf", "DFIM Circular No. 04: Deposit Protection Expansion", "Bangladesh Bank", date(2026, 10, 20), 1, "Sumon", date(2026, 10, 26))
+            ("src-bb-circ-2026-01", "https://www.bb.org.bd/mediaroom/circulars/brpd/oct2026_01.pdf", "BRPD Circular No. 18: Sound Capital & Liquidity Guidelines", "Bangladesh Bank", date(2026, 10, 15), 2, "test-fixture", date(2026, 10, 26)),
+            ("src-bb-circ-2026-02", "https://www.bb.org.bd/mediaroom/circulars/dfim/oct2026_04.pdf", "DFIM Circular No. 04: Deposit Protection Expansion", "Bangladesh Bank", date(2026, 10, 20), 1, "test-fixture", date(2026, 10, 26))
         ]
 
         for sid, url, title, pub, pdate, page, chk_by, chk_on in sources_data:
@@ -182,27 +191,27 @@ def seed_data():
                     db.add(Fact(
                         fact_id=fid, institution_id=inst.id, metric=metric, value=val, unit=unit,
                         period=period, period_end=pend, source_id=sid, quote=quote,
-                        checked_by="Sumon", checked_on=date(2026, 10, 26)
+                        checked_by="test-fixture", checked_on=date(2026, 10, 26)
                     ))
 
                 for fid, agency, lt, st, outlook, rdate, sid, quote in item["ratings"]:
                     db.add(Rating(
                         fact_id=fid, institution_id=inst.id, agency=agency, long_term=lt, short_term=st,
                         outlook=outlook, rated_on=rdate, source_id=sid, quote=quote,
-                        checked_by="Sumon", checked_on=date(2026, 10, 26)
+                        checked_by="test-fixture", checked_on=date(2026, 10, 26)
                     ))
 
                 for fid, prod, tenor, rate, min_amt, as_of_date, sid, quote in item["rates"]:
                     db.add(Rate(
                         fact_id=fid, institution_id=inst.id, product=prod, tenor_months=tenor,
                         rate=rate, min_amount_bdt=min_amt, as_of=as_of_date, source_id=sid, quote=quote,
-                        checked_by="Sumon", checked_on=date(2026, 10, 26)
+                        checked_by="test-fixture", checked_on=date(2026, 10, 26)
                     ))
 
         # Add official events for news
         news_events = [
-            ("ev-bb-2026-10-1", 101, "emergency_liquidity", "বাণিজ্যিক ব্যাংকসমূহে তারল্য ব্যবস্থাপনা সফলভাবে সম্পন্ন", "Successful Liquidity Management in Commercial Banks", "official", True, None, date(2026, 10, 15), date(2026, 10, 15), "Sumon", date(2026, 10, 26), ["src-bb-circ-2026-01"]),
-            ("ev-bb-2026-10-2", 102, "other", "আমানত সুরক্ষা তহবিল আইন ২০২৬ এর অধীনে নতুন নির্দেশনা জারি", "New Directives Issued Under Deposit Protection Act 2026", "official", True, None, date(2026, 10, 20), date(2026, 10, 20), "Sumon", date(2026, 10, 26), ["src-bb-circ-2026-02"])
+            ("ev-bb-2026-10-1", 101, "emergency_liquidity", "বাণিজ্যিক ব্যাংকসমূহে তারল্য ব্যবস্থাপনা সফলভাবে সম্পন্ন", "Successful Liquidity Management in Commercial Banks", "official", True, None, date(2026, 10, 15), date(2026, 10, 15), "test-fixture", date(2026, 10, 26), ["src-bb-circ-2026-01"]),
+            ("ev-bb-2026-10-2", 102, "other", "আমানত সুরক্ষা তহবিল আইন ২০২৬ এর অধীনে নতুন নির্দেশনা জারি", "New Directives Issued Under Deposit Protection Act 2026", "official", True, None, date(2026, 10, 20), date(2026, 10, 20), "test-fixture", date(2026, 10, 26), ["src-bb-circ-2026-02"])
         ]
 
         for eid, iid, etype, tbn, ten, st, off, sev, edate, ldate, chk_by, chk_on, src_ids in news_events:

@@ -71,8 +71,9 @@ def history(db,institution_id):
     return dict(available=bool(rows or extra),window=None,complete_search=False,
         record_window=dict(start=str(min(dates)),end=str(max(ends))) if dates else None,
         items=sorted([view(row) for row in rows]+extra,key=lambda r:(r['last_update_on'],r['incident_id']),reverse=True),
-        message_bn='সরবরাহকৃত ঘটনার নথি; পূর্ণ অনুসন্ধানের সময়সীমা দেওয়া হয়নি। এটি সম্পূর্ণ ইতিহাস নয়।' if rows or extra else 'এই ব্যাংকের ঘটনার নথি এই রপ্তানিতে নেই। পূর্ণ ইতিহাস যাচাই করা হয়নি।',
-        message_en='Supplied incident records; no complete search window was provided. This is not a complete history.' if rows or extra else 'This export supplied no incident records for this bank. Its complete history has not been checked.')
+        message_bn='আমরা যে নথি পেয়েছি তার তালিকা; এটি সম্পূর্ণ ইতিহাস নয়।' if rows or extra else 'এই ব্যাংকের কোনো ঘটনার নথি আমরা পাইনি। এর মানে ঘটনা নেই, তা নয়; পূর্ণ ইতিহাস যাচাই করা হয়নি।',
+        message_en='A list of the records we have received; this is not a complete history.' if rows or extra else 'We have not received any incident records for this bank. That does not mean there were none; its full history has not been checked.')
+
 
 def voice_facts(db,institution_id,language):
     result=[]
@@ -80,7 +81,7 @@ def voice_facts(db,institution_id,language):
         item=view(row);source=item['sources'][0]
         bn=language=='bn'
         confirmation=item['confirmation_bn' if bn else 'confirmation_en'] if row.official or bn else 'Reported, unconfirmed.'
-        text=(confirmation+'। '+item['title_bn' if bn else 'title_en']+' — '+item['status_label_bn' if bn else 'status_label_en']+
+        text=(confirmation.rstrip('.।')+('। ' if bn else '. ')+item['title_bn' if bn else 'title_en']+' — '+item['status_label_bn' if bn else 'status_label_en']+
             ' ('+format_date(row.last_update_on,bn=bn)+')')
         result.append(dict(text=text,unconfirmed=not row.official,fact_id=row.incident_id,source_url=source['source_url'],
             source_title=source['source_title'],published_at=source['published_at'],page=source['page']))
