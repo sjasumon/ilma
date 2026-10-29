@@ -8,7 +8,7 @@ ACRONYMS={'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
  'nccbank':('NCC','এনসিসি'),'dutchbangl':('DBBL','ডিবিবিএল'),
  'sbacbank':('SBAC','এসবিএসি'),'primebank':('Prime','প্রাইম'),
  'citybank':('City Bank','সিটি ব্যাংক'),'bracbank':('BRAC','ব্র্যাক','break bank','breakbank','ব্রেক ব্যাংক')}
-PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsurance\b|\bprotection\b|(?:ব্যাংক|bank).{0,20}(?:বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
+PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsur(?:ance|ed|e)\b|\bprotect(?:ion|ed)\b|(?:ব্যাংক|bank).{0,20}(?:বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
 CORRECTION=re.compile(r'^না(?:[\s,।]|$)|না আমি|নয়|নয়|ভুল|শুধরে|বদলে|সংশোধন|ধরুন|আগের প্রশ্ন|আমার কথা ছিল|কথাই বলছি|আমি বলেছিলাম|নাম.{0,24}হবে|জন্যই জানতে চেয়েছি|\b(?:i meant|not|correct|instead|that should|use .*previous|was asking|previous question|bank in my last question)\b',re.I)
 
 def is_best_dps_question(text):
@@ -21,6 +21,20 @@ def is_best_dps_question(text):
     normalized=normalize_numbers(value.replace('বছরের','বছর').replace('মাসের','মাস'))
     explicit=re.search(r'(?<!\w)(\d+)\s*months?\b',normalized)
     return (best or where and good) and (not explicit or int(explicit[1])==60)
+
+def is_best_fdr_question(text):
+    """The global best-FDR question family; one-year term unless another is named."""
+    value=unicodedata.normalize('NFC',text).casefold()
+    if not re.search(r'এফ\s*ডি\s*আর|(?<![a-z])f\s*d\s*r(?![a-z])|fixed\s+deposit|স্থায়ী\s*আমানত|স্থায়ী\s*আমানত',value):return False
+    best=bool(re.search(r'(?:সবথেকে|সবচেয়ে|সবচে|সবচেয়ে)\s*(?:ভালো|ভাল|বেশি)|সেরা|সর্বোচ্চ|\bbest\b|\bhighest\b',value))
+    where=bool(re.search(r'কোথায়|কোথায়|কোন\s*ব্যাংক|\bwhere\b|\bwhich\s*bank',value))
+    good=bool(re.search(r'ভালো|ভাল|বেশি|\bgood\b|\bbetter\b',value))
+    normalized=normalize_numbers(value.replace('বছরের','বছর').replace('মাসের','মাস'))
+    explicit=re.search(r'(?<!\w)(\d+)\s*months?\b',normalized)
+    return (best or where and good) and (not explicit or int(explicit[1])==12)
+
+def best_rate_product(text):
+    return 'dps' if is_best_dps_question(text) else 'fdr' if is_best_fdr_question(text) else None
 
 @dataclass
 class ResolvedTurn:
@@ -45,6 +59,9 @@ def resolve(text,c,banks):
     text=join_acronyms(unicodedata.normalize('NFC',text)).strip()
     matched_text=re.sub(r'(প্রাইম|সিটি|ইবিএল|এনসিসি|এমটিবি|ব্র্যাক)(?:ের|র)(?=$|[\s,।.!?])',r'\1',text)
     indexed=[{**b,'aliases':[*b.get('aliases',[]),*ACRONYMS.get(b.get('slug'),())]} for b in banks]
+    # A possessive ending on any Bangla bank name ("ব্যাংক এশিয়ার") still names that bank.
+    for alias in sorted({unicodedata.normalize('NFC',a) for b in indexed for a in [b.get('name_bn') or '',*b['aliases']] if re.search(r'[ঀ-৿]$',a)},key=len,reverse=True):
+        matched_text=re.sub(re.escape(alias)+r'(?:ের|র)(?=$|[\s,।.!?])',alias,matched_text)
     correction=bool(CORRECTION.search(text))
     candidates=match_candidates(matched_text,indexed)
     from ilma_api.voice_text import normalize_alias
@@ -119,6 +136,7 @@ def resolve(text,c,banks):
     elif changed:
         named_bank=next((b for b in banks if b['id']==bank),{})
         basis='islamic' if named_bank.get('islamic') else 'conventional'
-    if is_best_dps_question(text):
-        bank=None;selected='dps';tenor=60;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
+    best=best_rate_product(text)
+    if best:
+        bank=None;selected=best;tenor=60 if best=='dps' else 12;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
     return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric)

@@ -262,3 +262,28 @@ def test_later_english_sentences_start_with_a_capital(db):
             return await run('How is it?',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
     sentences=[s for s in asyncio.run(scenario())['speech'].split('. ') if s]
     assert len(sentences)>1 and all(s[0].isupper() for s in sentences)
+
+def test_possessive_bangla_bank_name_resolves_without_confirmation():
+    banks=[{'id':7,'slug':'synthetic-asia','type':'bank','islamic':False,'coverage':'full','licensed':True,'name_bn':'পরীক্ষা এশিয়া পিএলসি','name_en':'Synthetic Asia PLC','aliases':['পরীক্ষা এশিয়া','পরীক্ষা এশিয়া পিএলসি','Synthetic Asia']}]
+    for text in ['পরীক্ষা এশিয়ার অবস্থা কেমন?','পরীক্ষা এশিয়ার ডিপিএসের সুদ কত?']:
+        r=resolve(text,Conversation(),banks)
+        assert r.bank_id==7 and not r.confirm_ids
+
+def test_rate_list_says_the_product_once_and_names_the_term():
+    from ilma_api.human_turn import merge_rates
+    facts={'term:dps':{'kind':'term'},'a':{'kind':'service'},'b':{'kind':'service'},'c':{'kind':'service'}}
+    lines=merge_rates([('পরীক্ষা ব্যাংকের ডিপিএসে ১ বছর মেয়াদে সুদ ৭%।',['a']),('ডিপিএসে ৩ বছর মেয়াদে সুদ ৭.৫%।',['b']),
+        ('কনফিডেন্স ডিপিএসে ১ বছর থেকে ৬ বছর মেয়াদে সুদ ৮%।',['c']),('প্রতি মাসে নির্দিষ্ট টাকা জমানোর স্কিম।',['term:dps'])],facts)
+    assert lines==[('পরীক্ষা ব্যাংকের ডিপিএসে ১ বছরে সুদ ৭%, ৩ বছরে ৭.৫%।',['a','b']),('কনফিডেন্স ডিপিএসে ১ বছর থেকে ৬ বছর মেয়াদে সুদ ৮%।',['c']),
+        ('ডিপিএস মানে প্রতি মাসে নির্দিষ্ট টাকা জমানোর স্কিম।',['term:dps'])]
+
+@pytest.mark.parametrize('sentence,bn,expected',[
+    ('পরীক্ষা এশিয়াের অবস্থা ভালো।',True,'পরীক্ষা এশিয়ার অবস্থা ভালো।'),
+    ('পরীক্ষা ব্যাংক একই ব্যাংকের সব হিসাব মিলিয়ে সীমা আছে।',True,'পরীক্ষা ব্যাংকে সব হিসাব মিলিয়ে সীমা আছে।'),
+    ('পরীক্ষা ব্যাংক এই তথ্যের উদ্ধৃতি নেই।',True,'পরীক্ষা ব্যাংকের এই তথ্যের উদ্ধৃতি নেই।'),
+    ('Synthetic Bank Plan DPS has interest of 8%.',False,"Synthetic Bank's Plan DPS has interest of 8%."),
+    ('Synthetic Bank is in good condition.',False,'Synthetic Bank is in good condition.')])
+def test_bank_name_joins_the_clause_grammatically(sentence,bn,expected):
+    from ilma_api.human_turn import polish
+    name='পরীক্ষা এশিয়া' if 'এশিয়া' in sentence else 'পরীক্ষা ব্যাংক' if bn else 'Synthetic Bank'
+    assert polish(sentence,{'bank:1':FactToken(name,(),1,'bank')},bn)==expected

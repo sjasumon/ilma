@@ -125,3 +125,40 @@ def test_default_text_pipeline_uses_comparison_without_stt_change(dps_db):
         assert result['speech'].endswith(QUESTION) and len(result['speech_tts'].split())<=60
         assert any('উদাহরণ' in fact['text_bn'] for fact in result['facts'])
     asyncio.run(scenario())
+
+@pytest.mark.parametrize('question',['কোন ব্যাংকে এফডিআরের সুদ সবচেয়ে বেশি?','এফডিআর কোথায় ভালো','Which bank has the best FDR?','সবচেয়ে ভালো এফডিআর কোন ব্যাংকের'])
+def test_best_fdr_family_routes_one_year_comparison(question):
+    from ilma_api.human_resolver import best_rate_product
+    result=resolve(question,Conversation(institution_id=19,product='card'),[])
+    assert best_rate_product(question)=='fdr' and result.intent=='compare' and result.product=='fdr' and result.tenor==12 and result.bank_id is None
+
+@pytest.mark.parametrize('question',['প্রাইম ব্যাংকের এফডিআর রেট কত','এফডিআর কী?','কোন ব্যাংকের ডিপিএস সবচেয়ে ভালো?'])
+def test_other_questions_are_not_best_fdr(question):
+    from ilma_api.human_resolver import is_best_fdr_question
+    assert not is_best_fdr_question(question)
+
+def test_fdr_comparison_uses_one_year_rates_without_an_illustration(dps_db):
+    for id,value,months in [(1,5,12),(2,4.5,12),(3,4,12),(4,9,6)]:
+        dps_db.add(ServiceOffer(offer_id='synthetic-fdr-'+str(id),institution_id=id,category='deposit',product='Synthetic fixed plan',product_type='fdr',tenor_months=months,tenor_min_months=months,tenor_max_months=months,tenor_options=[months],attribute='rate',value_num=value,value_text=str(value),unit='pct_year',condition='Synthetic term',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/fdr',page=1,quote='Synthetic fixed rate',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='synthetic-fixture',checked_on=date(2026,10,1)))
+    dps_db.commit()
+    facts=build(dps_db,'fdr')
+    assert facts['ready'] and [r['bank_id'] for r in facts['top']]==[1,2,3] and facts['years']==1
+    assert all('maturity_estimate_bdt' not in r for r in facts['top']) and not facts['conditions']
+    assert facts['flagged'][0]['bank_id']==4 and facts['flagged'][0]['comparison_months']==6
+    for variant in range(3):
+        answer=template(facts,variant)
+        assert validate(answer,facts) is None and 'এফডিআর' in answer and 'ডিপিএস' not in answer and '6 মাসের এফডিআরে' in answer
+
+def test_english_best_rate_question_gets_an_english_answer(dps_db):
+    async def scenario():
+        with patch('ilma_api.dps_compare.compose',AsyncMock()) as model:
+            result=await run_agent_turn('Which bank has the best DPS?',VoiceContext(agent=True,ui_lang='en',speak=False),[],dps_db)
+        model.assert_not_awaited()
+        return result
+    result=asyncio.run(scenario())
+    assert result['language']=='en' and result['speech'].startswith('By interest rate, for a 5-year DPS')
+    assert not any('ঀ'<=ch<='৿' for ch in result['speech']) and result['speech'].endswith('?')
+
+def test_english_insured_question_is_a_protection_question():
+    result=resolve('How much of my deposit is insured at this bank?',Conversation(institution_id=19,language='en'),[])
+    assert result.direct_protection

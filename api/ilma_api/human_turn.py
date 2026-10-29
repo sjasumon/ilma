@@ -30,6 +30,8 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
     r=resolved or resolve(text,c,banks)
     if forced:r=replace(r,intent=forced,direct_protection=forced=='insurance')
     if r.intent=='compare' and r.product is None:r=replace(r,product='fdr')
+    # A deposit comparison defaults to one year, not the shortest published term.
+    if r.intent=='compare' and r.tenor is None and r.product in {'fdr','dps'}:r=replace(r,tenor=12)
     if r.bank_id is not None and not any(b['id']==r.bank_id for b in banks):r=replace(r,bank_id=None)
     c=c.model_copy(update={'institution_id':r.bank_id,'product':r.product,'tenor':r.tenor,'basis':r.basis,'network':r.network,'tier':r.tier})
     ids=list(dict.fromkeys(([r.bank_id] if r.bank_id else [])+r.compare_bank_ids))
@@ -59,10 +61,23 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
     if r.product and not offers and r.bank_id:
         proof=next((f for f in facts.values() if f['kind']=='inventory' and f['institution_id']==r.bank_id),None)
         if proof:
-            phrase='এই সেবার প্রকাশিত তথ্য এখনো আমাদের সংগ্রহে নেই' if c.language=='bn' else 'Published information for this service has not yet been added to our collection'
+            from ilma_api.human_tokens import PRODUCTS as LABEL
+            label=LABEL.get(r.product,('এই সেবা','this service'))
+            phrase=f'{label[0]}ের প্রকাশিত তথ্য এখনো আমাদের কাছে নেই' if c.language=='bn' else f'published {label[1]} information is not yet in our collection'
             fid='coverage:product:'+str(r.bank_id)+':'+r.product
             facts[fid]={'fact_id':fid,'institution_id':r.bank_id,'kind':'coverage','text_bn':phrase if c.language=='bn' else 'এই সেবার তথ্য আমাদের সংগ্রহে নেই','text_en':phrase if c.language=='en' else 'This service is absent from the imported collection','values':{'product_type':r.product},'source':{**proof['source'],'quote':'Derived coverage of imported product rows, not a claim that the bank does not offer this service'}}
             registry['gap:product']=FactToken(phrase,(fid,),r.bank_id,'gap')
+    if r.intent=='compare' and r.product:
+        # Name each compared bank that lacks the product; the others keep their rows.
+        from ilma_api.human_tokens import PRODUCTS as LABEL
+        label=LABEL.get(r.product,('এই সেবা','this service'))
+        present={f['institution_id'] for f in comparisons}
+        for bank_id in ids:
+            if bank_id in present or 'bank:'+str(bank_id) not in registry:continue
+            phrase=f'{label[0]}ের প্রকাশিত তথ্য এখনো আমাদের কাছে নেই' if c.language=='bn' else f'published {label[1]} information is not yet in our collection'
+            fid='coverage:compare:'+str(bank_id)+':'+r.product
+            facts[fid]={'fact_id':fid,'institution_id':bank_id,'kind':'coverage','text_bn':phrase if c.language=='bn' else label[0]+'ের তথ্য আমাদের কাছে নেই','text_en':phrase if c.language=='en' else 'Published '+label[1]+' information is not in our collection','values':{'product_type':r.product},'source':{'source_title':'ILMA collection coverage','source_url':'','quote':''}}
+            registry['gap:compare:'+str(bank_id)]=FactToken(phrase,(fid,),bank_id,'gap')
     if r.tenor is not None and r.product in {'fdr','dps'} and offers and not any(not f['values'].get('nearest') and matches(f['values'],r.tenor) for f in offers):
         from ilma_api.human_tokens import term
         when=term({},c.language=='bn',r.tenor)
@@ -71,6 +86,48 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
         facts[fid]={'fact_id':fid,'institution_id':r.bank_id,'kind':'coverage','text_bn':phrase if c.language=='bn' else 'চাওয়া মেয়াদের তথ্য আমাদের সংগ্রহে নেই','text_en':phrase if c.language=='en' else 'The requested term is absent from our imported collection','values':{'product_type':r.product,'asked_tenor':r.tenor},'source':{'kind':'computed','source_url':offers[0]['source']['source_url'],'source_title':'Published term coverage','quote':'Derived coverage of imported product terms, not a statement that the bank does not offer the product','inputs':[f['source'] for f in offers]}}
         registry['gap:term']=FactToken(phrase,(fid,),r.bank_id,'gap')
     return r,c,packs,comparisons,registry,facts
+
+# Joins a bank name to a clause that does not start with a verb, after all checks.
+EN_VERB=re.compile(r"(?:is|has|have|was|shows|currently|holds|reported|does|offers|gives|pays)\b")
+def polish(sentence,registry,bn):
+    if bn:
+        # After a vowel sign the endings are র/য়: "ব্যাংক এশিয়ার", "ব্যাংক এশিয়ায়".
+        sentence=re.sub(r'([\u09be-\u09cc])ের(?=[\s,।.?]|$)',r'\1র',sentence)
+        sentence=re.sub(r'([\u09be-\u09cc])ে(?=[\s,।.?]|$)',r'\1য়',sentence)
+    for token in registry.values():
+        if token.kind!='bank' or not sentence.startswith(token.text+' '):continue
+        name=token.text;rest=sentence[len(name)+1:]
+        if bn:
+            if rest.startswith('একই ব্যাংকের '):return polish(name+'ে '+rest[len('একই ব্যাংকের '):],{},bn)
+            if rest.startswith('প্রকাশিত সেবার ধরন '):return polish(name+'ের প্রকাশিত সেবার ধরন: '+rest[len('প্রকাশিত সেবার ধরন '):],{},bn)
+            if re.match(r'(?:এই|প্রকাশিত)\s|\S+ের\s',rest):return polish(name+'ের '+rest,{},bn)
+        else:
+            if rest.startswith('The '):return name+"'s "+rest[4:]
+            if rest.startswith('published '):return name+"'s "+rest
+            if rest[:1].isupper() and not EN_VERB.match(rest.lower()):return name+"'s "+rest
+        return sentence
+    return sentence
+
+RATE_LINE=re.compile(r'^(?P<head>.*?)(?P<product>(?<!\S)(?!থেকে)\S+ে) (?P<term>[০-৯\d.]+ (?:বছর|মাস)) মেয়াদে (?P<label>সুদ|আনুমানিক মুনাফা) (?P<rate>[০-৯\d.]+%)।$')
+def merge_rates(lines,facts):
+    """Say the product once: "ডিপিএসে ১ বছরে সুদ ৭%, ৩ বছরে ৭.৫%।"; a term's meaning is named."""
+    from ilma_api.human_tokens import PRODUCTS as LABEL
+    output=[]
+    for sentence,ids in lines:
+        found=RATE_LINE.match(sentence)
+        previous=output[-1] if output else None
+        if found and previous and previous[2] and previous[2]['product']==found['product'] and previous[2]['label']==found['label'] and not found['head']:
+            text=previous[0].rstrip('।')+f", {found['term']}ে {found['rate']}।"
+            output[-1]=(text,previous[1]+[i for i in ids if i not in previous[1]],previous[2])
+            continue
+        if found:sentence=f"{found['head']}{found['product']} {found['term']}ে {found['label']} {found['rate']}।"
+        general=bool(ids) and all(facts.get(i,{}).get('kind')=='term' for i in ids)
+        if general and output:
+            alias=ids[0].split(':',1)[-1]
+            word=LABEL.get(alias,(None,))[0]
+            if word and not sentence.startswith(word):sentence=f'{word} মানে {sentence}'
+        output.append((sentence,list(ids),found.groupdict() if found else None))
+    return [(s,ids) for s,ids,_ in output]
 
 def matches(v,months):
     return months in v['tenor_options'] if v.get('tenor_options') else v.get('tenor_min_months') is not None and v['tenor_min_months']<=months<=v['tenor_max_months']
@@ -106,7 +163,7 @@ def recommended(intent,c,registry,facts,key):
         return (['gap:term'] if 'gap:term' in registry else [])+available(selected)[:4]
     if intent=='compare':
         if 'gap:term' in registry:return ['gap:term']+recommended('service_detail',c,registry,facts,key)[1:3]
-        return ['row:'+str(i)+'.offer' for i in range(4) if 'row:'+str(i)+'.offer' in registry]
+        return ['row:'+str(i)+'.offer' for i in range(4) if 'row:'+str(i)+'.offer' in registry]+[name for name in registry if name.startswith('gap:compare:')]
     if intent=='insurance':return available([f for f in current or list(facts.values()) if f['kind']=='insurance'])[:1]
     if intent=='services_list':return available([f for f in current if f['kind']=='inventory'])[:1]
     if intent=='explain_term':return available([f for f in facts.values() if f['kind']=='term'])[:1]
@@ -394,7 +451,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 lines.append((sentence,list(item.fact_ids)));numeric_count+=count
     # Never narrate old protection, raw incident headlines or unbounded paragraphs.
     if not r.direct_protection:lines=[(s,ids) for s,ids in lines if not PROTECTION_WORDS.search(s)]
-    lines=[(re.sub(r'([।.?])\1+',r'\1',s),ids) for s,ids in lines]
+    lines=[(polish(re.sub(r'([।.?])\1+',r'\1',s),registry,bn),ids) for s,ids in lines]
     if intent!='compare' and len(lines)>1:
         name=registry.get('bank:'+str(c.institution_id))
         if name:
@@ -411,6 +468,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                         named=True;break
                 if i and not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
                 lines[i]=(sentence,ids)
+    if bn:lines=merge_rates(lines,facts)
     chosen,pending=paginate(lines,question,c.language)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))
