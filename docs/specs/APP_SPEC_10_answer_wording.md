@@ -87,3 +87,13 @@ card. Service-tab answers use product sentences; unverified bank-condition
 notices remain visible separately. Comparison readout returns one cached audio
 URL and full paragraph text instead of embedded audio or bare field labels.
 Published fees are read directly, without substituting a calculated waiver.
+
+## Replay and delivery recovery
+
+Repeat retains `last_spoken_fact_ids` separately from all explained IDs and
+re-retrieves the previous card records. It replays the selected facts rather
+than restarting the first figures. Source actions retain the last substantive
+answer and do not produce response speech. A clean or failed connection ending
+before promised audio shows unavailable playback while keeping the answer and
+conversation. Repeated no-speech and hard capture/provider failures offer inline
+typing without continued automatic prompts.

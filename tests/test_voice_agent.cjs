@@ -3,7 +3,7 @@ const {AgentPanel}=require('../static/js/voice-agent.js');
 function fixture(){
  let time=0,id=0,mic=false,complete;const timers=new Map(),calls=[];
  const clock={now:()=>time,setTimeout(fn,ms){timers.set(++id,{fn,at:time+ms});return id},clearTimeout(id){timers.delete(id)}};
- const a={cancel(){mic=false},interrupt(){if(complete){const end=complete;complete=null;end(false)}},render(r){calls.push(['render',r])},play(){return new Promise(resolve=>{complete=resolve})},async listen(){mic=true;calls.push(['listen'])},recording:()=>mic,assistive:()=>false,finish(){mic=false;calls.push(['finish'])},send(choice){calls.push(['send',choice])},async question(){calls.push(['question']);return true},exit(){calls.push(['exit'])}};
+ const a={cancel(){mic=false},interrupt(){if(complete){const end=complete;complete=null;end(false)}},render(r){calls.push(['render',r])},play(){return new Promise(resolve=>{complete=resolve})},async listen(){mic=true;calls.push(['listen'])},recording:()=>mic,assistive:()=>false,finish(){mic=false;calls.push(['finish'])},send(choice){calls.push(['send',choice])},typing(){calls.push(['typing'])},async question(){calls.push(['question']);return true},exit(){calls.push(['exit'])}};
  const panel=new AgentPanel(a,clock),settle=async()=>{for(let i=0;i<10;i++)await Promise.resolve()};
  const result={speech:'synthetic',next:{question:'Choose',options:[{value:'detail'},{value:'services'}]},conversation:{state:'BANK'}};
  return{panel,calls,a,result,settle,async end(){complete(true);complete=null;await settle()},async advance(ms){time+=ms;for(const [id,t] of [...timers])if(t.at<=time){timers.delete(id);await t.fn()}await settle()}};
@@ -18,6 +18,8 @@ function fixture(){
  const timeout=fixture();timeout.panel.show(timeout.result);await timeout.advance(120000);assert.equal(timeout.panel.active,false);assert.deepEqual(timeout.calls.at(-1),['exit']);await timeout.settle();assert.ok(!timeout.calls.some(c=>c[0]==='listen'),'late audio cannot reopen mic after reset');
  const tab=fixture();tab.panel.show(tab.result);tab.panel.reset();await tab.settle();assert.equal(tab.panel.active,false);
  const typing=fixture();typing.result.offer_typing=true;typing.panel.show(typing.result);await typing.end();await typing.advance(16000);assert.ok(!typing.calls.some(c=>['listen','question'].includes(c[0])),'typing recovery must not reopen the microphone or repeat over the keyboard');
+ const capture=fixture();capture.result.speech_format='paragraph';await capture.panel.show(capture.result);capture.panel.captureFailed(true);assert.ok(!capture.result.offer_typing);capture.panel.captureFailed(true);assert.equal(capture.result.offer_typing,true);assert.deepEqual(capture.calls.at(-1),['typing']);await capture.advance(8000);assert.ok(!capture.calls.some(c=>c[0]==='question'));
+ const unavailable=fixture();unavailable.result.speech_format='paragraph';await unavailable.panel.show(unavailable.result);unavailable.panel.captureFailed(false);assert.equal(unavailable.result.offer_typing,true);assert.ok(unavailable.calls.some(c=>c[0]==='typing'));
  const {createApp}=require('./frontend_harness.cjs');const appLang=createApp();appLang.run("agentConversation={state:'BANK'};setLanguage('en')");assert.equal(appLang.run('agentConversation'),null,'changing language clears prior-language conversation');
  console.log('Voice agent lifetime passed: post-speech mic, tap/recording isolation, assistive activation, two re-asks, idle reset and stale-playback cancellation');
 })().catch(error=>{console.error(error);process.exitCode=1});

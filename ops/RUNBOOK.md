@@ -168,3 +168,10 @@ playback, enable TTS only on that preview and run
 TTS on a cache miss, and must not be described as real microphone acceptance.
 Stop the temporary preview after verification. Never change live credentials
 just to run these checks.
+
+For generated-input full voice checks, `tests/check_voice_roundtrip_browser.py`
+requires a private WAV, bank slug, language and provider-enabled target. It uses
+Chromium's fake microphone with real MediaRecorder/upload/Meta/TTS. No transcript
+or audio is printed or committed; normal target diagnostic settings still apply.
+Run other browser/matrix checks sequentially to avoid competing admission leases.
+`docs/VOICE_PIPELINE_CHECKS.md` records scope and outstanding native/human gates.

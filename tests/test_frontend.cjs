@@ -36,8 +36,8 @@ assert.ok(!element('ret-result-box').innerHTML.includes('NaN'));
 console.log('Frontend runtime regressions passed');
 const html = fs.readFileSync('static/index.html', 'utf8');
 assert.match(html, /id="home-listening-view" hidden/);
-assert.match(html, /ilma\.css\?v=voice-complete-20261028-54/);
-assert.match(html, /app\.js\?v=voice-complete-20261028-54/);
+assert.match(html, /ilma\.css\?v=voice-complete-20261029-56/);
+assert.match(html, /app\.js\?v=voice-complete-20261029-56/);
 assert.match(html, /id="home-tap-target" class="home-speak-button"/);
 console.log('Home visibility and asset-version regressions passed');
 

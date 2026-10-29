@@ -162,12 +162,14 @@ def offer_clause(db,item,bn,comparison=False):
     return text
 
 
-def compose(db,facts,conversation,question,tool,action=None,repeat=False):
+def compose(db,facts,conversation,question,tool,action=None,repeat=False,replay_fact_ids=None):
     bn=conversation.get('language','bn')=='bn';bank_id=conversation.get('institution_id')
     seen=set(conversation.get('spoken_fact_ids',[]));insurance_banks=list(conversation.get('insurance_bank_ids',[]));used=[];sentences=[]
     stop=bool(action and action['type'] in {'stop','open_report','open_proof','end'})
     name=bank_name(db,bank_id,bn)
     fresh=[f for f in facts if repeat or f['fact_id'] not in seen]
+    if replay_fact_ids is not None:
+        fresh=[f for f in fresh if f['fact_id'] in replay_fact_ids]
     def add(text,item=None):
         if text:sentences.append(clean(text))
         if item and item['fact_id'] not in used:used.append(item['fact_id'])
@@ -175,7 +177,7 @@ def compose(db,facts,conversation,question,tool,action=None,repeat=False):
         status=next((f for f in facts if f.get('status')),None)
         code=(status or {}).get('status',{}).get('code','no_data')
         starts={'strong':(f'আমাদের পাওয়া তথ্যে {possessive(name,True)} অবস্থা ভালো',f'Our records show that {name} is in good condition'),'watch':(f'{possessive(name,True)} কিছু বিষয়ে সতর্ক থাকা দরকার',f'Our records flag some concerns about {name}'),'high':(f'{possessive(name,True)} তথ্যে ঝুঁকির বড় সংকেত আছে',f'Our records flag high risk at {name}'),'no_data':(f'{name} কেমন আছে বলার মতো যথেষ্ট তথ্য আমাদের কাছে নেই',f'We do not have enough information to assess {name}')}
-        if status and (repeat or status['fact_id'] not in seen):add(starts.get(code,starts['no_data'])[0 if bn else 1],status)
+        if status and (status['fact_id'] in replay_fact_ids if replay_fact_ids is not None else repeat or status['fact_id'] not in seen):add(starts.get(code,starts['no_data'])[0 if bn else 1],status)
         else:add('এই ব্যাংকের সারাংশ আগেই বলেছি' if bn else 'I have already summarised this bank')
         reasons=[f for f in fresh if not f['fact_id'].startswith(('status:','insurance:'))]
         if code=='no_data':add('কারণ হালনাগাদ হিসাবের কিছু তথ্য এখনও পাওয়া যায়নি' if bn else 'That is because some current financial records are missing',reasons[0] if reasons else None)
@@ -183,7 +185,7 @@ def compose(db,facts,conversation,question,tool,action=None,repeat=False):
             add(('কারণ, ' if bn else 'That is because ')+fact_clause(db,reasons[0],bn,bank_id),reasons[0])
         else:add('এর কারণগুলো আগেই ব্যাখ্যা করেছি, সঠিক অঙ্ক কার্ডে আছে' if bn else 'I have explained the reasons, and the exact figures are on the card')
         ins=next((f for f in facts if f['fact_id'].startswith('insurance:')),None)
-        if ins and (repeat or bank_id not in insurance_banks):
+        if ins and (ins['fact_id'] in replay_fact_ids if replay_fact_ids is not None else repeat or bank_id not in insurance_banks):
             add(('আর ' if bn else 'Also, ')+insurance_clause(db,bank_id,bn),ins)
             if bank_id not in insurance_banks:insurance_banks.append(bank_id)
     elif tool in {'bank_reasons','bank_figures'}:

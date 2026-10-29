@@ -422,3 +422,15 @@ Live Cloudflare checks verified the sourced conversation flow, English
 introduction, every-tab responsive chrome and root/API-doc security headers.
 The eight-second duration and native/independent listener acceptance remain
 open as described above.
+
+
+## Full pipeline recheck — 29 October 2026
+
+[Voice pipeline checks](VOICE_PIPELINE_CHECKS.md) records real provider probes,
+actual browser recording/upload with generated input, newly corrected matcher,
+Repeat, planner-argument and audio/typing recovery bugs, and repeatable checks.
+The updated suite passed 281 tests plus 27 subtests and all seven frontend suites.
+The English City/Citibank ambiguity and initial browser recognition variability
+are retained as evidence, not counted as a representative ASR-accuracy pass.
+Native/human/offline-clip/source acceptance and the eight-second audio goal remain
+open. Database and provider authentication succeeded.

@@ -682,8 +682,7 @@ async function finishRecording() {
 function showVoiceFallback(code = "unmatched") {
   if (agentPanel?.active) {
     document.getElementById('agent-state').textContent = currentLang === 'bn' ? 'কথা শোনা যায়নি। একটি বিকল্প বেছে নিন বা আবার বলুন।' : 'Could not hear a reply. Choose an option or try speaking again.';
-    if (!['no_speech','no-speech'].includes(code)) agentPanel.silenceRetries = 2;
-    agentPanel.silent(); return;
+    agentPanel.captureFailed(['no_speech','no-speech'].includes(code)); return;
   }
   if (ivr?.active) {
     document.getElementById('ivr-status').textContent = ['no_speech','no-speech'].includes(code)
@@ -862,6 +861,7 @@ async function loadBankOptions() {
 
 async function sendVoiceInput(audio, text, request, choice = null) {
   voiceLanguageReturn=null;voiceLanguageOverride=null;document.getElementById('voice-language-chip').hidden=true;
+  const keepTypingOnMiss=!audio&&!choice&&!document.getElementById('agent-text-form').hidden;
   const form = new FormData();
   if (audio) form.append("audio", audio, audio.type.includes("mp4") ? "recording.mp4" : "recording.webm");
   else if (choice) form.append("choice", choice);
@@ -874,7 +874,7 @@ async function sendVoiceInput(audio, text, request, choice = null) {
   const armTimeout = ms => { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), ms); };
   armTimeout(40000); // bounded ASR retries/conversion can precede the first event
   let reader;
-  let receivedResult = false;
+  let receivedResult = false, awaitingSpeech = false;
   try {
     const response = await fetch(audio ? "/v1/voice" : "/v1/ask", { method: "POST", body: form, signal: controller.signal, headers: { "Accept-Language": currentLang, "X-ILMA-Device": anonymousDevice } });
     if (response.status === 404 || response.status === 405) throw new Error("voice_backend_outdated");
@@ -902,13 +902,16 @@ async function sendVoiceInput(audio, text, request, choice = null) {
           armTimeout(45000);
           let parsed;
           try { parsed = JSON.parse(data); } catch { throw new Error("voice_incomplete_response"); }
+          if(name==='result'&&parsed.type==='agent_turn'&&keepTypingOnMiss&&parsed.conversation?.misses>0)parsed.offer_typing=true;
           await handleVoiceEvent(name, parsed, audioRequest);
-          if (name === "result") receivedResult = true;
+          if (name === "result") {receivedResult = true;awaitingSpeech=Boolean(parsed.type==='agent_turn'&&parsed.audio_pending);}
+          if (name === 'speech'||name==='speech_unavailable')awaitingSpeech=false;
         }
       }
       if (done) break;
     }
     if (request === voiceRequest && !receivedResult) throw new Error("voice_incomplete_response");
+    if (request === voiceRequest && awaitingSpeech) await handleVoiceEvent('speech_unavailable',{},audioRequest);
     if (request === voiceRequest) {
       isSearching = false; voiceAbort = null;
       const player = document.getElementById("ilma-player");
@@ -918,7 +921,10 @@ async function sendVoiceInput(audio, text, request, choice = null) {
   } catch (error) {
     if (receivedResult && request === voiceRequest) {
       isSearching = false; voiceAbort = null;
-      stopAudio();
+      if(agentPanel?.active){
+        document.getElementById('agent-state').textContent=currentLang==='bn'?'অডিও পাওয়া যায়নি। বিকল্প বেছে নিন।':'Audio unavailable. Choose an option.';
+        agentPanel.speechUnavailable();
+      }else stopAudio();
       document.getElementById("sr-announcer").textContent = currentLang === "bn"
         ? "উত্তরটি পর্দায় আছে। পড়ে শোনানো সম্পূর্ণ হয়নি।" : "The answer is shown. Spoken playback could not finish.";
       startExampleCycle();
@@ -1838,6 +1844,11 @@ function setupAgentPanel() {
     recording: () => isListening, finish: finishRecording,
     assistive: () => appSettings.screenreader,
     send: sendAgentChoice,
+    typing() {
+      document.getElementById('agent-text-form').hidden=false;
+      document.getElementById('agent-state').textContent=currentLang==='bn'?'কথা শোনা যায়নি। বিকল্প বেছে নিন অথবা লিখে বলুন।':'Could not hear a reply. Choose an option or type your question.';
+      document.getElementById('agent-text-input').focus();
+    },
     async listen() {
       if (document.hidden || phoneLandscape || currentTab !== 'home') return;
       activeVoiceContext = {tab:'home',bank_id:null};

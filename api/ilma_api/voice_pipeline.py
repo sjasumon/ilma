@@ -357,7 +357,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             yield event('progress', {'stage':'agent_tools_complete'})
             spoken=result.pop('speech_text')
             speech_parts=result.pop('speech_parts',[spoken])
-            result['audio_pending']=bool(context.speak and spoken and (not result.get('action') or result['action']['type'] not in {'stop','open_report'}))
+            result['audio_pending']=bool(context.speak and spoken and (not result.get('action') or result['action']['type'] not in {'stop','open_report','open_proof'}))
             intent='voice_agent';institution=result['conversation']['institution_id'];outcome='answered'
             yield event('result',result)
             if timings:

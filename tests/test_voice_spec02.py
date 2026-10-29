@@ -69,6 +69,12 @@ class TestVoiceText(unittest.TestCase):
         both=match_candidates('South Bangla Agriculture and Commerce Bank and Dutch Bangla Bank',banks)
         self.assertEqual({r['id'] for r in both},{1,2})
 
+    def test_long_unrelated_words_are_not_short_bank_aliases(self):
+        banks=[bank(1,'BRAC Bank PLC','ব্র্যাক ব্যাংক')]
+        for text in ['insurance','Explain deposit insurance','How does deposit insurance work?']:
+            self.assertEqual(match_candidates(text,banks),[],text)
+        self.assertEqual(match_candidates('Brack Bank',banks)[0]['id'],1)
+
     def test_language_rule(self):
         for text, expected in [('Eastern Bank কি নিরাপদ?', 'bn'), ('IFIC Bank-এর FDR rate কত?', 'bn'),
                                ('is জনতা ব্যাংক safe?', 'en'), ('Is Sonali Bank safe?', 'en')]:

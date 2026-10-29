@@ -302,3 +302,24 @@ def test_explicit_bank_survives_rejected_plan_and_overrides_previous_bank(db):
 @pytest.mark.parametrize('reply,expected',[('আরো বিস্তারিত','detail'),('আরও বিস্তারীত','detail'),('more detals','detail'),('ব্যাংকের মূলধন কত',None),('আরো বিস্তারিত বলবেন না',None),('yess',None),('watchh',None)])
 def test_short_option_spelling_tolerance_never_fuzzes_consent(reply,expected):
     assert spoken_choice(reply,Conversation(state='BANK',institution_id=1))==expected
+
+
+@pytest.mark.parametrize('option,want',[('detail','DETAIL'),('figures','FIGURES')])
+def test_model_script_option_uses_script_args_instead_of_unused_service_defaults(db,option,want):
+    plan={'tool':'bank_reasons','args':{'institution_id':1,'tenor':12,'tier':'Gold','network':'Visa'},'option':option}
+    client,calls=model_client({'agent_plan':plan})
+    with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
+        result=call(db,'interpret this disclosure please',Conversation(state='BANK',institution_id=1),client=client)
+    assert result['conversation']['state']==want and result['conversation']['misses']==0
+    assert len(calls)==1
+    prompt=json.loads(calls[0]['messages'][1]['content'])
+    assert prompt['tool_contracts']['bank_reasons']['arguments']==['institution_id']
+    assert 'not financial performance' in prompt['tool_contracts']['bank_history']['purpose']
+
+
+def test_model_script_option_cannot_select_an_unmatched_bank(db):
+    client,calls=model_client({'agent_plan':{'tool':'bank_reasons','args':{'institution_id':999},'option':'detail'}})
+    with patch.object(settings,'META_MODEL_API_KEY','synthetic-key'):
+        result=call(db,'interpret this disclosure please',Conversation(state='BANK',institution_id=1),client=client)
+    assert result['conversation']['institution_id']==1 and result['conversation']['misses']==1
+    assert all(f['fact_id'].startswith('script:') for f in result['facts'])

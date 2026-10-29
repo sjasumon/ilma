@@ -88,7 +88,8 @@ def match_candidates(text, banks, scorer=None):
             width = len(normalized.split())
             for start in range(len(tokens)):
                 window = ' '.join(tokens[start:start + width])
-                if len(window) < len(normalized) * .7:
+                # Partial matches inside much longer words are not bank names.
+                if min(len(window),len(normalized)) < max(len(window),len(normalized)) * .7:
                     continue
                 if window == normalized:
                     score = 100

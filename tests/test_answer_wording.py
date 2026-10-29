@@ -119,3 +119,64 @@ def test_generic_insurance_request_outranks_spurious_weak_bank_match(wording_db,
     assert result['conversation']['institution_id']==1
     assert result['conversation']['language']=='en'
     assert result['facts'][0]['fact_id']=='insurance:bank'
+
+
+@pytest.mark.parametrize('language',['bn','en'])
+def test_repeat_replays_the_selected_details_and_specific_figure(wording_db,language):
+    result=ask(wording_db,'BRAC Bank',Conversation(language=language))
+    result=ask(wording_db,'',conv(result),'detail')
+    repeated=ask(wording_db,'',conv(result),'repeat')
+    assert repeated['speech']==result['speech']
+    assert repeated['speech_fact_ids']==result['speech_fact_ids']
+    assert 'synthetic-capital' not in repeated['speech_fact_ids']
+    result=ask(wording_db,'BRAC Bank net profit',conv(result))
+    repeated=ask(wording_db,'',conv(result),'repeat')
+    assert repeated['speech']==result['speech']
+    assert repeated['speech_fact_ids']==['synthetic-profit']
+
+
+def test_source_action_does_not_replace_the_last_answer_to_repeat(wording_db):
+    first=ask(wording_db,'BRAC Bank')
+    proof=ask(wording_db,'',conv(first),'proof')
+    assert proof['action']['type']=='open_proof'
+    assert proof['conversation']['last_tool']==first['conversation']['last_tool']
+    assert proof['conversation']['last_spoken_fact_ids']==first['speech_fact_ids']
+    repeated=ask(wording_db,'',conv(proof),'repeat')
+    assert repeated['speech']==first['speech']
+
+
+def test_insurance_questions_use_context_without_spurious_bank_clarification(wording_db):
+    for text in ['How does deposit insurance work?','Explain deposit insurance']:
+        result=ask(wording_db,text,Conversation(state='BANK',institution_id=1,language='en'))
+        assert result['conversation']['state']=='NEXT' and result['conversation']['institution_id']==1
+        assert result['conversation']['misses']==0
+
+
+def test_opening_proof_does_not_request_speech(wording_db):
+    from ilma_api.voice_pipeline import run_pipeline
+    first=ask(wording_db,'BRAC Bank')
+    async def run():
+        register=AsyncMock(return_value=None)
+        ctx=context(conv(first)).model_copy(update={'choice':'proof','speak':True})
+        with patch('ilma_api.audio_cache.register_speech',new=register):
+            frames=[f async for f in run_pipeline(None,'','',ctx,BANKS,wording_db,mode='text')]
+        import json
+        result=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: result'))
+        assert result['action']['type']=='open_proof' and not result['audio_pending']
+        assert not any(f.startswith('event: speech') for f in frames)
+        register.assert_not_awaited()
+    asyncio.run(run())
+
+
+def test_repeat_of_already_explained_reply_does_not_restart_old_figures(wording_db):
+    first=ask(wording_db,'BRAC Bank')
+    again=ask(wording_db,'BRAC Bank',conv(first))
+    assert again['speech_fact_ids']==[]
+    repeated=ask(wording_db,'',conv(again),'repeat')
+    assert repeated['speech']==again['speech'] and repeated['speech_fact_ids']==[]
+    current=first
+    for choice in ['detail','figures','figures']:
+        current=ask(wording_db,'',conv(current),choice)
+    assert current['speech_fact_ids']==[]
+    repeated=ask(wording_db,'',conv(current),'repeat')
+    assert repeated['speech']==current['speech'] and repeated['speech_fact_ids']==[]

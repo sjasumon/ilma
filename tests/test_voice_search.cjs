@@ -100,6 +100,23 @@ function voiceApp(options = {}) {
   assert.equal(lateDisconnect.context.openedBank, 102);
   assert.equal(lateDisconnect.run('isSearching'), false);
   assert.match(lateDisconnect.node('sr-announcer').textContent, /answer is shown/);
+  for(const failAtEnd of [false,true]){
+  const agentDisconnect = voiceApp();
+  agentDisconnect.run(`agentPanel={active:true,phase:'audio-wait',speechUnavailable(){this.phase='waiting';globalThis.audioRecovery=true}};showAgentTurn=async result=>{agentConversation=result.conversation;globalThis.keptAgentResult=result};`);
+  agentDisconnect.context.fetch=async()=>response([['result',{type:'agent_turn',speech_format:'paragraph',speech:'Synthetic answer.',text:'Synthetic answer.',audio_pending:true,conversation:{state:'BANK',institution_id:1,language:'bn'}}]],'\n',failAtEnd);
+  await agentDisconnect.run('sendVoiceInput(null,"Synthetic Bank",voiceRequest)');
+  assert.equal(agentDisconnect.run('audioRecovery'),true);
+  assert.equal(agentDisconnect.run('agentPanel.phase'),'waiting');
+  assert.equal(agentDisconnect.run('agentConversation.institution_id'),1);
+  assert.equal(agentDisconnect.run('keptAgentResult.text'),'Synthetic answer.');
+  assert.equal(agentDisconnect.run('isListening'),false);
+  assert.match(agentDisconnect.node('agent-state').textContent,/অডিও/);
+  }
+  const typingMiss=voiceApp();typingMiss.node('agent-text-form').hidden=false;
+  typingMiss.run('showAgentTurn=async result=>{globalThis.typedResult=result};');
+  typingMiss.context.fetch=async()=>response([['result',{type:'agent_turn',offer_typing:false,audio_pending:false,conversation:{state:'BANK',institution_id:1,misses:1}}]]);
+  await typingMiss.run('sendVoiceInput(null,"Unrecognized typed reply",voiceRequest)');
+  assert.equal(typingMiss.run('typedResult.offer_typing'),true,'a miss during inline typing must keep keyboard recovery available');
   const crlf = voiceApp();
   crlf.context.fetch = async () => response([
     ['transcript', {text:'Pubali Bank', language:'en'}],
