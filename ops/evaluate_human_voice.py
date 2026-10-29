@@ -88,7 +88,7 @@ def evaluate(base,cases,output,workers=2,sample=False):
     return score>=.95 and not summary['bank_target_failures']
 
 
-def evaluate_v2(base,cases,output,workers=2,sample=False):
+def evaluate_v2(base,cases,output,workers=2,sample=False,auditor=None):
     import math,collections
     parsed=urlparse(base)
     if parsed.hostname not in {'localhost','127.0.0.1'} or parsed.port in {None,80,443,8001}:raise ValueError('Use an isolated local preview port')
@@ -118,7 +118,9 @@ def evaluate_v2(base,cases,output,workers=2,sample=False):
         protection=case['expected_intent']!='insurance' and bool(__import__('re').search(r'বন্ধ হলেও|সুরক্ষিত|ফেরত পাওয়ার|deposit protection|if the bank closes',result['speech'],__import__('re').I))
         calls=sum(t['stage']=='PLAN' and t['model']!='exact_option' for t in trace)
         passed=intent_ok and bank_ok and slots_ok and facts_ok and checked and not protection
-        return dict(id=case['id'],intent=case['id'].split('-')[0],language=language,actual=result['intent'],intent_ok=intent_ok,bank_ok=bank_ok,slots_ok=slots_ok,facts_ok=facts_ok,checked=checked,passed=passed,ms=result.get('_first_text_ms') or round((time.monotonic()-start)*1000),complete_ms=result.get('_complete_ms'),model_calls=calls,unsolicited_protection=protection,repairs=result.get('sentence_repairs',0),words=len(result.get('speech_tts','').split()),reply=result['text'],trace=trace)
+        row=dict(id=case['id'],intent=case['id'].split('-')[0],language=language,actual=result['intent'],intent_ok=intent_ok,bank_ok=bank_ok,slots_ok=slots_ok,facts_ok=facts_ok,checked=checked,passed=passed,ms=result.get('_first_text_ms') or round((time.monotonic()-start)*1000),complete_ms=result.get('_complete_ms'),model_calls=calls,unsolicited_protection=protection,repairs=result.get('sentence_repairs',0),words=len(result.get('speech_tts','').split()),reply=result['text'],trace=trace)
+        if auditor is not None:row['claim_audit']=auditor(case,setup,result)
+        return row
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures=[pool.submit(one,case) for case in selected]
         for future in as_completed(futures):

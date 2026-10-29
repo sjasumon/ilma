@@ -332,3 +332,36 @@ private environment's provider settings without printing their values. Keep a
 commit-stamped deployment manifest and update it after each preview release.
 A preview deployment does not constitute production acceptance or a completed
 Phase 1 evaluation.
+
+## Complete Phase 1 evaluation
+
+Use a separate local service (for example port 8019), with the exact frozen
+preview checkout, the same Meta model and 8-second deadline, TTS/prewarming off,
+and its own admission namespace/signing salt. Raise only this test service's
+admission/question quotas for the authored corpus; do not change public preview
+limits or interfere with manual testing. The runner uses the preview's private
+environment to read only `ilma` for response audits. It clears inherited database
+variables before loading that file so another workspace's defaults cannot win.
+
+```sh
+"$ILMA_VENV_PATH/bin/python" ops/evaluate_phase1.py --live \
+  --app-dir /home/ubuntu/shared/all_projects/preview.sumon.me \
+  --base-url http://127.0.0.1:8019 --workers 2 \
+  --output /tmp/ilma-phase1-evaluation.json
+```
+
+This makes paid Meta requests, never paid TTS requests. All 404 cases must finish
+against unchanged code. Overall, comparison and correction acceptance must each
+reach 90%, with at least 30 cases in each subgroup. Wrong banks, slots, required
+fact coverage, unsolicited protection and response audit violations must all be
+zero; every answer must be audited. At least 90% of turns use no more than one
+Spark call, and send-to-first-checked-text p95 must be at most 6 seconds. Complete
+response timing is retained separately and must not be called first-text latency.
+
+The factual audit compares returned values, condition fields and source metadata
+with the canonical database pack, then checks spoken whole clauses and numeric
+support against that pack. This catches substituted numbers, dates, bank names,
+ranks and sources; it does not independently validate the original financial
+documents. Source sign-off remains a later human gate. Samples and partial runs
+can diagnose failures but cannot close Phase 1. Stop the temporary evaluation
+service after the run; keep the permanent public preview services running.
