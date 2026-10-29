@@ -102,6 +102,7 @@ def polish(sentence,registry,bn):
             if rest.startswith('প্রকাশিত সেবার ধরন '):return polish(name+'ের প্রকাশিত সেবার ধরন: '+rest[len('প্রকাশিত সেবার ধরন '):],{},bn)
             if re.match(r'(?:এই|প্রকাশিত)\s|\S+ের\s',rest):return polish(name+'ের '+rest,{},bn)
         else:
+            if rest.startswith(name+' '):rest=rest[len(name)+1:]
             if rest.startswith('The '):return name+"'s "+rest[4:]
             if rest.startswith('published '):return name+"'s "+rest
             if rest[:1].isupper() and not EN_VERB.match(rest.lower()):return name+"'s "+rest
@@ -109,16 +110,18 @@ def polish(sentence,registry,bn):
     return sentence
 
 RATE_LINE=re.compile(r'^(?P<head>.*?)(?P<product>(?<!\S)(?!থেকে)\S+ে) (?P<term>[০-৯\d.]+ (?:বছর|মাস)) মেয়াদে (?P<label>সুদ|আনুমানিক মুনাফা) (?P<rate>[০-৯\d.]+%)।$')
-def merge_rates(lines,facts):
+def merge_rates(lines,facts,banks=()):
     """Say the product once: "ডিপিএসে ১ বছরে সুদ ৭%, ৩ বছরে ৭.৫%।"; a term's meaning is named."""
     from ilma_api.human_tokens import PRODUCTS as LABEL
     output=[]
     for sentence,ids in lines:
         found=RATE_LINE.match(sentence)
         previous=output[-1] if output else None
-        if found and previous and previous[2] and previous[2]['product']==found['product'] and previous[2]['label']==found['label'] and not found['head']:
+        # Only one plain product per sentence: the earlier head is just a bank name, and terms differ.
+        plain=lambda head:head=='' or any(head==polish(b+'ের ',{},True) for b in banks)
+        if found and previous and previous[2] and plain(previous[2]['head']) and previous[2]['product']==found['product'] and previous[2]['label']==found['label'] and not found['head'] and found['term'] not in previous[2]['terms']:
             text=previous[0].rstrip('।')+f", {found['term']}ে {found['rate']}।"
-            output[-1]=(text,previous[1]+[i for i in ids if i not in previous[1]],previous[2])
+            output[-1]=(text,previous[1]+[i for i in ids if i not in previous[1]],{**previous[2],'terms':previous[2]['terms']+[found['term']]})
             continue
         if found:sentence=f"{found['head']}{found['product']} {found['term']}ে {found['label']} {found['rate']}।"
         general=bool(ids) and all(facts.get(i,{}).get('kind')=='term' for i in ids)
@@ -126,7 +129,7 @@ def merge_rates(lines,facts):
             alias=ids[0].split(':',1)[-1]
             word=LABEL.get(alias,(None,))[0]
             if word and not sentence.startswith(word):sentence=f'{word} মানে {sentence}'
-        output.append((sentence,list(ids),found.groupdict() if found else None))
+        output.append((sentence,list(ids),{**found.groupdict(),'terms':[found['term']]} if found else None))
     return [(s,ids) for s,ids,_ in output]
 
 def matches(v,months):
@@ -462,13 +465,13 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             # Say the bank name once, in the first sentence that carries it.
             named=False
             for i,(sentence,ids) in enumerate(lines):
-                for prefix in (name.text+'ের ',name.text+' '):
+                for prefix in (polish(name.text+'ের ',{},bn),name.text+' '):
                     if sentence.startswith(prefix):
                         if named:sentence=sentence[len(prefix):]
                         named=True;break
                 if i and not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
                 lines[i]=(sentence,ids)
-    if bn:lines=merge_rates(lines,facts)
+    if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])
     chosen,pending=paginate(lines,question,c.language)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))

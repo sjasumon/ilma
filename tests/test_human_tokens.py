@@ -273,7 +273,7 @@ def test_rate_list_says_the_product_once_and_names_the_term():
     from ilma_api.human_turn import merge_rates
     facts={'term:dps':{'kind':'term'},'a':{'kind':'service'},'b':{'kind':'service'},'c':{'kind':'service'}}
     lines=merge_rates([('পরীক্ষা ব্যাংকের ডিপিএসে ১ বছর মেয়াদে সুদ ৭%।',['a']),('ডিপিএসে ৩ বছর মেয়াদে সুদ ৭.৫%।',['b']),
-        ('কনফিডেন্স ডিপিএসে ১ বছর থেকে ৬ বছর মেয়াদে সুদ ৮%।',['c']),('প্রতি মাসে নির্দিষ্ট টাকা জমানোর স্কিম।',['term:dps'])],facts)
+        ('কনফিডেন্স ডিপিএসে ১ বছর থেকে ৬ বছর মেয়াদে সুদ ৮%।',['c']),('প্রতি মাসে নির্দিষ্ট টাকা জমানোর স্কিম।',['term:dps'])],facts,['পরীক্ষা ব্যাংক'])
     assert lines==[('পরীক্ষা ব্যাংকের ডিপিএসে ১ বছরে সুদ ৭%, ৩ বছরে ৭.৫%।',['a','b']),('কনফিডেন্স ডিপিএসে ১ বছর থেকে ৬ বছর মেয়াদে সুদ ৮%।',['c']),
         ('ডিপিএস মানে প্রতি মাসে নির্দিষ্ট টাকা জমানোর স্কিম।',['term:dps'])]
 
@@ -287,3 +287,13 @@ def test_bank_name_joins_the_clause_grammatically(sentence,bn,expected):
     from ilma_api.human_turn import polish
     name='পরীক্ষা এশিয়া' if 'এশিয়া' in sentence else 'পরীক্ষা ব্যাংক' if bn else 'Synthetic Bank'
     assert polish(sentence,{'bank:1':FactToken(name,(),1,'bank')},bn)==expected
+
+def test_rate_merge_keeps_named_products_and_equal_terms_apart():
+    from ilma_api.human_turn import merge_rates
+    lines=merge_rates([('পরীক্ষা ব্যাংকের এক্সট্রা এফডিআরে ১ বছর মেয়াদে সুদ ৮%।',['a']),('এফডিআরে ১ বছর মেয়াদে সুদ ৬.৫%।',['b']),
+        ('এফডিআরে ২ বছর মেয়াদে সুদ ৭%।',['c'])],{},['পরীক্ষা ব্যাংক'])
+    assert [s for s,_ in lines]==['পরীক্ষা ব্যাংকের এক্সট্রা এফডিআরে ১ বছরে সুদ ৮%।','এফডিআরে ১ বছরে সুদ ৬.৫%, ২ বছরে ৭%।']
+
+def test_english_product_name_does_not_repeat_the_bank():
+    from ilma_api.human_turn import polish
+    assert polish('Synthetic Bank Synthetic Bank Gold Card has annual fee of 10 taka.',{'b':FactToken('Synthetic Bank',(),1,'bank')},False)=="Synthetic Bank's Gold Card has annual fee of 10 taka."
