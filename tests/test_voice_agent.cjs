@@ -9,6 +9,7 @@ function fixture(){
  return{panel,calls,a,result,settle,async end(){complete(true);complete=null;await settle()},async advance(ms){time+=ms;for(const [id,t] of [...timers])if(t.at<=time){timers.delete(id);await t.fn()}await settle()}};
 }
 (async()=>{
+ const duplicate=fixture();duplicate.result.audio_pending=true;let plays=0;duplicate.a.play=async()=>{plays++;return false};await duplicate.panel.show(duplicate.result);await duplicate.panel.deliverSpeech({audio_url:'/synthetic'});await duplicate.panel.deliverSpeech({audio_url:'/synthetic'});assert.equal(plays,1,'Duplicate speech frames must not request the answer twice');
  const late=fixture();late.result.audio_pending=true;let offered=0;late.a.offerReplay=()=>offered++;await late.panel.show(late.result);late.panel.tap({detail:1});await late.panel.deliverSpeech({audio_url:'/synthetic'});assert.equal(offered,1,'late speech offers replay after a tap');
  const searching=fixture();searching.panel.active=true;searching.panel.phase='searching';searching.panel.tap();await searching.settle();assert.equal(searching.a.recording(),true,'search can be interrupted to ask another question');
  const app=fixture();app.panel.show(app.result,true);assert.equal(app.calls.filter(c=>c[0]==='listen').length,0);await app.end();assert.equal(app.a.recording(),true);

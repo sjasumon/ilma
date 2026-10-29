@@ -113,12 +113,6 @@ def bank_summary(db, institution_id):
     status=card.get('status') or {}
     name={**card['institution'],'name_bn':re.sub(r'\s+পিএলসি[.]?$','',card['institution']['name_bn']),'name_en':re.sub(r'\s+PLC[.]?$','',card['institution']['name_en'],flags=re.I)}
     result=[fact(f'status:{institution_id}',name['name_bn']+': '+status.get('label_bn','তথ্য কম'),name['name_en']+': '+status.get('label_en','Not enough data'),{**RULE_SOURCE,'rules_version':status.get('rules_version'),'inputs':card.get('reasons',[])},institution_id=institution_id,status=status)]
-    ins=insurance(db,institution_id)
-    rule=db.get(InsuranceRule,card['institution']['type'])
-    if ins and rule.covered and rule.limit_bdt is not None and 'per depositor per member bank' in rule.text_en and 'combining accounts' in rule.text_en and 'Conditions' in rule.text_en:
-        ins[0]['text_bn']=f'যোগ্য আমানত: সদস্য ব্যাংকে জনপ্রতি সব হিসাব মিলে সর্বোচ্চ {format_number(rule.limit_bdt,bn=True)} টাকা। শর্ত প্রযোজ্য।'
-        ins[0]['text_en']=f'Eligible deposits: up to Tk {format_number(rule.limit_bdt,bn=False)} per depositor per member bank; accounts combined. Conditions apply.'
-    result+=ins
     reasons=bank_reasons(db,institution_id,card)[:2]
     top=db.get(Fact,reasons[0]['fact_id']) if reasons else None
     compact={f['fact_id']:f for f in bank_figures(db,institution_id,top.metric)} if top and top.metric in {'npl_ratio','crar','net_profit'} else {}
@@ -697,9 +691,9 @@ async def run_scripted_turn(text,context,banks,db,candidates=(),choice=None,watc
     return result
 
 
-async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None,device_hash=None):
+async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None,device_hash=None,on_sentence=None):
     from ilma_api.human_agent import enabled,run
-    if enabled():return await run(text,context,banks,db,candidates,choice,watch_identity,client,device_hash)
+    if enabled():return await run(text,context,banks,db,candidates,choice,watch_identity,client,device_hash,on_sentence)
     return await run_scripted_turn(text,context,banks,db,candidates,choice,watch_identity,client,device_hash)
 
 

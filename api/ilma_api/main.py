@@ -74,6 +74,8 @@ STATIC_DIR = Path(__file__).parent.parent.parent / "static"
 class AppStaticFiles(StaticFiles):
     """Versioned assets are immutable; the acceptance page is hidden unless enabled."""
     async def get_response(self, path, scope):
+        if path.startswith('audio/fixed/') and 'insurance' in path:
+            raise HTTPException(status_code=404)
         if path == 'voice-test.html' and not settings.VOICE_TEST_PAGE_ENABLED:
             raise HTTPException(status_code=404)
         response = await super().get_response(path, scope)
@@ -202,6 +204,7 @@ def get_institution_index(db: Session = Depends(get_db)):
             "name_bn": inst.name_bn,
             "name_en": inst.name_en,
             "type": inst.type,
+            "islamic": inst.islamic,
             "coverage": inst.coverage,
             "licensed": inst.licensed,
             "aliases": aliases,
@@ -308,6 +311,12 @@ def get_banking_news(db: Session = Depends(get_db)):
 async def voice_audio(token:str):
     from ilma_api.audio_cache import audio_response
     return await audio_response(token)
+
+@app.get('/v1/audio/{token}/status',include_in_schema=False)
+async def voice_audio_status(token:str,response:Response):
+    from ilma_api.audio_cache import get_store
+    response.headers['Cache-Control']='no-store'
+    return await get_store().status(token)
 
 
 @app.get("/v1/voice/config")
@@ -422,7 +431,7 @@ def fixed_voice_content():
         manifest = load_approved(STATIC_DIR / 'audio/fixed', allow_legacy=True)
         return {'clips': {key: {'url': '/static/audio/fixed/' + item['file'], 'fallback_url': '/static/audio/fixed/' + item['fallback_file'], 'text': item['text']} for key, item in manifest['clips'].items()}}
     except (ValueError, OSError, KeyError):
-        return {'clips': {}}
+        return JSONResponse(status_code=503,content={'clips': {},'error':{'code':'fixed_audio_unavailable'}})
 
 
 @app.get('/sw.js', include_in_schema=False)

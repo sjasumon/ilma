@@ -33,7 +33,6 @@ CATALOG = {
     'ivr_yes': ('হ্যাঁ।', 'Yes.'), 'ivr_no': ('না।', 'No.'),
     'ivr_ready': ('বলুন।', 'Speak now.'),
     'ivr_repeat_hint': ("আবার শুনতে আবার বলুন।", 'Say again to hear it again.'),
-    'insurance': (None, None),
 }
 
 
@@ -48,6 +47,8 @@ def validate_review(item):
 def load_approved(directory, allow_legacy=False):
     directory = Path(directory)
     manifest = json.loads((directory / 'manifest.json').read_text())
+    # Retire old protection clips without changing their private review evidence.
+    manifest['clips']={key:item for key,item in manifest.get('clips',{}).items() if key not in {'bn:insurance','en:insurance'}}
     required = {f'{lang}:{key}' for lang in ('bn', 'en') for key in CATALOG}
     supplied = set(manifest.get('clips', {}))
     baseline = {key for key in required if ':ivr_' not in key}
@@ -81,19 +82,12 @@ async def generate(directory, limit=None):
     from ilma_api.voice_pipeline import speech
     from ilma_api.voice import ffmpeg_executable
     ffmpeg_executable()  # fail before spending provider credits if conversion is unavailable
-    from ilma_api.db import SessionLocal, InsuranceRule
     directory = Path(directory); directory.mkdir(parents=True, exist_ok=True)
     clips, failures = {}, []
     for language, index in [('bn', 0), ('en', 1)]:
         for key, text in CATALOG.items():
             if limit is not None and len(clips) + len(failures) >= limit: break
             phrase = text[index]
-            if key == 'insurance':
-                try:
-                    with SessionLocal() as db:
-                        row = db.query(InsuranceRule).filter_by(inst_type='bank').first()
-                        phrase = (row.text_bn if language == 'bn' else row.text_en) if row and row.source else None
-                except Exception: phrase = None
             if key == 'ivr_confirm':
                 phrase = phrase.replace('{bank}', 'ব্যাংকের নাম' if language == 'bn' else 'the bank name')
             if not phrase:

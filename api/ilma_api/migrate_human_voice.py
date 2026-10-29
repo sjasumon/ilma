@@ -1,7 +1,7 @@
 """Additive schema migration and derived service terms. No bank fact import."""
 from sqlalchemy import inspect,text
 from sqlalchemy.orm import Session
-from ilma_api.db import engine,BankProfile,AppConversation,ServiceOffer
+from ilma_api.db import engine,BankProfile,AppConversation,AppVoiceVariant,ServiceOffer
 from ilma_api.service_terms import parse_terms
 
 def migrate(bind=engine):
@@ -13,6 +13,7 @@ def migrate(bind=engine):
         if 'failure_reason' not in {c['name'] for c in inspect(bind).get_columns('app_model_call')}:
             connection.execute(text('ALTER TABLE app_model_call ADD COLUMN failure_reason VARCHAR(255) NULL'))
     BankProfile.__table__.create(bind,checkfirst=True);AppConversation.__table__.create(bind,checkfirst=True)
+    AppVoiceVariant.__table__.create(bind,checkfirst=True)
     with Session(bind) as db:
         rows=db.query(ServiceOffer).all()
         for row in rows:

@@ -92,8 +92,8 @@ def brief_fact(db,item,bn,bank_id):
             cfg=json.loads(Path(__file__).with_name('rules').joinpath('thresholds.json').read_text())
             total=(Decimal(str(cfg['crar_min']))+Decimal(str(cfg['crar_buffer'])))*100
             limit=spoken_percent(total,bn,negative=True);number=spoken_percent(value*100,bn,negative=value<0)
-            if value<0:return calculated+(f'ঝুঁকিভিত্তিক সম্পদের তুলনায় মূলধনের অনুপাত মাইনাস {number}, অথচ বাফারসহ লাগে {limit}' if bn else f'Its capital ratio is minus {number} of risk-weighted assets, against a {limit} minimum including the buffer')
-            return calculated+(f'ঝুঁকিভিত্তিক সম্পদের তুলনায় মূলধনের অনুপাত প্রায় {number}, বাফারসহ ন্যূনতম লাগে {limit}' if bn else f'Its capital ratio is about {number} of risk-weighted assets, against a {limit} minimum including the buffer')
+            if value<0:return calculated+(f'নিজের মূলধনের অনুপাত মাইনাস {number}, অথচ ন্যূনতম লাগে {limit}, যা বড় দুর্বলতার লক্ষণ' if bn else f'Its capital ratio is minus {number}, against a {limit} minimum, a significant weakness')
+            return calculated+(f'নিজের মূলধনের অনুপাত প্রায় {number}, ন্যূনতম লাগে {limit}' if bn else f'Its capital ratio is about {number}, against a {limit} minimum')
         if row.metric=='npl_ratio':
             number=rounded(value*100,bn)
             return calculated+(f'প্রতি ১০০ টাকা ঋণে প্রায় {number} টাকা ফেরত আসছে না' if bn else f'About {number} taka in every 100 lent has repayment problems')
@@ -121,15 +121,15 @@ def brief_fact(db,item,bn,bank_id):
     event=db.get(Event,key) if not incident else None
     record=incident or event
     if record and record.institution_id==bank_id:
-        title=clean(record.title_bn if bn else record.title_en)
+        raw_title=(record.title_bn or '')+' '+(record.title_en or '')
+        card=bool(re.search(r'atm|card|এটিএম|কার্ড',raw_title,re.I))
+        customer=bool(re.search(r'customer|deposit|গ্রাহক|আমানত',raw_title,re.I))
+        title=('এটিএম কার্ড নিয়ে একটি ঘটনা' if card else 'গ্রাহকের টাকা নিয়ে একটি অনিয়মের ঘটনা' if customer else 'ব্যাংকটির কার্যক্রম নিয়ে একটি ঘটনা') if bn else ('an incident involving ATM cards' if card else 'an irregularity involving customer funds' if customer else 'an incident involving the bank’s operations')
         official=record.official
         date_value=(record.started_on or record.first_reported_on) if incident else record.event_date
         when=format_number(date_value.year,bn=bn,group=False)
-        text=f'{when} সালের নথিতে এই ব্যাংক সম্পর্কে বলা হয়েছিল, {title}' if bn else f'In {when}, records about this bank described {title}'
-        if incident and incident.status in {'acquitted','case_withdrawn','settled','convicted','charged','case_filed'}:
-            from ilma_api.incidents import STATUS_LABELS
-            text+=', '+STATUS_LABELS[incident.status][0 if bn else 1]
-        if not official:text+=', সরকারিভাবে নিশ্চিত নয়' if bn else ', not officially confirmed'
+        text=f'{when} সালে {title} নিয়ে খবর আসে' if bn else f'In {when}, reports described {title}'
+        if not official:text+=', খবরের তথ্য সরকারিভাবে নিশ্চিত নয়' if bn else ', the news report is not officially confirmed'
         return text
     return clean(item['text_bn' if bn else 'text_en'])
 
@@ -142,8 +142,7 @@ def brief_insurance(db,bank_id,bn,short=False):
     if 'per depositor per member bank' not in rule.text_en or 'combining accounts' not in rule.text_en:
         return 'সুরক্ষার শর্ত কার্ডে দেখুন' if bn else 'See the protection terms on the card'
     limit=(format_number(rule.limit_bdt/100000,bn=bn,group=False)+(' লাখ' if bn else ' lakh')) if rule.limit_bdt%100000==0 else format_number(rule.limit_bdt,bn=bn,group=False)
-    if short:return f'শর্ত মেনে জনে {limit} টাকা পর্যন্ত সুরক্ষা পাবেন' if bn else f'Eligible deposits are protected up to {limit} taka per person'
-    return (f'শর্ত মেনে সদস্য ব্যাংকের সব হিসাব মিলিয়ে জনপ্রতি {limit} টাকা পর্যন্ত আমানত সুরক্ষিত থাকে' if bn else f'Eligible deposits are protected up to {limit} taka per person per member bank, with accounts combined. Conditions apply')
+    return (f'একই ব্যাংকের সব হিসাব মিলিয়ে জনপ্রতি {limit} টাকার সীমা আছে। কিছু শর্তের ওপর এটি নির্ভর করে, সেগুলো কার্ডে আছে' if bn else f'The limit is {limit} taka per person per bank, combining accounts. This depends on conditions explained on the card')
 
 
 def brief_offer(db,item,bn,comparison=False):
@@ -235,41 +234,24 @@ def compose(db,facts,conversation,question,tool,action=None,repeat=False,replay_
         starts={'strong':(f'{possessive(name,True)} অবস্থা ভালো',f'{name} is in good condition'),'watch':(f'{possessive(name,True)} কিছু বিষয়ে সতর্কতা দরকার',f'{name} has some warning signs'),'high':(f'{possessive(name,True)} ঝুঁকি বেশি',f'{name} faces risk'),'no_data':(f'{name} সম্পর্কে যথেষ্ট তথ্য নেই',f'{name} cannot be assessed')}
         start=starts.get(code,starts['no_data'])[0 if bn else 1] if say_status else ('এই ব্যাংকের সারাংশ আগেই বলেছি' if bn else 'I already summarised this bank')
         reasons=[f for f in fresh if not f['fact_id'].startswith(('status:','insurance:'))]
-        ins=next((f for f in facts if f['fact_id'].startswith('insurance:')),None)
-        speak_ins=bool(ins and (ins['fact_id'] in replay_fact_ids if replay_fact_ids is not None else repeat or bank_id not in insurance_banks))
         add(start,status if say_status else None,True)
-        # Budget the whole paragraph, reserving the conditional protection line.
-        protection=brief_insurance(db,bank_id,bn,short=True) if speak_ins else None
         for index,item in enumerate(reasons[:1 if code=='no_data' else 2]):
             row=db.get(Fact,item['fact_id'])
             text=brief_fact(db,item,bn,bank_id)
-            if row and row.metric=='crar' and row.value>=0:
+            if row and row.metric in {'crar','npl_ratio'}:
+                from ilma_api.human_tokens import fact_clause
                 cfg=json.loads(Path(__file__).with_name('rules').joinpath('thresholds.json').read_text())
                 minimum=(Decimal(str(cfg['crar_min']))+Decimal(str(cfg['crar_buffer'])))*100
-                number=spoken_percent(row.value*100,bn);limit=spoken_percent(minimum,bn,negative=True)
-                if row.value*100>=minimum:
-                    text=f'নিজস্ব মূলধন প্রায় {number}, লাগে {limit}, তাই ক্ষতি সামলাতে পারে' if bn else f'Its capital is about {number}, above the {limit} buffer minimum'
-                else:text=f'নিজস্ব মূলধন প্রায় {number}, লাগে {limit}, তাই ঘাটতি আছে' if bn else f'Its capital is about {number}, below the {limit} buffer inclusive minimum'
-            if row and row.metric=='crar' and row.value>=0 and not bn and len(name.split())>4:
-                text=f'Its own capital exceeds the required {limit}' if row.value*100>=minimum else f'Its own capital falls below the required {limit}'
-            if row and row.metric=='crar' and row.value<0:
-                number=spoken_percent(row.value*100,bn,negative=True)
-                cfg=json.loads(Path(__file__).with_name('rules').joinpath('thresholds.json').read_text())
-                limit=spoken_percent((Decimal(str(cfg['crar_min']))+Decimal(str(cfg['crar_buffer'])))*100,bn,negative=True)
-                text=f'লোকসানে নিজস্ব মূলধন শেষ হয়েছে, এখন মাইনাস {number}, প্রয়োজন {limit}' if bn else text
+                text=fact_clause({'kind':'figure','values':{'metric':row.metric,'value':float(row.value),'minimum_percent':float(minimum)}},language,True)
             rating=db.get(Rating,item['fact_id']) if not row else None
             if rating and rating.outlook in {'negative','developing'} and not (rating.valid_to and rating.valid_to<date.today()):
                 text=('রেটিংয়ের পূর্বাভাস '+('নেতিবাচক' if rating.outlook=='negative' else 'অনিশ্চিত')+' রয়েছে') if bn else 'Its rating outlook is '+rating.outlook
             if index and reasons and db.get(Fact,reasons[0]['fact_id']) and db.get(Fact,reasons[0]['fact_id']).metric=='crar' and db.get(Fact,reasons[0]['fact_id']).value<0:continue
-            if row and row.metric=='npl_ratio':
-                number=rounded(row.value*100,bn)
-                text=f'ঋণের ১০০ টাকায় প্রায় {number} টাকা ফেরত আসে না' if bn else f'About {number}% of lending has repayment problems' if len(name.split())>4 else f'About {number} per 100 taka lent has repayment problems'
             if row and row.basis.endswith('_calculated') and not text.startswith(('হিসাবে ','Calculated ')):
                 text=('আমাদের হিসাবে '+text) if bn else 'Our calculation shows that '+text[:1].lower()+text[1:]
             if index==0:text=('কারণ, '+text if bn else 'That is because '+text[:1].lower()+text[1:])
-            candidate=assembled([*bodies,text,*([protection] if protection else [])])
+            candidate=assembled([*bodies,text])
             if len(candidate.split())<=(45 if bn else 47):add(text,item,True)
-        if protection and add(protection,ins,True) and bank_id not in insurance_banks:insurance_banks.append(bank_id)
     elif tool in {'bank_reasons','bank_figures','bank_history'}:
         for item in [f for f in fresh if not f['fact_id'].startswith('script:')]:
             if len(bodies)>=2:break

@@ -1,0 +1,4416 @@
+[
+  {
+    "id": "bank_overview-01",
+    "text": "ব্যাংকটা কেমন আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-02",
+    "text": "ব্যাংকটি সম্পর্কে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-03",
+    "text": "এই ব্যাংকের কথা শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-04",
+    "text": "এটার একটা ধারণা দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-05",
+    "text": "একটু পরিচয় করিয়ে দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-06",
+    "text": "ব্যাংকটা নিয়ে বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-07",
+    "text": "সামগ্রিকভাবে কেমন চলছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-08",
+    "text": "এই ব্যাংকের সারকথা কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-09",
+    "text": "ব্যাংকের খোঁজখবর বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-10",
+    "text": "এটার সম্পর্কে জানতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-11",
+    "text": "Tell me about this bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-12",
+    "text": "How is this bank doing",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-13",
+    "text": "Give me an overview",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-14",
+    "text": "What can you tell me about it",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-15",
+    "text": "Introduce this bank to me",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-extra-01",
+    "text": "এই ব্যাংকের সারসংক্ষেপ শুনব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-extra-02",
+    "text": "ব্যাংকটির সম্পর্কে সংক্ষেপে জানান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-extra-03",
+    "text": "এই প্রতিষ্ঠানের একটা ধারণা চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-extra-04",
+    "text": "ওই ব্যাংক সম্পর্কে একটু বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_overview-extra-05",
+    "text": "Could you introduce the bank we were discussing?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-01",
+    "text": "এই ব্যাংক নিরাপদ কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-02",
+    "text": "ব্যাংকের বর্তমান অবস্থা কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-03",
+    "text": "এখানে ঝুঁকি কেমন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-04",
+    "text": "টাকা নিয়ে চিন্তার কারণ আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-05",
+    "text": "ব্যাংকটা কি ভালো অবস্থায় আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-06",
+    "text": "অবস্থা যাচাইয়ে কী দেখা যাচ্ছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-07",
+    "text": "ব্যাংকটার ঝুঁকি বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-08",
+    "text": "এটার অবস্থা ভালো না খারাপ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-09",
+    "text": "এই ব্যাংক কি বিপদে আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-10",
+    "text": "নিরাপত্তা নিয়ে কী বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-11",
+    "text": "Is this bank safe",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-12",
+    "text": "What is its current condition",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-13",
+    "text": "Are there warning signs",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-14",
+    "text": "How risky is this bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-15",
+    "text": "Does its condition look concerning",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-extra-01",
+    "text": "বর্তমানে ব্যাংকটির হাল কেমন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-extra-02",
+    "text": "সূচক অনুযায়ী ব্যাংকটির ঝুঁকি কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-extra-03",
+    "text": "এই ব্যাংকের অবস্থা নিয়ে উদ্বেগ আছে কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-extra-04",
+    "text": "ব্যাংকটির এখনকার আর্থিক অবস্থা বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_condition-extra-05",
+    "text": "Is the bank we discussed showing financial weakness?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_condition",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-01",
+    "text": "কেন এমন অবস্থা বলছেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-02",
+    "text": "আরও একটু বুঝিয়ে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-03",
+    "text": "কী কারণে এই ফল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-04",
+    "text": "অবস্থার পেছনের কারণ কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-05",
+    "text": "একটু বিস্তারিত জানতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-06",
+    "text": "কোন বিষয়গুলো দেখেছেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-07",
+    "text": "এই সিদ্ধান্তের ভিত্তি বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-08",
+    "text": "রেটিংসহ কারণগুলো বুঝিয়ে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-09",
+    "text": "ভালো বলার কারণ কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-10",
+    "text": "আর কী দেখে বুঝব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-11",
+    "text": "Why does it have that condition",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-12",
+    "text": "Explain the reasons",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-13",
+    "text": "Tell me a little more",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-14",
+    "text": "What supports that assessment",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-15",
+    "text": "Which factors matter here",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-extra-01",
+    "text": "অবস্থাটা এমন বললেন কেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-extra-02",
+    "text": "এই মূল্যায়নের কারণটা খুলে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-extra-03",
+    "text": "কোন সূচক দেখে এমনটা বললেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-extra-04",
+    "text": "ভালো বা খারাপ বলার ভিত্তি কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_reasons-extra-05",
+    "text": "Could you explain what led to that assessment?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_reasons",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "bank_figures-01",
+    "text": "মুনাফার হিসাব বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-02",
+    "text": "নিট লাভ কত হয়েছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-03",
+    "text": "আগের বছরের তুলনায় লাভ কেমন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-04",
+    "text": "ব্যাংকের মূলধনের অঙ্ক কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-05",
+    "text": "খেলাপি ঋণের হার কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-06",
+    "text": "লোকসানের অঙ্কটা বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-07",
+    "text": "আর্থিক সংখ্যাগুলো জানতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-08",
+    "text": "হিসাবে কী পরিবর্তন হয়েছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-09",
+    "text": "লাভ কমেছে না বেড়েছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-10",
+    "text": "মূলধন আর মুনাফা শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-11",
+    "text": "What are the financial figures",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-12",
+    "text": "How much net profit did it make",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-13",
+    "text": "What is the capital ratio",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-14",
+    "text": "What percentage of loans are bad",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-15",
+    "text": "How did profit change from last year",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-extra-01",
+    "text": "ব্যাংকটির net profit কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-extra-02",
+    "text": "CRAR এর সঠিক অঙ্ক শুনব",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-extra-03",
+    "text": "এই ব্যাংকের NPL শতাংশ কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-extra-04",
+    "text": "এইবার নিট মুনাফার পরিমাণটা বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_figures-extra-05",
+    "text": "Give me the exact financial figures for this bank.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_figures",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "figure"
+    ]
+  },
+  {
+    "id": "bank_history-01",
+    "text": "অতীত ঘটনা বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-02",
+    "text": "পূর্বের ঘটনা কী ছিল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-03",
+    "text": "আগে কোনো ঘটনা ঘটেছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-04",
+    "text": "অতীতে কোনো ঝামেলা হয়েছিল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-05",
+    "text": "ব্যাংকের পুরোনো খবর বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-06",
+    "text": "কোনো কেলেঙ্কারির খবর আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-07",
+    "text": "ইতিহাসে কী ঘটেছিল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-08",
+    "text": "পাস্ট ইভেন্টস শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-09",
+    "text": "ব্যাংকটা নিয়ে আগে কী খবর হয়েছিল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-10",
+    "text": "আগের সমস্যাগুলো বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-11",
+    "text": "Tell me the past events",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-12",
+    "text": "Any scandal in the past",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-13",
+    "text": "What happened before",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-14",
+    "text": "Tell me its incident history",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-15",
+    "text": "Has it had any reported problems",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-extra-01",
+    "text": "এই ব্যাংকের অতীতের কোনো অনিয়মের খবর আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-extra-02",
+    "text": "আগে ব্যাংকটি নিয়ে অভিযোগের খবর হয়েছিল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-extra-03",
+    "text": "এর পাস্ট ইভেন্টগুলো বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-extra-04",
+    "text": "ব্যাংকের পুরনো ঘটনার খবর শুনব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_history-extra-05",
+    "text": "Were there earlier reports of problems at this bank?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_history",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "history"
+    ]
+  },
+  {
+    "id": "bank_profile-01",
+    "text": "কবে প্রতিষ্ঠিত হয়েছিল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-02",
+    "text": "কতগুলো শাখা আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-03",
+    "text": "উপশাখার সংখ্যা কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-04",
+    "text": "এটিএম কত আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-05",
+    "text": "গ্রাহকের সংখ্যা জানেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-06",
+    "text": "ব্যাংকের পরিচিতি বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-07",
+    "text": "কোন সালে যাত্রা শুরু",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-08",
+    "text": "এজেন্ট আউটলেট কতগুলো",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-09",
+    "text": "ব্যাংকটি কী জন্য পরিচিত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-10",
+    "text": "প্রতিষ্ঠার বছর বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-11",
+    "text": "When was it founded",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-12",
+    "text": "How many branches does it have",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-13",
+    "text": "How many ATMs are there",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-14",
+    "text": "Tell me its company profile",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-15",
+    "text": "What is it known for",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-extra-01",
+    "text": "এই ব্যাংকের প্রতিষ্ঠার সাল কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-extra-02",
+    "text": "মোট শাখার সংখ্যা জানা আছে কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-extra-03",
+    "text": "ব্যাংকটির এজেন্ট আউটলেটের সংখ্যা বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-extra-04",
+    "text": "এই প্রতিষ্ঠানের জন্ম কোন বছরে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "bank_profile-extra-05",
+    "text": "What year did this bank begin operations?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_profile",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "profile",
+      "coverage"
+    ]
+  },
+  {
+    "id": "services_list-01",
+    "text": "কী কী সেবা আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-02",
+    "text": "ব্যাংকের সেবাগুলো বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-03",
+    "text": "কী ধরনের হিসাব খোলা যায়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-04",
+    "text": "এখানে কোন কোন পণ্য আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-05",
+    "text": "সেবার পরিচয় দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-06",
+    "text": "কোন ধরনের সুবিধা পাওয়া যায়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-07",
+    "text": "ডিপোজিটের কী কী ধরন আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-08",
+    "text": "এই ব্যাংক কী কী দেয়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-09",
+    "text": "আমার জন্য সেবার তালিকা পড়ুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-10",
+    "text": "ব্যাংকের পণ্য সম্পর্কে একটা ধারণা দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-11",
+    "text": "What services does it offer",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-12",
+    "text": "List its banking products",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-13",
+    "text": "What kinds of accounts are available",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-14",
+    "text": "Tell me about its services",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-15",
+    "text": "What products can I ask about",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-extra-01",
+    "text": "এই ব্যাংকের সব ধরনের সেবা কী কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-extra-02",
+    "text": "কোন কোন ব্যাংকিং সেবা নিয়ে কথা বলা যায়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-extra-03",
+    "text": "ব্যাংকটির পণ্যগুলোর নাম শুনব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-extra-04",
+    "text": "এখানে পাওয়া সেবার ধরনগুলো বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "services_list-extra-05",
+    "text": "Which banking services can you explain for this bank?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "services_list",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "service_detail-01",
+    "text": "এফডিআর রেট কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-02",
+    "text": "ডিপিএসের সুদ বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-03",
+    "text": "এক বছরের এফডিআর জানতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-04",
+    "text": "ডিপিএসের সব মেয়াদ বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-05",
+    "text": "সঞ্চয়ী হিসাবের সুদ কেমন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-06",
+    "text": "কার্ডের বার্ষিক ফি কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "card"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-07",
+    "text": "গৃহঋণের হার বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-08",
+    "text": "এই ব্যাংকের এফডিআরের বিস্তারিত কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-09",
+    "text": "মাসিক সঞ্চয় স্কিমে কী হার",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-10",
+    "text": "ডিপিএস কত বছরের হয়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-11",
+    "text": "What is its FDR rate",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-12",
+    "text": "Tell me the DPS rates",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-13",
+    "text": "What does a one-year fixed deposit pay",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-14",
+    "text": "How much is the card annual fee",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "card"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-15",
+    "text": "What terms does its DPS offer",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-extra-01",
+    "text": "এই ব্যাংকে এক বছরের FDR rate কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-extra-02",
+    "text": "ডিপিএসের মেয়াদ ও সুদ শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-extra-03",
+    "text": "এই ব্যাংকের Visa Gold কার্ডের বার্ষিক ফি কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "card"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-extra-04",
+    "text": "এখানে savings account এর সুদ কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "service_detail-extra-05",
+    "text": "Give me this bank’s DPS terms and rates.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "service_detail",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service",
+      "coverage"
+    ]
+  },
+  {
+    "id": "compare-01",
+    "text": "অন্য ব্যাংকের সাথে তুলনা করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-02",
+    "text": "পাশাপাশি মিলিয়ে দেখান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-03",
+    "text": "একই মেয়াদে অন্যদের সুদ কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-04",
+    "text": "আর কোন ব্যাংকে এই সেবা আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-05",
+    "text": "ডিপিএস অন্য ব্যাংকে কেমন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-06",
+    "text": "এফডিআর তুলনা শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-07",
+    "text": "আরও কয়েকটা ব্যাংকের সাথে মেলান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-08",
+    "text": "একই পণ্যের হার মিলিয়ে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-09",
+    "text": "অন্য ব্যাংকের একই মেয়াদের তথ্য দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-10",
+    "text": "একই ভিত্তিতে তুলনা করবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-11",
+    "text": "Compare with another bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-12",
+    "text": "Show similar offers side by side",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-13",
+    "text": "How do other banks compare",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-14",
+    "text": "Compare the same deposit term",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-15",
+    "text": "What do other banks pay on this product",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-01",
+    "text": "এক বছরের FDR অন্য ব্যাংকের সাথে মেলান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-02",
+    "text": "ডিপিএসের একই মেয়াদে ব্যাংকগুলো তুলনা করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-03",
+    "text": "এই পণ্যের হার অন্য ব্যাংকে কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-04",
+    "text": "পাশাপাশি অন্যদের রেট দেখান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-05",
+    "text": "Compare this bank’s FDR with other banks.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-06",
+    "text": "একই term এ DPS compare করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-07",
+    "text": "অন্য ব্যাংকের FDR rate পাশাপাশি বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-08",
+    "text": "এই ব্যাংক আর প্রাইমের এক বছরের ডিপিএস তুলনা করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-09",
+    "text": "ইবিএল ও প্রাইমের এক বছরের FDR মেলান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-10",
+    "text": "ই বি এল এর এক বছরের ডিপিএস অন্য ব্যাংকের সাথে তুলনা করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-11",
+    "text": "Compare one-year DPS rates across banks.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "dps",
+      "tenor": 12
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-12",
+    "text": "Compare FDR rates on the same term.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "fdr"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-13",
+    "text": "Show this bank and Prime side by side.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-14",
+    "text": "Compare Visa Gold annual fees across banks.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {
+      "product": "card"
+    },
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "compare-extra-15",
+    "text": "Compare the other banks on this product.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "compare",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "service"
+    ]
+  },
+  {
+    "id": "insurance-01",
+    "text": "আমানত সুরক্ষা কী আছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-02",
+    "text": "ব্যাংক বন্ধ হলে কী হয়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-03",
+    "text": "বীমার সীমা কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-04",
+    "text": "টাকা ফেরতের সুরক্ষা জানতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-05",
+    "text": "আমানতের বীমা বুঝিয়ে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-06",
+    "text": "কোন শর্তে সুরক্ষা মেলে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-07",
+    "text": "সব হিসাবের জন্য আলাদা বীমা কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-08",
+    "text": "জনপ্রতি সুরক্ষা কত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-09",
+    "text": "সুরক্ষার নিয়ম বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-10",
+    "text": "আমানত বীমার তথ্য শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-11",
+    "text": "What deposit protection applies",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-12",
+    "text": "What happens if the bank closes",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-13",
+    "text": "What is the insurance limit",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-14",
+    "text": "Explain deposit insurance",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-15",
+    "text": "Are accounts combined for protection",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-extra-01",
+    "text": "একই ব্যাংকে সব হিসাবের বীমা একসাথে কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-extra-02",
+    "text": "deposit insurance এর শর্ত কী",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-extra-03",
+    "text": "এই ব্যাংক বন্ধ হলে বীমার নিয়ম কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-extra-04",
+    "text": "আমার টাকা কি সুরক্ষিত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "insurance-extra-05",
+    "text": "Explain the deposit-protection conditions and limit.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "insurance",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": [
+      "insurance"
+    ]
+  },
+  {
+    "id": "explain_term-01",
+    "text": "মূলধন অনুপাত মানে কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-02",
+    "text": "খেলাপি ঋণ বলতে কী বোঝায়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-03",
+    "text": "নিট মুনাফা কী জিনিস",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-04",
+    "text": "রেটিং মানে কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-05",
+    "text": "ডিপিএস শব্দটা বুঝিয়ে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-06",
+    "text": "এফডিআর কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-07",
+    "text": "ব্যাংকের নিজের মূলধন কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-08",
+    "text": "খারাপ ঋণ কেন বলা হয়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-09",
+    "text": "মধ্যমান বলতে কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-10",
+    "text": "বাফার কথাটার অর্থ কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-11",
+    "text": "What does capital ratio mean",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-12",
+    "text": "Explain bad loans simply",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-13",
+    "text": "What is net profit",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-14",
+    "text": "What does a credit rating mean",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-15",
+    "text": "What is a capital buffer",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-extra-01",
+    "text": "CRAR মানে কী বোঝায়",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-extra-02",
+    "text": "ডিপিএস শব্দটার মানে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-extra-03",
+    "text": "নিট মুনাফার সহজ মানে কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-extra-04",
+    "text": "ব্যাংকের বাফার কথাটা বুঝি না",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "explain_term-extra-05",
+    "text": "Explain what a bad loan means in plain words.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "explain_term",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-01",
+    "text": "কোন ব্যাংকে টাকা রাখব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-02",
+    "text": "আপনি কোথায় রাখতে বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-03",
+    "text": "এই ব্যাংকে আমার টাকা রাখা উচিত",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-04",
+    "text": "টাকা তুলে নেব কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-05",
+    "text": "আমাকে একটা ব্যাংক বেছে দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-06",
+    "text": "কোনটায় বিনিয়োগ করব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-07",
+    "text": "আমি কোথায় জমা দেব বলে দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-08",
+    "text": "আপনার পরামর্শ চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-09",
+    "text": "এখানে সঞ্চয় করব কি না বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-10",
+    "text": "আমার হয়ে সিদ্ধান্ত নিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-11",
+    "text": "Which bank should I keep my money in",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-12",
+    "text": "Should I withdraw my money",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-13",
+    "text": "Recommend a bank for me",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-14",
+    "text": "Tell me where to invest",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-15",
+    "text": "Choose a bank for my savings",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-extra-01",
+    "text": "কোন ব্যাংকে সঞ্চয় করা উচিত বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-extra-02",
+    "text": "আমার বদলে একটা ব্যাংক বেছে নিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-extra-03",
+    "text": "এখান থেকে টাকা সরাব কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-extra-04",
+    "text": "আপনি হলে কোথায় টাকা জমাতেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "advice_request-extra-05",
+    "text": "Please decide where I should keep my savings.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "advice_request",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-01",
+    "text": "সেরা ব্যাংক কোনটা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-02",
+    "text": "সবচেয়ে ভালো ব্যাংক বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-03",
+    "text": "এক নম্বর ব্যাংক কী",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-04",
+    "text": "সবার চেয়ে নিরাপদ কোন ব্যাংক",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-05",
+    "text": "সবচেয়ে ভরসার ব্যাংক কোনটি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-06",
+    "text": "কোন ব্যাংক সবচেয়ে ভালো",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-07",
+    "text": "সেরা বলে কোনটা ধরব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-08",
+    "text": "সবচেয়ে ভালোটা বেছে বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-09",
+    "text": "ব্যাংকের মধ্যে সেরা কে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-10",
+    "text": "সবচেয়ে নিরাপদ ব্যাংকের নাম দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-11",
+    "text": "Which is the best bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-12",
+    "text": "What is the safest bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-13",
+    "text": "Name the number one bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-14",
+    "text": "Which bank is better than all the others",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-15",
+    "text": "What is the most reliable bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-extra-01",
+    "text": "কোন ব্যাংককে সবার সেরা বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-extra-02",
+    "text": "সবচেয়ে নির্ভরযোগ্য ব্যাংকটা বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-extra-03",
+    "text": "একেবারে সবচেয়ে ভালো কোনটি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-extra-04",
+    "text": "সেরা ব্যাংকের নামটা শুনব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "best_bank-extra-05",
+    "text": "Which bank would you call the very best?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "best_bank",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-01",
+    "text": "আবার বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-02",
+    "text": "শেষ কথাটা আবার শুনব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-03",
+    "text": "আগের উত্তরটা শোনান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-04",
+    "text": "পুনরায় শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-05",
+    "text": "একই কথাটা আবার বলবেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-06",
+    "text": "একবার আর বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-07",
+    "text": "আগেরটা শুনতে পাইনি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-08",
+    "text": "যা বললেন আবার পড়ুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-09",
+    "text": "উত্তরটা আরেকবার শুনিয়ে দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-10",
+    "text": "আবার শুনতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-11",
+    "text": "Repeat that",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-12",
+    "text": "Say it again please",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-13",
+    "text": "Replay your last answer",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-14",
+    "text": "I did not hear the previous reply",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-15",
+    "text": "Can I hear that once more",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-extra-01",
+    "text": "আগের উত্তরটা আবার বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-extra-02",
+    "text": "যা বললেন সেটি আরেকবার শুনব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-extra-03",
+    "text": "শেষ উত্তরটা শুনিনি আবার শোনান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-extra-04",
+    "text": "ওই কথাটাই আবার পড়ুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "repeat-extra-05",
+    "text": "Could you replay exactly what you just said?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "repeat",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-01",
+    "text": "না আমি প্রাইম ব্যাংক বলেছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-02",
+    "text": "ভুল হয়েছে প্রাইম ব্যাংক হবে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-03",
+    "text": "আমি প্রাইমের কথাই বলছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-04",
+    "text": "ওটা নয় প্রাইম ব্যাংক",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-05",
+    "text": "ব্যাংকটা বদলে প্রাইম ধরুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-06",
+    "text": "না প্রাইম সম্পর্কে জানতে চেয়েছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-07",
+    "text": "ইস্টার্ন নয় প্রাইম ব্যাংক",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-08",
+    "text": "শুধরে নিন প্রাইম বলেছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-09",
+    "text": "প্রাইম ব্যাংকের জন্য আগের প্রশ্নটা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-10",
+    "text": "আমার কথা ছিল প্রাইম ব্যাংক",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-11",
+    "text": "No I meant Prime Bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-12",
+    "text": "That should be Prime Bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-13",
+    "text": "Correct the bank to Prime",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-14",
+    "text": "I was asking about Prime Bank",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-15",
+    "text": "Use Prime Bank for my previous question",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-01",
+    "text": "না প্রাইম হবে ইবিএল নয়",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-02",
+    "text": "আমি বলেছিলাম প্রাইম ব্যাংককে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-03",
+    "text": "না আমি আসলে প্রাইম বোঝাতে চেয়েছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-04",
+    "text": "আগের প্রশ্নটা প্রাইমের জন্য করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-05",
+    "text": "I meant Prime Bank, not Eastern.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-06",
+    "text": "এই প্রশ্নে ব্যাংক প্রাইম ধরুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-07",
+    "text": "না প্রাইম ব্যাংক সম্পর্কে একই প্রশ্ন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-08",
+    "text": "সংশোধন করছি ব্যাংকটি প্রাইম",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-09",
+    "text": "ব্যাংকের নাম প্রাইম হবে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-10",
+    "text": "প্রাইমের জন্যই জানতে চেয়েছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-11",
+    "text": "Please correct that to Prime Bank.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-12",
+    "text": "Use Prime Bank instead.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-13",
+    "text": "The previous question was about Prime.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-14",
+    "text": "No, apply that question to Prime Bank.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "correction-extra-15",
+    "text": "Switch the bank in my last question to Prime.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "expected_bank": "primebank",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-01",
+    "text": "হ্যালো",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-02",
+    "text": "আসসালামু আলাইকুম",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-03",
+    "text": "শুভ সকাল",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-04",
+    "text": "ধন্যবাদ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-05",
+    "text": "অনেক ধন্যবাদ ইলমা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-06",
+    "text": "কেমন আছেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-07",
+    "text": "আপনাকে ধন্যবাদ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-08",
+    "text": "শুভ সন্ধ্যা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-09",
+    "text": "ভালো লাগল ধন্যবাদ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-10",
+    "text": "আচ্ছা বুঝেছি ধন্যবাদ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-11",
+    "text": "Hello",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-12",
+    "text": "Good morning",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-13",
+    "text": "Thank you",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-14",
+    "text": "Thanks that helped",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-15",
+    "text": "How are you",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-extra-01",
+    "text": "আপনার সাহায্যের জন্য ধন্যবাদ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-extra-02",
+    "text": "আবার কথা হবে ধন্যবাদ",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-extra-03",
+    "text": "সালাম ইলমা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-extra-04",
+    "text": "আচ্ছা অনেক সাহায্য হলো",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "smalltalk-extra-05",
+    "text": "Thanks, that answers my question.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "smalltalk",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-01",
+    "text": "থামুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-02",
+    "text": "কথা থামান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-03",
+    "text": "পড়া বন্ধ করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-04",
+    "text": "আর বলবেন না",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-05",
+    "text": "এখন থামতে পারেন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-06",
+    "text": "শোনা বন্ধ করতে চাই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-07",
+    "text": "এইটুকুই যথেষ্ট থামুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-08",
+    "text": "দয়া করে চুপ করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-09",
+    "text": "বলা থামিয়ে দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-10",
+    "text": "বন্ধ করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-11",
+    "text": "Stop",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-12",
+    "text": "Stop speaking please",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-13",
+    "text": "Please be quiet",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-14",
+    "text": "Do not read any more",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-15",
+    "text": "That is enough stop",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-extra-01",
+    "text": "আর পড়ার দরকার নেই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-extra-02",
+    "text": "এখনই বলা থামান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-extra-03",
+    "text": "শোনা এখানেই শেষ করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-extra-04",
+    "text": "ইলমা থামতে বলছি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "stop-extra-05",
+    "text": "Please stop reading the answer.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "stop",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-01",
+    "text": "আজ আবহাওয়া কেমন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-02",
+    "text": "আমাকে একটা গান শোনান",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-03",
+    "text": "রান্নার রেসিপি বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-04",
+    "text": "ক্রিকেটে কে জিতেছে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-05",
+    "text": "একটা কৌতুক বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-06",
+    "text": "ঢাকা থেকে চট্টগ্রামের ট্রেন কখন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-07",
+    "text": "আমার জন্য কবিতা লিখুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-08",
+    "text": "চিকিৎসার ওষুধ বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-09",
+    "text": "গণিতের অঙ্ক করে দিন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-10",
+    "text": "সিনেমার খবর বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-11",
+    "text": "What is the weather today",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-12",
+    "text": "Tell me a joke",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-13",
+    "text": "Write a poem",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-14",
+    "text": "Who won the cricket match",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-15",
+    "text": "Give me a cooking recipe",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-extra-01",
+    "text": "কাল বৃষ্টি হবে কি",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-extra-02",
+    "text": "একটা গানের লাইন বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-extra-03",
+    "text": "ট্রেনের টিকিটের সময় বলুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-extra-04",
+    "text": "আমাকে একটা সিনেমা সাজেস্ট করুন",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "out_of_scope-extra-05",
+    "text": "Can you write a short story for me?",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "out_of_scope",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-01",
+    "text": "ঝমঝম",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-02",
+    "text": "ওই যে সেটা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-03",
+    "text": "তাহলে ওইটা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-04",
+    "text": "হুম ওই",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-05",
+    "text": "গুবলু টুবলু",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-06",
+    "text": "যা বলছিলাম সেটা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-07",
+    "text": "ইয়ে মানে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-08",
+    "text": "অমুক তমুক",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-09",
+    "text": "ঠিক ওই জিনিস",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-10",
+    "text": "তা ওইভাবে",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-11",
+    "text": "Blargle",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-12",
+    "text": "You know that thing",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-13",
+    "text": "Um that one thing",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-14",
+    "text": "Something or other",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-15",
+    "text": "Flibberty gibbet",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-extra-01",
+    "text": "মানে ওই যেটা বললাম",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-extra-02",
+    "text": "এই তো ওইসব",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-extra-03",
+    "text": "ইয়ে ওইটা না ওইটা",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-extra-04",
+    "text": "টুকু পুকু",
+    "language": "bn",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "unclear-extra-05",
+    "text": "Er, you know, the thing.",
+    "language": "en",
+    "current_bank": "ebl",
+    "expected_intent": "unclear",
+    "expected_bank": "ebl",
+    "slots": {},
+    "required_fact_kinds": []
+  },
+  {
+    "id": "spaced-bn-ebl",
+    "text": "ই বি এল",
+    "language": "bn",
+    "current_bank": "primebank",
+    "expected_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "slots": {},
+    "required_fact_kinds": [
+      "status"
+    ]
+  },
+  {
+    "id": "dotted-bn-ebl",
+    "text": "ই.বি.এল",
+    "language": "bn",
+    "current_bank": "primebank",
+    "expected_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "slots": {},
+    "required_fact_kinds": [
+      "status"
+    ]
+  },
+  {
+    "id": "spaced-en-ebl",
+    "text": "E B L",
+    "language": "en",
+    "current_bank": "primebank",
+    "expected_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "slots": {},
+    "required_fact_kinds": [
+      "status"
+    ]
+  },
+  {
+    "id": "dotted-en-ebl",
+    "text": "E.B.L.",
+    "language": "en",
+    "current_bank": "primebank",
+    "expected_bank": "ebl",
+    "expected_intent": "bank_overview",
+    "slots": {},
+    "required_fact_kinds": [
+      "status"
+    ]
+  }
+]

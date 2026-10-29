@@ -37,4 +37,4 @@ LABELS={
 ALLOWED={
  'BANK':{'detail','services','history','figures','ask_bank','fdr','dps'},'DETAIL':{'figures','history','services','ask_bank','fdr','dps'},'FIGURES':{'services','history','ask_bank','fdr','dps'},
  'HISTORY':{'services','detail','ask_bank','fdr','dps'},'SERVICES':{'fdr','dps','card','home_loan','ask_bank'},'SERVICE':{'compare','services','ask_bank'},
- 'COMPARE':{'bank_1','bank_2','bank_3','services','ask_bank'},'NEXT':{'ask_bank','end'},'ASK_BANK':{'ask_bank','end','fdr','dps','listen'},'WATCH_CONFIRM':{'yes','no'}}
+ 'COMPARE':{'bank_1','bank_2','bank_3','services','ask_bank'},'NEXT':{'services','ask_bank','end'},'ASK_BANK':{'ask_bank','end','fdr','dps','listen'},'WATCH_CONFIRM':{'yes','no'}}

@@ -9,12 +9,12 @@ import shutil
 import subprocess
 import sys
 
-AUTHOR = 'sjasumon <5217484+sjasumon@users.noreply.github.com>'
-LEGACY_AUTHOR = 'sjasumon <me@sumon.me>'
+AUTHOR = 'sjasumon <me@sumon.me>'
+LEGACY_AUTHOR = 'sjasumon <5217484+sjasumon@users.noreply.github.com>'
 # Existing history at the identity change; never rewrite published commits.
 # These immutable tips do not permit the old identity on new descendants.
 LEGACY_IDENTITY_TIPS = (
-    '4da1ab26851ac4f28e12a51c57b1af51537cea3b',
+    '9ce0f263694c4f1ced9393e3aca0bccd93c9164e',
     '4a524feab585b3c7d2f6a229c216e85d24693bfa',
 )
 PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
@@ -44,7 +44,7 @@ def tree_errors(files):
     errors = []
     for name, content in files.items():
         path = Path(name)
-        if (name.startswith(PRIVATE_PREFIXES) or name.startswith(('ilma_incidents_input_','ilma_seed_input_','ilma_extra_input_','docs/FIX_')) or name in DEBUG_ASSETS or
+        if (name.startswith(PRIVATE_PREFIXES) or name.startswith(('ilma_incidents_input_','ilma_seed_input_','ilma_extra_input_','docs/FIX_','docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_')) or name in DEBUG_ASSETS or
             path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_', 'CODE_REVIEW_', 'WEBSITE_FULL_TEST_', 'TAP_OR_TALK_FIXES_')) or name in {'docs/review_muse.md','docs/APP_SPEC_07_voice_agent.md','docs/APP_SPEC_08_speed.md', 'docs/FIX_09_language_and_loop.md', 'docs/FIX_10_answer_wording.md', 'docs/FIX_11_speech_wording_and_pronunciation.md', 'docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md'} or (path.name.startswith('.env') and path.name != '.env.example') or
             name.endswith(('.sql', '.sql.gz'))):
             errors.append(f'Private/unwanted path tracked: {name}')

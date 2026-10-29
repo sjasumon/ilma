@@ -1,4 +1,5 @@
 /* ILMA Design Tokens and Styles - Strict match to design/S01-Home.html & tokens.css */
+.voice-live-answer { color: inherit; font-size: 1.05rem; line-height: 1.6; max-height: 8em; overflow: auto; overflow-wrap: anywhere; }
 :root {
   --stage-hi: #2B5653;
   --stage: #1E4542;

@@ -10,7 +10,7 @@ const T = {
     homeIdle2: "Tap anywhere to speak",
     listeningText: "শুনছি…",
     listeningPrompt: "ব্যাংকের নাম বা প্রশ্ন বলুন। থামিয়ে খুঁজতে দুইবার ট্যাপ করুন।",
-    checkingText: "ইলমা খুঁজে দেখছেন…",
+    checkingText: "ইলমা ভাবছেন…",
     tryExamples: [
       "যেমন বলুন: “ইস্টার্ন ব্যাংক কেমন আছে?”",
       "যেমন বলুন: “ডাচ-বাংলা ব্যাংকের খেলাপি ঋণ কত?”",
@@ -70,7 +70,7 @@ const T = {
     homeIdle2: "You can also speak Bangla",
     listeningText: "Listening…",
     listeningPrompt: "Say a bank name or ask a question. Double-tap to stop and search.",
-    checkingText: "Ilma is looking up the facts…",
+    checkingText: "Ilma is thinking…",
     tryExamples: [
       "Try: “How is Eastern Bank doing?”",
       "Try: “What is Dutch-Bangla Bank's bad loan ratio?”",
@@ -948,7 +948,16 @@ async function sendVoiceInput(audio, text, request, choice = null) {
 
 async function handleVoiceEvent(name, data, audioRequest) {
   if (name === "error") throw new Error(data.code);
+  if(name==='acknowledgement'){void playGuidedSpeech('agent',null,null,data.audio_url);return;}
+  if (name === 'resolved_context') {agentConversation=data.conversation;return;}
+  if (name === 'answer_sentence') {
+    const live=document.getElementById('voice-live-answer');
+    if(live){live.hidden=false;live.textContent=(data.append?live.textContent+' ':'')+data.text;}
+    if(agentPanel?.active){const answer=document.getElementById('agent-answer');answer.textContent=(data.append?answer.textContent+' ':'')+data.text;}
+    return;
+  }
   if (name === "transcript") {
+    const live=document.getElementById('voice-live-answer');if(live){live.hidden=true;live.textContent='';}
     lastAgentChoice = "";
     lastVoiceTranscript = data.text;
     if(agentPanel?.active)document.getElementById('agent-heard').textContent=(currentLang==='bn'?'আপনি বলেছেন: ':'You said: ')+data.text;
@@ -967,6 +976,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
     if (window.requestAnimationFrame) await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
   }
   if (name === 'result' && data.type === 'agent_turn') {
+    const live=document.getElementById('voice-live-answer');if(live){live.hidden=true;live.textContent='';}
     isSearching=false;
     if(data.memory_turn){voiceHistory.push(data.memory_turn);voiceHistory=voiceHistory.slice(-4);}
     if(voiceLanguageOverride&&data.conversation.language!==voiceLanguageOverride){
@@ -1658,7 +1668,7 @@ function ivrCopy(id) {
 async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, audioUrl = null) {
   stopAudio();
   const controller = new AbortController(), player = document.getElementById('ilma-player');
-  let resolveAudio, timer, retryTimer, ticketRetries=0;
+  let resolveAudio, timer, retryTimer;
   const completion = new Promise(resolve => { resolveAudio = resolve; });
   const done = ok => {
     clearTimeout(timer); clearTimeout(retryTimer); controller.abort();
@@ -1666,12 +1676,7 @@ async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, aud
     if (ivrAudioCancel === cancelled) ivrAudioCancel = null;
     resolveAudio(ok);
   };
-  const ended = () => done(true), failed = () => {
-    if(audioUrl?.startsWith('/v1/audio/')&&!controller.signal.aborted&&ticketRetries<12){
-      ticketRetries++;retryTimer=setTimeout(()=>{if(!controller.signal.aborted){player.src=audioUrl;player.play().catch(()=>done(false));}},Math.min(3000,ticketRetries*500));return;
-    }
-    done(false);
-  }, cancelled = () => done(false);
+  const ended = () => {lastSpeechEndedAt=performance.now();done(true);}, failed = () => done(false), cancelled = () => done(false);
   ivrAudioCancel = cancelled;
   timer = setTimeout(failed, 90000);
   player.addEventListener('ended', ended); player.addEventListener('error', failed);
@@ -1688,6 +1693,18 @@ async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, aud
       }
       if (controller.signal.aborted) return;
       if (!(url?.startsWith('data:audio/mpeg;base64,') || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || '') || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || '')))) throw Error('speech_unavailable');
+      if(/^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url)){
+        const until=Date.now()+45000;
+        while(!controller.signal.aborted){
+          const statusResponse=await fetch(url.replace(/\.mp3$/,'/status'),{signal:controller.signal,cache:'no-store'});
+          if(!statusResponse.ok)throw Error('speech_unavailable');
+          const status=await statusResponse.json();
+          if(['ready','streaming'].includes(status.state))break;
+          if(status.state==='unavailable'||Date.now()>=until)throw Error('speech_unavailable');
+          await new Promise(resolve=>{retryTimer=setTimeout(resolve,Math.max(100,Math.min(3000,(status.retry_after||1)*1000)));controller.signal.addEventListener('abort',resolve,{once:true});});
+        }
+      }
+      if(controller.signal.aborted)return;
       player.src = url; player.playbackRate = appSettings.slow ? .85 : 1;
       await player.play();
     } catch { done(false); }
@@ -1870,6 +1887,7 @@ async function sendAgentChoice(choice) {
   catch (error) { if (request === voiceRequest) { stopListening(); showVoiceFallback(error.message); } }
 }
 
+let lastSpeechEndedAt=0;
 function setupAgentPanel() {
   if (!window.IlmaAgentPanel) return;
   agentPanel = new window.IlmaAgentPanel({
@@ -1884,6 +1902,10 @@ function setupAgentPanel() {
       document.getElementById('agent-text-input').focus();
     },
     async listen() {
+      const generation=agentPanel.generation;
+      const echoDelay=lastSpeechEndedAt?Math.max(0,300-(performance.now()-lastSpeechEndedAt)):0;
+      if(echoDelay)await new Promise(resolve=>setTimeout(resolve,echoDelay));
+      if(!agentPanel.active||generation!==agentPanel.generation)return;
       if (document.hidden || phoneLandscape || currentTab !== 'home') return;
       activeVoiceContext = {tab:'home',bank_id:null};
       return startListening();

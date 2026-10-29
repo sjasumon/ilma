@@ -94,7 +94,8 @@ def test_english_report_uses_full_stops(sessions):
 def test_crar_glossary_definition_is_corrected(sessions):
     with sessions() as db:
         from ilma_api.voice_facts import glossary_facts
-        assert glossary_facts('CRAR মানে কি?', 'bn', db)[0]['text'].startswith('ঝুঁকিভিত্তিক সম্পদের তুলনায়')
+        text=glossary_facts('CRAR মানে কি?', 'bn', db)[0]['text']
+        assert 'নিজের টাকা' in text and 'ক্ষতি সামলানোর' in text
 
 
 def test_intent_failure_is_bounded_to_one_request():

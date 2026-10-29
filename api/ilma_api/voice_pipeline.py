@@ -173,8 +173,6 @@ def build_result(intent, candidates, language, db, question=""):
         else:
             summary = (card['institution']['name_bn' if bn else 'name_en'] + ': ' + card['status']['label_bn' if bn else 'label_en'] + ('। ' if bn else '. ') +
                        ' '.join(reason['text_bn' if bn else 'text_en'] for reason in card.get('reasons', [])[:3]))
-        insurance_line=card.get('insurance',{}).get('text_bn' if bn else 'text_en')
-        if insurance_line:summary += ' ' + insurance_line
         # Preserve the exact report separately from its connected narration.
         from ilma_api.answer_wording import compose
         from ilma_api.voice_agent import bank_summary
@@ -350,7 +348,27 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 yield event('result', {'type':'refused','omit_history':True,'sources':[], 'text':'ব্যাংক বেছে দেওয়া বা টাকা রাখার পরামর্শ দেওয়া হয় না।' if context.ui_lang=='bn' else 'ILMA does not recommend where to deposit money.'})
                 return
             agent_started=time.monotonic()
-            result=await run_agent_turn(text,context,banks,db,agent_candidates,context.choice,watch_identity,device_hash=device_hash)
+            if human_enabled():
+                pending=asyncio.Queue()
+                async def sentence_ready(value):pending.put_nowait(value)
+                task=asyncio.create_task(run_agent_turn(text,context,banks,db,agent_candidates,context.choice,watch_identity,device_hash=device_hash,on_sentence=sentence_ready))
+                next_sentence=asyncio.create_task(pending.get())
+                try:
+                    while not task.done():
+                        done,_=await asyncio.wait({task,next_sentence},return_when=asyncio.FIRST_COMPLETED)
+                        if next_sentence in done:
+                            value=next_sentence.result();yield event(value.pop('_event','answer_sentence'),value)
+                            next_sentence=asyncio.create_task(pending.get())
+                    if next_sentence.done() and not next_sentence.cancelled():
+                        value=next_sentence.result();yield event(value.pop('_event','answer_sentence'),value)
+                    while not pending.empty():
+                        value=pending.get_nowait();yield event(value.pop('_event','answer_sentence'),value)
+                    result=await task
+                finally:
+                    next_sentence.cancel()
+                    if not task.done():task.cancel()
+                    await asyncio.gather(next_sentence,task,return_exceptions=True)
+            else:result=await run_agent_turn(text,context,banks,db,agent_candidates,context.choice,watch_identity,device_hash=device_hash)
             for step in result['trace']['steps']:
                 if step['stage']=='ASR':
                     step.update(model=settings.MUSE_VOICE_MODEL if mode=='voice' else 'none',status='ok' if mode=='voice' else 'skipped',ms=asr_ms)
@@ -378,7 +396,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                     for frame in timings.events():yield frame
                 ticket=await register_speech(speech_parts,result['language'],short=True)
                 if ticket:
-                    yield event('speech',ticket)
+                    yield event('speech',{'role':'answer',**ticket})
                     from ilma_api.audio_cache import get_store
                     if not await get_store().wait(ticket):
                         failed=await get_store().failed(ticket)
@@ -559,7 +577,9 @@ def readout_result(kind, institution_id, language, db, prompt=None, agent_state=
         card = get_institution_report_card(db, institution_id) if institution_id else None
         reasons = (card or {}).get('reasons', [])[:3]
         if kind == 'reasons':
-            text = ' '.join(row['text_bn' if language == 'bn' else 'text_en'] for row in reasons)
+            from ilma_api.voice_agent import bank_reasons
+            from ilma_api.answer_wording import compose
+            text=compose(db,bank_reasons(db,institution_id),{'state':'DETAIL','institution_id':institution_id,'language':language},'','bank_reasons').speech if institution_id else ''
         else:
             # Speak publisher and document date, never raw URLs.
             labels = []
@@ -583,14 +603,13 @@ def readout_result(kind, institution_id, language, db, prompt=None, agent_state=
         result = {'text': text or ('এই তথ্য পাওয়া যাচ্ছে না।' if language == 'bn' else 'This information is unavailable.')}
     elif kind == 'report_card':
         result = build_result(VoiceIntent(intent='bank_status', institution_ids=[institution_id] if institution_id else []), [], language, db)
-        result['text']=result.get('card_text',result['text'])
-        result['speech_text']=result['text']
     elif kind == 'insurance':
         result = build_result(VoiceIntent(intent='insurance', institution_ids=[institution_id] if institution_id else []), [], language, db)
     else:
         from ilma_api.db import Event
         rows = db.query(Event).order_by(Event.event_date.desc()).limit(5).all()
-        result = {'text': '। '.join((('খবরে প্রকাশিত, নিশ্চিত নয়। ' if language == 'bn' else 'Reported, unconfirmed. ') if not row.official else '') + (row.title_bn if language == 'bn' else row.title_en) for row in rows)}
+        from ilma_api.answer_wording import brief_fact
+        result = {'text': '। '.join(brief_fact(db,{'fact_id':row.event_id},language=='bn',row.institution_id) for row in rows)}
     return result
 
 

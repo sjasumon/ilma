@@ -1,76 +1,76 @@
-# Contextual, sourced voice replies
+# Contextual voice replies
 
-The optional contextual engine combines understanding and wording in one Muse
-Spark request. It receives the current bank's sourced facts and four redacted
-conversation turns. An exact displayed option or button uses its database action
-directly. A new bank, product or comparison can require a second fact-fetching
-request. A factual checker can request one repair before a sourced fallback.
+The token protocol is implemented on the voice feature branch and tested on an
+isolated preview. Production still uses the earlier contextual engine. The new
+release has not passed all acceptance gates and is not ready for production.
 
-The model cannot set financial figures or bank conditions. Displayed replies keep
-digits; pronunciation normalization produces speech text. Sentence citations
-connect the reply and visible source cards. Checks cover numbers, percentages,
-bank/rate binding, dates, ratings, computed conditions, repeated facts, advice,
-conditional protection, source age and length. These checks reduce risk; they
-cannot prove the semantic correctness of arbitrary paraphrases.
+## Implemented preview behavior
 
-Conversation memory is stored in `ilma.app_conversation`, expires after 24 hours,
-and uses signed opaque tokens. Personal amounts and identifiers are removed from
-saved user words and model input. Repeat uses the exact previous reply and facts.
-Switching banks clears service slots; deposit questions clear card filters.
-Provider failures do not count as user misunderstandings. A genuine unclear
-model result increments misses and offers typing after two misses.
+Code resolves bank names, spaced acronyms, product, term, comparison and correction
+slots before asking Muse Spark. A clear new bank replaces the current one;
+otherwise the current bank is retained. Corrections preserve unaffected slots.
+An exact displayed option uses its action without a model call. A bank-specific
+request without a bank asks which bank, rather than inventing a default.
 
-Service terms support continuous ranges and discrete choices. Comparisons retain
-their source conditions, match basis and term, and explicitly mark nearest-term
-alternatives. Missing terms are not silently treated as a one-year request.
-Comparisons without a specified term disclose the anchor term used.
+All service facts and comparison rows are prepared before the wording request.
+Spark selects finite, bank-bound fact-token clauses through a streamed schema.
+Code fills their sourced values and verifies declarations and bank/row binding.
+The model cannot write financial values, compute a condition or invent a rank.
+Bad later sentences are repaired locally or dropped. Invalid headers or first
+sentences permit one repair request inside the original shared model deadline;
+there is no second fact-fetching pass. Exact repeat replays the checked reply.
 
-Profile facts require a source URL, page and quotation. The curated profile file
-currently contains 38 facts for eleven banks from their 2025 annual reports. It is
-a source import, not a completed manual review. Missing fields stay absent;
-full profile coverage and independent source review remain pending.
-Peer comparisons use computed conditions, comparable periods and cited inputs.
-They include available capital, problem-loan, profit, profit-change, rating and
-one-year deposit-rate comparisons. Incident counts describe the sourced
-collection, not every event that occurred. No peer ranking is a recommendation.
+Introductions explain the meaning of capital and problem-loan indicators. Exact
+figures and sources remain on cards. Material differences use configured
+thresholds and comparable, verified financial bases. A material capital or
+problem-loan weakness takes priority over optional positive details. This is
+information, not a bank recommendation or a safety guarantee.
 
-## Activation and acceptance
+Deposit protection is available only for direct questions. It is excluded from
+other token registries, fallbacks, prewarming and the fixed clip catalog. Incident
+speech uses a neutral category and event year, with an unconfirmed-news caveat
+when appropriate. Full headlines remain on source cards.
 
-`HUMAN_VOICE_ENABLED=false` is the default until preview acceptance passes. Run
-the additive migration and profile import before enabling a preview. Operational
-commands are in the runbook. Production requires a stable private log salt and
-disabled diagnostic recording.
+MySQL conversation memory uses signed opaque identifiers and a 24-hour expiry.
+Saved turns keep resolved slots and checked replies; arbitrary user words are
+replaced with a redaction marker. Resolved context and checked partial replies
+are saved before completion, allowing interruption and repeat without restoring
+an earlier bank. Raw user text never becomes TTS input.
 
-Local regression tests are separate from live model acceptance. During this
-implementation, provider access was restored after an earlier HTTP 402. The
-285-case baseline passed 213 cases; 44 encountered provider timeouts. Subsequent
-fixes require a fresh complete evaluation. Consequently the real-model
-paraphrase accuracy, answer variation, three spoken dialogs, 95th-percentile
-speaking latency and two-person listening acceptance have **not passed**.
-Successful fallback replies must not be reported as successful Spark replies.
-On 29 October the owner authorized production activation with an 8-second model
-deadline while these checks and independent source/profile review remain pending.
-Activation does not establish completion of the acceptance requirements.
+The preview streams checked text to the screen. A sentence-based word budget
+keeps replies within 45 pronounced words and offers continuation on “yes”. Cards
+localize labels and dates; every completed answer has two allowed next steps.
 
-The subsequent complete 8-second preview evaluation passed 240/285 cases (84.2%)
-with zero bank-target failures; the 95% gate remains unmet. Comparisons,
-corrections, answer variation and measured speech duration still have failures.
-See the full live validation section in `docs/VOICE_ACCEPTANCE.md` for methods,
-timing limits, intermittent browser observations and remaining human acceptance.
+Offline introductions are stored in `ilma.app_voice_variant`. Their fingerprint
+covers the prompt, source revision and code-owned wording. Reuse validates the
+tokens again and rotates variants. Changed facts invalidate the cache; offline
+composition must then be rerun. The compiler makes explicit opt-in Spark calls
+and no TTS calls. Only one bank has been trialled so far, not the full bundle.
 
-The model deadline defaults to 4.5 seconds. `HUMAN_MODEL_TIMEOUT_SECONDS` permits
-an explicit deployment choice between 2 and 8 seconds; a longer deadline trades
-waiting time for fewer timeout fallbacks. Unverified financial bases are excluded
-from peer rankings. Capital percentages refer to risk-weighted assets, not
-deposits. Generated replies must pass numeric and citation checks before speech.
+Acknowledgements are cached-only, skip taps and cached introductions, and avoid
+consecutive repeats. Missing acknowledgement audio causes no synthesis on the
+waiting user's path. The answer player polls opaque ticket status before its
+single MP3 request. Identical synthesis shares a job, provider text rejections
+have a short negative cache, duplicate speech events are ignored, and the
+microphone waits 300 ms after completed playback before reopening.
 
-`tests/human_voice_cases.json` contains 285 handwritten paraphrases, ten Bangla
-and five English phrasings per intent. The opt-in evaluator
-`ops/evaluate_human_voice.py --live` runs against an isolated local preview only.
-It stops on provider access failure and does not count template fallback guesses
-as model-understanding passes. It does not test speech latency or listening.
+## Validation and remaining gates
 
-The intended listening acceptance is practical: two people unfamiliar with
-banking should understand the bank's condition, its reasons and the history
-without looking at the screen. Test Bangla pronunciation, interruptions, noisy
-rooms, screen-reader navigation and older phones separately.
+The authored corpus contains 404 cases, including 30 comparisons and 30
+corrections. Complete live preview runs passed the Phase 1 gate; the acceptance
+record includes both runs and their failures, rather than only the best score.
+Recorded finite-token responses replay against synthetic meanings in CI without
+paid calls or copied source exports. Old and new engine tests explicitly isolate
+their environment flags and do not load the private environment file.
+
+The 45-word budget does not prove the 30-second speech requirement. Measured
+duration and graceful continuation of unusually slow audio still require work.
+The full offline audio bundle, all-intent variation and first-audio/variety
+targets remain incomplete. Phase 2 needs two consecutive passing nightly runs.
+
+Phase 3 security, dashboard, external alerts, signed mutation identity, release
+branch integration and rollback rehearsal remain pending. Existing production
+API documentation is still public. Physical Android/iPhone testing, diverse
+consented recordings, TalkBack/VoiceOver, native clip review, two-person listening
+and source approval are separate human gates. See `docs/VOICE_ACCEPTANCE.md` for
+measured evidence and `ops/RUNBOOK.md` for operational commands.

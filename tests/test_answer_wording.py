@@ -28,11 +28,13 @@ def ask(db,text,c=None,choice=None):
         return asyncio.run(run_agent_turn(text,context(c),BANKS,db,match_candidates(text,BANKS) if text else [],choice))
 
 @pytest.mark.parametrize('bn',[True,False])
-def test_contextual_capital_wording_names_the_ratio_denominator(wording_db,bn):
+def test_contextual_capital_wording_keeps_ratio_and_minimum_without_jargon(wording_db,bn):
     from ilma_api.answer_wording import brief_fact
     item={'fact_id':'synthetic-capital'}
     text=brief_fact(wording_db,item,bn,1)
-    assert ('ঝুঁকিভিত্তিক সম্পদ' if bn else 'risk-weighted assets') in text
+    assert ('মূলধনের অনুপাত' if bn else 'capital ratio') in text
+    assert ('ন্যূনতম' if bn else 'minimum') in text
+    assert 'ঝুঁকিভিত্তিক' not in text and 'বাফার' not in text
     row=wording_db.get(Fact,'synthetic-capital');row.value=Decimal('-.0548');wording_db.flush()
     text=brief_fact(wording_db,item,bn,1)
     assert ('মাইনাস' if bn else 'minus') in text
@@ -51,10 +53,10 @@ def test_five_turn_conversation_is_connected_source_backed_and_does_not_repeat(w
         insurance+=int('insurance:bank' in ids)
         if choice=='bank':
             assert ('কারণ' if language=='bn' else 'because') in result['speech']
-            assert ('প্রায় ১৮%' if language=='bn' else 'about 18%') in result['speech']
-            assert ('সাড়ে ১২%' if language=='bn' else '12.5%') in result['speech']
-            assert 'insurance:bank' in ids
-            assert any(f['fact_id']=='insurance:bank' for f in result['facts'])
+            assert ('ক্ষতি সামলানোর' if language=='bn' else 'capacity to absorb losses') in result['speech']
+            assert 'insurance:bank' not in ids
+            assert not any(f['fact_id']=='insurance:bank' for f in result['facts'])
+            assert not re.search(r'ঝুঁকিভিত্তিক|বাফার|মধ্যমান|যোগ্য আমানত|সদস্য ব্যাংক',result['speech'])
         if choice=='detail':
             assert 'synthetic-capital' not in ids
             assert 'test-npl-1' not in ids
@@ -65,13 +67,13 @@ def test_five_turn_conversation_is_connected_source_backed_and_does_not_repeat(w
             assert '8.5%' in result['speech'] if language=='en' else '৮.৫%' in result['speech']
             assert not re.search(r'Strong|good condition|ভালো অবস্থা|ঝুঁকির',result['speech'])
             assert result['speech_fact_ids'] and len(result['speech'].split())<=70
-    assert insurance==1
+    assert insurance==0
 
 
-def test_exact_card_facts_are_unchanged_and_spoken_numbers_are_rounded(wording_db):
+def test_exact_card_facts_are_unchanged_and_first_speech_explains_the_meaning(wording_db):
     facts=bank_summary(wording_db,1);n=compose(wording_db,facts,{'state':'BANK','institution_id':1,'language':'bn'},'আরও শুনবেন?','bank_summary')
     assert '১৮.০৭%' in ' '.join(f['text_bn'] for f in facts)
-    assert 'প্রায় ১৮%' in n.speech and '১৮.০৭%' not in n.speech
+    assert 'ক্ষতি সামলানোর' in n.speech and '১৮.০৭%' not in n.speech
     assert wording_db.get(Fact,'synthetic-capital').value==Decimal('.180700')
     assert rounded(Decimal('.4'),True)=='০.৪' and rounded(Decimal('2.73'),True)=='৩'
 
@@ -81,15 +83,15 @@ def test_insurance_does_not_promise_payment_from_bank_closure_or_flat_seventeen_
     rule.text_en+=' On liquidation: 10 working days for the depositor list, then 7 after required information.'
     wording_db.commit()
     result=ask(wording_db,'insurance',Conversation(state='BANK',institution_id=1,language='en'))
-    assert 'member bank' in result['speech'] and 'accounts combined' in result['speech']
-    assert 'Eligible deposits' in result['speech']
+    assert 'per person per bank' in result['speech'] and 'combining accounts' in result['speech']
+    assert 'conditions' in result['speech']
     assert 'after required information' in result['facts'][0]['text_en']
     assert '17' not in result['speech'] and 'will receive' not in result['speech']
 
 
 def test_explicit_repeat_can_repeat_but_does_not_create_extra_fact_ids(wording_db):
     first=ask(wording_db,'BRAC Bank');second=ask(wording_db,'',conv(first),'repeat')
-    assert 'about 18%' in second['speech']
+    assert second['speech']==first['speech']
     assert set(second['conversation']['spoken_fact_ids'])==set(first['conversation']['spoken_fact_ids'])
 
 
@@ -120,8 +122,8 @@ def test_legacy_bank_answer_preserves_exact_card_beside_connected_speech(wording
         assert ('কারণ' if language=='bn' else 'because') in result['text']
         assert ('১৮.০৭%' if language=='bn' else '18.07%') in result['card_text']
         assert ('১৮.০৭%' if language=='bn' else '18.07%') not in result['speech_text']
-        assert readout_result('report_card',1,language,wording_db)['text']==result['card_text']
-        assert readout_result('report_card',1,language,wording_db)['speech_text']==result['card_text']
+        assert readout_result('report_card',1,language,wording_db)['text']==result['speech_text']
+        assert readout_result('report_card',1,language,wording_db)['speech_text']==result['speech_text']
 
 
 @pytest.mark.parametrize('text',['deposit insurance','What is deposit insurance?','deposit protection','আমানত সুরক্ষা'])
@@ -210,10 +212,10 @@ def test_card_minimum_and_fdr_caption_keep_exact_data_without_health_labels(word
     assert 'Synthetic rate' in offer['source']['quote']
 
 
-def test_weak_intro_retains_conditional_protection_and_negative_figure_uses_tenths(wording_db):
+def test_weak_intro_does_not_volunteer_protection_and_negative_figure_uses_tenths(wording_db):
     row=wording_db.get(Fact,'synthetic-capital');row.value=Decimal('-.0548');row.quote='Synthetic capital minus 5.48 percent';wording_db.commit()
     first=ask(wording_db,'BRAC Bank',Conversation(language='bn'))
-    assert 'insurance:bank' in first['speech_fact_ids'] and 'শর্ত' in first['speech']
+    assert 'insurance:bank' not in first['speech_fact_ids'] and 'বড় দুর্বলতার লক্ষণ' in first['speech']
     assert len(first['speech'].split())<=45
     figure=ask(wording_db,'মূলধন কত',conv(first))
     assert 'মাইনাস সাড়ে ৫%' in figure['speech']
@@ -230,27 +232,38 @@ def test_non_currency_offer_units_are_not_spoken_as_money(wording_db):
     assert 'card' in brief_offer(wording_db,item,False)
 
 
-def test_long_source_wording_pages_with_no_lost_words_or_premature_fact_completion(wording_db):
+def test_long_incident_headline_stays_on_card_and_is_neutral_in_speech(wording_db):
     record=wording_db.get(BankIncident,'synthetic-history')
     # Handwritten repeated synthetic clauses stress paging, not copied source data.
     title='একটি প্রক্রিয়াগত ত্রুটির অভিযোগ নিয়ে তদন্ত করা হয়েছে, '
     record.title_bn=title*12;wording_db.commit()
     result=ask(wording_db,'',Conversation(state='BANK',institution_id=1,language='bn'),'history')
-    chunks=[];original_id='synthetic-history';pages=0
-    while True:
-        pages+=1;assert pages<10
-        assert len(result['speech'].split())<=70
-        assert original_id in result['speech_fact_ids']
-        chunks.append(result['speech'])
-        c=conv(result)
-        if not c.speech_page_fact_ids:break
-        assert original_id not in c.spoken_fact_ids,'Do not mark the unseen remainder as completed'
-        assert result['next']['options'][0]['value']=='more'
-        replay=ask(wording_db,'',c,'repeat')
-        assert replay['speech']==result['speech']
-        result=ask(wording_db,'আরও শুনব',c)
-    assert pages>1 and original_id in c.spoken_fact_ids
-    assert sum(t.count('প্রক্রিয়াগত') for t in chunks)==12
+    assert 'synthetic-history' in result['speech_fact_ids']
+    assert 'প্রক্রিয়াগত' not in result['speech']
+    assert 'ব্যাংকটির কার্যক্রম নিয়ে একটি ঘটনা' in result['speech']
+    assert 'প্রক্রিয়াগত' in next(f['text_bn'] for f in result['facts'] if f['fact_id']=='synthetic-history')
+    assert ask(wording_db,'',conv(result),'repeat')['speech']==result['speech']
+
+@pytest.mark.parametrize('language',['bn','en'])
+def test_standard_report_and_reasons_readouts_never_volunteer_protection(wording_db,language):
+    from ilma_api.voice_pipeline import readout_result
+    from ilma_api.human_tokens import PROTECTION_WORDS,BANNED
+    for kind in ('report_card','reasons'):
+        result=readout_result(kind,1,language,wording_db)
+        assert not PROTECTION_WORDS.search(result['text'])
+        assert not BANNED.search(result['text'])
+        assert result['text']==result.get('speech_text',result['text'])
+
+def test_standard_news_readout_uses_neutral_category_not_raw_headline(wording_db):
+    from ilma_api.db import Event
+    from ilma_api.voice_pipeline import readout_result
+    title='Synthetic ATM card incident headline for the source card'
+    wording_db.add(Event(event_id='synthetic-news',institution_id=1,type='other',title_bn='পরীক্ষার এটিএম কার্ডের খবরের শিরোনাম',title_en=title,status='reported',official=False,event_date=date(2024,1,1),last_update=date(2024,1,1),checked_by='test-fixture',checked_on=date(2024,1,1)))
+    wording_db.flush()
+    result=readout_result('news',None,'en',wording_db)
+    assert title not in result['text']
+    assert '2024' in result['text'] and 'an incident involving ATM cards' in result['text']
+    assert 'not officially confirmed' in result['text']
 
 
 def test_tts_uses_resolved_reply_language_not_the_old_ui_language(wording_db):
@@ -264,7 +277,7 @@ def test_tts_uses_resolved_reply_language_not_the_old_ui_language(wording_db):
         result=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: result'))
         assert result['language']=='en'
         assert register.await_args.args[1]=='en'
-        assert '%' not in result['speech_tts'] and 'percent' in result['speech_tts']
+        assert '%' not in result['speech_tts'] and 'capacity to absorb losses' in result['speech_tts']
     asyncio.run(run())
 
 

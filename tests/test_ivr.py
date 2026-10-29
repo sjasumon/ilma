@@ -8,6 +8,7 @@ from ilma_api.ivr import match_ivr_action
 from ilma_api.voice_text import VoiceContext
 from ilma_api.voice_pipeline import run_pipeline, readout
 from ilma_api.voice_assets import CATALOG
+from test_voice_agent import db
 
 @pytest.mark.parametrize('text,action', [('আবার।','again'),('Again!','again'),('কারণ','reasons'),('insurance','insurance'),('উৎস','sources'),('নতুন ব্যাংক','name'),('থামুন','stop'),('হ্যাঁ','one'),('না','two'),('এক','one'),('দুই','two')])
 def test_commands(text, action):
@@ -32,7 +33,7 @@ def test_command_does_not_need_bank_index_or_intent():
         intent.assert_not_called()
     asyncio.run(run())
 
-def test_dynamic_confirmation_and_sources_no_urls():
+def test_dynamic_confirmation_and_sources_no_urls(db):
     card={'institution':{'name_bn':'পরীক্ষা ব্যাংক','name_en':'Example Bank'},'reasons':[{'text_bn':'পরীক্ষার কারণ','text_en':'Example reason','publisher':'বাংলাদেশ ব্যাংক','published_at':'2026-10-12','source_url':'https://example.test/raw'}]}
     async def run():
         async def speech(text,language): return 'data:audio/mpeg;base64,AA=='
@@ -41,8 +42,8 @@ def test_dynamic_confirmation_and_sources_no_urls():
             assert 'পরীক্ষা ব্যাংক' in confirm['text'] and '{bank}' not in confirm['text']
             source=await readout('sources',1,'bn',None)
             assert 'বাংলাদেশ ব্যাংক' in source['text'] and '১২ অক্টোবর' in source['text'] and 'http' not in source['text']
-            reasons=await readout('reasons',1,'en',None)
-            assert reasons['text']=='Example reason'
+            reasons=await readout('reasons',1,'en',db)
+            assert 'repayment problems' in reasons['text']
         assert all(CATALOG[key][0] and CATALOG[key][1] for key in CATALOG if key.startswith('ivr_'))
     asyncio.run(run())
 

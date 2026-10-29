@@ -35,7 +35,7 @@ def test_empty_audio_is_no_speech():
 
 def test_truncated_capture_asks_again_without_a_model_or_user_miss(db):
     async def scenario():
-        with patch('ilma_api.human_agent.spark',AsyncMock()) as model:
+        with patch('ilma_api.human_turn.generate',AsyncMock()) as model:
             result=await run('Partial question',VoiceContext(agent=True,speak=False,ui_lang='en',audio_truncated=True,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
         model.assert_not_awaited()
         assert result['audio_truncated'] and result['conversation']['misses']==0

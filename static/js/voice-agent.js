@@ -6,7 +6,7 @@
     idle(){this.clock.clearTimeout(this.idleTimer);this.idleTimer=this.clock.setTimeout(()=>this.reset(),120000);}
     async show(result,guided=false){
       this.clear();this.a.interrupt();this.active=true;this.result=result;this.guided=guided;this.silenceRetries=0;this.captureFailures=0;
-      const generation=++this.generation;this.a.render(result);if(!this.active||generation!==this.generation)return;this.phase='speaking';this.idle();
+      const generation=++this.generation;this.deliveredTickets=new Set();this.a.render(result);if(!this.active||generation!==this.generation)return;this.phase='speaking';this.idle();
       if(result.audio_pending){this.phase='audio-wait';return;}
       const heard=result.speech_format==='paragraph'?false:await this.a.play(result.speech);
       if(!this.active||generation!==this.generation)return;
@@ -18,7 +18,10 @@
     }
     async deliverSpeech(data){
       if(!this.active)return;
+      const ticket=(data.audio_urls||[data.audio_url]).join('|');
+      if(this.deliveredTickets?.has(ticket))return;
       if(this.phase!=='audio-wait'){this.a.offerReplay?.();return;}
+      this.deliveredTickets?.add(ticket);
       const generation=this.generation;this.phase='speaking';
       const heard=await this.a.play(data.audio_urls||[data.audio_url]);
       if(!this.active||generation!==this.generation)return;

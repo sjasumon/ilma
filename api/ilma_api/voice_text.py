@@ -58,12 +58,25 @@ def fold_bengali_vowels(value):
 
 
 def normalize_alias(value):
+    value = join_acronyms(value)
     value = fold_bengali_vowels(value).lower().translate(str.maketrans('০১২৩৪৫৬৭৮৯', '0123456789'))
     value = re.sub(r'ব্যাংক(?:ের|ে)?', ' ', value)
     value = re.sub(r'\b(bank|plc|ltd|limited)\b|পিএলসি|লিমিটেড', ' ', value)
     value = re.sub(r'[-–—]?এর(?=\s|$)|[-–—]?এর(?=[?!।])', ' ', value)
     value = ''.join(c if c.isalnum() or unicodedata.category(c).startswith('M') else ' ' for c in value)
     return ' '.join(value.split())
+
+
+def join_acronyms(value):
+    """Join only known spelled acronyms; never merge ordinary short words."""
+    value=unicodedata.normalize('NFC',value)
+    groups={'EBL':('ই বি এল','ইবিএল'),'MTB':('এম টি বি','এমটিবি'),
+            'NCC':('এন সি সি','এনসিসি'),'DBBL':('ডি বি বি এল','ডিবিবিএল'),
+            'SBAC':('এস বি এ সি','এসবিএসি'),'UCB':('ইউ সি বি','ইউসিবি')}
+    for latin,(spelled,bangla) in groups.items():
+        value=re.sub(r'(?<![A-Za-z])'+r'[\s.]*'.join(latin)+r'(?![A-Za-z])',latin,value,flags=re.I)
+        value=re.sub(r'(?<![\w\u0980-\u09ff])'+r'[\s.]+'.join(map(re.escape,spelled.split()))+r'(?![\w\u0980-\u09ff])',bangla,value)
+    return value
 
 
 def related_parent_ids(text, banks):

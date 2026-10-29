@@ -256,3 +256,42 @@ changing this deployment setting.
 Production startup rejects a missing/short stable `VOICE_LOG_SALT`, enabled audio
 diagnostics or a database name other than `ilma`. Conversation tokens use the
 stable salt, so changing it invalidates existing conversation tokens.
+
+## Token-protocol preview checkpoint
+
+The newer token engine remains a preview; do not copy this checkpoint into the
+production working tree. The release instructions require Phase 2 acceptance
+on two consecutive nights before proceeding with production hardening/release.
+No two-night acceptance, physical-device acceptance or source sign-off is claimed.
+
+Before starting a preview of this checkpoint, run the additive migration:
+
+```sh
+PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" -m ilma_api.migrate_human_voice
+```
+
+Offline introduction composition is explicit and paid (Spark only, no TTS).
+Start with a specific bank and inspect its validated coverage before composing
+all banks. Invalid or duplicate variants are not saved, and the command exits
+nonzero if any requested variant was not completed:
+
+```sh
+PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" ops/compose_voice_variants.py --live --bank-id 19
+```
+
+Regenerate after approved fact changes. Cached variants are not a completed,
+native-reviewed or prewarmed audio bundle. Keep `TTS_PREWARM=false` and omit TTS
+credentials on automated evaluation previews. Never run paid TTS in automated
+tests. The synthetic browser playback test uses generated tone audio:
+
+```sh
+PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" tests/check_voice_tokens_browser.py --base-url http://127.0.0.1:8018
+PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" ops/evaluate_human_voice.py --live --workers 2 --output /tmp/ilma-voice-evaluation.json
+```
+
+The complete corpus is 404 authored cases. Evaluation output stays private;
+only measured aggregates belong in the public acceptance record. First streamed
+text and complete-response timing are now separate; older reports measured only
+completion. No nightly timer has been installed while the Phase 2 implementation
+and audio/variety measurements are incomplete. External alerts also need a
+private destination/configuration; they are not currently operational.

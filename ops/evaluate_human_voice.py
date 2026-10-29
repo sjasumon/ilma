@@ -21,9 +21,25 @@ def request_turn(client,payload):
     # Concurrent setup and answer requests share the preview's admission budget.
     # Respect a bounded Retry-After rather than losing all completed cases.
     for attempt in range(3):
-        response=client.post('/v1/ask',json=payload)
-        if response.status_code!=429 or attempt==2:return frames(response)
-        try:delay=float(response.headers.get('Retry-After','2'))
+        started=time.monotonic();first_text=None;result=None;event_name='';data=[]
+        with client.stream('POST','/v1/ask',json=payload) as response:
+            status=response.status_code
+            if status!=429:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if line.startswith('event:'):event_name=line[6:].strip()
+                    elif line.startswith('data:'):data.append(line[5:].strip())
+                    elif not line and data:
+                        value=json.loads('\n'.join(data));data=[]
+                        if event_name=='error':raise RuntimeError('Preview returned a voice error')
+                        if event_name in {'answer_sentence','result'} and value.get('text') and first_text is None:first_text=round((time.monotonic()-started)*1000)
+                        if event_name=='result':result=value
+                if result is None:raise RuntimeError('No result frame')
+                result['_first_text_ms']=first_text;result['_complete_ms']=round((time.monotonic()-started)*1000)
+                return result
+            retry=response.headers.get('Retry-After','2')
+        if attempt==2:raise RuntimeError('Preview admission remained limited')
+        try:delay=float(retry)
         except ValueError:delay=2
         time.sleep(max(1,min(60,delay)))
 
@@ -71,8 +87,51 @@ def evaluate(base,cases,output,workers=2,sample=False):
     output.write_text(json.dumps(summary,ensure_ascii=False,indent=2));output.chmod(0o600)
     return score>=.95 and not summary['bank_target_failures']
 
+
+def evaluate_v2(base,cases,output,workers=2,sample=False):
+    import math,collections
+    parsed=urlparse(base)
+    if parsed.hostname not in {'localhost','127.0.0.1'} or parsed.port in {None,80,443,8001}:raise ValueError('Use an isolated local preview port')
+    with httpx.Client(base_url=base,timeout=40) as client:
+        client.get('/v1/health').raise_for_status()
+        banks={b['slug']:b for b in client.get('/v1/institutions/index').json()}
+    selected=[];groups=collections.Counter()
+    for case in cases:
+        group=case['id'].split('-')[0]
+        if sample and groups[(group,case['language'])]>=1:continue
+        selected.append(case);groups[(group,case['language'])]+=1
+    results=[]
+    def one(case):
+        with httpx.Client(base_url=base,timeout=40) as client:
+            bank=banks[case['current_bank']]['id'];expected=banks[case['expected_bank']]['id'];language=case['language']
+            setup=request_turn(client,{'choice':'bank_1','context':{'agent':True,'speak':False,'ui_lang':language,'conversation':{'institution_id':bank,'compare_bank_ids':[bank],'language':language}}})
+            if setup.get('protocol')!=2:raise RuntimeError('Token protocol is not active on the preview')
+            start=time.monotonic();result=request_turn(client,{'text':case['text'],'context':{'agent':True,'speak':False,'ui_lang':language,'conversation':setup['conversation']}})
+        trace=result.get('trace',{}).get('steps',[])
+        provider=[s for s in trace if s.get('stage')=='PLAN' and s.get('reason','').startswith('http_')]
+        if provider:raise RuntimeError('Provider access failed: '+provider[0]['reason'])
+        conversation=result['conversation'];kinds={f['kind'] for f in result.get('facts',[])}
+        intent_ok=result['intent']==case['expected_intent'];bank_ok=conversation['institution_id']==expected
+        slots_ok=all(conversation.get(k)==v for k,v in case.get('slots',{}).items())
+        facts_ok=not case.get('required_fact_kinds') or bool(set(case['required_fact_kinds'])&kinds)
+        checked=result.get('checked')=='code' or case['expected_intent']=='repeat'
+        protection=case['expected_intent']!='insurance' and bool(__import__('re').search(r'বন্ধ হলেও|সুরক্ষিত|ফেরত পাওয়ার|deposit protection|if the bank closes',result['speech'],__import__('re').I))
+        calls=sum(t['stage']=='PLAN' and t['model']!='exact_option' for t in trace)
+        passed=intent_ok and bank_ok and slots_ok and facts_ok and checked and not protection
+        return dict(id=case['id'],intent=case['id'].split('-')[0],language=language,actual=result['intent'],intent_ok=intent_ok,bank_ok=bank_ok,slots_ok=slots_ok,facts_ok=facts_ok,checked=checked,passed=passed,ms=result.get('_first_text_ms') or round((time.monotonic()-start)*1000),complete_ms=result.get('_complete_ms'),model_calls=calls,unsolicited_protection=protection,repairs=result.get('sentence_repairs',0),words=len(result.get('speech_tts','').split()),reply=result['text'],trace=trace)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures=[pool.submit(one,case) for case in selected]
+        for future in as_completed(futures):
+            row=future.result();results.append(row);print(row['id'],'pass' if row['passed'] else 'FAIL',flush=True)
+            output.write_text(json.dumps({'partial':True,'cases':results},ensure_ascii=False,indent=2));output.chmod(0o600)
+    times=sorted(r['ms'] for r in results);total=len(results)
+    rate=lambda predicate:sum(predicate(r) for r in results)/max(1,total)
+    summary=dict(protocol=2,sample=sample,total=total,passed=sum(r['passed'] for r in results),accuracy=rate(lambda r:r['passed']),bank_target_failures=sum(not r['bank_ok'] for r in results),intent_accuracy=rate(lambda r:r['intent_ok']),slot_failures=sum(not r['slots_ok'] for r in results),required_fact_failures=sum(not r['facts_ok'] for r in results),unsolicited_protection=sum(r['unsolicited_protection'] for r in results),fallback_rate=rate(lambda r:not r['checked']),one_call_rate=rate(lambda r:r['model_calls']<=1),sentence_repair_rate=rate(lambda r:r['repairs']>0),p50_ms=times[len(times)//2] if times else None,p95_ms=times[math.ceil(len(times)*.95)-1] if times else None,cases=results)
+    output.write_text(json.dumps(summary,ensure_ascii=False,indent=2));output.chmod(0o600)
+    return summary['accuracy']>=.95 and not summary['bank_target_failures'] and not summary['unsolicited_protection']
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--live',action='store_true');parser.add_argument('--sample',action='store_true');parser.add_argument('--workers',type=int,default=1,choices=[1,2]);parser.add_argument('--base-url',default='http://127.0.0.1:8018');parser.add_argument('--output',type=Path,default=Path('/tmp/ilma-human-evaluation.json'));args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--live',action='store_true');parser.add_argument('--sample',action='store_true');parser.add_argument('--legacy',action='store_true');parser.add_argument('--workers',type=int,default=1,choices=[1,2]);parser.add_argument('--base-url',default='http://127.0.0.1:8018');parser.add_argument('--output',type=Path,default=Path('/tmp/ilma-human-evaluation.json'));args=parser.parse_args()
     if not args.live:parser.error('Use --live explicitly; this makes paid provider requests on the preview')
-    cases=json.loads((Path(__file__).resolve().parents[1]/'tests/human_voice_cases.json').read_text())
-    sys.exit(0 if evaluate(args.base_url,cases,args.output,workers=args.workers,sample=args.sample) else 1)
+    cases=json.loads((Path(__file__).resolve().parents[1]/('tests/human_voice_cases.json' if args.legacy else 'tests/human_voice_cases_v2.json')).read_text())
+    sys.exit(0 if (evaluate if args.legacy else evaluate_v2)(args.base_url,cases,args.output,workers=args.workers,sample=args.sample) else 1)

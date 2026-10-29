@@ -36,8 +36,8 @@ class AudioJob:
 class AudioStore:
     def __init__(self,directory=None,client=None):
         self.directory=Path(directory or settings.TTS_CACHE_DIR);self.client=client;self.jobs={};self.tasks=set();self.gate=asyncio.Semaphore(2)
-    def key(self,text,language,short=False,policy='natural-speech-v5'):
-        identity=[settings.ELEVENLABS_VOICE_ID,settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)]
+    def key(self,text,language,short=False,policy='meaning-first-v2'):
+        identity=['meaning-first-v2',settings.ELEVENLABS_VOICE_ID,settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)]
         if short:identity.append(policy)
         return hashlib.sha256(json.dumps(identity,ensure_ascii=False).encode()).hexdigest()
     def folders(self):
@@ -67,6 +67,9 @@ class AudioStore:
             measured=json.loads(path.with_suffix('.json').read_text())['duration_ms']
             return isinstance(measured,(int,float)) and not isinstance(measured,bool) and 0<measured and (not short or measured<=30000) and 0<path.stat().st_size<=2*1024*1024
         except (OSError,ValueError,KeyError,TypeError):return False
+    def negative(self,key):
+        try:return json.loads((self.directory/(key+'.negative')).read_text()).get('until',0)>time.time()
+        except (OSError,ValueError,TypeError):return False
     async def register(self,texts,language,short=False):
         if not settings.ELEVENLABS_API_KEY or not re.fullmatch(r'[A-Za-z0-9_-]+',settings.ELEVENLABS_VOICE_ID):return None
         await asyncio.to_thread(self.folders)
@@ -96,6 +99,8 @@ class AudioStore:
             fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB);os.utime(fd,None);return fd
         except BlockingIOError:os.close(fd);return None
     async def job(self,key,text,language,short=False):
+        if key in self.jobs:return self.jobs[key]
+        if await asyncio.to_thread(self.negative,key):raise HTTPException(503,{'code':'speech_rejected','retry_after':300})
         if key in self.jobs:return self.jobs[key]
         if len(self.jobs)>=2:raise HTTPException(503,{'code':'speech_busy','retry_after':1},headers={'Retry-After':'1'})
         job=AudioJob();self.jobs[key]=job
@@ -133,6 +138,7 @@ class AudioStore:
                     job.cache='shared-stream';await self.follow(key,job,short);return
             if await asyncio.to_thread(self.valid_cache,key,short):
                 job.cache='shared-hit';await job.append(await asyncio.to_thread(path.read_bytes));await job.finish();return
+            if await asyncio.to_thread(self.negative,key):raise ValueError('Speech rejected')
             path.unlink(missing_ok=True);path.with_suffix('.json').unlink(missing_ok=True)
             (self.directory/(key+'.error')).unlink(missing_ok=True)
             partial_fd=os.open(self.directory/(key+'.stream'),os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)
@@ -154,7 +160,10 @@ class AudioStore:
                                     if not 0<measured<=30000:continue
                                     yield data;return
                         async with client.stream('POST','https://api.elevenlabs.io/v1/text-to-speech/'+settings.ELEVENLABS_VOICE_ID+'/stream',headers={'xi-api-key':settings.ELEVENLABS_API_KEY,'Accept':'audio/mpeg'},json={'text':pronounce(text,language),'model_id':settings.ELEVENLABS_MODEL,'voice_settings':{'speed':settings.TTS_SPEED}},timeout=httpx.Timeout(25,connect=5)) as response:
-                            if response.status_code!=200:raise ValueError('Speech provider unavailable')
+                            if response.status_code!=200:
+                                if response.status_code in {400,403,422}:
+                                    await asyncio.to_thread(self.atomic,self.directory/(key+'.negative'),json.dumps({'until':time.time()+300}).encode())
+                                raise ValueError('Speech provider unavailable')
                             length=0
                             async for chunk in response.aiter_bytes():
                                 length+=len(chunk)
@@ -183,6 +192,7 @@ class AudioStore:
             await asyncio.to_thread(self.atomic,self.directory/(key+'.error'),str(time.time()).encode())
             await job.finish(True)
         finally:
+            if not job.done.is_set():await job.finish(True)
             if partial_fd is not None:os.close(partial_fd);(self.directory/(key+'.stream')).unlink(missing_ok=True)
             if lock is not None:os.close(lock)
             self.jobs.pop(key,None)
@@ -220,6 +230,22 @@ class AudioStore:
         if job.failed and not job.chunks:raise HTTPException(503,'Speech unavailable')
         headers['X-ILMA-Cache']=job.cache
         return StreamingResponse(job.stream(),media_type='audio/mpeg',headers=headers)
+    async def status(self,token):
+        item=await asyncio.to_thread(self.ticket,token)
+        if item is None:raise HTTPException(404,'Audio ticket expired or unavailable')
+        key=item['key']
+        if await asyncio.to_thread(self.valid_cache,key,item.get('short',False)):return {'state':'ready','retry_after':0}
+        if await asyncio.to_thread(self.negative,key):return {'state':'unavailable','code':'speech_rejected','retry_after':300}
+        job=self.jobs.get(key)
+        if job is not None:
+            if job.failed:return {'state':'unavailable','code':'speech_unavailable','retry_after':0}
+            if job.chunks:return {'state':'streaming','retry_after':0}
+            return {'state':'pending','retry_after':1}
+        if await asyncio.to_thread((self.directory/(key+'.error')).is_file):return {'state':'unavailable','code':'speech_unavailable','retry_after':0}
+        try:await self.job(key,item['text'],item['language'],item.get('short',False))
+        except HTTPException as error:
+            return {'state':'busy' if error.detail.get('code')=='speech_busy' else 'unavailable','code':error.detail['code'],'retry_after':error.detail.get('retry_after',1)}
+        return {'state':'pending','retry_after':1}
     async def close(self):
         for task in self.tasks:task.cancel()
         await asyncio.gather(*list(self.tasks),return_exceptions=True)

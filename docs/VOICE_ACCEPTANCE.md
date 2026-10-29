@@ -1,5 +1,68 @@
 # APP_SPEC_02: implementation and acceptance record
 
+## Token protocol preview checkpoint, 29 October 2026
+
+This checkpoint is on the voice feature branch, **not deployed to production**.
+Phase 1's automated gate passed. Phase 2 is incomplete; no pair of consecutive
+passing nightly runs exists. Production still runs the earlier release below.
+
+| Check | Observed result |
+| --- | --- |
+| Complete R3 synthetic-text evaluation | 398/404, 98.5%; comparison 30/30, correction 29/30 |
+| Complete subsequent R4 evaluation | 391/404, 96.8%; comparison 30/30, correction 30/30 |
+| R4 bank/slot/required-kind failures | Zero / zero / zero |
+| R4 unsolicited protection | Zero |
+| R4 checked-answer fallback | 5/404, 1.24% |
+| R4 turns using at most one Spark call | 98.02% |
+| R4 complete typed response | Median 2,678 ms; p95 5,836 ms, excluding ASR/TTS |
+| Isolated Python regression | 403 tests and 27 subtests passed with external voice flag enabled |
+| Latest complete Python regression | 407 tests and 27 subtests passed, including the standard report/reasons/news readout regressions |
+| Frontend regression | All seven Node suites passed |
+| Synthetic Chromium answer playback | One answer MP3 GET, three ticket-status polls, one answer completion; microphone reopened after 301 ms |
+| Synthetic Chromium interruption | Stop 2.6 ms, tap 1.2 ms, simulated voice-monitor handoff 2.5 ms |
+| Layout | Four tabs at phone and desktop sizes, 200% text, rotation and keyboard resizing passed; no page errors |
+| Three synthetic text dialogs | Nine checked turns; EBL introduction/history/DPS/thanks, BRAC one-year DPS comparison corrected to Prime with its term retained, and advice refusal followed by a bank clarification |
+| Live Cloudflare headers | Shell, docs, OpenAPI and health had CSP/nosniff/referrer policy; API docs remain publicly accessible and require the later security fix |
+
+The complete evaluations used real Spark with synthetic authored questions and
+TTS disabled. They do not establish human ASR accuracy, speech latency, audio
+duration, independent financial-source correctness or listener comprehension.
+Zero required-kind failures is a coverage assertion, not independent source
+approval. The full-run timing above measures completion, not first text. The
+evaluator now separately measures streamed first text and full completion;
+those newer measurements need a complete rerun.
+The nine-dialog-turn probe measured first text between 27 and 5,098 ms; its
+cached EBL introduction took 900 ms and made no live Spark request. It is a small
+diagnostic sample, not the corpus latency gate or audio/listening acceptance.
+
+R4 exposed false routing of corporate introductions, assessment explanations,
+service-list questions and superlatives. Regression fixes followed that run;
+the full R4 score must not be attributed to those later edits. Protocol-only
+provider recordings replay in CI against handwritten synthetic meanings;
+they contain no source exports, user audio or token meanings. This replay tests
+protocol/checker behavior, not live semantic understanding.
+
+Implemented in the preview: code-resolved bank/product/term slots, correction
+retention, streamed finite fact tokens, one shared model deadline, local sentence
+repair and a bounded first-sentence/header retry. Source-bound cards retain exact
+values; introductions explain meanings and omit unsolicited protection. Classic
+incident speech also uses neutral categories. Resolved bank context and checked
+partial replies survive interruption without retaining arbitrary user words.
+
+The preview also has source-fingerprinted MySQL introduction variants, cached-only
+acknowledgements, ticket polling, duplicate-event suppression, a negative cache
+for rejected TTS requests and a microphone reopening delay. Offline composition
+has only been trialled for one bank; the full bank/language/intent bundle,
+prewarmed audio, native review and variety acceptance remain pending.
+
+Before production: finish the 35–45-word/30-second audio behavior, all-intent
+fallback variation and the offline bundle; measure all Phase 2 targets on two
+consecutive nights; then complete Phase 3 security/observability/release work and
+its rollback rehearsal. Public docs restriction, signed mutation identity,
+dashboard and configured external alerts are not complete. Physical devices,
+consented diverse recordings, accessibility, two-person listening and source
+sign-off remain human acceptance gates. No production-readiness claim is made.
+
 ## Full live validation with the 8-second model deadline, 29 October 2026
 
 The pushed release `90caf6e` was tested with the contextual engine enabled and

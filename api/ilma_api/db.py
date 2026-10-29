@@ -324,6 +324,20 @@ class AppConversation(Base):
     expires_at=Column(DateTime,nullable=False,index=True)
 
 
+class AppVoiceVariant(Base):
+    __tablename__='app_voice_variant'
+    fingerprint=Column(String(64),primary_key=True)
+    ordinal=Column(Integer,primary_key=True)
+    bank_id=Column(Integer,ForeignKey('institution.id'),nullable=False,index=True)
+    language=Column(String(2),nullable=False)
+    intent=Column(String(24),nullable=False)
+    protocol=Column(JSON,nullable=False)
+    model=Column(String(128),nullable=False)
+    created_at=Column(DateTime,nullable=False,default=datetime.utcnow)
+    last_served_at=Column(DateTime,nullable=True)
+    served_count=Column(Integer,nullable=False,default=0)
+
+
 class AppRateCounter(Base):
     __tablename__ = "app_rate_counter"
     key = Column(String(80), primary_key=True)

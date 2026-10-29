@@ -162,7 +162,7 @@ def offer_item(row,bank,asked_term=None):
     return entry
 
 
-def service_facts(db,id,product=None,tenor=None,basis=None,network=None,tier=None):
+def service_facts(db,id,product=None,tenor=None,basis=None,network=None,tier=None,include_all=False):
     bank=db.get(Institution,id)
     if not bank:return []
     query=db.query(ServiceOffer).filter_by(institution_id=id,hidden=False).filter(ServiceOffer.variant!='excluded',ServiceOffer.doc_date<=date.today())
@@ -174,6 +174,7 @@ def service_facts(db,id,product=None,tenor=None,basis=None,network=None,tier=Non
     rows=query.order_by(ServiceOffer.product_type,ServiceOffer.doc_date.desc(),ServiceOffer.product,ServiceOffer.offer_id).all()
     rows=[r for r in rows if r.value_num is not None and r.attribute in {'rate','interest_rate','annual_fee','rate_min','sms_alert_fee','maintenance_fee_half_yearly'}]
     if tenor is not None and product in {'fdr','dps'}:rows=[r for r in rows if matches_term(r,tenor)]
+    if include_all:return [offer_item(r,bank,tenor) for r in rows]
     if product:return [offer_item(r,bank,tenor) for r in rows[:18]]
     grouped=defaultdict(list)
     for row in rows:grouped[row.product_type].append(row)
@@ -262,11 +263,11 @@ def fact_pack(db,id,product=None,tenor=None,basis=None,network=None,tier=None):
 
 
 def build_fact_pack(db,id,product=None,tenor=None,basis=None,network=None,tier=None):
-    from ilma_api.voice_agent import bank_summary,bank_figures
+    from ilma_api.voice_agent import bank_summary,bank_figures,insurance
     bank=db.get(Institution,id) if id else None
     if not bank:return {'bank':None,'facts':[],'status':None}
     facts=[];card=get_institution_report_card(db,id) or {};status=card.get('status') or {'code':'no_data','label_bn':'অবস্থা যাচাই হয়নি','label_en':'Condition unverified'}
-    for f in bank_summary(db,id)+bank_figures(db,id):
+    for f in bank_summary(db,id)+bank_figures(db,id)+insurance(db,id):
         if any(old['fact_id']==f['fact_id'] for old in facts):continue
         kind='status' if f.get('status') else 'insurance' if f['fact_id'].startswith('insurance:') else 'figure'
         f={**f,'kind':kind,'values':{}}

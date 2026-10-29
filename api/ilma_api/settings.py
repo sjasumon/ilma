@@ -6,7 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Local development secrets; deployed environment variables take precedence.
-load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
+if os.getenv('ILMA_ENV') != 'test':
+    load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
 
 # Supply production credentials through the environment, never source control.
 DATABASE_URL = build_database_url(os.environ)
@@ -66,6 +67,7 @@ API_ADMISSION_BACKEND = os.getenv('API_ADMISSION_BACKEND','process')
 HUMAN_VOICE_ENABLED = os.getenv('HUMAN_VOICE_ENABLED','false').lower()=='true'
 DAILY_QUESTIONS_LIMIT = max(1,int(os.getenv('DAILY_QUESTIONS_LIMIT','20')))
 HUMAN_MODEL_TIMEOUT_SECONDS = max(2,min(8,float(os.getenv('HUMAN_MODEL_TIMEOUT_SECONDS','4.5'))))
+HUMAN_PROTOCOL_FIXTURES = os.getenv('HUMAN_PROTOCOL_FIXTURES','')
 
 def validate_environment():
     if ILMA_ENV not in {'production','development','test'}:

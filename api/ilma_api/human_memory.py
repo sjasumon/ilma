@@ -6,6 +6,7 @@ from ilma_api.db import AppConversation
 
 
 def redact_user(text):
+    text=re.sub(r'(?:আমার নাম|my name is|my name\s*[:=])\s*[^।.!?\n]+','[name omitted]',text,flags=re.I)
     # Keep term/year questions; never retain a personal balance, PIN or account.
     text=re.sub(r'(?:[0-9০-৯][0-9০-৯,.]*|এক|দুই|তিন|চার|পাঁচ|দশ|one|two|three|five|ten)\s*(?:লাখ|লক্ষ|কোটি|হাজার|টাকা|lakh|crore|thousand|taka|BDT)(?:\s*(?:টাকা|taka))?','[personal amount omitted]',text,flags=re.I)
     text=re.sub(r'\b(?:account|pin|password|otp)\b\s*[:#-]?\s*\S+|(?:পিন|অ্যাকাউন্ট নম্বর|পাসওয়ার্ড|ওটিপি)\s*[:#-]?\s*\S+','[identifier omitted]',text,flags=re.I)

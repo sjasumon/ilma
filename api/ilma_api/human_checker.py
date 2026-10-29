@@ -108,6 +108,7 @@ def check(answer,facts,banks,seen=(),allow_repeat=False,insurance_said=False):
     reasons=[];known={f['fact_id']:f for f in facts};ids=answer.used_fact_ids
     if any(id not in known for id in ids):return ['unknown_fact_id']
     cited=[known[id] for id in ids];parts=sentences(answer.reply)
+    if answer.intent not in {'insurance','repeat'} and any(f['kind']=='insurance' for f in cited):reasons.append('unsolicited_protection')
     if len(parts)!=len(answer.sentence_fact_ids):reasons.append('sentence_citation_count')
     if set(id for ids in answer.sentence_fact_ids for id in ids)!=set(answer.used_fact_ids):reasons.append('sentence_citation_union')
     if not allow_repeat and set(ids)&set(seen):reasons.append('repeated_fact')
