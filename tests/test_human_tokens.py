@@ -308,3 +308,15 @@ def test_english_bank_named_by_the_introduction_is_then_called_it(db):
             return await run('How is it?',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
     speech=asyncio.run(scenario())['speech']
     assert speech.startswith('BRAC Test Bank was named Synthetic Best Bank by Synthetic Magazine in 2025. It does not yet have enough information')
+
+def test_after_an_award_sentence_names_the_bank_the_next_says_bankti(db):
+    async def model(payload,trace,client,**kwargs):
+        status=next(e for e in payload['tokens'] if e['token'].startswith('⟨f:') and 'যাচাই করার মতো' in e['meaning'])
+        return Draft(Header(intent='bank_overview',used=status['used']),['⟨bank:1⟩ের '+status['token']+'।'])
+    async def scenario(intro):
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)),patch('ilma_api.human_turn.introduction',return_value=intro):
+            return (await run('কেমন আছে?',VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(institution_id=1,language='bn')),BANKS,db))['speech']
+    awarded=asyncio.run(scenario(([('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে পরীক্ষা ম্যাগাজিন সেরা ব্যাংক বলেছে।',[])],{})))
+    assert awarded.startswith('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে পরীক্ষা ম্যাগাজিন সেরা ব্যাংক বলেছে। ব্যাংকটির অবস্থা যাচাই করার মতো')
+    plain=asyncio.run(scenario(([],{})))
+    assert plain.startswith('পরীক্ষা ব্র্যাক ব্যাংকের অবস্থা যাচাই করার মতো')
