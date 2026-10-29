@@ -1,5 +1,5 @@
 """Narrow five-year DPS comparison: code owns selection, money and validation."""
-import asyncio,json,re,time
+import asyncio,json,random,re,time
 from datetime import date
 from decimal import Decimal,ROUND_HALF_UP,localcontext
 import httpx
@@ -10,8 +10,11 @@ from ilma_api.report_card import get_institution_report_card
 from ilma_api.database_tasks import call
 from ilma_api.voice_numbers import pronounce,NUMBERS,SCALES
 
-QUESTION='আপনি মাসে কত টাকা রাখতে চান?'
-SHORT={'primebank':'প্রাইম','nccbank':'এনসিসি','bracbank':'ব্র্যাক','ebl':'ইস্টার্ন ব্যাংক','citybank':'সিটি ব্যাংক','sbacbank':'সাউথবাংলা','bankasia':'ব্যাংক এশিয়া','mtb':'এমটিবি'}
+# Never ask for an amount: the closing question offers detail, not a calculation.
+QUESTION='কোনটার বিস্তারিত শুনবেন?'
+QUESTIONS=(QUESTION,'কোন ব্যাংকের ডিপিএস বিস্তারিত শুনবেন?','কোনটার কথা আরও জানতে চান?')
+# Full spoken names (never "প্রাইম" or "এনসিসি" alone).
+SPOKEN={'primebank':'প্রাইম ব্যাংক','nccbank':'এনসিসি ব্যাংক','bracbank':'ব্র্যাক ব্যাংক','ebl':'ইস্টার্ন ব্যাংক','citybank':'সিটি ব্যাংক','sbacbank':'সাউথ বাংলা ব্যাংক','bankasia':'ব্যাংক এশিয়া','mtb':'মিউচুয়াল ট্রাস্ট ব্যাংক','dbbl':'ডাচ বাংলা ব্যাংক','pubalibank':'পূবালী ব্যাংক','nbl':'ন্যাশনাল ব্যাংক','islamibank':'ইসলামী ব্যাংক'}
 
 def rate(row):
     if row.value_num is not None:return Decimal(row.value_num)
@@ -35,7 +38,7 @@ def inventory(db):
         if bank.id not in cards:cards[bank.id]=get_institution_report_card(db,bank.id) or {}
         card=cards[bank.id]
         output.append({'offer_id':row.offer_id,'bank_id':bank.id,'slug':bank.slug,'bank_bn':bank.name_bn,
-          'name_bn':SHORT.get(bank.slug,re.sub(r'\s*পিএলসি$','',bank.name_bn)),
+          'name_bn':SPOKEN.get(bank.slug,re.sub(r'\s*(?:পিএলসি|লিমিটেড)$','',bank.name_bn)),
           'status':(card.get('status') or {}).get('code','no_data'),
           'rate_percent':format(value.normalize(),'f'),'terms':terms(row),'date':str(row.doc_date),
           'basis':row.basis,'stale':row.stale or (date.today()-row.doc_date).days>365,
@@ -77,99 +80,135 @@ def build(db):
     return {**base,'ready':True,'top':selected,'flagged':flagged,'conditions':conditions,'monthly_bdt':1000,'months':60,'years':5,
       'calculation':'Monthly compounding; payments at month end; no upfront amount; before tax/fees. Illustration, not a bank maturity quote or eligibility promise.',
       'tie_break':'Equal rates use stable bank ID; excluded equal-rate banks are not worse.',
-      'cutoff_ties':[r for r in strongest.values() if r['bank_id'] not in {x['bank_id'] for x in top} and Decimal(r['rate_percent'])==Decimal(top[-1]['rate_percent'])]}
+      'cutoff_ties':[{**r,'maturity_estimate_bdt':maturity(r['rate_percent'])} for r in sorted(strongest.values(),key=lambda r:r['bank_id']) if r['bank_id'] not in {x['bank_id'] for x in top} and Decimal(r['rate_percent'])==Decimal(top[-1]['rate_percent'])]}
+
+def groups(data):
+    """Strong banks by rate, highest first; equal rates are spoken together."""
+    output=[]
+    for row in data['top']+data['cutoff_ties']:
+        if output and Decimal(output[-1][0])==Decimal(row['rate_percent']):output[-1][1].append(row)
+        else:output.append((row['rate_percent'],[row]))
+    return output
+
+def join_names(rows):
+    names=[r['name_bn'] for r in rows]
+    if len(names)>1 and all(n.endswith(' ব্যাংক') for n in names):names=[n[:-len(' ব্যাংক')] for n in names[:-1]]+[names[-1]]
+    return names[0] if len(names)==1 else ', '.join(names[:-1])+' ও '+names[-1]
+
+def warning(row):
+    if row['status']=='no_data':return 'তবে ওই ব্যাংকের অবস্থা যাচাইয়ের তথ্য আমাদের কাছে কম'
+    if row['status']=='high':return 'তবে ওই ব্যাংকের ঝুঁকি বেশি'
+    return 'তবে ওই ব্যাংকে কিছু সতর্কতার লক্ষণ আছে'
+
+def term_phrase(months):
+    if months is None:return 'মেয়াদ জানা নেই এমন ডিপিএসে'
+    return f"{months//12} বছরের ডিপিএসে" if months%12==0 else f"{months} মাসের ডিপিএসে"
+
+def flagged_sentence(row):
+    if row['matches_five_years']:return f"{row['name_bn']} {row['rate_percent']}% দেয়, {warning(row)}।"
+    return f"{row['name_bn']} {term_phrase(row['comparison_months'])} {row['rate_percent']}% দেয়, {warning(row)}।"
+
+# Three wordings with the same facts, so repeat visits don't sound scripted.
+OPENINGS=(
+    lambda y,first:f"সুদের হিসাবে বললে, {y} বছরের ডিপিএসে সবচেয়ে বেশি দেয় {first}।",
+    lambda y,first:f"{y} বছরের ডিপিএসের কথা ধরলে, সুদ সবচেয়ে বেশি দেয় {first}।",
+    lambda y,first:f"সুদের হার দেখলে, {y} বছরের ডিপিএসে এগিয়ে আছে {first}।")
+CLOSINGS=('এদের সবার অবস্থা ভালো।','এই ব্যাংকগুলোর অবস্থা ভালো।','সবগুলোর অবস্থাই ভালো।')
+
+def template(data,variant=0):
+    """Plain spoken answer: rates only; the calculation stays on the card."""
+    parts=[f"{join_names(rows)}, {rate}%" for rate,rows in groups(data)]
+    text=OPENINGS[variant%3](data['years'],parts[0])
+    if len(parts)==2:text+=f" এরপর {parts[1]}।"
+    elif len(parts)>2:text+=" এরপর "+', '.join(parts[1:-1])+f", আর {parts[-1]}।"
+    text+=' '+CLOSINGS[variant%3]
+    for row in data['flagged'][:2]:text+=' '+flagged_sentence(row)
+    return text+' '+QUESTIONS[variant%3]
 
 def spoken_facts(data):
-    facts=[{'id':'example','text_bn':'মাসশেষে ১০০০ জমিয়ে ৫ বছরে মাসিক চক্রবৃদ্ধিতে কর-ফি কাটার আগে আনুমানিক হিসাব।'}]
-    for row in data['top']:
-        facts.append({'id':row['offer_id'],'text_bn':f"ভালো অবস্থার {row['name_bn']}: {row['rate_percent']}%, আনুমানিক {row['maturity_estimate_bdt']} টাকা।"})
-    for row in data['conditions']:
-        facts.append({'id':'initial:'+str(row['bank_id']),'text_bn':f"{row['name_bn']}-এর উৎসের উদাহরণে আগাম {row['initial_example_bdt']} টাকা আছে; এই হিসাবে তা বাদ।"})
-    for row in data['flagged']:
-        label='অযাচাইকৃত' if row['status']=='no_data' else 'উচ্চ ঝুঁকি' if row['status']=='high' else 'সতর্কতার লক্ষণ'
-        months=row['comparison_months'];term='মেয়াদের তথ্য নেই' if months is None else f'{months//12} বছর' if months%12==0 else f'{months} মাস'
-        facts.append({'id':'flag:'+row['offer_id'],'text_bn':f"{row['name_bn']}: {row['rate_percent']}%, {term}; অবস্থা {label}।"+('৫ বছরের তথ্য নেই।' if not row['matches_five_years'] else '')})
+    """The only facts Meta may use; no calculation, upfront example or source dates."""
+    facts=[{'id':'scope','text_bn':f"শুধু {data['years']} বছরের ডিপিএসের সুদের হার, ভালো অবস্থার ব্যাংকগুলোর মধ্যে।"}]
+    for rate,rows in groups(data):
+        for row in rows:facts.append({'id':row['offer_id'],'text_bn':f"{row['name_bn']}: {rate}%, অবস্থা ভালো।"})
+    for row in data['flagged'][:2]:facts.append({'id':'flag:'+row['offer_id'],'text_bn':flagged_sentence(row)})
     return facts
 
-def template(data):
-    rows=[f"{r['name_bn']} {r['rate_percent']}%—{r['maturity_estimate_bdt']}" for r in data['top']]
-    text='মাসশেষে ১০০০, ৫ বছরে মাসিক চক্রবৃদ্ধিতে কর-ফি কাটার আগে আনুমানিক: ভালো অবস্থার '+', '.join(rows)+' টাকা।'
-    for row in data['conditions']:text+=f" {row['name_bn']}র উদাহরণের আগাম {row['initial_example_bdt']} ধরা হয়নি।"
-    for row in data['flagged']:
-        label='অযাচাইকৃত' if row['status']=='no_data' else 'উচ্চ ঝুঁকি' if row['status']=='high' else 'সতর্কতার লক্ষণ'
-        if row['comparison_months'] is None:
-            text+=f" {row['name_bn']}র {row['rate_percent']}%, মেয়াদ অজানা, অবস্থা {label}।";continue
-        amount=row['comparison_months']//12;unit='বছরের' if row['comparison_months']%12==0 else 'মাসের'
-        if unit=='মাসের':amount=row['comparison_months']
-        text+=f" {row['name_bn']}র {row['rate_percent']}% {amount} {unit}; "+('৫ বছরের তথ্য নেই, ' if not row['matches_five_years'] else '')+label+'।'
-    return text+' '+QUESTION
+def card_line(row,data):
+    """Exact figures for the visible card; the fixed example never uses the user's money."""
+    if row in data['flagged']:
+        label='অবস্থা যাচাইয়ের তথ্য কম' if row['status']=='no_data' else 'উচ্চ ঝুঁকি' if row['status']=='high' else 'সতর্কতার লক্ষণ'
+        months=row['comparison_months'];term='মেয়াদ জানা নেই' if months is None else f"{months//12} বছর" if months%12==0 else f"{months} মাস"
+        return f"{row['name_bn']}: {row['rate_percent']}% বার্ষিক, {term}; {label}।"+('' if row['matches_five_years'] else f" {data['years']} বছরের হার প্রকাশিত নেই।")
+    text=f"{data['years']} বছরের ডিপিএস, {row['name_bn']}: {row['rate_percent']}% বার্ষিক। উদাহরণ: মাসে {data['monthly_bdt']:,} টাকা করে জমালে {data['years']} বছরে আনুমানিক {row['maturity_estimate_bdt']:,} টাকা (মাসিক চক্রবৃদ্ধি, কর ও ফি কাটার আগে; ব্যাংকের নিজের হিসাব আলাদা হতে পারে)।"
+    for condition in data['conditions']:
+        if condition['bank_id']==row['bank_id']:text+=f" ব্যাংকের উদাহরণে শুরুতে {condition['initial_example_bdt']:,} টাকা জমার কথা আছে; এই হিসাবে তা ধরা হয়নি।"
+    return text
 
 def quantities(text):
     value=text.translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
     value=re.sub(r'(?<=\d),(?=\d)','',value)
     return [Decimal(n) for n in re.findall(r'(?<![\d.])-?\d+(?:\.\d+)?',value)]
 
+ADVICE=re.compile(r'নিরাপদ|সেরা|সবচেয়ে ভালো|সবথেকে ভালো|রাখুন|রাখা উচিত|বিনিয়োগ করুন|নিশ্চিত|গ্যারান্টি|পরামর্শ দিচ্ছি|কত টাকা')
+
+def key(name):
+    return name[:-len(' ব্যাংক')] if name.endswith(' ব্যাংক') else name
+
 def validate(answer,data):
-    """Conservative number/name whitelist plus completeness and bank binding."""
-    if not answer.endswith(QUESTION):return 'closing_question'
-    if len(pronounce(answer,'bn').split())>=60:return 'word_limit'
-    if re.search('[A-Za-z]',answer):return 'non_bangla'
-    if re.search(r'নিশ্চিত লাভ|নিরাপদ|সেরা|সবচেয়ে ভালো|রাখুন|বিনিয়োগ করুন',answer):return 'advice_or_guarantee'
-    allowed={number for fact in spoken_facts(data) for number in quantities(fact['text_bn'])}
-    if any(number not in allowed for number in quantities(answer)):return 'unknown_number'
-    words=lambda text:re.findall(r'[\u0980-\u09ff]+',re.sub(r'[0-9০-৯]+',' ',text))
-    for word in words(answer):
-        if word in NUMBERS or word in SCALES or re.match(r'^(?:এক|দুই|তিন|চার|পাঁচ|ছয়|সাত|আট|নয়|দশ)(?:বছর|মাস|হাজার|লাখ)',word):return 'quantities_must_use_digits_before_tts'
-    # Restrict free wording as well as named banks: a new bank or unsupported
-    # claim cannot hide behind numbers that happen to occur in another row.
-    text=answer
-    names={r['name_bn'] for r in data['top']+data['flagged']}
-    for name in sorted(names,key=len,reverse=True):text=text.replace(name+'ের',' ').replace(name+'র',' ').replace(name,' ')
-    lexicon=set(words(template(data)+' '.join(f['text_bn'] for f in spoken_facts(data))))|set('এর ব্যাংক ব্যাংকের হার হারে সুদ সুদের শতাংশ শতাংশে তুলনায় তুলনা হিসেবে মোট পাবেন হয় হবে হতে পারে এবং আর তবে এখানে এই হিসাবে হিসাব একই তিনটি ব্যাংকের মধ্যে দেখুন আছে মাসের শেষে মাসে জমালে জমিয়ে ফি কর আগে কাটার বাদ বাদে উৎসে তথ্য যাচাই হয়নি শুধুমাত্র আপনার জন্য পরিমাণ আনুমানিকভাবে'.split())
-    if any(word not in lexicon for word in words(text)):return 'unknown_bank_or_claim'
+    """Checks what matters: right rate with the right bank, warnings kept, nothing invented."""
     normalized=answer.translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
-    normalized=re.sub(r'(?<=\d),(?=\d)','',normalized)
-    positions=sorted((match.start(),match.end(),name) for name in names for match in re.finditer(re.escape(name),normalized))
-    def spans(name):
-        return [normalized[end:positions[i+1][0] if i+1<len(positions) else len(normalized)] for i,(_,end,current) in enumerate(positions) if current==name]
-    def rate_in(text,value):return any(Decimal(number)==Decimal(value) for number in re.findall(r'(?<![\d.])(\d+(?:\.\d+)?)\s*(?:%|শতাংশ)',text))
-    for row in data['top']:
-        if not any(rate_in(span,row['rate_percent']) and Decimal(row['maturity_estimate_bdt']) in quantities(span) for span in spans(row['name_bn'])):return 'missing_or_swapped_bank_fact'
-    for row in data['flagged']:
-        label='অযাচাইকৃত' if row['status']=='no_data' else 'উচ্চ ঝুঁকি' if row['status']=='high' else 'সতর্কতার লক্ষণ'
-        amount=None if row['comparison_months'] is None else Decimal(row['comparison_months'])/12 if row['comparison_months']%12==0 else Decimal(row['comparison_months'])
-        if not any(rate_in(span,row['rate_percent']) and label in span and (amount is None or amount in quantities(span)) and (row['matches_five_years'] or 'নেই' in span and 'তথ্য' in span) for span in spans(row['name_bn'])):return 'missing_risk_or_term_flag'
-    for row in data['conditions']:
-        if not any(Decimal(row['initial_example_bdt']) in quantities(span) and 'আগাম' in span and ('বাদ' in span or 'ধরা হয়নি' in span) and 'উদাহরণ' in span for span in spans(row['name_bn'])):return 'missing_initial_deposit_caveat'
-    if not (Decimal(1000) in quantities(answer) and re.search(r'5\s*বছর|60\s*মাস',normalized) and ('মাসশেষে' in answer or 'মাসের শেষে' in answer) and 'মাসিক' in answer and 'চক্রবৃদ্ধি' in answer and 'কর' in answer and 'ফি' in answer and 'আগে' in answer and 'আনুমানিক' in answer and ('ভালো অবস্থার' in answer or 'অবস্থা ভালো' in answer)):return 'missing_calculation_scope'
+    if not answer.rstrip().endswith('?'):return 'closing_question'
+    if len(pronounce(answer,'bn').split())>60:return 'word_limit'
+    if re.search('[A-Za-z]',answer):return 'non_bangla'
+    if ADVICE.search(answer):return 'advice_or_amount'
+    spoken=[r for _,rows in groups(data) for r in rows]+data['flagged'][:2]
+    allowed={Decimal(r['rate_percent']) for r in spoken}|{Decimal(data['years'])}
+    allowed|={Decimal(r['comparison_months']//12 if r['comparison_months']%12==0 else r['comparison_months']) for r in data['flagged'][:2] if r['comparison_months']}
+    if any(number not in allowed for number in quantities(answer)):return 'unknown_number'
+    others={key(r['name_bn']) for r in data['inventory']}-{key(r['name_bn']) for r in spoken}
+    if any(name in normalized for name in others):return 'unknown_bank'
+    # Each bank's first rate after its name must be its own rate.
+    marks=sorted((m.start(),m.end(),r) for r in spoken for m in re.finditer(re.escape(key(r['name_bn'])),normalized))
+    for row in spoken:
+        found=[m for m in marks if m[2] is row]
+        if not found:return 'missing_bank'
+        rate=re.search(r'(\d+(?:\.\d+)?)\s*(?:%|শতাংশ)',normalized[found[0][1]:])
+        if not rate or Decimal(rate[1])!=Decimal(row['rate_percent']):return 'swapped_rate'
+    for row in data['flagged'][:2]:
+        after=normalized[[m for m in marks if m[2] is row][0][0]:]
+        if not re.search(r'তথ্য[^।?]*কম' if row['status']=='no_data' else r'ঝুঁকি' if row['status']=='high' else r'সতর্ক',after):return 'missing_warning'
+    if not re.search(r'অবস্থা\S*\s*(?:\S+\s*)?ভালো',answer):return 'missing_status'
     return None
 
-SYSTEM='''You write only a DPS comparison from the supplied fact list. Use ALL facts
-and NOTHING ELSE, in simple spoken Bangla, fewer than 60 words AFTER numbers are
-spoken aloud. Combine the repeated good-status label once. Keep each bank's rate
-and estimated maturity together. Never recommend a bank or promise a return.
-Keep the upfront-example caveat and the unverified bank's different tenor/no
-five-year-data warning. Write ALL quantities as digits, not spelled-out number
-words; code will pronounce them. End exactly with the last fact, the question.
-Do not mention source dates or add background information. Return JSON answer.'''
+SYSTEM='''You are Ilma, a warm, plain-spoken Bangladeshi woman who explains banks
+like a knowledgeable relative. Someone asked which bank's DPS is best. Answer in
+natural spoken Bangla, 40-55 words, using ONLY the supplied facts:
+- Frame it as interest rates ("সুদের হিসাবে"), never as "best" or "safe".
+- Name every bank in the facts with its full name and its own rate, highest first.
+  Banks with the same rate can be said together.
+- Say once that these banks are in good condition.
+- Keep each warning sentence's meaning for any bank marked with a warning.
+- Write every number as digits with % (for example 8.75%); code pronounces them.
+- No calculations, no money amounts, no dates, no advice, no other banks or facts.
+- End with one short question offering details, such as "কোনটার বিস্তারিত শুনবেন?"
+Return JSON {"answer": "..."}.'''
 
-async def compose(data,trace,client=None):
-    started=time.monotonic();fallback=template(data)
-    if validate(fallback,data):raise ValueError('The complete fixed DPS template does not fit the response constraints')
+async def compose(data,trace,client=None,variant=0):
+    started=time.monotonic();fallback=template(data,variant)
+    if validate(fallback,data):raise ValueError('The fixed DPS template does not fit the response constraints')
     if not settings.META_MODEL_API_KEY and client is None:return fallback,'unconfigured'
     from ilma_api.http_clients import shared
     http=client or shared();owned=http is None
     if owned:http=httpx.AsyncClient(follow_redirects=False)
-    facts=spoken_facts(data)+[{'id':'next_question','text_bn':QUESTION}]
-    body={'model':settings.MUSE_SPARK_MODEL,'temperature':.2,'reasoning_effort':'minimal','max_tokens':1600,
+    body={'model':settings.MUSE_SPARK_MODEL,'temperature':.7,'reasoning_effort':'minimal','max_tokens':1600,
       'response_format':{'type':'json_schema','json_schema':{'name':'dps_comparison','strict':True,'schema':{'type':'object','additionalProperties':False,'properties':{'answer':{'type':'string'}},'required':['answer']}}},
-      'messages':[{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps(facts,ensure_ascii=False)}]}
+      'messages':[{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps(spoken_facts(data),ensure_ascii=False)}]}
     reason=None
     try:
         response=await asyncio.wait_for(http.post(settings.MUSE_SPARK_API_URL,headers={'Authorization':'Bearer '+settings.META_MODEL_API_KEY},json=body,timeout=httpx.Timeout(settings.HUMAN_MODEL_TIMEOUT_SECONDS,connect=2)),settings.HUMAN_MODEL_TIMEOUT_SECONDS)
         if response.status_code!=200:reason='http_'+str(response.status_code);answer=fallback
         else:
-            answer=json.loads(response.json()['choices'][0]['message']['content'])['answer'].strip()
+            answer=' '.join(json.loads(response.json()['choices'][0]['message']['content'])['answer'].split())
             reason=validate(answer,data)
             if reason:answer=fallback
     except (httpx.HTTPError,asyncio.TimeoutError,ValueError,KeyError,TypeError,IndexError):reason='provider_or_schema';answer=fallback
@@ -177,6 +216,11 @@ async def compose(data,trace,client=None):
         if owned:await http.aclose()
     trace.append({'stage':'PLAN','model':settings.MUSE_SPARK_MODEL,'ms':round((time.monotonic()-started)*1000),'status':'fallback' if reason else 'ok','reason':reason or 'dps_fact_list_only'})
     return answer,reason
+
+def split_question(answer):
+    """The last question sentence becomes the next question; the rest is the reply."""
+    parts=re.split(r'(?<=[।.!])\s+',answer.strip())
+    return (' '.join(parts[:-1]),parts[-1]) if len(parts)>1 and parts[-1].endswith('?') else (answer,'')
 
 async def run_question(text,context,banks,db,watch_identity=None,client=None,device_hash=None,on_sentence=None):
     from ilma_api.human_agent import controls,render,finish
@@ -193,16 +237,14 @@ async def run_question(text,context,banks,db,watch_identity=None,client=None,dev
         result=render(answer,c,[],trace,'template');result['dps_data_ready']=False;result['reason']=data['reason']
         return await finish(result,'[redacted]',id,memory,db,started)
     await call(db,lambda session:consume_question(session,watch_identity or device_hash or 'dps-comparison'))
-    spoken,reason=await compose(data,trace,client)
+    spoken,reason=await compose(data,trace,client,variant=random.randrange(len(OPENINGS)))
+    from ilma_api.rules.reasons import format_date
     facts=[]
-    for row in data['top']+data['flagged']:
-        fid='dps-compare:'+row['offer_id']
-        line=next(f['text_bn'] for f in spoken_facts(data) if f['id']==row['offer_id'] or f['id']=='flag:'+row['offer_id'])
-        from ilma_api.rules.reasons import format_date
-        extra=' '.join(f['text_bn'] for f in spoken_facts(data) if f['id']=='initial:'+str(row['bank_id']))
-        card=('৫ বছরের ডিপিএস। ' if row in data['top'] else '')+line+' '+extra+' হারতালিকা '+format_date(date.fromisoformat(row['date']),bn=True)
-        facts.append({'fact_id':fid,'institution_id':row['bank_id'],'kind':'service','text_bn':card,'text_en':row['product'],'values':{'rate_percent':row['rate_percent'],'tenor_months':60 if row in data['top'] else row['comparison_months'],'monthly_example_bdt':1000,'maturity_estimate_bdt':row.get('maturity_estimate_bdt'),'status':row['status'],'calculation':data['calculation']},'source':{'source_url':row['source_url'],'source_title':row['product'],'published_at':row['date'],'page':row['page'],'quote':row['quote']}})
-    answer=controls('compare',c,spoken[:-len(QUESTION)].rstrip(),QUESTION,['repeat','end']).model_copy(update={'used_fact_ids':[f['fact_id'] for f in facts]})
+    for row in data['top']+data['cutoff_ties']+data['flagged']:
+        card=card_line(row,data)+' হারতালিকা '+format_date(date.fromisoformat(row['date']),bn=True)
+        facts.append({'fact_id':'dps-compare:'+row['offer_id'],'institution_id':row['bank_id'],'kind':'service','text_bn':card,'text_en':row['product'],'values':{'rate_percent':row['rate_percent'],'tenor_months':data['months'] if row not in data['flagged'] else row['comparison_months'],'monthly_example_bdt':data['monthly_bdt'],'maturity_estimate_bdt':row.get('maturity_estimate_bdt'),'status':row['status'],'calculation':data['calculation']},'source':{'source_url':row['source_url'],'source_title':row['product'],'published_at':row['date'],'page':row['page'],'quote':row['quote']}})
+    reply,question=split_question(spoken)
+    answer=controls('compare',c,reply,question,['repeat','end']).model_copy(update={'used_fact_ids':[f['fact_id'] for f in facts]})
     result=render(answer,c,facts,trace,'template' if reason else 'code')
     result.update(dps_data_ready=True,dps_comparison_facts=spoken_facts(data),dps_comparison_data={key:data[key] for key in ['top','flagged','conditions','monthly_bdt','months','years','calculation','tie_break','cutoff_ties']},dps_model_fallback_reason=reason)
     return await finish(result,'[redacted]',id,memory,db,started)

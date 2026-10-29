@@ -42,8 +42,17 @@ def test_selects_strong_rates_and_flags_higher_different_term_without_fabricatin
     assert not facts['flagged'][0]['matches_five_years']
     assert 'maturity_estimate_bdt' not in facts['flagged'][0]
     assert facts['conditions'][0]['initial_example_bdt']==10000
-    assert validate(template(facts),facts) is None
-    assert len(pronounce(template(facts),'bn').split())<60
+    for variant in range(3):
+        answer=template(facts,variant)
+        assert validate(answer,facts) is None and len(pronounce(answer,'bn').split())<=60
+        assert 'প্রাইম ব্যাংক' in answer and 'কত টাকা' not in answer and '10000' not in answer
+
+def test_equal_rates_are_spoken_together_with_full_names(dps_db):
+    dps_db.add(Institution(id=5,slug='citybank',name_bn='পরীক্ষা সিটি',name_en='Synthetic city',type='bank',islamic=False,licensed=True,listed=True,coverage='full'))
+    dps_db.add(ServiceOffer(offer_id='synthetic-dps-5',institution_id=5,category='deposit',product='Synthetic monthly plan',product_type='dps',tenor_months=60,tenor_min_months=60,tenor_max_months=60,tenor_options=[60],attribute='rate',value_num=4,value_text='4',unit='pct_year',condition='Synthetic terms',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/synthetic',page=1,quote='Synthetic rate example',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='synthetic-fixture',checked_on=date(2026,10,1)))
+    dps_db.commit()
+    facts=build(dps_db);answer=template(facts)
+    assert 'ব্র্যাক ও সিটি ব্যাংক, 4%' in answer and validate(answer,facts) is None
 
 def test_month_end_formula_zero_rate_and_compounding():
     assert maturity(0)==60000
@@ -55,17 +64,17 @@ def test_numbers_absent_from_sent_fact_list_are_rejected(dps_db):
     answer=template(facts).replace(QUESTION,'3 '+QUESTION)
     assert validate(answer,facts)=='unknown_number'
 
-@pytest.mark.parametrize('kind',['unknown_number','unknown_bank','swap_rates','swap_maturity','drop_flag','drop_caveat','ending'])
+@pytest.mark.parametrize('kind',['unknown_number','unknown_bank','swap_rates','amount','drop_flag','advice','ending'])
 def test_rejects_inventions_swapped_facts_and_omissions(dps_db,kind):
     facts=build(dps_db);answer=template(facts)
-    if kind=='unknown_number':answer=answer.replace(str(facts['top'][0]['maturity_estimate_bdt']),'999999')
-    elif kind=='unknown_bank':answer=answer.replace('প্রাইম','অজানা ব্যাংক')
-    elif kind=='swap_rates':answer=answer.replace('প্রাইম 6%','প্রাইম 5%')
-    elif kind=='swap_maturity':answer=answer.replace(str(facts['top'][0]['maturity_estimate_bdt']),str(facts['top'][1]['maturity_estimate_bdt']))
-    elif kind=='drop_flag':answer=answer.replace('অযাচাইকৃত','ভালো')
-    elif kind=='drop_caveat':answer=answer.replace('ধরা হয়নি','ধরা হয়েছে')
-    else:answer=answer.replace(QUESTION,'কোন ব্যাংক?')
-    assert validate(answer,facts)
+    if kind=='unknown_number':answer=answer.replace('6%','7%')
+    elif kind=='unknown_bank':answer=answer.replace('প্রাইম ব্যাংক','অজানা ব্যাংক')
+    elif kind=='swap_rates':answer=answer.replace('প্রাইম ব্যাংক, 6%','প্রাইম ব্যাংক, 5%')
+    elif kind=='amount':answer=answer.replace(QUESTION,'আপনি মাসে কত টাকা রাখতে চান?')
+    elif kind=='drop_flag':answer=answer.replace('তবে ওই ব্যাংকের অবস্থা যাচাইয়ের তথ্য আমাদের কাছে কম','অবস্থা ভালো')
+    elif kind=='advice':answer=answer.replace('সুদের হিসাবে বললে,','সবচেয়ে ভালো হলো,')
+    else:answer=answer.replace(QUESTION,'আর কিছু না।')
+    assert answer!=template(facts) and validate(answer,facts)
 
 def test_meta_receives_only_speakable_facts_and_bad_numbers_fall_back(dps_db):
     async def scenario():
@@ -73,9 +82,10 @@ def test_meta_receives_only_speakable_facts_and_bad_numbers_fall_back(dps_db):
         def provider(request):
             body=json.loads(request.content);calls.append(body)
             payload=json.loads(body['messages'][1]['content'])
-            assert isinstance(payload,list) and payload[-1]['text_bn']==QUESTION
+            assert isinstance(payload,list) and payload[0]['id']=='scope'
             assert all(set(row)=={'id','text_bn'} for row in payload)
-            answer=template(facts).replace(str(facts['top'][0]['maturity_estimate_bdt']),'999999')
+            assert 'কত টাকা' not in body['messages'][1]['content'] and '10000' not in body['messages'][1]['content']
+            answer=template(facts).replace('6%','7%')
             return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps({'answer':answer})}}]})
         async with httpx.AsyncClient(transport=httpx.MockTransport(provider)) as client:
             answer,reason=await compose(facts,[],client)
@@ -101,5 +111,6 @@ def test_default_text_pipeline_uses_comparison_without_stt_change(dps_db):
         stt.assert_not_awaited()
         result=next(json.loads(frame.split('data: ',1)[1]) for frame in frames if frame.startswith('event: result'))
         assert result['intent']=='compare' and result['dps_data_ready']
-        assert result['speech'].endswith(QUESTION) and len(result['speech_tts'].split())<60
+        assert result['speech'].endswith(QUESTION) and len(result['speech_tts'].split())<=60
+        assert any('উদাহরণ' in fact['text_bn'] for fact in result['facts'])
     asyncio.run(scenario())
