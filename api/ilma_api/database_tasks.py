@@ -1,5 +1,6 @@
 """Keep synchronous MySQL I/O off the event loop, with thread-owned sessions."""
 import asyncio
+import logging,time
 from sqlalchemy.orm import Session
 
 async def call(db,function):
@@ -7,6 +8,10 @@ async def call(db,function):
     bind=db.get_bind()
     def run():
         with Session(bind=bind) as owned:
+            started=time.monotonic()
+            owned.connection()
+            elapsed=round((time.monotonic()-started)*1000)
+            if elapsed>=250:logging.getLogger(__name__).warning('database_connection_acquire_ms=%d',elapsed)
             result=function(owned)
             owned.commit()
             return result

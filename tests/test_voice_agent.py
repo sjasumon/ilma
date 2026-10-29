@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from ilma_api import settings
 from ilma_api.db import Base, Institution, Source, InsuranceRule, ServiceOffer, Fact, AppWatchItem, AppModelCall
 from ilma_api.voice_text import VoiceContext
-from ilma_api.voice_agent import (Conversation,Plan,ToolArgs,Wording,check_wording,run_agent_turn,spoken_choice,
+from ilma_api.voice_agent import (Conversation,Plan,ToolArgs,Wording,check_wording,run_scripted_turn as run_agent_turn,spoken_choice,
     bank_summary,bank_reasons,bank_figures,bank_history,services_overview,service_detail,service_compare,insurance,open_proof,watch_bank,end,prepare_schema,validate_plan)
 from ilma_api.voice_pipeline import parse_request,run_pipeline
 

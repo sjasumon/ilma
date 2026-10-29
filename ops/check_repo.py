@@ -30,8 +30,8 @@ def tree_errors(files):
     errors = []
     for name, content in files.items():
         path = Path(name)
-        if (name.startswith(PRIVATE_PREFIXES) or name.startswith(('ilma_incidents_input_','ilma_seed_input_','ilma_extra_input_')) or name in DEBUG_ASSETS or
-            path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_', 'CODE_REVIEW_', 'WEBSITE_FULL_TEST_', 'TAP_OR_TALK_FIXES_')) or name in {'docs/review_muse.md','docs/APP_SPEC_07_voice_agent.md','docs/APP_SPEC_08_speed.md', 'docs/FIX_09_language_and_loop.md', 'docs/FIX_10_answer_wording.md', 'docs/FIX_11_speech_wording_and_pronunciation.md'} or (path.name.startswith('.env') and path.name != '.env.example') or
+        if (name.startswith(PRIVATE_PREFIXES) or name.startswith(('ilma_incidents_input_','ilma_seed_input_','ilma_extra_input_','docs/FIX_')) or name in DEBUG_ASSETS or
+            path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_', 'CODE_REVIEW_', 'WEBSITE_FULL_TEST_', 'TAP_OR_TALK_FIXES_')) or name in {'docs/review_muse.md','docs/APP_SPEC_07_voice_agent.md','docs/APP_SPEC_08_speed.md', 'docs/FIX_09_language_and_loop.md', 'docs/FIX_10_answer_wording.md', 'docs/FIX_11_speech_wording_and_pronunciation.md', 'docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md'} or (path.name.startswith('.env') and path.name != '.env.example') or
             name.endswith(('.sql', '.sql.gz'))):
             errors.append(f'Private/unwanted path tracked: {name}')
         try:

@@ -60,7 +60,7 @@
         }, 100);
         this.deadline = setTimeout(() => {
           if (lastSpeech === null) { this.cancel(); onError('no-speech'); }
-          else this.complete(onComplete);
+          else { this.truncated=true; this.complete(onComplete); }
         }, Math.min(15000, Math.max(1000, maxMs)));
       } catch (error) {
         this.cleanup();
@@ -121,8 +121,8 @@
         const data=new Float32Array(1024);let count=0,floor=0,voiced=0;
         this.monitor=setInterval(()=>{
           this.analyser.getFloatTimeDomainData(data);const rms=Math.sqrt(data.reduce((a,b)=>a+b*b,0)/data.length);
-          if(count++<10){floor+=rms/10;return;}
-          voiced=rms>Math.max(.04,floor*3.5)?voiced+1:0;
+          if(count++<2){floor+=Math.min(rms,.015)/2;return;}
+          voiced=rms>Math.max(.035,Math.min(.06,floor*3))?voiced+1:0;
           if(voiced>=4){const stream=this.stream;this.stream=null;this.cancel();onSpeech(stream);}
         },50);
       }catch{this.cancel();}

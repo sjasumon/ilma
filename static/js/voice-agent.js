@@ -17,7 +17,8 @@
       if(this.phase==='waiting')this.silent();
     }
     async deliverSpeech(data){
-      if(!this.active||this.phase!=='audio-wait')return;
+      if(!this.active)return;
+      if(this.phase!=='audio-wait'){this.a.offerReplay?.();return;}
       const generation=this.generation;this.phase='speaking';
       const heard=await this.a.play(data.audio_urls||[data.audio_url]);
       if(!this.active||generation!==this.generation)return;
@@ -41,7 +42,8 @@
       return this.a.send(choice);
     }
     tap(event={}){
-      if(!this.active||['starting','searching'].includes(this.phase))return;
+      if(!this.active||this.phase==='starting')return;
+      if(this.phase==='searching'){this.suspend();return this.a.listen();}
       this.idle();
       if(this.a.recording()){
         const now=this.clock.now?this.clock.now():Date.now(),delta=now-this.recordingTap;

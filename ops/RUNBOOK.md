@@ -223,3 +223,27 @@ input that continually replays its phrase simulates a person continually
 interrupting; it cannot establish normal completion or physical echo rejection.
 Always poll `/v1/health` after starting a preview or restarting the service before
 browser checks. No recording or diagnostic export belongs in the published tree.
+# Contextual voice preview
+
+Keep `HUMAN_VOICE_ENABLED=false` in production until the acceptance requirements
+in `docs/specs/HUMAN_VOICE.md` pass. The implementation includes a source-safe
+fallback; a fallback success does not validate Muse Spark wording.
+
+Before enabling an isolated preview, run these against the private deployment
+environment, with `DB_NAME=ilma` explicitly set:
+
+```sh
+PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" -m ilma_api.migrate_human_voice
+PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" -m ilma_api.profile_loader seed/bank_profile.csv
+```
+
+The migration is additive and derives term metadata without changing source
+financial values. Profile imports preserve individual source quotations. Set
+`HUMAN_VOICE_ENABLED=true` only for the preview while completing live acceptance.
+An HTTP 402 from Spark requires resolving provider account/model access; changing
+templates does not resolve that provider response. Do not paste credentials into
+logs, issue descriptions or chat.
+
+Production startup rejects a missing/short stable `VOICE_LOG_SALT`, enabled audio
+diagnostics or a database name other than `ilma`. Conversation tokens use the
+stable salt, so changing it invalidates existing conversation tokens.

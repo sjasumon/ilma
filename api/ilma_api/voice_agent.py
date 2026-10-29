@@ -18,10 +18,14 @@ from ilma_api.voice_answers import numbers
 
 Product = Literal['fdr','dps','savings','card','home_loan','auto_loan','personal_loan','loan_against_fdr','account_fee']
 Tool = Literal['bank_summary','bank_reasons','bank_figures','bank_history','services_overview','service_detail','service_compare','insurance','open_proof','watch_bank','end']
-Choice = Literal['detail','services','figures','history','fdr','dps','card','home_loan','compare','next','bank','ask_bank','end','repeat','more','confirm_bank','reject_bank','stop','report','proof','watch','yes','no','listen','insurance']
+Choice = Literal['detail','services','figures','history','fdr','dps','card','home_loan','compare','next','bank','ask_bank','end','repeat','more','confirm_bank','reject_bank','stop','report','proof','watch','yes','no','listen','insurance','bank_1','bank_2','bank_3']
 
 class Conversation(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
+    conversation_token: str | None = Field(default=None,max_length=100)
+    last_intent: str | None = Field(default=None,max_length=40)
+    insurance_said: bool = False
+    compare_bank_ids: list[int] = Field(default_factory=list,max_length=4)
     state: Literal['BANK','DETAIL','FIGURES','HISTORY','SERVICES','SERVICE','COMPARE','NEXT','ASK_BANK','WATCH_CONFIRM'] = 'ASK_BANK'
     institution_id: int | None = Field(default=None, gt=0)
     product: Product | None = None
@@ -37,9 +41,9 @@ class Conversation(BaseModel):
     speech_page_fact_ids: list[str] = Field(default_factory=list,max_length=12)
     last_speech_page: int = Field(default=0,ge=0,le=100)
     last_narration_fact_ids: list[str] = Field(default_factory=list,max_length=12)
-    tenor: int = Field(default=12, ge=1, le=600)
-    tier: Literal['Classic','Gold','Platinum','Signature','World','Infinite','Titanium'] = 'Gold'
-    network: Literal['Visa','Mastercard','Amex'] = 'Visa'
+    tenor: int | None = Field(default=None, ge=1, le=600)
+    tier: Literal['Classic','Gold','Platinum','Signature','World','Infinite','Titanium'] | None = None
+    network: Literal['Visa','Mastercard','Amex'] | None = None
     basis: Literal['conventional','islamic'] = 'conventional'
     last_tool: Tool | None = None
     fact_ids: list[str] = Field(default_factory=list, max_length=12)
@@ -182,7 +186,7 @@ def services_overview(db,institution_id):
     return [fact('services:'+str(institution_id),bank_name(db,institution_id,True)+': '+', '.join(f'{bn_labels[key]} {format_number(n,bn=True)}টি তথ্য' for key,n in groups),bank_name(db,institution_id,False)+': '+', '.join(f'{key.replace("_"," ")} {n} records' for key,n in groups),{'kind':'database_count','source_title':'Published service schedules','source_url':rows[0].source_url,'offer_ids':[r.offer_id for r in rows],'count_kind':'attributes, not unique products'},institution_id=institution_id,counts=dict(groups))]
 
 
-def comparison(db,product,tenor=12,tier='Gold',network='Visa',basis='conventional',institution_id=None):
+def comparison(db,product,tenor=None,tier=None,network=None,basis='conventional',institution_id=None):
     args={'product_type':product,'basis':basis}
     if product in {'fdr','dps'}:args['tenor_months']=tenor
     if product=='card':args.update(tier=tier,network=network)
@@ -191,13 +195,13 @@ def comparison(db,product,tenor=12,tier='Gold',network='Visa',basis='conventiona
     # Compare the same terms and published conditions; never cross slabs/bases.
     def cohort(row):
         offer=row['offer']
-        return tuple(offer.get(k) for k in ('unit','tenor_months','network','tier','attribute','basis'))+(' '.join(offer['condition'].casefold().split()),)
+        return tuple(offer.get(k) for k in ('unit','network','tier','attribute','basis','condition'))+((tenor if tenor is not None else offer.get('tenor_months')),)
     if not eligible:return []
     base=next((r for r in eligible if r['id']==institution_id),None)
     if not base:
         key=Counter(cohort(r) for r in eligible).most_common(1)[0][0]
     else:key=cohort(base)
-    return [row for row in eligible if cohort(row)==key][:3]
+    return [row for row in eligible if cohort(row)==key][:4]
 
 
 def offer_fact(row,bank):
@@ -217,7 +221,7 @@ def offer_fact(row,bank):
     return fact(row['offer_id'],line(True),line(False),{'source_url':row['source_url'],'source_title':row['product'],'published_at':str(row['doc_date']),'page':row['page'],'quote':row['quote'],'condition':row['condition']},value=row['value_num'],institution_id=bank['id'],status=bank.get('status'))
 
 
-def service_detail(db,institution_id,product,tenor=12,tier='Gold',network='Visa',basis='conventional'):
+def service_detail(db,institution_id,product,tenor=None,tier=None,network=None,basis='conventional'):
     # Reuse the curated compare selector rather than cherry-picking high slabs.
     bank=db.get(Institution,institution_id)
     if not bank:return []
@@ -227,14 +231,15 @@ def service_detail(db,institution_id,product,tenor=12,tier='Gold',network='Visa'
     data=compare(db,**args)
     row=next((r for r in data['rows'] if r['id']==institution_id and r.get('offer')),None)
     if not row:return []
-    result=[offer_fact(row['offer'],row)]
+    selected=[row['offer'],*row.get('alternatives',[])] if product in {'fdr','dps','savings'} and tenor is None else [row['offer']]
+    result=[offer_fact(offer,row) for offer in selected[:8]]
     if row['offer']['stale']:
         for f in result:
             f['text_bn']+='। পুরনো তথ্য।';f['text_en']+='. Old data.'
     return result
 
 
-def service_compare(db,product,tenor=12,tier='Gold',network='Visa',basis='conventional',institution_id=None):
+def service_compare(db,product,tenor=None,tier=None,network=None,basis='conventional',institution_id=None):
     return [offer_fact(row['offer'],row) for row in comparison(db,product,tenor,tier,network,basis,institution_id)]
 
 
@@ -355,10 +360,10 @@ def service_request(text,c,institution_id):
     months=re.search(r'\b(\d+)\s*(?:months?|মাস)',normalized,re.I)
     years=re.search(r'\b(\d+)\s*(?:years?|বছর)',normalized,re.I)
     tenor=int(months[1]) if months else int(years[1])*12 if years else c.tenor
-    if not 1<=tenor<=600:return None
+    if tenor is not None and not 1<=tenor<=600:return None
     tier=next((value for pattern,value in [(r'signature|সিগনেচার','Signature'),(r'platinum|প্লাটিনাম','Platinum'),(r'gold|গোল্ড','Gold'),(r'world|ওয়ার্ল্ড','World'),(r'infinite|ইনফিনিট','Infinite'),(r'classic|ক্লাসিক','Classic'),(r'titanium|টাইটানিয়াম','Titanium')] if re.search(pattern,text,re.I)),c.tier)
     network='Mastercard' if re.search(r'mastercard|মাস্টারকার্ড',text,re.I) else 'Amex' if re.search(r'amex|আমেক্স',text,re.I) else 'Visa' if re.search(r'visa|ভিসা',text,re.I) else c.network
-    return Plan(tool='service_detail',args=ToolArgs(institution_id=institution_id,product=product,tenor=tenor,tier=tier,network=network))
+    return Plan(tool='service_detail',args=ToolArgs(institution_id=institution_id,product=product,tenor=tenor,tier=tier if product=='card' else None,network=network if product=='card' else None))
 
 
 def simple_plan(text,c,institution_id):
@@ -516,6 +521,7 @@ def prepare_turn(text,context,banks,db,candidates,choice):
             c=c.model_copy(update={'product':chosen})
     elif not chosen:
         id=candidates[0]['id'] if len(candidates)==1 else c.institution_id
+        if c.institution_id is not None and id!=c.institution_id:c=c.model_copy(update={'product':None,'tenor':None,'tier':None,'network':None})
         plan=service_request(text,c,id) or simple_plan(text,c,id)
         if plan is None and len(candidates)==1 and c.state=='ASK_BANK' and c.institution_id is None and c.product:
             plan=Plan(tool='service_detail',args=ToolArgs(institution_id=id,product=c.product))
@@ -667,7 +673,7 @@ def render_turn(db,executed,trace,language):
 
 
 
-async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None):
+async def run_scripted_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None,device_hash=None):
     from ilma_api.database_tasks import call
     from ilma_api.voice_text import turn_language
     context=context.model_copy(update={'ui_lang':turn_language(text,context,candidates,choice)})
@@ -676,6 +682,9 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
     prepared=await call(db,lambda owned:prepare_turn(text,context,banks,owned,candidates,choice))
     c=prepared['c'];proposed=None
     if not prepared['invalid'] and not prepared['skip_plan']:
+        if settings.META_MODEL_API_KEY:
+            from ilma_api.voice_pipeline import consume_question
+            await call(db,lambda owned:consume_question(owned,watch_identity or device_hash))
         safe_reply=re.sub(r'[0-9০-৯][0-9০-৯,.]*','[number omitted]',text)
         proposed=await model_call('PLAN',{'reply':safe_reply,'conversation':c.model_dump(include={'state','institution_id','product','tenor','tier','network'}),'allowed_options':script_next(c.state,context.ui_lang),'matched_bank_ids':list(prepared['ids']),'products':list(Product.__args__),'tools':list(TOOLS),'tool_contracts':{name:{'arguments':sorted(ALLOWED_ARGS[name]),'purpose':purpose} for name,purpose in TOOL_PURPOSES.items()}},Plan,db,trace,turn_id,client)
     if not any(step['stage']=='PLAN' for step in trace):trace.append({'stage':'PLAN','model':'script','ms':0,'status':'skipped'})
@@ -686,6 +695,12 @@ async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_i
     result=await call(db,act)
     result['trace']['total_ms']=round((time.monotonic()-started)*1000)
     return result
+
+
+async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None,device_hash=None):
+    from ilma_api.human_agent import enabled,run
+    if enabled():return await run(text,context,banks,db,candidates,choice,watch_identity,client,device_hash)
+    return await run_scripted_turn(text,context,banks,db,candidates,choice,watch_identity,client,device_hash)
 
 
 def prepare_schema(engine):

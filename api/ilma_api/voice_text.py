@@ -1,6 +1,7 @@
 """APP_SPEC_02 transcript cleanup, language, numbers and conservative alias scoring."""
 import re
 import unicodedata
+from functools import lru_cache
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 from ilma_api.voice import VoiceError
@@ -12,12 +13,13 @@ class VoiceContext(BaseModel):
     tab: Literal['home', 'bank', 'services'] = 'home'
     bank_id: int | None = None
     ui_lang: Literal['bn', 'en'] = 'bn'
-    history: list[dict[str, str]] = Field(default_factory=list, max_length=3)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=4)
     speak: bool = True
     agent: bool = False
     conversation: Conversation | None = None
     choice: Choice | None = None
     ivr_step: Literal['open', 'mic', 'language', 'menu', 'name', 'confirm', 'report', 'next'] | None = None
+    audio_truncated: bool = False
 
 
 class VoiceIntent(BaseModel):
@@ -69,6 +71,12 @@ def related_parent_ids(text, banks):
     return {bank['id'] for bank in banks if any(' '+normalize_alias(name)+' ' in query for name in bank.get('related_entities',[]))}
 
 
+@lru_cache(maxsize=2048)
+def indexed_alias(alias):
+    normalized=normalize_alias(alias)
+    return normalized,len(normalized.split())
+
+
 def match_candidates(text, banks, scorer=None):
     query = normalize_alias(text)
     tokens = query.split()
@@ -80,12 +88,11 @@ def match_candidates(text, banks, scorer=None):
             continue
         best, best_alias, best_window = 0, '', None
         for alias in [bank['name_bn'], bank['name_en'], *bank.get('aliases', [])]:
-            normalized = normalize_alias(alias)
+            normalized,width = indexed_alias(alias)
             if len(normalized) < 2 or normalized in {'bank', 'ব্যাংক', 'plc'}:
                 continue
             # Sliding equal-size word windows avoid partial_ratio awarding 100 to
             # an acronym hidden inside a different long word.
-            width = len(normalized.split())
             for start in range(len(tokens)):
                 window = ' '.join(tokens[start:start + width])
                 # Partial matches inside much longer words are not bank names.

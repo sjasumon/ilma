@@ -66,6 +66,8 @@ def parse_request(content_type, body, mode):
         if 'choice' in fields:
             context=VoiceContext.model_validate({**context.model_dump(), 'choice':fields['choice'].decode('utf-8')})
         if context.choice and not context.conversation:raise ValueError('conversation')
+        if mode == 'voice' and 'audio' in fields and not fields['audio']:
+            raise VoiceError('no_speech',422,'কথা শোনা যায়নি। আবার বলুন।','No audio was received. Please try again.')
         if mode == 'voice' and (not fields.get('audio') or 'text' in fields or 'choice' in fields or context.choice): raise ValueError('audio')
         if mode == 'text' and ((not fields.get('text') and not context.choice) or 'audio' in fields or ('text' in fields and context.choice)): raise ValueError('text')
         if mode == 'text' and len(fields.get('text',b'')) > 8000: raise ValueError('text')
@@ -270,7 +272,7 @@ def consume_question(db, device_hash):
     else:  # isolated SQLite tests only; runtime URL validation requires MySQL
         from sqlalchemy.dialects.sqlite import insert
         db.execute(insert(AppRateCounter).values(key=key, count=0, expires_at=now + timedelta(hours=48)).on_conflict_do_nothing())
-    changed = db.execute(update(AppRateCounter).where(AppRateCounter.key == key, AppRateCounter.count < 20).values(count=AppRateCounter.count + 1)).rowcount
+    changed = db.execute(update(AppRateCounter).where(AppRateCounter.key == key, AppRateCounter.count < getattr(settings,'DAILY_QUESTIONS_LIMIT',20)).values(count=AppRateCounter.count + 1)).rowcount
     db.commit()
     if changed != 1:
         raise VoiceError('daily_limit', 429, 'আজকের প্রশ্নের সীমা শেষ। ব্যাংকের অবস্থা, বীমা ও হার দেখা যাবে।', 'Daily question limit reached. Status, insurance and rate lookups remain available.')
@@ -280,6 +282,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
     started, intent, institution, outcome = time.monotonic(), 'unclear', None, 'error'
     fact_ids = []
     asr_ms = 0
+    result_sent=False
     try:
         if mode == 'voice':
             trace_stage(diagnostic, 'conversion_started', started, uploaded_bytes=len(audio), mime=mime)
@@ -342,11 +345,12 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 yield event('result',{'type':'not_licensed','omit_history':True,'sources':[],'text':'এটি লাইসেন্সপ্রাপ্ত ব্যাংক বা আর্থিক প্রতিষ্ঠান নয়।' if context.ui_lang=='bn' else 'This is not marked as a licensed bank or finance company.'})
                 return
             # Refusals remain deterministic and are never sent to the planner.
-            if ADVICE.search(text):
+            from ilma_api.human_agent import enabled as human_enabled
+            if ADVICE.search(text) and not human_enabled():
                 yield event('result', {'type':'refused','omit_history':True,'sources':[], 'text':'ব্যাংক বেছে দেওয়া বা টাকা রাখার পরামর্শ দেওয়া হয় না।' if context.ui_lang=='bn' else 'ILMA does not recommend where to deposit money.'})
                 return
             agent_started=time.monotonic()
-            result=await run_agent_turn(text,context,banks,db,agent_candidates,context.choice,watch_identity)
+            result=await run_agent_turn(text,context,banks,db,agent_candidates,context.choice,watch_identity,device_hash=device_hash)
             for step in result['trace']['steps']:
                 if step['stage']=='ASR':
                     step.update(model=settings.MUSE_VOICE_MODEL if mode=='voice' else 'none',status='ok' if mode=='voice' else 'skipped',ms=asr_ms)
@@ -358,12 +362,15 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             spoken=result.pop('speech_text')
             speech_parts=result.pop('speech_parts',[spoken])
             result['audio_pending']=bool(context.speak and spoken and (not result.get('action') or result['action']['type'] not in {'stop','open_report','open_proof'}))
+            result['audio_truncated']=context.audio_truncated
             intent='voice_agent';institution=result['conversation']['institution_id'];outcome='answered'
+            result_sent=True
             yield event('result',result)
             if timings:
                 timings.mark('sent')
                 for frame in timings.events():yield frame
             if result['audio_pending']:
+                if db.get_bind().dialect.name=='mysql':db.close()
                 from ilma_api.audio_cache import register_speech
                 tts_started=time.monotonic()
                 if timings:
@@ -373,7 +380,9 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 if ticket:
                     yield event('speech',ticket)
                     from ilma_api.audio_cache import get_store
-                    if not await get_store().wait(ticket):yield event('speech_unavailable',{'text':'Speech is unavailable.'})
+                    if not await get_store().wait(ticket):
+                        failed=await get_store().failed(ticket)
+                        yield event('speech_unavailable' if failed else 'speech_pending',{'code':'speech_unavailable' if failed else 'speech_busy','retry_after':1,**ticket})
                 else:yield event('speech_unavailable',{'text':'Speech is unavailable.'})
                 if timings:
                     timings.mark('tts_done',started=tts_started)
@@ -441,12 +450,14 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             return
         trace_stage(diagnostic, 'intent_started', started)
         intent_started=time.monotonic()
+        # Reserve before a possible paid intent call, including model failure.
+        pure_lookup=bank_name_only(text,candidates) and len(candidates)==1 or len(candidates)==1 and FIGURE.search(text) and not SERVICE_WORDS.search(text)
+        if not pure_lookup:await db_call(db,lambda owned:consume_question(owned,device_hash))
         understood = await understand(text, candidates, context)
         if timings:timings.mark('intent',started=intent_started)
         tools_started=time.monotonic()
         trace_stage(diagnostic, 'intent_completed', started, intent=understood.intent)
         intent = understood.intent
-        if intent not in {'bank_status', 'insurance', 'rates'}: await db_call(db,lambda owned:consume_question(owned,device_hash))
         institution = understood.institution_ids[0] if understood.institution_ids else None
         from ilma_api.bank_services import voice_service_result
         service_result=await db_call(db,lambda owned:voice_service_result(text,understood,context,owned,language))
@@ -474,12 +485,14 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         fact_ids = [str(source.get('fact_id') or source.get('source_id')) for source in result.get('sources', []) if source.get('fact_id') or source.get('source_id')]
         result['omit_history'] = sensitive_numbers
         result['language'] = language
+        result_sent=True
         yield event('result', result)
         if timings:
             timings.mark('sent')
             for frame in timings.events():yield frame
         outcome = 'refused' if result['type'] == 'refused' else 'no_data' if result['type'] in {'clarify', 'no_data'} else 'answered'
         if context.speak:
+            if db.get_bind().dialect.name=='mysql':db.close()
             from ilma_api.audio_cache import register_speech
             tts_started=time.monotonic()
             if timings:
@@ -490,12 +503,17 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             if ticket:
                 yield event('speech',ticket)
                 from ilma_api.audio_cache import get_store
-                if not await get_store().wait(ticket):yield event('speech_unavailable',{'text':'Spoken playback unavailable.'})
+                if not await get_store().wait(ticket):
+                    failed=await get_store().failed(ticket)
+                    yield event('speech_unavailable' if failed else 'speech_pending',{'code':'speech_unavailable' if failed else 'speech_busy','retry_after':1,**ticket})
             else:yield event('speech_unavailable',{'text':'Spoken playback unavailable.'})
             if timings:
                 timings.mark('tts_done',started=tts_started)
                 for frame in timings.events():yield frame
     except VoiceError as error:
+        if result_sent:
+            yield event('speech_unavailable',{'code':'speech_unavailable','text':'The answer is available; spoken playback could not finish.'})
+            return
         trace_stage(diagnostic, 'failed', started, code=error.code)
         import logging
         logging.getLogger(__name__).warning('voice_pipeline_error code=%s', error.code)
@@ -503,19 +521,22 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
     except SQLAlchemyError:
         trace_stage(diagnostic, 'failed', started, code='bank_data_unavailable')
         db.rollback()
-        yield event('error', {'code': 'bank_data_unavailable', 'message_bn': 'ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না।', 'message_en': 'Bank data is unavailable.'})
+        yield event('speech_unavailable' if result_sent else 'error', {'code': 'speech_unavailable' if result_sent else 'bank_data_unavailable', 'message_bn': 'ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না।', 'message_en': 'Bank data is unavailable.'})
     except Exception as error:
         trace_stage(diagnostic, 'failed', started, code='voice_internal_error')
         import logging
         logging.getLogger(__name__).error('voice_pipeline_unexpected type=%s', type(error).__name__)
         db.rollback()
-        yield event('error', {'code': 'voice_internal_error', 'message_bn': 'অনুরোধটি শেষ করা যায়নি। আবার চেষ্টা করুন।', 'message_en': 'Could not finish this request. Please try again.'})
+        yield event('speech_unavailable' if result_sent else 'error', {'code': 'speech_unavailable' if result_sent else 'voice_internal_error', 'message_bn': 'অনুরোধটি শেষ করা যায়নি। আবার চেষ্টা করুন।', 'message_en': 'Could not finish this request. Please try again.'})
     except asyncio.CancelledError:
         trace_stage(diagnostic, 'cancelled', started)
         raise
     finally:
         audio, text = None, None
-        await db_call(db,lambda owned:log_outcome(owned, mode, intent, institution, outcome, started, device_hash, fact_ids))
+        try:await db_call(db,lambda owned:log_outcome(owned, mode, intent, institution, outcome, started, device_hash, fact_ids))
+        except SQLAlchemyError:
+            import logging
+            logging.getLogger(__name__).warning('voice_outcome_audit_unavailable')
 
 
 def readout_result(kind, institution_id, language, db, prompt=None, agent_state=None):

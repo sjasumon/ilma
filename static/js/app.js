@@ -671,6 +671,8 @@ async function finishRecording() {
     if ("vibrate" in navigator) navigator.vibrate(30);
     if (request !== voiceRequest) return;
     if (audioRecorder === recorder) audioRecorder = null;
+    if (!audio.size) throw new Error('no_speech');
+    audio.ilmaTruncated=Boolean(recorder.truncated);
     if (audio.size > 1024 * 1024) throw new Error("audio_too_large");
     await sendVoiceInput(audio, null, request);
     await flushIvrResult();
@@ -871,7 +873,7 @@ async function sendVoiceInput(audio, text, request, choice = null) {
   if (audio) form.append("audio", audio, audio.type.includes("mp4") ? "recording.mp4" : "recording.webm");
   else if (choice) form.append("choice", choice);
   else form.append("text", text);
-  form.append("context", JSON.stringify({ ...activeVoiceContext, agent: currentTab === "home", ...(agentConversation ? {conversation: agentConversation} : {}), ui_lang: currentLang, history: voiceHistory.slice(-3), speak: Boolean(appSettings.speak && (currentTab === 'home' || audio) && (!ivr?.active || ['menu','name','confirm'].includes(ivr.id))), ...(ivr?.active ? { ivr_step: ivr.id } : {}) }));
+  form.append("context", JSON.stringify({ ...activeVoiceContext, agent: currentTab === "home", ...(agentConversation ? {conversation: agentConversation} : {}), ui_lang: currentLang, history: voiceHistory.slice(-4), audio_truncated: Boolean(audio?.ilmaTruncated), speak: Boolean(appSettings.speak && (currentTab === 'home' || audio) && (!ivr?.active || ['menu','name','confirm'].includes(ivr.id))), ...(ivr?.active ? { ivr_step: ivr.id } : {}) }));
   const controller = new AbortController();
   voiceAbort = controller;
   const audioRequest = playbackRequest;
@@ -966,6 +968,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
   }
   if (name === 'result' && data.type === 'agent_turn') {
     isSearching=false;
+    if(data.memory_turn){voiceHistory.push(data.memory_turn);voiceHistory=voiceHistory.slice(-4);}
     if(voiceLanguageOverride&&data.conversation.language!==voiceLanguageOverride){
       agentConversation={...data.conversation,language:voiceLanguageOverride};voiceLanguageOverride=null;
       return sendAgentChoice('repeat');
@@ -1422,10 +1425,18 @@ document.addEventListener("DOMContentLoaded", () => {
           agentPanel.suspend();void startListening(stream);
         });
       }
+    }else if(!ivr?.active&&window.IlmaBargeMonitor&&appSettings.micExplained){
+      const generation=playbackRequest;
+      bargeMonitor?.cancel();bargeMonitor=new window.IlmaBargeMonitor();
+      void bargeMonitor.start(stream=>{
+        if(generation!==playbackRequest){stream.getTracks().forEach(t=>t.stop());return;}
+        stopAudio();void startListening(stream);
+      });
     }
     if (!ivr?.active) document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "ইলমা উত্তর পড়ে শোনাচ্ছে।" : "ILMA is reading the answer.";
   });
   document.getElementById("ilma-player").addEventListener("error", () => {
+    if(ivrAudioCancel)return; // The ticket player handles bounded retries.
     if (!ivrAudioCancel) stopAudio();
     document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "অডিও চালানো যায়নি। উত্তরটি পর্দায় আছে।" : "Audio could not play. The answer is shown on screen.";
   });
@@ -1465,6 +1476,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (e.target.id === "btn-stop-listening") return;
       if (!isListening) {
+        if(isSearching)stopListening();
         lastRecordingTap = null;
         activeVoiceContext = { tab: "home", bank_id: null };
         return startListening();
@@ -1646,15 +1658,20 @@ function ivrCopy(id) {
 async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, audioUrl = null) {
   stopAudio();
   const controller = new AbortController(), player = document.getElementById('ilma-player');
-  let resolveAudio, timer;
+  let resolveAudio, timer, retryTimer, ticketRetries=0;
   const completion = new Promise(resolve => { resolveAudio = resolve; });
   const done = ok => {
-    clearTimeout(timer); controller.abort();
+    clearTimeout(timer); clearTimeout(retryTimer); controller.abort();
     player.removeEventListener('ended', ended); player.removeEventListener('error', failed);
     if (ivrAudioCancel === cancelled) ivrAudioCancel = null;
     resolveAudio(ok);
   };
-  const ended = () => done(true), failed = () => done(false), cancelled = () => done(false);
+  const ended = () => done(true), failed = () => {
+    if(audioUrl?.startsWith('/v1/audio/')&&!controller.signal.aborted&&ticketRetries<12){
+      ticketRetries++;retryTimer=setTimeout(()=>{if(!controller.signal.aborted){player.src=audioUrl;player.play().catch(()=>done(false));}},Math.min(3000,ticketRetries*500));return;
+    }
+    done(false);
+  }, cancelled = () => done(false);
   ivrAudioCancel = cancelled;
   timer = setTimeout(failed, 90000);
   player.addEventListener('ended', ended); player.addEventListener('error', failed);
@@ -1857,6 +1874,7 @@ function setupAgentPanel() {
   if (!window.IlmaAgentPanel) return;
   agentPanel = new window.IlmaAgentPanel({
     cancel: stopListening, interrupt: stopAudio,
+    offerReplay(){document.getElementById('agent-repeat').textContent=currentLang==='bn'?'আবার শুনুন':'Listen again';document.getElementById('agent-state').textContent=currentLang==='bn'?'উত্তর প্রস্তুত। আবার শুনুন চাপলে শুনতে পাবেন।':'The answer is ready. Choose Listen again to hear it.';},
     recording: () => isListening, finish: finishRecording,
     assistive: () => appSettings.screenreader,
     send: sendAgentChoice,

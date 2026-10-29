@@ -5,6 +5,7 @@ import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from ilma_api.service_terms import parse_terms
 
 CONFIG = Path(__file__).resolve().parents[2] / 'seed'
 
@@ -117,6 +118,7 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
             offers.append(dict(offer_id='svc-' + row['id'], institution_id=int(row['bank_id']),
                 category=row['category'], product=row['product'], product_type=product_type,
                 network=row['network'] or None, tier=row['tier'] or None, tenor_months=tenor(row),
+                **parse_terms(row['product'],row['condition'],tenor(row)),
                 attribute=row['attribute'], value_num=number, value_text=row['value'], unit=row['unit'],
                 condition=row['condition'], basis=row['basis'], doc_date=row['doc_date'], stale=stale,
                 source_url=row['source_url'], page=int(row['page']), quote=row['quote'],
@@ -172,7 +174,7 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
         with (output / (name + '.csv')).open('w', encoding='utf-8', newline='') as destination:
             if rows:
                 writer = csv.DictWriter(destination, fieldnames=list(rows[0]))
-                writer.writeheader(); writer.writerows(rows)
+                writer.writeheader(); writer.writerows({k:json.dumps(v) if isinstance(v,(list,dict)) else v for k,v in row.items()} for row in rows)
     if services:
         previous=json.loads((output/'release.json').read_text()) if (output/'release.json').exists() else {}
         manifest={**previous,'release_id':'services-'+services_version+'-'+exported,'export_date':exported,

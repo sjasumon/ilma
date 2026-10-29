@@ -1,5 +1,6 @@
 """Read-only bank/service views. Hidden offers never cross the API boundary."""
 from datetime import date
+from ilma_api.service_terms import terms
 from pathlib import Path
 import csv
 import json
@@ -34,6 +35,9 @@ def offer_view(row, today=None):
     return {**{column.name:getattr(row,column.name) for column in ServiceOffer.__table__.columns
         if column.name not in {'hidden','hidden_reason','checked_by'}},
         'value_num':float(row.value_num) if row.value_num is not None else None,
+        'tenor_min_months':terms(row)['tenor_min_months'],
+        'tenor_max_months':terms(row)['tenor_max_months'],
+        'tenor_options':terms(row)['tenor_options'],
         'stale':row.stale or (today-row.doc_date).days>365,
         'checked':row.checked_by.casefold()=='sumon', 'source_title':row.column_header if row.product_type=='card' and row.column_header else row.product,
         'group_key':f'{row.institution_id}:{row.product}:{row.column_header if row.product_type=="card" else ""}:{row.network or ""}:{row.tier or ""}:{row.tenor_months or ""}:{row.basis}'}
@@ -44,10 +48,11 @@ def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
     primary = attribute or ('rate' if product_type in {'fdr','dps','savings'} else 'annual_fee' if product_type=='card'
         else 'maintenance_fee_half_yearly' if product_type=='account_fee' else 'rate_min')
     query = db.query(ServiceOffer).filter_by(product_type=product_type,basis=basis)
-    if tenor_months is not None: query=query.filter_by(tenor_months=tenor_months)
+    if product_type!='card':network=tier=None
     if network: query=query.filter_by(network=network)
     if tier: query=query.filter_by(tier=tier)
-    all_rows = query.all()
+    from ilma_api.service_terms import matches_term
+    all_rows = [row for row in query.all() if matches_term(row,tenor_months)]
     rows=[]
     for bank in demo_banks(db):
         candidates=[r for r in all_rows if r.institution_id==bank.id and r.attribute==primary]
