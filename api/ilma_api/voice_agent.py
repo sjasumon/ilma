@@ -692,6 +692,10 @@ async def run_scripted_turn(text,context,banks,db,candidates=(),choice=None,watc
 
 
 async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None,device_hash=None,on_sentence=None):
+    from ilma_api.human_resolver import is_best_dps_question
+    if not choice and not context.audio_truncated and is_best_dps_question(text):
+        from ilma_api.dps_compare import run_question
+        return await run_question(text,context,banks,db,watch_identity,client,device_hash,on_sentence)
     from ilma_api.human_agent import enabled,run
     if enabled():return await run(text,context,banks,db,candidates,choice,watch_identity,client,device_hash,on_sentence)
     return await run_scripted_turn(text,context,banks,db,candidates,choice,watch_identity,client,device_hash)

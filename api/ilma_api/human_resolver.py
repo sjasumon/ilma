@@ -11,6 +11,17 @@ ACRONYMS={'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
 PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsurance\b|\bprotection\b|(?:ব্যাংক|bank).{0,20}(?:বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
 CORRECTION=re.compile(r'^না(?:[\s,।]|$)|না আমি|নয়|নয়|ভুল|শুধরে|বদলে|সংশোধন|ধরুন|আগের প্রশ্ন|আমার কথা ছিল|কথাই বলছি|আমি বলেছিলাম|নাম.{0,24}হবে|জন্যই জানতে চেয়েছি|\b(?:i meant|not|correct|instead|that should|use .*previous|was asking|previous question|bank in my last question)\b',re.I)
 
+def is_best_dps_question(text):
+    """Only the global best-DPS question family; no ASR normalization changes."""
+    value=unicodedata.normalize('NFC',text).casefold()
+    if not re.search(r'ডি\s*পি\s*এস|(?<![a-z])d\s*p\s*s(?![a-z])',value):return False
+    best=bool(re.search(r'(?:সবথেকে|সবচেয়ে|সবচে)\s*(?:ভালো|ভাল|বেশি)|সেরা|সর্বোচ্চ|\bbest\b|\bhighest\b',value))
+    where=bool(re.search(r'কোথায়|কোথায়|কোন\s*ব্যাংক|\bwhere\b|\bwhich\s*bank',value))
+    good=bool(re.search(r'ভালো|ভাল|বেশি|\bgood\b|\bbetter\b',value))
+    normalized=normalize_numbers(value.replace('বছরের','বছর').replace('মাসের','মাস'))
+    explicit=re.search(r'(?<!\w)(\d+)\s*months?\b',normalized)
+    return (best or where and good) and (not explicit or int(explicit[1])==60)
+
 @dataclass
 class ResolvedTurn:
     text:str
@@ -108,4 +119,6 @@ def resolve(text,c,banks):
     elif changed:
         named_bank=next((b for b in banks if b['id']==bank),{})
         basis='islamic' if named_bank.get('islamic') else 'conventional'
+    if is_best_dps_question(text):
+        bank=None;selected='dps';tenor=60;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
     return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric)

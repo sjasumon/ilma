@@ -332,6 +332,8 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             yield event('result', {'type':'ivr_action','ivr_action':action,'omit_history':True,'sources':[],'text':''})
             outcome='answered'
             return
+        from ilma_api.human_resolver import is_best_dps_question
+        if is_best_dps_question(text):context=context.model_copy(update={'agent':True,'ivr_step':None})
         if context.conversation or context.agent and context.ivr_step not in {'open','mic','language'}:
             from ilma_api.voice_agent import run_agent_turn
             agent_candidates=match_candidates(text,banks) if text else []
@@ -344,7 +346,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 return
             # Refusals remain deterministic and are never sent to the planner.
             from ilma_api.human_agent import enabled as human_enabled
-            if ADVICE.search(text) and not human_enabled():
+            if ADVICE.search(text) and not human_enabled() and not is_best_dps_question(text):
                 yield event('result', {'type':'refused','omit_history':True,'sources':[], 'text':'ব্যাংক বেছে দেওয়া বা টাকা রাখার পরামর্শ দেওয়া হয় না।' if context.ui_lang=='bn' else 'ILMA does not recommend where to deposit money.'})
                 return
             agent_started=time.monotonic()
