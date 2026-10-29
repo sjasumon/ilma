@@ -54,6 +54,11 @@ def test_equal_rates_are_spoken_together_with_full_names(dps_db):
     facts=build(dps_db);answer=template(facts)
     assert 'ব্র্যাক ও সিটি ব্যাংক, 4%' in answer and validate(answer,facts) is None
 
+def test_model_wording_with_status_before_condition_is_accepted(dps_db):
+    facts=build(dps_db)
+    answer=template(facts).replace('এদের সবার অবস্থা ভালো।','তিনটি ব্যাংকই ভালো অবস্থায় আছে।')
+    assert validate(answer,facts) is None
+
 def test_month_end_formula_zero_rate_and_compounding():
     assert maturity(0)==60000
     assert maturity(6)>60000 and maturity(7)>maturity(6)

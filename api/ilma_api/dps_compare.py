@@ -177,7 +177,8 @@ def validate(answer,data):
     for row in data['flagged'][:2]:
         after=normalized[[m for m in marks if m[2] is row][0][0]:]
         if not re.search(r'তথ্য[^।?]*কম' if row['status']=='no_data' else r'ঝুঁকি' if row['status']=='high' else r'সতর্ক',after):return 'missing_warning'
-    if not re.search(r'অবস্থা\S*\s*(?:\S+\s*)?ভালো',answer):return 'missing_status'
+    # "অবস্থা ভালো", "ভালো অবস্থায় আছে" and similar: both words in one sentence.
+    if not re.search(r'অবস্থা[^।?]*ভালো|ভালো[^।?]*অবস্থা',answer):return 'missing_status'
     return None
 
 SYSTEM='''You are Ilma, a warm, plain-spoken Bangladeshi woman who explains banks
