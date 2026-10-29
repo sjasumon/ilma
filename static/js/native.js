@@ -4,6 +4,10 @@
   if (!cap?.isNativePlatform?.()) return;
   const { App, Browser, StatusBar } = cap.Plugins || {};
 
+  // Remove download app link inside native app
+  document.getElementById('get-app-container')?.remove();
+  document.getElementById('get-app-link')?.remove();
+
   // B6: Handle back button press
   if (App) {
     App.addListener('backButton', () => {

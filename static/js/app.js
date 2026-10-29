@@ -1955,11 +1955,12 @@ function setupAgentPanel() {
 window.ilmaGoBack = function () {
   if (typeof isListening !== "undefined" && isListening) { stopListening(); return true; }
   if (typeof recognitionStarting !== "undefined" && recognitionStarting) { stopListening(); return true; }
-  if (typeof isSpeaking !== "undefined" && isSpeaking) { stopAudio(); return true; }
-  if (typeof audioPlayer !== "undefined" && audioPlayer && !audioPlayer.paused) { stopAudio(); return true; }
+
+  const player = document.getElementById("ilma-player");
+  if (player && !player.paused) { stopAudio(); return true; }
 
   const proofModal = document.getElementById("proof-modal");
-  if (proofModal && (proofModal.classList.contains("open") || !proofModal.classList.contains("hidden"))) {
+  if (proofModal && proofModal.classList.contains("open")) {
     if (typeof closeProofModal === "function") closeProofModal();
     return true;
   }
