@@ -128,3 +128,47 @@ by [the natural speech contract](specs/APP_SPEC_11_speech_wording_and_pronunciat
 Replies now use full bank names, fuller sentences and a separate pronunciation
 string. Two-person listening/comprehension and physical echo-rejection checks
 remain pending; automated duration checks do not establish those outcomes.
+
+
+## Complete pipeline recheck — 29 October 2026
+
+The recheck found and corrected defects beyond narration timing:
+
+- A brief spoken reply entirely within the initial 300 ms calibration could be
+  discarded as no speech. Capture now retains early speech and keeps the
+  existing ambient-noise warning.
+- Introductions could speak four sourced facts while the card showed only
+  three. The deterministic card now includes all retrieved facts up to the
+  conversation limit, and the source-backed check requires every spoken source
+  to be visible.
+- Failed audio could be cached before successful decoding. Publication now
+  follows positive duration validation; ordinary replies over 30 seconds are
+  rejected. Existing invalid cache entries are regenerated.
+- A second worker could inherit stale partial bytes or an error from an earlier
+  synthesis attempt. It now ignores artifacts older than the active lock.
+- The microphone explanation could leave silent-reply timers active. The agent
+  suspends those timers while awaiting the user's permission decision.
+- A real generated English City question was transcribed as Citibank and led
+  to a generic bank question. A single uncertain match now asks for explicit
+  confirmation. City is identified as Bangladesh; Yes selects it, No clears the
+  selection, and explicit Citibank N.A. remains outside the demo. Product and
+  requested term survive confirmation; Repeat retains the confirmation question.
+
+Verification passed 321 Python tests plus 27 subtests and all seven frontend
+suites. A real browser recording with generated input passed compressed upload,
+ffmpeg, real Meta transcription, Prime retrieval, one TTS clip and automatic
+capture reopening. The answer appeared about 6.2 seconds after the tap and the
+clip lasted about 20.3 seconds. Follow-up generated FDR and details audio kept
+Prime and routed to their respective states. The real English City clip passed
+explicit confirmation, acceptance/rejection and foreign-bank separation.
+
+The browser fixture now uses native input for the initial recording and quiet
+input for subsequent openings. Replaying the test phrase on every fake-mic
+opening had simulated continual interruption; that timeout was not counted as
+a successful end-to-end check. Separate tests cover interruption. All 36
+source-backed paragraphs remain unchanged from the measured natural-speech
+release; their exact-card coverage now passes as well.
+
+Private aggregate diagnostics include automated samples and have no human
+ground-truth labels, so they do not establish ASR accuracy. Two-person listening,
+human/older-speaker/noise trials and physical-device echo rejection remain open.

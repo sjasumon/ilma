@@ -205,3 +205,21 @@ budget. Record introduction target misses honestly. Use
 microphone handoff. Native listening and physical echo rejection are separate.
 The natural-speech cache policy regenerates changed pronunciation without
 removing private historical cache data or altering published history.
+
+
+### Audio cache recovery and real-input smoke check
+
+MP3 publication requires successful decoding and positive duration metadata.
+Ordinary speech over 30 seconds is rejected rather than cached; full-report
+readouts retain their separate contract. Existing invalid cache entries are
+regenerated on the next request. Shared workers ignore partial/error files older
+than the current lock, preserving first-byte streaming without inheriting an
+earlier failed attempt. Do not manually delete cache data to bypass a test.
+
+`check_voice_roundtrip_browser.py` uses a private generated WAV for the initial
+native browser capture and quiet input for subsequent openings. This tests
+normal completion separately from `check_speech_interrupt_browser.py`. A fake
+input that continually replays its phrase simulates a person continually
+interrupting; it cannot establish normal completion or physical echo rejection.
+Always poll `/v1/health` after starting a preview or restarting the service before
+browser checks. No recording or diagnostic export belongs in the published tree.

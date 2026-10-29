@@ -581,6 +581,8 @@ async function startListening(providedStream = null) {
   if (navigator.onLine === false) { showVoiceFallback("offline"); return; }
   closeVoiceFeedback();
   if (!appSettings.micExplained) {
+    // A permission explanation is waiting for the user, not a silent reply.
+    if(agentPanel?.active)agentPanel.suspend();
     const bn = currentLang === "bn";
     document.getElementById("mic-permission-title").textContent = bn ? "কথা বলতে মাইক্রোফোন লাগবে" : "Use your microphone to speak";
     document.getElementById("mic-permission-copy").textContent = bn ? "আপনার কথা লিখে ব্যাংক খুঁজব। লেখা হওয়ার পর রেকর্ডিং মুছে ফেলা হয়। পিন বা অ্যাকাউন্ট নম্বর বলবেন না।" : "We transcribe your voice to find bank information, then delete the recording. Never say your PIN or account number.";

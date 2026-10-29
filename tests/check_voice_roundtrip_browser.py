@@ -20,12 +20,23 @@ with sync_playwright() as pw:
   page.goto(args.base_url,wait_until='networkidle')
   banks=page.request.get(args.base_url.rstrip('/')+'/v1/institutions?list=demo').json();expected=next(b['id'] for b in banks if b['slug']==args.bank_slug)
   page.evaluate('''()=>{
+   // The file-backed fake mic restarts its phrase on each new capture stream.
+   // Subsequent openings use silence so the fixture does not simulate a user
+   // continuously interrupting every spoken answer. Initial capture stays native.
+   const nativeCapture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);let opened=0;
+   navigator.mediaDevices.getUserMedia=constraints=>{
+    if(opened++===0)return nativeCapture(constraints);
+    const context=IlmaAudioSession.getContext();return Promise.resolve(context.createMediaStreamDestination().stream);
+   };
    window.probeFrames=[];window.probePlayback=[];window.probeCapture=[];const original=handleVoiceEvent;const originalSend=sendVoiceInput;sendVoiceInput=(audio,...rest)=>{if(audio)probeCapture.push({bytes:audio.size,type:audio.type});return originalSend(audio,...rest)};
    handleVoiceEvent=async(name,data,request)=>{if(['transcript','result','error'].includes(name))probeFrames.push({name,ms:Math.round(performance.now()-probeStart),language:data.language,type:data.type,bank:data.conversation?.institution_id,state:data.conversation?.state,code:data.code,asr:data.trace?.steps.find(s=>s.stage==='ASR')});return original(name,data,request)};
    const player=document.getElementById('ilma-player');for(const name of ['playing','ended','error'])player.addEventListener(name,()=>{if(player.currentSrc.includes('/v1/audio/'))probePlayback.push({name,ms:Math.round(performance.now()-probeStart)})});window.probeStart=performance.now();
   }''')
   page.locator('#home-tap-target').click()
-  page.wait_for_function("()=>probeFrames.some(f=>f.name==='error')||document.getElementById('voice-feedback').open||(probeFrames.some(f=>f.name==='result')&&probePlayback.some(e=>e.name==='ended')&&isListening)",timeout=90000)
+  try:
+   page.wait_for_function("()=>probeFrames.some(f=>f.name==='error')||document.getElementById('voice-feedback').open||(probeFrames.some(f=>f.name==='result')&&probePlayback.some(e=>e.name==='ended')&&isListening)",timeout=90000)
+  except Exception:
+   print(json.dumps(page.evaluate('()=>({frames:probeFrames,playback:probePlayback,capture:probeCapture,listening:isListening,phase:agentPanel?.phase,searching:isSearching,starting:recognitionStarting})')));raise
   data=page.evaluate('()=>({frames:probeFrames,playback:probePlayback,capture:probeCapture,listening:isListening})');page.evaluate('agentPanel?.suspend();stopListening()')
   result=next((f for f in data['frames'] if f['name']=='result'),None)
   assert result and result['bank']==expected and result['state']=='BANK' and result['language']==args.language,data

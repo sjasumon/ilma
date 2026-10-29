@@ -262,3 +262,10 @@ def test_continuation_spoken_options_and_ordinals_match_visible_choices():
     c=Conversation(state='HISTORY',institution_id=1,speech_page=1,speech_page_fact_ids=['synthetic-history'])
     for word in ['আরও শুনুন','এক','one','হ্যাঁ','yes']:assert spoken_choice(word,c)=='more'
     for word in ['দুই','two','না','no']:assert spoken_choice(word,c)=='end'
+
+
+def test_every_spoken_source_is_visible_in_the_exact_card(wording_db):
+    result=ask(wording_db,'BRAC Bank')
+    visible={id for sentence in result['sentences'] for id in sentence['fact_ids']}
+    assert set(result['speech_fact_ids'])<=visible
+    assert {fact['fact_id'] for fact in result['facts']}<=visible

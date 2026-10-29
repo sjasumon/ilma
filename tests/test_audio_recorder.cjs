@@ -49,6 +49,11 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   assert.ok(app.stopped());
   assert.equal(app.timers(), 0);
 
+  const brief=createRecorder();let briefCompleted=0,briefError;
+  await brief.recorder.start({onComplete(){briefCompleted++},onError(code){briefError=code}});
+  brief.sample(100,.08);brief.sample(200,0);brief.sample(1700,0);
+  assert.equal(briefCompleted,1,'A short reply during calibration must be retained');assert.equal(briefError,undefined);brief.recorder.cancel();
+  const noisy=createRecorder();let warnings=0;await noisy.recorder.start({onComplete(){},onError(){},onNoise(){warnings++}});noisy.sample(100,.06);noisy.sample(200,.06);noisy.sample(400,.06);assert.equal(warnings,1,'Early-reply capture must preserve the ambient-noise warning');noisy.recorder.cancel();
   const barge=createRecorder();let transferred=null;
   const monitor=new barge.context.window.IlmaBargeMonitor();await monitor.start(stream=>transferred=stream);
   for(let i=0;i<10;i++)barge.sample(i*50,0);

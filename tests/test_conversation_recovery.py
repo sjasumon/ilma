@@ -168,3 +168,56 @@ def test_spaced_alias_is_removed_but_real_question_language_is_retained(db):
         matches=match_candidates(text,banks)
         assert matches[0]['id']==1 and decide_language(text,matches,preference)==expected
     assert match_candidates('break',banks)[0]['confirm'],'A bare ambiguous word must not silently select BRAC'
+
+
+@pytest.mark.parametrize('reply',['yes','one','হ্যাঁ','এক'])
+def test_uncertain_bank_requires_confirmation_before_selecting_or_switching(db,reply):
+    candidate={**BANKS[1],'confidence':.875,'confirm':False,'alias':'synthetic-misheard'}
+    ctx=VoiceContext(agent=True,speak=False,ui_lang='en',conversation=Conversation(state='BANK',institution_id=1,language='en'))
+    with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('Uncertain names need no model'))):
+        result=asyncio.run(run_agent_turn('How is synthetic-misheard doing?',ctx,BANKS,db,[candidate]))
+    assert result['conversation']['institution_id']==1
+    assert result['conversation']['confirm_bank_id']==2 and 'EBL Test Bank' in result['next']['question']
+    assert [o['value'] for o in result['next']['options']]==['confirm_bank','reject_bank']
+    accepted=turn(db,reply,conv(result))
+    assert accepted['conversation']['institution_id']==2 and accepted['conversation']['state']=='BANK'
+    assert accepted['conversation']['confirm_bank_id'] is None
+    assert accepted['language']=='en','Spoken confirmation must preserve the question language'
+
+
+def test_uncertain_product_request_survives_bank_confirmation_and_rejection(db):
+    candidate={**BANKS[1],'confidence':.875,'confirm':False,'alias':'synthetic-misheard'}
+    ctx=VoiceContext(agent=True,speak=False,ui_lang='en')
+    with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('Confirmation needs no model'))):
+        result=asyncio.run(run_agent_turn('synthetic-misheard FDR rate',ctx,BANKS,db,[candidate]))
+    assert result['conversation']['confirmation_product']=='fdr'
+    accepted=turn(db,'yes',conv(result))
+    assert accepted['conversation']['institution_id']==2 and accepted['conversation']['state']=='SERVICE'
+    assert accepted['conversation']['product']=='fdr'
+    rejected=turn(db,'no',conv(result))
+    assert rejected['conversation']['institution_id'] is None and rejected['conversation']['confirm_bank_id'] is None
+    assert rejected['conversation']['state']=='ASK_BANK'
+
+
+def test_explicit_foreign_citibank_is_not_silently_mapped_to_city(db):
+    result=turn(db,'Citibank N.A.')
+    assert result['conversation']['institution_id'] is None
+    assert 'has not been added' in result['speech']
+
+
+def test_confirmation_repeat_and_requested_term_do_not_revert_to_prior_bank(db):
+    candidate={**BANKS[1],'confidence':.875,'confirm':False,'alias':'synthetic-misheard'}
+    ctx=VoiceContext(agent=True,speak=False,ui_lang='en',conversation=Conversation(state='BANK',institution_id=1,language='en',last_tool='bank_summary'))
+    with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('Confirmation needs no model'))):
+        result=asyncio.run(run_agent_turn('synthetic-misheard FDR for 2 years',ctx,BANKS,db,[candidate]))
+    repeated=turn(db,'repeat',conv(result))
+    assert repeated['speech']==result['speech'] and repeated['conversation']['confirm_bank_id']==2
+    accepted=turn(db,'yes',conv(result))
+    assert accepted['conversation']['institution_id']==2 and accepted['conversation']['tenor']==24
+    assert accepted['conversation']['product']=='fdr'
+
+
+def test_missing_pending_bank_is_cleared_without_a_server_error(db):
+    result=turn(db,'',Conversation(confirm_bank_id=999999,confirmation_product='fdr',language='en'),choice='confirm_bank')
+    assert result['conversation']['confirm_bank_id'] is None
+    assert result['conversation']['institution_id'] is None

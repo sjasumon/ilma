@@ -27,6 +27,9 @@ with httpx.Client(timeout=30) as client:
   assert len(result['speech'].split())<=70
   assert not re.search(r'[0-9০-৯%()·—]|[A-Za-z]',result['speech_tts']) if result['language']=='bn' else '%' not in result['speech_tts']
   assert set(result['speech_fact_ids'])<={f['fact_id'] for f in result['facts']}
+  visible={id for sentence in result['sentences'] for id in sentence['fact_ids']}
+  assert {f['fact_id'] for f in result['facts']}<=visible
+  assert set(result['speech_fact_ids'])<=visible
   return result,round((time.monotonic()-started)*1000)
  first={}
  for language in ['bn','en']:

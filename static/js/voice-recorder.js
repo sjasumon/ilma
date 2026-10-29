@@ -48,8 +48,12 @@
           const rms = Math.sqrt(samples.reduce((total, value) => total + value * value, 0) / samples.length);
           const now = Date.now();
           onLevel(rms);
-          if (now - started < 300) { noiseTotal += rms; noiseCount++; return; }
-          if (!noiseFloor && noiseCount) { noiseFloor = noiseTotal / noiseCount; if (noiseFloor > .035) onNoise(); }
+          // A one-word reply may finish during calibration. Never discard it.
+          if (now - started < 300) {
+            noiseTotal+=rms;noiseCount++;
+            if(rms>.015)lastSpeech=now;
+          }
+          if (now-started>=300 && !noiseFloor && noiseCount) { noiseFloor = noiseTotal / noiseCount; if (noiseFloor > .035) onNoise(); }
           if (rms > Math.max(.015, Math.min(.03, noiseFloor * 1.8))) lastSpeech = now;
           if (lastSpeech !== null && now - lastSpeech >= silenceMs) this.complete(onComplete);
           else if (lastSpeech === null && now - started >= noSpeechMs) { this.cancel(); onError('no-speech'); }

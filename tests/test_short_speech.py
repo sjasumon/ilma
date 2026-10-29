@@ -93,3 +93,66 @@ def test_provider_receives_normalized_words_with_one_consistent_voice_and_model(
                 assert len(requests)==3
             await store.close()
     asyncio.run(run())
+
+
+@pytest.mark.parametrize('measured',[None,0,31000])
+def test_invalid_or_overlong_short_speech_is_not_published_and_can_be_retried(tmp_path,measured):
+    from ilma_api.audio_cache import AudioStore
+    async def run():
+        async def provider(request):return httpx.Response(200,content=b'synthetic-audio')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(provider)) as client:
+            store=AudioStore(tmp_path,client)
+            with patch.object(settings,'ELEVENLABS_API_KEY','synthetic-key'),patch.object(settings,'ELEVENLABS_VOICE_ID','synthetic-voice'):
+                measurement=AsyncMock(side_effect=ValueError('bad audio')) if measured is None else AsyncMock(return_value=measured)
+                with patch('ilma_api.agent_audio.duration_ms',new=measurement):
+                    ticket=await store.register(['Synthetic short answer'],'en',short=True)
+                    assert not await store.wait(ticket)
+                    await asyncio.gather(*list(store.tasks))
+                assert not list(tmp_path.glob('*.mp3')),'Do not poison retries with invalid cached audio'
+                with patch('ilma_api.agent_audio.duration_ms',new=AsyncMock(return_value=1000)):
+                    retry=await store.register(['Synthetic short answer'],'en',short=True);assert await store.wait(retry)
+            await store.close()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('short',[False,True])
+def test_preexisting_invalid_cache_is_repaired_instead_of_replayed(tmp_path,short):
+    from ilma_api.audio_cache import AudioStore
+    async def run():
+        calls=[]
+        async def provider(request):calls.append(request);return httpx.Response(200,content=b'new-valid-synthetic-audio')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(provider)) as client:
+            store=AudioStore(tmp_path,client);store.folders()
+            with patch.object(settings,'ELEVENLABS_API_KEY','synthetic-key'),patch.object(settings,'ELEVENLABS_VOICE_ID','synthetic-voice'),patch('ilma_api.agent_audio.duration_ms',new=AsyncMock(return_value=1000)):
+                key=store.key('Synthetic repair','en',short);path=tmp_path/(key+'.mp3')
+                store.atomic(path,b'old-invalid-audio');store.atomic(path.with_suffix('.json'),b'{"duration_ms":null}')
+                ticket=await store.register(['Synthetic repair'],'en',short=short);assert await store.wait(ticket)
+                assert len(calls)==1 and path.read_bytes()==b'new-valid-synthetic-audio'
+                assert store.valid_cache(key,short)
+            await store.close()
+    asyncio.run(run())
+
+
+def test_shared_worker_ignores_stale_partial_and_error_from_previous_attempt(tmp_path):
+    import os,time
+    from ilma_api.audio_cache import AudioStore
+    async def run():
+        async def provider(request):raise AssertionError('The owner already holds the synthesis lock')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(provider)) as client:
+            owner=AudioStore(tmp_path,client);follower=AudioStore(tmp_path,client);owner.folders()
+            with patch.object(settings,'ELEVENLABS_API_KEY','synthetic-key'),patch.object(settings,'ELEVENLABS_VOICE_ID','synthetic-voice'):
+                key=owner.key('Synthetic shared retry','en',True)
+                for suffix,data in [('.stream',b'old-partial'),('.error',b'old-error')]:
+                    path=tmp_path/(key+suffix);owner.atomic(path,data);old=time.time_ns()-1000000000;os.utime(path,ns=(old,old))
+                lock=owner.lock(key)
+                try:
+                    ticket=await follower.register(['Synthetic shared retry'],'en',short=True)
+                    await asyncio.sleep(.08);job=follower.jobs[key]
+                    assert not job.chunks and not job.failed,'Never replay an older attempt or inherit its failure'
+                    owner.atomic(tmp_path/(key+'.json'),b'{"duration_ms":1000}')
+                    owner.atomic(tmp_path/(key+'.mp3'),b'new-complete-audio')
+                    await asyncio.wait_for(job.done.wait(),1)
+                    assert not job.failed and b''.join(job.chunks)==b'new-complete-audio'
+                finally:os.close(lock)
+            await follower.close();await owner.close()
+    asyncio.run(run())

@@ -25,6 +25,15 @@ with sync_playwright() as pw:
   assert page.evaluate('agentConversation.institution_id')==bank
  reply('How is BRAC Bank doing?','BANK')
  assert page.evaluate('currentLang')=='en' and page.evaluate('agentConversation.language')=='en'
+ page.evaluate("setLanguage('en',false)");page.evaluate('resetAgentConversation()')
+ city=next(b['id'] for b in page.request.get(args.base_url.rstrip('/')+'/v1/institutions?list=demo').json() if b['slug']=='citybank')
+ reply('How is Citibank doing?','ASK_BANK')
+ assert page.evaluate('agentConversation.confirm_bank_id')==city and 'Bangladesh' in page.locator('#agent-answer').inner_text()
+ page.locator('#agent-options button').filter(has_text='Yes').click();page.wait_for_function('()=>!isSearching&&agentConversation?.state==="BANK"')
+ assert page.evaluate('agentConversation.institution_id')==city
+ reply('How is Citibank doing?','ASK_BANK')
+ page.locator('#agent-options button').filter(has_text='No').click();page.wait_for_function('()=>!isSearching&&agentConversation?.confirm_bank_id===null')
+ assert page.evaluate('agentConversation.institution_id') is None
  assert not errors,errors
  browser.close()
 print('BRAC reply browser passed: all three ASR aliases, canonical bank label, Bangla retained for exact/fuzzy scripted replies, and English detection for a genuine question. No microphone recording used.')

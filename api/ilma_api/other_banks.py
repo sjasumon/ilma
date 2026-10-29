@@ -7,6 +7,7 @@ import re
 from ilma_api.voice_text import normalize_alias
 
 NAMES = [
+    ('সিটিব্যাংক এনএ', 'Citibank N.A.', ['citibank n a','citi bank n a','সিটিব্যাংক এনএ']),
     ('পূবালী ব্যাংক', 'Pubali Bank', ['পূবালী', 'পুবালী', 'পূবালি', 'pubali']),
     ('সোনালী ব্যাংক', 'Sonali Bank', ['সোনালী', 'সোনালি', 'sonali']),
     ('জনতা ব্যাংক', 'Janata Bank', ['জনতা', 'janata']),

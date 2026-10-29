@@ -18,7 +18,7 @@ from ilma_api.voice_answers import numbers
 
 Product = Literal['fdr','dps','savings','card','home_loan','auto_loan','personal_loan','loan_against_fdr','account_fee']
 Tool = Literal['bank_summary','bank_reasons','bank_figures','bank_history','services_overview','service_detail','service_compare','insurance','open_proof','watch_bank','end']
-Choice = Literal['detail','services','figures','history','fdr','dps','card','home_loan','compare','next','bank','ask_bank','end','repeat','more','stop','report','proof','watch','yes','no','listen','insurance']
+Choice = Literal['detail','services','figures','history','fdr','dps','card','home_loan','compare','next','bank','ask_bank','end','repeat','more','confirm_bank','reject_bank','stop','report','proof','watch','yes','no','listen','insurance']
 
 class Conversation(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -31,6 +31,8 @@ class Conversation(BaseModel):
     spoken_fact_ids: list[str] = Field(default_factory=list, max_length=128)
     last_spoken_fact_ids: list[str] = Field(default_factory=list, max_length=12)
     insurance_bank_ids: list[int] = Field(default_factory=list, max_length=20)
+    confirm_bank_id: int | None = Field(default=None,gt=0)
+    confirmation_product: Product | None = None
     speech_page: int = Field(default=0,ge=0,le=100)
     speech_page_fact_ids: list[str] = Field(default_factory=list,max_length=12)
     last_speech_page: int = Field(default=0,ge=0,le=100)
@@ -302,6 +304,9 @@ def spoken_choice(text,conversation):
     from rapidfuzz.fuzz import ratio
     def normalized(value):return ' '.join(fold_bengali_vowels(value).casefold().strip(' .!?,।').split())
     value=normalized(text)
+    if conversation.confirm_bank_id:
+        if value in {'হ্যাঁ','হ্যা','ঠিক','ঠিক আছে','yes','correct','one','first','এক','১','1'}:return 'confirm_bank'
+        if value in {'না','no','two','second','দুই','২','2'}:return 'reject_bank'
     if conversation.speech_page_fact_ids:
         if value in {'আরও','আরো','আরও শুনব','আরও শুনবেন','আরও শুনুন','হ্যাঁ','হ্যা','more','yes','continue','hear more','এক','একবার','প্রথমটা','one','first','1','১'}:return 'more'
         if value in {'না','no','শেষ','end','finish','দুই','দুবার','দ্বিতীয়টা','দ্বিতিয়টা','two','second','2','২'}:return 'end'
@@ -389,8 +394,11 @@ def outside_demo(text,candidates,c,db):
 def choice_plan(choice,c,db):
     id=c.institution_id
     options={o['value'] for o in script_next(c.state,'en')['options']}
-    global_choices={'repeat','more','stop','report','end','proof','watch','detail','services','figures','history','insurance'}
+    global_choices={'repeat','more','confirm_bank','reject_bank','stop','report','end','proof','watch','detail','services','figures','history','insurance'}
     if choice not in options|global_choices|({'fdr','dps','card','home_loan'} if id else set()):return None
+    if choice=='confirm_bank':
+        if not c.confirm_bank_id or not db.get(Institution,c.confirm_bank_id):return None
+        return Plan(tool='service_detail' if c.confirmation_product else 'bank_summary',args=ToolArgs(institution_id=c.confirm_bank_id,product=c.confirmation_product))
     if choice=='more' and not c.speech_page_fact_ids:return None
     if choice in {'repeat','more'}:return Plan(tool=c.last_tool or 'bank_summary',args=ToolArgs(institution_id=id,product=c.product if c.last_tool in {'service_detail','service_compare'} else None))
     mapping={'detail':'bank_reasons','services':'services_overview','figures':'bank_figures','history':'bank_history','compare':'service_compare','yes':'watch_bank','end':'end','proof':'open_proof','watch':'watch_bank','insurance':'insurance'}
@@ -477,7 +485,7 @@ def check_wording(wording,facts,banks=()):
 
 
 def template_sentences(facts,language):
-    return [{'text':f['text_bn' if language=='bn' else 'text_en'],'fact_ids':[f['fact_id']],'source':f['source']} for f in facts[:3]]
+    return [{'text':f['text_bn' if language=='bn' else 'text_en'],'fact_ids':[f['fact_id']],'source':f['source']} for f in facts[:12]]
 
 
 def prepare_turn(text,context,banks,db,candidates,choice):
@@ -487,6 +495,8 @@ def prepare_turn(text,context,banks,db,candidates,choice):
     if c.turn>=20:choice='end';tap=True
     if c.institution_id and not db.get(Institution,c.institution_id):
         c=c.model_copy(update={'institution_id':None,'last_tool':None})
+    if c.confirm_bank_id and not db.get(Institution,c.confirm_bank_id):
+        c=c.model_copy(update={'confirm_bank_id':None,'confirmation_product':None})
     chosen=choice or spoken_choice(text,c)
     matched_choice=chosen
     # A resolved spoken option is exactly a tap: no PLAN, SAY or CHECK call.
@@ -494,12 +504,13 @@ def prepare_turn(text,context,banks,db,candidates,choice):
     candidates=[] if chosen is not None else list(candidates)
     ids={row['id'] for row in candidates}
     if not candidates and c.institution_id:ids.add(c.institution_id)
+    if chosen=='confirm_bank' and c.confirm_bank_id:ids.add(c.confirm_bank_id)
     confirmed=[row for row in candidates if not row.get('confirm') and row['confidence']>=.9]
-    unavailable=outside_demo(text,confirmed,c,db) if chosen not in {'end','stop','ask_bank','listen','no','next'} else None
+    unavailable=outside_demo(text,confirmed,c,db) if chosen not in {'end','stop','ask_bank','listen','no','next','confirm_bank','reject_bank'} else None
     plan=None;invalid=False;direct_service=False
     if candidates and (len(candidates)>1 or (candidates[0].get('confirm') and candidates[0]['id']!=c.institution_id) or candidates[0]['confidence']<.9):
         invalid=True
-    elif chosen and chosen not in {'stop','report','ask_bank','next','listen','no'}:
+    elif chosen and chosen not in {'stop','report','ask_bank','next','listen','no','reject_bank'}:
         plan=choice_plan(chosen,c,db)
         if plan is None and c.institution_id is None and chosen in {'fdr','dps','card','home_loan'}:
             c=c.model_copy(update={'product':chosen})
@@ -516,8 +527,9 @@ def prepare_turn(text,context,banks,db,candidates,choice):
         if len(candidates)==1:
             c=c.model_copy(update={'institution_id':id})
     from ilma_api.voice_text import bank_name_only
-    skip_plan=tap or direct_service or unavailable is not None or len(text.split())<=1 or (len(candidates)==1 and bank_name_only(text,list(candidates)))
-    return dict(c=c,chosen=chosen,matched_choice=matched_choice,candidates=candidates,ids=ids,unavailable=unavailable,plan=plan,invalid=invalid,tap=tap,skip_plan=skip_plan)
+    skip_plan=tap or invalid or direct_service or unavailable is not None or len(text.split())<=1 or (len(candidates)==1 and bank_name_only(text,list(candidates)))
+    clarification_service=service_request(text,c,candidates[0]['id']) if invalid and len(candidates)==1 else None
+    return dict(clarify_params={key:value for key,value in clarification_service.args.model_dump(exclude_none=True).items() if key in {'tenor','tier','network'}} if clarification_service else {},clarify_product=clarification_service.args.product if clarification_service and clarification_service.tool=='service_detail' else None,c=c,chosen=chosen,matched_choice=matched_choice,candidates=candidates,ids=ids,unavailable=unavailable,plan=plan,invalid=invalid,tap=tap,skip_plan=skip_plan)
 
 
 def missed_reply(c):
@@ -555,7 +567,14 @@ def execute_turn(db,prepared,proposed,trace):
         state='ASK_BANK';c=c.model_copy(update={'misses':0})
         facts=[control('bank_needed','এই তথ্য খুঁজতে ব্যাংকের নাম দরকার।','A bank name is needed to find this information.')]
     elif invalid:
-        c,facts=missed_reply(c)
+        uncertain=prepared['candidates']
+        if len(uncertain)==1 and .75<=uncertain[0]['confidence']<.9:
+            c=c.model_copy(update={'confirm_bank_id':uncertain[0]['id'],'confirmation_product':prepared.get('clarify_product'),'misses':0,**prepared.get('clarify_params',{})})
+            state='ASK_BANK';facts=[control('bank_confirmation','ব্যাংকের নামটি নিশ্চিত করতে চাই।','I would like to confirm the bank name.')]
+        else:c,facts=missed_reply(c)
+    elif chosen=='reject_bank':
+        c=c.model_copy(update={'confirm_bank_id':None,'confirmation_product':None,'institution_id':None,'product':None,'last_tool':None,'misses':0})
+        state='ASK_BANK';facts=[control('bank_needed','ব্যাংকের পুরো নাম বলুন।','Please say the full bank name.')]
 
 
     elif chosen=='report' and c.institution_id:
@@ -565,6 +584,8 @@ def execute_turn(db,prepared,proposed,trace):
     elif chosen in {'ask_bank','listen'}:
         state='ASK_BANK';facts=[]
         if chosen=='ask_bank':c=c.model_copy(update={'institution_id':None,'product':None,'last_tool':None})
+    elif chosen=='repeat' and c.confirm_bank_id:
+        state='ASK_BANK';facts=[control('bank_confirmation','ব্যাংকের নামটি নিশ্চিত করতে চাই।','I would like to confirm the bank name.')]
     elif chosen=='repeat' and not c.last_tool:
         state=c.state;facts=[]
     elif chosen in {'next','no'}:
@@ -615,6 +636,13 @@ def render_turn(db,executed,trace,language):
     trace.sort(key=lambda s:['ASR','PLAN','ACT','SAY','CHECK'].index(s['stage']))
     c=c.model_copy(update={'state':state,'turn':min(20,c.turn+1),'last_tool':tool if content_tool else c.last_tool,'fact_ids':[f['fact_id'] for f in facts[:12]] if content_tool else c.fact_ids})
     next_question=script_next(state,language) if not action or action['type'] not in {'end','stop','open_report'} else {'question':'','options':[]}
+    if content_tool or state!='ASK_BANK':c=c.model_copy(update={'confirm_bank_id':None,'confirmation_product':None})
+    if c.confirm_bank_id and state=='ASK_BANK':
+        from ilma_api.answer_wording import bank_name
+        name=bank_name(db,c.confirm_bank_id,bn)
+        pending=db.get(Institution,c.confirm_bank_id)
+        if pending and pending.slug=='citybank':name+=(' বাংলাদেশ' if bn else ' Bangladesh')
+        next_question={'question':f'আপনি কি {name} বলছেন?' if bn else f'Did you mean {name}?','options':[{'label':'হ্যাঁ' if bn else 'Yes','value':'confirm_bank'},{'label':'না' if bn else 'No','value':'reject_bank'}]}
     if c.turn>=20 and (not action or action['type']!='end'):
         goodbye=end(db)[0];next_question={'question':goodbye['text_bn' if bn else 'text_en'],'options':[]};action={'type':'end'}
     text_out=' '.join(s['text'] for s in sentences)
@@ -629,6 +657,7 @@ def render_turn(db,executed,trace,language):
     from ilma_api.answer_wording import compose
     from ilma_api.voice_numbers import pronounce
     replay_ids=(c.speech_page_fact_ids if executed['chosen']=='more' else c.last_narration_fact_ids or c.last_spoken_fact_ids) if executed['chosen'] in {'repeat','more'} else None
+    if not content_tool:replay_ids=None
     page=c.speech_page if executed['chosen']=='more' else c.last_speech_page if executed['chosen']=='repeat' else 0
     narration=compose(db,facts,c.model_dump(),next_question['question'],tool,action,repeat=executed['chosen'] in {'repeat','more'} or bool(plan and plan.tool=='bank_figures' and plan.args.figure),replay_fact_ids=replay_ids,page=page)
     if narration.more:

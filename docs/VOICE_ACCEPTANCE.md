@@ -501,3 +501,23 @@ the three tested interruption paths. The voice-detection path used a synthetic
 handoff; physical microphone/echo and two-person comprehension remain pending.
 A complete preview playback used one cached MP3 and reopened capture after
 playback ended (20.5 seconds elapsed), with no document scroll jump.
+
+
+## Pipeline reliability recheck — 29 October 2026
+
+[The pipeline checks](VOICE_PIPELINE_CHECKS.md) record corrected early-word
+capture, full source-card coverage, invalid/stale audio cache recovery, permission
+timer suspension and explicit uncertain-bank confirmation. Real Meta tests
+covered a bank question, contextual FDR/details and English City confirmation.
+The full suite passed 321 tests plus 27 subtests and all seven frontend suites.
+The 36 measured narration paragraphs remain unchanged. Human comprehension and
+physical microphone/echo acceptance remain pending; no new ASR-accuracy claim
+is made from mixed unlabelled diagnostics or generated clips.
+
+After deployment, the live generated-input browser round trip also passed:
+answer at 6.7 seconds, one 20.3-second clip, then capture reopening. Phone/rotation/
+keyboard viewport/desktop/200% layout passed. Cloudflare root, Swagger, ReDoc and
+OpenAPI returned 200 with security headers and the application kept its strict
+self-only script policy. A stale pending bank ID is cleared without a server
+error. The original private reviews, recordings and diagnostic outputs remain
+outside the published tree.

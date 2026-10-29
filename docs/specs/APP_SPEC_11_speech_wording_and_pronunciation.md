@@ -56,3 +56,16 @@ still hear the Bangla introduction, details, FDR and negative-capital replies
 without the screen and explain the condition, reason and protection limit.
 Native comprehension, pronunciation and physical-device acceptance must not be
 reported as passed by automated checks.
+
+
+The reliability recheck also requires complete source-card coverage and validated
+audio publication. A failed decode, zero duration or over-budget ordinary clip
+must not become a reusable MP3. Invalid existing entries are repaired; shared
+workers ignore artifacts from older synthesis attempts. Pending microphone
+explanations suspend automatic reply timers, and calibration retains short
+spoken replies. These changes preserve narration and natural pacing.
+
+Uncertain single-bank matches require explicit confirmation rather than a
+financial answer. The current bank is not replaced before acceptance; product
+and term are retained. A negative reply clears the pending choice. Distinct
+City Bank Bangladesh and Citibank N.A. names are not merged into one alias.
