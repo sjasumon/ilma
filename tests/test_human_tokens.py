@@ -318,5 +318,7 @@ def test_after_an_award_sentence_names_the_bank_the_next_says_bankti(db):
             return (await run('কেমন আছে?',VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(institution_id=1,language='bn')),BANKS,db))['speech']
     awarded=asyncio.run(scenario(([('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে পরীক্ষা ম্যাগাজিন সেরা ব্যাংক বলেছে।',[])],{})))
     assert awarded.startswith('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে পরীক্ষা ম্যাগাজিন সেরা ব্যাংক বলেছে। ব্যাংকটির অবস্থা যাচাই করার মতো')
+    founded=asyncio.run(scenario(([('পরীক্ষা ব্র্যাক ব্যাংক যাত্রা শুরু করে ১৯৯৯ সালে।',[])],{})))
+    assert founded.startswith('পরীক্ষা ব্র্যাক ব্যাংক যাত্রা শুরু করে ১৯৯৯ সালে। ব্যাংকটির অবস্থা যাচাই করার মতো')
     plain=asyncio.run(scenario(([],{})))
     assert plain.startswith('পরীক্ষা ব্র্যাক ব্যাংকের অবস্থা যাচাই করার মতো')

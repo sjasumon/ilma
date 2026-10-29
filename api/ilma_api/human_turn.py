@@ -523,8 +523,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             # Say the bank name once, in the first sentence that carries it.
             named=False
             for i,(sentence,ids) in enumerate(lines):
-                # After "<bank>কে … বলেছে।" the next sentence says "ব্যাংকটির", not the full name again.
-                if bn and i==1 and lines[0][0].startswith(name.text+'কে ') and sentence.startswith(polish(name.text+'ের ',{},bn)):
+                # After "<bank>কে … বলেছে।" or "<bank> যাত্রা শুরু করে …" the next sentence says "ব্যাংকটির".
+                if bn and i==1 and lines[0][0].startswith((name.text+'কে ',name.text+' যাত্রা শুরু করে ')) and sentence.startswith(polish(name.text+'ের ',{},bn)):
                     lines[i]=('ব্যাংকটির '+sentence[len(polish(name.text+'ের ',{},bn)):],ids);named=True;continue
                 for prefix in (polish(name.text+'ের ',{},bn),name.text+"'s ",name.text+' '):
                     if sentence.startswith(prefix):
