@@ -165,6 +165,9 @@ def validate(answer,data):
     allowed={Decimal(r['rate_percent']) for r in spoken}|{Decimal(data['years'])}
     allowed|={Decimal(r['comparison_months']//12 if r['comparison_months']%12==0 else r['comparison_months']) for r in data['flagged'][:2] if r['comparison_months']}
     if any(number not in allowed for number in quantities(answer)):return 'unknown_number'
+    # The term is the comparison: it must be said, and a shorter-term rate keeps its own term.
+    if not re.search(rf"{data['years']}\s*বছর",normalized):return 'missing_term'
+    if len(re.findall(r'[।?]',answer))<3:return 'run_on_sentence'
     others={key(r['name_bn']) for r in data['inventory']}-{key(r['name_bn']) for r in spoken}
     if any(name in normalized for name in others):return 'unknown_bank'
     # Each bank's first rate after its name must be its own rate.
@@ -177,6 +180,10 @@ def validate(answer,data):
     for row in data['flagged'][:2]:
         after=normalized[[m for m in marks if m[2] is row][0][0]:]
         if not re.search(r'তথ্য[^।?]*কম' if row['status']=='no_data' else r'ঝুঁকি' if row['status']=='high' else r'সতর্ক',after):return 'missing_warning'
+        months=row['comparison_months']
+        if not row['matches_five_years'] and months:
+            term=months//12 if months%12==0 else months
+            if not re.search(rf"(?<![\d.]){term}\s*(?:বছর|মাস)",after.split('।')[0]):return 'missing_flagged_term'
     # "অবস্থা ভালো", "ভালো অবস্থায় আছে" and similar: both words in one sentence.
     if not re.search(r'অবস্থা[^।?]*ভালো|ভালো[^।?]*অবস্থা',answer):return 'missing_status'
     return None
@@ -185,8 +192,11 @@ SYSTEM='''You are Ilma, a warm, plain-spoken Bangladeshi woman who explains bank
 like a knowledgeable relative. Someone asked which bank's DPS is best. Answer in
 natural spoken Bangla, 40-55 words, using ONLY the supplied facts:
 - Frame it as interest rates ("সুদের হিসাবে"), never as "best" or "safe".
-- Name every bank in the facts with its full name and its own rate, highest first.
-  Banks with the same rate can be said together.
+- Say the term ("5 বছরের ডিপিএসে") and name every bank in the facts with its full
+  name and its own rate, highest first. Banks with the same rate can be said together.
+- A warned bank with a different term keeps its own term in the same sentence
+  (for example "1 বছরের ডিপিএসে 10%").
+- Use 3 to 5 short sentences, not one long sentence.
 - Say once that these banks are in good condition.
 - Keep each warning sentence's meaning for any bank marked with a warning.
 - Write every number as digits with % (for example 8.75%); code pronounces them.
