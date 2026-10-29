@@ -1,5 +1,40 @@
 # APP_SPEC_02: implementation and acceptance record
 
+## Dedicated public preview, 29 October 2026
+
+The updated web app is deployed at **https://preview.sumon.me**, pinned to
+`f3c65482b045fd5effa28880ae82fc1d6514175c`. Production was not redeployed.
+The preview has its own application service, named Cloudflare tunnel, signing
+salt, MySQL admission namespace and audio cache. Both preview services are enabled
+for host restart. It uses the same configured Meta and ElevenLabs credentials,
+models, voice, speed, deadlines and limit values as production, with TTS enabled.
+The database remains `ilma`; no seed reload was performed.
+
+| Deployment check | Observed result |
+| --- | --- |
+| Backend regression | 411 tests and 27 subtests passed |
+| Frontend regression | Seven Node suites passed |
+| Deployed commit CI | GitHub run 40900110623 passed |
+| Public HTTPS | Shell, health, voice configuration, API docs and OpenAPI returned 200 with security headers |
+| Public Meta request | One synthetic profile question returned a checked Prime Bank reply using one successful Spark call; SSE response preserved |
+| Operational TTS | 80 prewarmed audio metadata files; an existing clip returned 200, audio/mpeg, 66,081 bytes, cache hit; this playback verification caused no new TTS generation |
+| Public Chromium playback | One answer MP3 request, three status polls, one completion, 304 ms microphone reopening delay; media fixture was synthetic |
+| Public Chromium interruption | Stop 1.4 ms, tap 5.9 ms, simulated voice-monitor handoff 2.7 ms |
+| Public layouts | Four tabs on phone/desktop, rotation, keyboard resize and 200% text passed, with no page errors |
+| Private deployment files | Environment/tunnel files and JSON/XML manifests mode 0600; private URLs returned 404; credentials excluded from Git |
+| Production availability | Local and public health remained 200; production services stayed active |
+
+TTS prewarming here is normal deployment operation using the configured provider.
+Automated audio tests use synthetic/provider fixtures and make no paid TTS calls.
+The existing production and preview folders have no fixed-clip manifest, so both
+use dynamic speech; no clip-review approval was invented or changed. Tunnel
+credentials and YAML configuration are private. The requested XML file is a
+deployment manifest, not Cloudflare's configuration format.
+
+This is a testing deployment, not completion of the release gates. The final
+404-case Phase 1 evaluation, complete audio/variation targets, subsequent nightly
+gates, security/observability work and human acceptance remain outstanding.
+
 ## Token protocol preview checkpoint, 29 October 2026
 
 This checkpoint is on the voice feature branch, **not deployed to production**.
