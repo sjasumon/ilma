@@ -503,7 +503,11 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             if numeric_count+count>1 or BANNED.search(sentence):continue
             if len(pronounce(' '.join(s for s,_ in lines)+' '+sentence+' '+question,c.language).split())<=45:
                 lines.append((sentence,list(item.fact_ids)));numeric_count+=count
-    if intent in {'bank_overview','bank_condition'} and c.institution_id and c.institution_id not in memory.get('introduced_banks',[]):
+    # A coverage note answers only a question that asked for that detail.
+    if intent in {'bank_overview','bank_condition','bank_reasons','bank_figures','bank_history'} and len(lines)>1:
+        lines=[(s,ids) for s,ids in lines if not (ids and all(facts.get(fid,{}).get('kind')=='coverage' for fid in ids))] or lines
+    # The opening is for general questions; "মূলধন কেমন?" answers the metric directly.
+    if intent in {'bank_overview','bank_condition'} and not r.requested_metric and c.institution_id and c.institution_id not in memory.get('introduced_banks',[]):
         intro,extra=await call(db,lambda owned:introduction(owned,c,registry,facts))
         if intro:
             founded={fid for _,ids in intro for fid in ids}
@@ -533,6 +537,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                             # "Eastern Bank is …" said twice becomes "It is …", not "Is …".
                             if not bn and prefix==name.text+' ' and EN_VERB.match(sentence.lower()):sentence='It '+sentence
                         named=True;break
+                # An English clause that starts with a verb needs a subject.
+                if not bn and EN_VERB.match(sentence):sentence=('It ' if named else name.text+' ')+sentence;named=True
                 if i and not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
                 lines[i]=(sentence,ids)
     if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])

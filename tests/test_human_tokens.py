@@ -322,3 +322,33 @@ def test_after_an_award_sentence_names_the_bank_the_next_says_bankti(db):
     assert founded.startswith('পরীক্ষা ব্র্যাক ব্যাংক যাত্রা শুরু করে ১৯৯৯ সালে। ব্যাংকটির অবস্থা যাচাই করার মতো')
     plain=asyncio.run(scenario(([],{})))
     assert plain.startswith('পরীক্ষা ব্র্যাক ব্যাংকের অবস্থা যাচাই করার মতো')
+
+@pytest.mark.parametrize('grade,words',[('AA+','ডাবল এ প্লাস'),('AAA','ট্রিপল এ'),('A-','এ মাইনাস'),('BBB','ট্রিপল বি')])
+def test_rating_grades_are_spoken_as_words(grade,words):
+    from ilma_api.human_tokens import rating_words
+    assert rating_words(grade)==words
+
+def test_rating_peer_is_said_plainly():
+    from ilma_api.human_tokens import fact_clause
+    f={'kind':'peer','fact_id':'p','text_bn':'রেটিং AA+, একই অবস্থার ব্যাংকগুলোর মধ্যমান AAA','values':{'metric':'rating','grade':'AA+','value':1.0,'median':0.0,'unusual':1.0,'worse':True}}
+    assert fact_clause(f,'bn')=='রেটিং সংস্থা ব্যাংকটিকে ডাবল এ প্লাস দিয়েছে, যা ভালো রেটিং; আমাদের তালিকার ভালো ব্যাংকগুলোর সাধারণ রেটিং ট্রিপল এ'
+    assert fact_clause(f,'en')=='its credit rating is AA+, a good rating; the typical rating among strong banks in our list is AAA'
+
+@pytest.mark.parametrize('product,kind,when,expected',[
+    ('Fixed Deposit 12 Months','fdr','1 year','pays 7% on a 1-year fixed deposit'),
+    ('Synthetic Confidence DPS','dps','1 year to 6 years','pays 7% on its Synthetic Confidence DPS for 1 year to 6 years'),
+    ('Synthetic Gold Card','card','','Synthetic Gold Card has interest of 7%')])
+def test_english_offers_do_not_read_raw_sheet_titles(product,kind,when,expected):
+    from ilma_api.human_tokens import english_offer
+    assert english_offer({'product':product,'product_type':kind},when,'interest','7%')==expected
+
+def test_metric_question_answers_without_the_opening(db):
+    async def model(payload,trace,client,**kwargs):
+        status=next(e for e in payload['tokens'] if e['token'].startswith('⟨f:') and 'যাচাই করার মতো' in e['meaning'])
+        return Draft(Header(intent='bank_condition',used=status['used']),['⟨bank:1⟩ের '+status['token']+'।'])
+    intro=([('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে পরীক্ষা ম্যাগাজিন সেরা ব্যাংক বলেছে।',[])],{})
+    async def scenario(text):
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)),patch('ilma_api.human_turn.introduction',return_value=intro):
+            return (await run(text,VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(institution_id=1,language='bn')),BANKS,db))['speech']
+    assert 'পরীক্ষা ম্যাগাজিন' not in asyncio.run(scenario('মূলধন কেমন?'))
+    assert asyncio.run(scenario('কেমন আছে?')).startswith('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে')

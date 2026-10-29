@@ -63,6 +63,27 @@ def card_text(f,language):
     return f.get('text_bn' if bn else 'text_en','')
 
 
+def rating_words(grade):
+    """Bangla spoken form of a rating grade: "AA+" -> "ডাবল এ প্লাস"."""
+    found=re.fullmatch(r'([A-D])(\1{0,2})([+-]?)',grade or '')
+    if not found:return grade
+    count=1+len(found[2]);letter={'A':'এ','B':'বি','C':'সি','D':'ডি'}[found[1]]
+    return ' '.join(x for x in (('','ডাবল','ট্রিপল')[count-1],letter,{'+':'প্লাস','-':'মাইনাস','':''}[found[3]]) if x)
+
+
+GENERIC=re.compile(r'\d|\bmonths?\b|\byears?\b|^fixed deposit|^retail|^term deposit|^general',re.I)
+def english_offer(v,when,label,amount):
+    """Plain English: "pays 7% on a 1-year fixed deposit"; raw sheet titles are not read out."""
+    name=product(v,False);kind={'fdr':'fixed deposit','dps':'DPS'}.get(v.get('product_type'))
+    single=re.fullmatch(r'(\d+) (year|month)s?',when or '')
+    if not kind:return f'{name} '+(f'over {when} ' if when else '')+f'has {label} of {amount}'
+    verb='pays' if label=='interest' else 'pays a provisional profit of'
+    if kind and (not name or GENERIC.search(name)):
+        if single:return f'{verb} {amount} on a {single[1]}-{single[2]} {kind}'
+        return f'{verb} {amount} on a {kind}'+(f' for {when}' if when else '')
+    return f'{verb} {amount} on its {name}'+(f' for {when}' if when else '')
+
+
 def fact_clause(f,language,meaning=False):
     bn=language=='bn';v=f.get('values',{});metric=v.get('metric');kind=f.get('kind')
     if kind=='term':
@@ -112,7 +133,7 @@ def fact_clause(f,language,meaning=False):
         label=('বার্ষিক ফি' if v.get('attribute')=='annual_fee' else 'আনুমানিক মুনাফা' if v.get('basis')=='islamic' else 'সুদ') if bn else ('annual fee' if v.get('attribute')=='annual_fee' else 'provisional profit' if v.get('basis')=='islamic' else 'interest')
         unit=unit_label(v['unit'],bn)
         when=term(v,bn,v.get('selected_tenor') if v.get('asked_tenor') else None)
-        text=f'{product(v,bn)}ে '+(when+' মেয়াদে ' if when else '')+f'{label} {number(v["rate"])}{unit}' if bn else f'{product(v,bn)} '+(f'over {when} ' if when else '')+f'has {label} of {number(v["rate"])}{unit}'
+        text=f'{product(v,bn)}ে '+(when+' মেয়াদে ' if when else '')+f'{label} {number(v["rate"])}{unit}' if bn else english_offer(v,when,label,number(v['rate'])+unit)
         if v.get('nearest'):text+=', চাওয়া মেয়াদের তথ্য নেই, এটি আলাদা মেয়াদের' if bn else '; the requested term is unavailable, this is a different term'
         if v.get('dated'):
             from datetime import date
@@ -120,6 +141,15 @@ def fact_clause(f,language,meaning=False):
             when=format_date(date.fromisoformat(v['doc_date']),bn)
             text+=', হারতালিকা '+when if bn else ', schedule dated '+when
         return text
+    if kind=='peer' and metric=='rating' and material(f):
+        median=re.search(r'মধ্যমান\s+(\S+)',f.get('text_bn',''))
+        grade=str(v.get('grade') or '')
+        good=bool(re.fullmatch(r'AAA|AA[+-]?',grade))
+        if bn:
+            text=f'রেটিং সংস্থা ব্যাংকটিকে {rating_words(grade)} দিয়েছে'+(', যা ভালো রেটিং' if good else '')
+            return text+(f'; আমাদের তালিকার ভালো ব্যাংকগুলোর সাধারণ রেটিং {rating_words(median[1])}' if median else '')
+        text=f'its credit rating is {grade}'+(', a good rating' if good else '')
+        return text+(f'; the typical rating among strong banks in our list is {median[1]}' if median else '')
     if kind=='peer' and material(f):
         direction=v.get('value',0)>v.get('median',0)
         if metric=='npl_ratio':return ('অন্য তুলনাযোগ্য ভালো ব্যাংকের চেয়ে খেলাপি ঋণ বেশি, যা চিন্তার বিষয়' if direction else 'অন্য তুলনাযোগ্য ভালো ব্যাংকের চেয়ে খেলাপি ঋণ কম, যা ভালো লক্ষণ') if bn else ('problem loans are higher than comparable peers, a concern' if direction else 'problem loans are lower than comparable peers, a positive sign')
