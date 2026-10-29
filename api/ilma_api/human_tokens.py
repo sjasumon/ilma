@@ -117,7 +117,7 @@ def fact_clause(f,language,meaning=False):
         category='এটিএম কার্ড নিয়ে একটি ঘটনা' if re.search(r'atm|card|এটিএম|কার্ড',title,re.I) else 'গ্রাহকের টাকা নিয়ে একটি অনিয়মের ঘটনা' if re.search(r'customer|deposit|গ্রাহক|আমানত',title,re.I) else 'ব্যাংকটির কার্যক্রম নিয়ে একটি ঘটনা'
         english='an incident involving ATM cards' if 'এটিএম' in category else 'an irregularity involving customer funds' if 'গ্রাহক' in category else 'an incident involving the bank’s operations'
         year=v['event_date'][:4];caution='' if v.get('official') else ', খবরের তথ্য সরকারিভাবে নিশ্চিত নয়' if bn else '; the news report is not officially confirmed'
-        return f'{year} সালে {category} নিয়ে খবর আসে'+caution if bn else f'In {year}, reports described {english}'+caution
+        return f'{year} সালে {category}র খবর আসে'+caution if bn else f'In {year}, reports described {english}'+caution
     if kind=='insurance' and v.get('limit'):
         amount=number(Decimal(str(v['limit']))/100000)+' লাখ' if bn and v['limit']%100000==0 else number(v['limit'])
         return f'একই ব্যাংকের সব হিসাব মিলিয়ে জনপ্রতি {amount} টাকার সীমা আছে, কিছু শর্তের ওপর এটি নির্ভর করে, সেগুলো কার্ডে আছে' if bn else f'The limit is {amount} taka per depositor per bank, combining accounts; conditions apply and are explained on the card'

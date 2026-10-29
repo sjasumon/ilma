@@ -352,3 +352,8 @@ def test_metric_question_answers_without_the_opening(db):
             return (await run(text,VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(institution_id=1,language='bn')),BANKS,db))['speech']
     assert 'পরীক্ষা ম্যাগাজিন' not in asyncio.run(scenario('মূলধন কেমন?'))
     assert asyncio.run(scenario('কেমন আছে?')).startswith('পরীক্ষা ব্র্যাক ব্যাংককে ২০২৫ সালে')
+
+def test_incident_sentence_says_niye_once():
+    from ilma_api.human_tokens import fact_clause
+    f={'kind':'history','fact_id':'h','text_en':'Operations issue','text_bn':'কার্যক্রম','values':{'event_date':'2025-01-01','official':True}}
+    assert fact_clause(f,'bn')=='২০২৫ সালে ব্যাংকটির কার্যক্রম নিয়ে একটি ঘটনার খবর আসে'.translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
