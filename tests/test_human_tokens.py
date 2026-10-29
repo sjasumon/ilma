@@ -297,3 +297,14 @@ def test_rate_merge_keeps_named_products_and_equal_terms_apart():
 def test_english_product_name_does_not_repeat_the_bank():
     from ilma_api.human_turn import polish
     assert polish('Synthetic Bank Synthetic Bank Gold Card has annual fee of 10 taka.',{'b':FactToken('Synthetic Bank',(),1,'bank')},False)=="Synthetic Bank's Gold Card has annual fee of 10 taka."
+
+def test_english_bank_named_by_the_introduction_is_then_called_it(db):
+    async def model(payload,trace,client,**kwargs):
+        status=next(e for e in payload['tokens'] if e['token'].startswith('⟨f:') and 'enough information' in e['meaning'])
+        return Draft(Header(intent='bank_overview',used=status['used']),['⟨bank:1⟩ '+status['token']+'.'])
+    intro=([('BRAC Test Bank was named Synthetic Best Bank by Synthetic Magazine in 2025.',[])],{})
+    async def scenario():
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)),patch('ilma_api.human_turn.introduction',return_value=intro):
+            return await run('How is it?',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
+    speech=asyncio.run(scenario())['speech']
+    assert speech.startswith('BRAC Test Bank was named Synthetic Best Bank by Synthetic Magazine in 2025. It does not yet have enough information')

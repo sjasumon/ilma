@@ -525,7 +525,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             for i,(sentence,ids) in enumerate(lines):
                 for prefix in (polish(name.text+'ের ',{},bn),name.text+"'s ",name.text+' '):
                     if sentence.startswith(prefix):
-                        if named:sentence=sentence[len(prefix):]
+                        if named:
+                            sentence=sentence[len(prefix):]
+                            # "Eastern Bank is …" said twice becomes "It is …", not "Is …".
+                            if not bn and prefix==name.text+' ' and EN_VERB.match(sentence.lower()):sentence='It '+sentence
                         named=True;break
                 if i and not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
                 lines[i]=(sentence,ids)
