@@ -4,7 +4,7 @@
   "description": "Say a bank's name. See its condition, deposit cover and three sourced reasons.",
   "lang": "bn",
   "dir": "ltr",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "id": "/",
   "display": "standalone",

@@ -1950,3 +1950,45 @@ function setupAgentPanel() {
   document.getElementById('agent-tap').addEventListener('click',event=>agentPanel.tap(event));
   for (const [id,choice] of [['agent-report','report'],['agent-repeat','repeat'],['agent-end','end']]) document.getElementById(id).addEventListener('click',()=>agentPanel.choose(choice));
 }
+
+/* Android back button handler (invoked by native.js inside native app) */
+window.ilmaGoBack = function () {
+  if (typeof isListening !== "undefined" && isListening) { stopListening(); return true; }
+  if (typeof recognitionStarting !== "undefined" && recognitionStarting) { stopListening(); return true; }
+  if (typeof isSpeaking !== "undefined" && isSpeaking) { stopAudio(); return true; }
+  if (typeof audioPlayer !== "undefined" && audioPlayer && !audioPlayer.paused) { stopAudio(); return true; }
+
+  const proofModal = document.getElementById("proof-modal");
+  if (proofModal && (proofModal.classList.contains("open") || !proofModal.classList.contains("hidden"))) {
+    if (typeof closeProofModal === "function") closeProofModal();
+    return true;
+  }
+
+  const miniVoiceModal = document.getElementById("mini-voice-modal");
+  if (miniVoiceModal && miniVoiceModal.open) {
+    if (typeof closeMiniVoiceModal === "function") closeMiniVoiceModal();
+    return true;
+  }
+
+  const voiceFeedback = document.getElementById("voice-feedback");
+  if (voiceFeedback && voiceFeedback.open) {
+    if (typeof closeVoiceFeedback === "function") closeVoiceFeedback();
+    return true;
+  }
+
+  for (const id of ["mic-permission-dialog", "settings-dialog"]) {
+    const d = document.getElementById(id);
+    if (d && d.open) { d.close(); return true; }
+  }
+
+  if (typeof currentTab !== "undefined") {
+    const back = [...document.querySelectorAll('#tab-' + currentTab + ' .catalog-back')].find(b => b.offsetParent !== null);
+    if (back) { back.click(); return true; }
+    if (currentTab !== "home") {
+      if (typeof switchTab === "function") switchTab("home");
+      return true;
+    }
+  }
+  return false;
+};
+

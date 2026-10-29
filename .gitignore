@@ -64,6 +64,7 @@ docs/TAP_OR_TALK_FIXES_*.md
 /docs/FIX_11_speech_wording_and_pronunciation.md
 
 # Mobile App & Review files
+.idea/
 mobile/node_modules/
 mobile/android/.gradle/
 mobile/android/build/
