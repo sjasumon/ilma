@@ -427,6 +427,11 @@ def web_manifest():
     return FileResponse(STATIC_DIR / 'manifest.webmanifest', media_type='application/manifest+json', headers={'Cache-Control': 'public, max-age=86400'})
 
 
+@app.get('/download', include_in_schema=False)
+def download_page():
+    return FileResponse(STATIC_DIR / 'download.html', headers={'Cache-Control': 'no-cache'})
+
+
 @app.get('/voice-test', include_in_schema=False)
 def voice_acceptance_page():
     # Physical-device acceptance page: off unless explicitly enabled for a test window.

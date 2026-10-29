@@ -62,3 +62,25 @@ docs/TAP_OR_TALK_FIXES_*.md
 /docs/FIX_10_answer_wording.md
 
 /docs/FIX_11_speech_wording_and_pronunciation.md
+
+# Mobile App & Review files
+mobile/node_modules/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/keystore.properties
+mobile/android/app/src/main/assets/public/
+mobile/ios/App/Pods/
+mobile/ios/App/App/public/
+mobile/ios/App/build/
+**/xcuserdata/
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.apk
+*.aab
+APP_SPEC_*.md
+MOBILE_APP_REVIEW_*.md
+

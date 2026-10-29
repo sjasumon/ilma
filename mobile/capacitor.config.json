@@ -1,0 +1,27 @@
+{
+  "appId": "me.sumon.ilma",
+  "appName": "ILMA",
+  "webDir": "www",
+  "server": {
+    "url": "https://app.sumon.me",
+    "cleartext": false,
+    "errorPath": "index.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "adjustMarginsForEdgeToEdge": "auto"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#0F2624",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0F2624",
+      "overlaysWebView": false
+    }
+  }
+}
