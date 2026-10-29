@@ -6,7 +6,9 @@ These instructions record Sumon's repository-review requirements of 27 October
 - Preserve published history. Create normal new commits only. Never force-push,
   recreate the repository, squash published work, or amend/rebase pushed commits.
   Keep the current published history reachable; commit dates are event evidence.
-- Use the configured author/committer `sjasumon <me@sumon.me>`. Do not add
+- Use the configured author/committer
+  `sjasumon <5217484+sjasumon@users.noreply.github.com>` for new commits.
+  Preserve existing published identities and dates. Do not add
   co-author trailers or coding-assistant attribution. Use neutral manual-review
   terminology in public code, fixtures, documents and commit messages.
 - Keep the pre-event collection tool, raw source exports, scraper metadata,

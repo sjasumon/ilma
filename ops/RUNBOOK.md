@@ -225,8 +225,10 @@ Always poll `/v1/health` after starting a preview or restarting the service befo
 browser checks. No recording or diagnostic export belongs in the published tree.
 # Contextual voice preview
 
-Keep `HUMAN_VOICE_ENABLED=false` in production until the acceptance requirements
-in `docs/specs/HUMAN_VOICE.md` pass. The implementation includes a source-safe
+The 29 October deployment was explicitly authorized with
+`HUMAN_VOICE_ENABLED=true` and `HUMAN_MODEL_TIMEOUT_SECONDS=8`, despite remaining
+acceptance gates in `docs/specs/HUMAN_VOICE.md`. This deployment does not establish
+that those gates passed. The implementation includes a source-safe
 fallback; a fallback success does not validate Muse Spark wording.
 
 Before enabling an isolated preview, run these against the private deployment

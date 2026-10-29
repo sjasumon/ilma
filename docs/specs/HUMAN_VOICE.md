@@ -48,7 +48,9 @@ fixes require a fresh complete evaluation. Consequently the real-model
 paraphrase accuracy, answer variation, three spoken dialogs, 95th-percentile
 speaking latency and two-person listening acceptance have **not passed**.
 Successful fallback replies must not be reported as successful Spark replies.
-Production activation remains pending those checks and source/profile review.
+On 29 October the owner authorized production activation with an 8-second model
+deadline while these checks and independent source/profile review remain pending.
+Activation does not establish completion of the acceptance requirements.
 
 The model deadline defaults to 4.5 seconds. `HUMAN_MODEL_TIMEOUT_SECONDS` permits
 an explicit deployment choice between 2 and 8 seconds; a longer deadline trades

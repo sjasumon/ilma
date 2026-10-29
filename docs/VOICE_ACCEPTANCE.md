@@ -13,7 +13,8 @@ Live Spark access is restored. The 285-case baseline passed 213 cases, below the
 95% target, and 44 cases encountered provider timeouts. Later fixes still need
 complete live acceptance. Real-model paraphrase accuracy,
 varied wording, three live dialogs, speaking-latency acceptance and two-person
-listening are pending. Production activation remains disabled by default. Existing
+listening are pending. The owner subsequently authorized live activation with an
+8-second model deadline; the code default remains disabled. Existing
 device, native-speaker and accessibility acceptance is not replaced by mock tests.
 
 Continuation checks: 354 Python tests plus 27 subtests and all seven Node suites

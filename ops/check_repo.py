@@ -9,7 +9,14 @@ import shutil
 import subprocess
 import sys
 
-AUTHOR = 'sjasumon <me@sumon.me>'
+AUTHOR = 'sjasumon <5217484+sjasumon@users.noreply.github.com>'
+LEGACY_AUTHOR = 'sjasumon <me@sumon.me>'
+# Existing history at the identity change; never rewrite published commits.
+# These immutable tips do not permit the old identity on new descendants.
+LEGACY_IDENTITY_TIPS = (
+    '4da1ab26851ac4f28e12a51c57b1af51537cea3b',
+    '4a524feab585b3c7d2f6a229c216e85d24693bfa',
+)
 PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
 # Split the definitions so this self-scanning policy does not match its own text.
 UNAPPROVED_BRANDS = ('cl' + 'aude', 'anth' + 'ropic')
@@ -23,6 +30,13 @@ PRIVATE_COLUMNS = {'local_path', 'sha256', 'obtained_by', 'run_id', 'article_tex
 def git(repo, *arguments, check=True):
     return subprocess.run(['git', '-C', str(repo), *arguments], check=check,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def identity_allowed(commit, author, committer, legacy_commits):
+    allowed = {AUTHOR}
+    if commit in legacy_commits:
+        allowed.add(LEGACY_AUTHOR)
+    return author in allowed and committer in allowed
 
 
 def tree_errors(files):
@@ -58,8 +72,9 @@ def check(repo, with_secrets=False, pre_push=False):
     errors = []
     if git(repo, 'merge-base', '--is-ancestor', PUBLISHED_ANCHOR, 'HEAD', check=False).returncode:
         errors.append('Published history anchor is not reachable from HEAD.')
-    identities = git(repo, 'log', '--all', '--format=%an <%ae>%n%cn <%ce>').stdout.decode().splitlines()
-    if any(identity != AUTHOR for identity in identities):
+    legacy_commits = set(git(repo, 'rev-list', *LEGACY_IDENTITY_TIPS).stdout.decode().splitlines())
+    identities = git(repo, 'log', '--all', '--format=%H%x00%an <%ae>%x00%cn <%ce>').stdout.decode().splitlines()
+    if any(not identity_allowed(*row.split('\0'), legacy_commits) for row in identities):
         errors.append('Commit author/committer differs from the approved project identity.')
     messages = git(repo, 'log', '--all', '--format=%B').stdout.decode()
     if re.search(r'co-authored', messages, re.I) or any(word in messages.casefold() for word in UNAPPROVED_BRANDS):

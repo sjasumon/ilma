@@ -19,3 +19,11 @@ def test_review_terms_are_neutral_and_templates_blank():
     for brand in policy.UNAPPROVED_BRANDS:
         assert policy.tree_errors({'example.md': brand.upper().encode()})
     assert not policy.tree_errors({'example.md': b'requires_manual_review', '.env.example': b'META_MODEL_API_KEY=\nDB_PASSWORD=\n'})
+
+
+def test_identity_transition_preserves_only_existing_history():
+    assert policy.identity_allowed('old',policy.LEGACY_AUTHOR,policy.LEGACY_AUTHOR,{'old'})
+    assert policy.identity_allowed('new',policy.AUTHOR,policy.AUTHOR,{'old'})
+    assert not policy.identity_allowed('new',policy.LEGACY_AUTHOR,policy.AUTHOR,{'old'})
+    assert not policy.identity_allowed('new',policy.AUTHOR,policy.LEGACY_AUTHOR,{'old'})
+    assert not policy.identity_allowed('old','sjasumon <unknown@example.test>',policy.AUTHOR,{'old'})
