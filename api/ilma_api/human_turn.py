@@ -407,10 +407,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             for i,(sentence,ids) in enumerate(lines):
                 for prefix in (name.text+'ের ',name.text+' '):
                     if sentence.startswith(prefix):
-                        if named:
-                            sentence=sentence[len(prefix):]
-                            if not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
+                        if named:sentence=sentence[len(prefix):]
                         named=True;break
+                if i and not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
                 lines[i]=(sentence,ids)
     chosen,pending=paginate(lines,question,c.language)
     if pending:question,buttons=next_steps(intent,c,id,more=True)

@@ -252,3 +252,13 @@ def test_answer_leads_with_bank_name_before_a_term_meaning(db):
     result=asyncio.run(scenario())
     assert result['speech'].startswith('পরীক্ষা ব্র্যাক ব্যাংকের ')
     assert 'জমানোর স্কিম।' in result['speech'] and '।।' not in result['speech']
+
+def test_later_english_sentences_start_with_a_capital(db):
+    async def model(payload,trace,client,**kwargs):
+        lines=[e['token'] for e in payload['tokens'] if e['token'].startswith('⟨f:') and e['meaning'][:1].islower()][:2]
+        return Draft(Header(intent='bank_overview',used=[u for e in payload['tokens'] if e['token'] in lines for u in e['used']]),['⟨bank:1⟩ '+lines[0]+'.',lines[1]+'.'])
+    async def scenario():
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)):
+            return await run('How is it?',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
+    sentences=[s for s in asyncio.run(scenario())['speech'].split('. ') if s]
+    assert len(sentences)>1 and all(s[0].isupper() for s in sentences)
