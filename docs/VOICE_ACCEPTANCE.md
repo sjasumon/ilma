@@ -434,3 +434,36 @@ The English City/Citibank ambiguity and initial browser recognition variability
 are retained as evidence, not counted as a representative ASR-accuracy pass.
 Native/human/offline-clip/source acceptance and the eight-second audio goal remain
 open. Database and provider authentication succeeded.
+
+
+## Short-answer recheck — 29 October 2026
+
+The new 30-word / ten-second policy supersedes the long paragraph timings above.
+Strong introductions omit spoken insurance; high-risk introductions retain a
+short conditional clause. Full eligibility/payment details, precise figures,
+minimum comparisons and the fixed conditional FDR example remain on the card.
+Negative capital is rounded to tenths when spoken. FDR card lines omit legal
+suffixes and health-status fragments.
+
+Actual TTS measurement found extra generated silence, as well as excess wording.
+Short-answer streaming now trims long near-digital pauses and applies a small
+3% pitch-preserving pace adjustment after synthesis at 1.1. Synthetic tone tests
+check quiet content, pitch, early streaming, cache separation and cancellation.
+The previous 31.2-second Prime BN introduction measured 9.072 seconds after these
+changes. Native voice-quality/comprehension acceptance remains pending; no person
+was represented as having reviewed these generated clips.
+
+The expanded real-audio gate passed **36** source-backed answers across all eleven
+bank introductions in BN/EN, the five-turn sequence, protection, comparison and
+negative-capital questions. Measured range: **4.608–9.888 seconds**, one clip each,
+with both written and pronounced word limits checked. The explicit full-report
+readout retains the full card and is outside this ordinary-answer budget.
+
+Final verification passed 288 Python tests plus 27 subtests and all seven
+frontend suites. After service restart, the live generated-input browser round
+trip passed compressed recording, real Meta transcription, Prime selection,
+one 9.1-second reply and microphone reopening after playback. Repeat/source/
+typing recovery passed. Live Cloudflare root, API docs and OpenAPI returned 200
+with security headers; layout passed phone rotation, keyboard-sized viewport,
+desktop and 200% text. These checks do not establish human ASR accuracy or
+native-device accessibility acceptance.

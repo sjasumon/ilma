@@ -157,3 +157,9 @@ The later [connected-wording update](specs/APP_SPEC_10_answer_wording.md) replac
 these short three-segment answers with one complete paragraph/clip. The six-second
 figures above are historical and do not describe the new paragraph duration.
 See VOICE_ACCEPTANCE.md for the longer measured playback and remaining target.
+
+The 29 October short-answer update supersedes the 11–33-second paragraph timings.
+Ordinary answers now have a 30-word budget and a measured ten-second gate. The
+synthesis setting remains 1.1; short speech also trims long digital pauses and
+uses a 3% pitch-preserving pace adjustment. Full-report readouts and user-selected
+Slow playback are separate. Current evidence is in `VOICE_ACCEPTANCE.md`.

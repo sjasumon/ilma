@@ -42,3 +42,32 @@ async def normalize_agent_audio(url):
         return url,metadata
     except (ValueError,OSError,VoiceError,asyncio.TimeoutError):
         return url,{'status':'measurement_unavailable'}
+
+
+async def trim_long_pauses(chunks):
+    """Stream MP3 through a conservative silence filter; retain voiced samples.
+    Gaps below 150 ms stay intact; longer digital pauses retain a short break.
+    A 3% pitch-preserving pace adjustment gives the ten-second budget headroom.
+    Voiced samples stay complete; processing remains a streaming pipe.
+    """
+    process=await asyncio.create_subprocess_exec(ffmpeg_executable(),'-hide_banner','-loglevel','error','-nostdin','-protocol_whitelist','pipe','-f','mp3','-probesize','32','-analyzeduration','0','-i','pipe:0','-af','silenceremove=stop_periods=-1:stop_duration=0.15:stop_threshold=-60dB:stop_silence=0.05:detection=peak,atempo=1.03','-map_metadata','-1','-ac','1','-ar','24000','-c:a','libmp3lame','-b:a','96k','-flush_packets','1','-f','mp3','pipe:1',stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL)
+    async def feed():
+        try:
+            async for chunk in chunks:
+                process.stdin.write(chunk);await process.stdin.drain()
+        finally:process.stdin.close()
+    feeder=asyncio.create_task(feed());length=0
+    try:
+        while chunk:=await process.stdout.read(16384):
+            length+=len(chunk)
+            if length>2*1024*1024:raise ValueError('Speech exceeds limit')
+            yield chunk
+        await feeder
+        if await process.wait() or not length:raise ValueError('Speech normalization failed')
+    finally:
+        if not feeder.done():feeder.cancel()
+        await asyncio.gather(feeder,return_exceptions=True)
+        if process.returncode is None:
+            try:process.kill()
+            except ProcessLookupError:pass
+            await process.wait()

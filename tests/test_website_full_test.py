@@ -71,7 +71,7 @@ def test_named_bank_figure_is_answered_from_the_database(sessions):
 
 def test_islami_bad_loans_are_labelled_as_calculated(sessions):
     result = ask(sessions, 'ইসলামী ব্যাংকের খেলাপি ঋণ কত?', spark=wording_unavailable)['result']
-    assert 'প্রায় ৫০ টাকা' in result['text'] and 'হিসাব করে পাওয়া' in result['text']
+    assert 'প্রায় ৫০ টাকা' in result['text'] and 'হিসাবে' in result['text']
     assert '৪৯.৬৬%' in result['card_text']
 
 

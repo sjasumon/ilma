@@ -30,9 +30,9 @@ async def warm():
     if lock is None:return
     try:
         for text,language in await asyncio.to_thread(demo_phrases):
-            key=store.key(text,language)
+            key=store.key(text,language,short=True)
             if await asyncio.to_thread((store.directory/(key+'.mp3')).is_file):continue
-            job=await store.job(key,text,language)
+            job=await store.job(key,text,language,short=True)
             await job.done.wait()
             await asyncio.sleep(.05)
     finally:os.close(lock)

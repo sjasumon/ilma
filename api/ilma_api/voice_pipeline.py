@@ -369,7 +369,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 if timings:
                     timings.mark('tts_start')
                     for frame in timings.events():yield frame
-                ticket=await register_speech(speech_parts,context.ui_lang)
+                ticket=await register_speech(speech_parts,context.ui_lang,short=True)
                 if ticket:
                     yield event('speech',ticket)
                     from ilma_api.audio_cache import get_store
@@ -486,7 +486,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 timings.mark('tts_start')
                 for frame in timings.events():yield frame
             spoken=result.get('speech_text',result['text'])
-            ticket=await register_speech([result.get('privacy_notice','')+' '+spoken],language)
+            ticket=await register_speech([result.get('privacy_notice','')+' '+spoken],language,short=True)
             if ticket:
                 yield event('speech',ticket)
                 from ilma_api.audio_cache import get_store
@@ -563,6 +563,7 @@ def readout_result(kind, institution_id, language, db, prompt=None, agent_state=
     elif kind == 'report_card':
         result = build_result(VoiceIntent(intent='bank_status', institution_ids=[institution_id] if institution_id else []), [], language, db)
         result['text']=result.get('card_text',result['text'])
+        result['speech_text']=result['text']
     elif kind == 'insurance':
         result = build_result(VoiceIntent(intent='insurance', institution_ids=[institution_id] if institution_id else []), [], language, db)
     else:
@@ -575,5 +576,5 @@ def readout_result(kind, institution_id, language, db, prompt=None, agent_state=
 async def readout(kind,institution_id,language,db,prompt=None,agent_state=None):
     result=await db_call(db,lambda owned:readout_result(kind,institution_id,language,owned,prompt,agent_state))
     from ilma_api.audio_cache import register_speech
-    ticket=await register_speech([result.get('speech_text',result.get('text',''))],language)
+    ticket=await register_speech([result.get('speech_text',result.get('text',''))],language,short=kind in {'agent_question','insurance','ivr'})
     return {'audio_url':ticket['audio_url'] if ticket else None,'audio_urls':ticket['audio_urls'] if ticket else [],'text':result.get('text','')}

@@ -207,23 +207,16 @@ def make_router(get_db):
         from ilma_api.database_tasks import call
         from ilma_api.audio_cache import register_speech
         paragraph=await call(db,lambda owned:comparison_narration(owned,compare(owned,**payload.model_dump(exclude={'language'})),payload.language))
-        audio=await register_speech([paragraph],payload.language)
+        audio=await register_speech([paragraph],payload.language,short=True)
         if not audio:raise HTTPException(503,'Spoken playback unavailable')
         return {**audio,'text':paragraph}
     return router
 
 
 def comparison_narration(db,result,language):
-    from ilma_api.answer_wording import offer_clause
-    bn=language=='bn'
-    rows=[bank for bank in result['rows'] if bank.get('offer')]
-    lines=[]
-    for bank in rows[:3]:
-        text=offer_clause(db,{'fact_id':bank['offer']['offer_id'],'institution_id':bank['id']},bn,comparison=True)
-        if text:lines.append(text+('।' if bn else '.'))
-    if not lines:return 'এই সেবার তথ্য আমাদের কাছে নেই।' if bn else 'We do not have information for this service.'
-    lines.append('ছাড় ও অন্যান্য শর্ত প্রতিটি ব্যাংকের কার্ডে আলাদা করে দেওয়া আছে।' if bn else 'Waivers and other conditions are shown separately on each bank’s card.')
-    return ' '.join(lines)
+    from ilma_api.answer_wording import compose
+    items=[{'fact_id':row['offer']['offer_id'],'institution_id':row['id']} for row in result['rows'] if row.get('offer')][:2]
+    return compose(db,items,{'language':language},'','service_compare').speech
 
 
 def voice_service_result(question,intent,context,db,language):
@@ -256,18 +249,16 @@ def voice_service_result(question,intent,context,db,language):
     result=compare(db,**choice)
     rows=[bank for bank in result['rows'] if bank.get('offer')]
     if intent.institution_ids:rows=[bank for bank in rows if bank['id'] in intent.institution_ids]
-    sources=[];lines=[];spoken=[]
+    sources=[];lines=[]
     for bank in rows[:3]:
         row=bank['offer']
         display_value=format_number(row['value_num'],bn=language=='bn') if row['value_num'] is not None else row['value_text']
         warning=(' · ব্যাংকের অবস্থা যাচাই হয়নি' if language=='bn' else ' · Bank condition is unverified') if bank['status']['code']=='no_data' else ''
         lines.append(f"{bank['name_bn' if language=='bn' else 'name_en']}: {display_value}{'%' if row['unit']=='pct_year' else (' টাকা' if language=='bn' else ' BDT') if row['unit']=='bdt' else ''} ({format_date(row['doc_date'],bn=language=='bn')})"+(' · '+('পুরনো তথ্য' if language=='bn' else 'old data') if row['stale'] else '')+warning)
-        from ilma_api.answer_wording import offer_clause
-        clause=offer_clause(db,{'fact_id':row['offer_id'],'institution_id':bank['id']},language=='bn',comparison=len(rows)>1)
-        if clause:spoken.append(clause)
         sources.append(dict(fact_id=row['offer_id'],source_url=row['source_url'],source_title=row['product'],source_title_bn=bank['name_bn'],source_title_en=bank['name_en']+' · '+row['product'],page=row['page'],quote=row['quote']))
-    ending='।' if language=='bn' else '.'
-    speech_text=' '.join(line+ending for line in spoken) if spoken else ('এই তথ্য আমাদের কাছে নেই।' if language=='bn' else 'We do not have this information.')
+    from ilma_api.answer_wording import compose
+    items=[{'fact_id':bank['offer']['offer_id'],'institution_id':bank['id']} for bank in rows[:2]]
+    speech_text=compose(db,items,{'language':language,'institution_id':items[0]['institution_id'] if items else None},'','service_compare' if len(items)>1 else 'service_detail').speech
     warnings=[(('এই ব্যাংকের আর্থিক অবস্থা যাচাই হয়নি।' if language=='bn' else 'This bank’s financial condition is unverified.')) for bank in rows[:3] if bank['status']['code']=='no_data']
     return dict(type='service_answer',text=speech_text,speech_text=speech_text,card_text='; '.join(lines),bank_warnings=warnings,
                 comparison=choice,sources=sources,calculator_amount=intent.amount_bdt,

@@ -36,8 +36,10 @@ class AudioJob:
 class AudioStore:
     def __init__(self,directory=None,client=None):
         self.directory=Path(directory or settings.TTS_CACHE_DIR);self.client=client;self.jobs={};self.tasks=set();self.gate=asyncio.Semaphore(2)
-    def key(self,text,language):
-        return hashlib.sha256(json.dumps([settings.ELEVENLABS_VOICE_ID,settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)],ensure_ascii=False).encode()).hexdigest()
+    def key(self,text,language,short=False,policy='short-pauses-v4'):
+        identity=[settings.ELEVENLABS_VOICE_ID,settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)]
+        if short:identity.append(policy)
+        return hashlib.sha256(json.dumps(identity,ensure_ascii=False).encode()).hexdigest()
     def folders(self):
         self.directory.mkdir(parents=True,exist_ok=True,mode=0o700);(self.directory/'tickets').mkdir(exist_ok=True,mode=0o700)
     def atomic(self,path,data):
@@ -59,34 +61,34 @@ class AudioStore:
             length=path.stat().st_size
             if now-path.stat().st_mtime>30*86400 or size>128*1024*1024:
                 path.unlink(missing_ok=True);path.with_suffix('.json').unlink(missing_ok=True);size-=length
-    async def register(self,texts,language):
+    async def register(self,texts,language,short=False):
         if not settings.ELEVENLABS_API_KEY or not re.fullmatch(r'[A-Za-z0-9_-]+',settings.ELEVENLABS_VOICE_ID):return None
         await asyncio.to_thread(self.folders)
         urls=[]
         for text in texts[:3]:
             if not text or len(text)>2000:continue
-            token=secrets.token_urlsafe(24);key=self.key(text,language)
-            descriptor={'key':key,'text':text,'language':language,'expires':time.time()+600}
+            token=secrets.token_urlsafe(24);key=self.key(text,language,short)
+            descriptor={'key':key,'text':text,'language':language,'short':short,'expires':time.time()+600}
             await asyncio.to_thread(self.atomic,self.directory/'tickets'/(token+'.json'),json.dumps(descriptor,ensure_ascii=False).encode())
             urls.append('/v1/audio/'+token+'.mp3')
-            if not await asyncio.to_thread((self.directory/(key+'.mp3')).is_file):await self.job(key,text,language)
+            if not await asyncio.to_thread((self.directory/(key+'.mp3')).is_file):await self.job(key,text,language,short)
         return {'audio_url':urls[0],'audio_urls':urls} if urls else None
     def ticket(self,token):
         if not re.fullmatch('[A-Za-z0-9_-]{32}',token):return None
         try:
             item=json.loads((self.directory/'tickets'/(token+'.json')).read_text())
-            if item['expires']<time.time() or item['key']!=self.key(item['text'],item['language']):return None
+            if item['expires']<time.time() or item['key']!=self.key(item['text'],item['language'],item.get('short',False)):return None
             return item
         except (OSError,ValueError,KeyError):return None
     def lock(self,key):
         fd=os.open(self.directory/(key+'.lock'),os.O_CREAT|os.O_RDWR,0o600)
         try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB);return fd
         except BlockingIOError:os.close(fd);return None
-    async def job(self,key,text,language):
+    async def job(self,key,text,language,short=False):
         if key in self.jobs:return self.jobs[key]
         if len(self.jobs)>=32:raise HTTPException(503,'Speech is busy')
         job=AudioJob();self.jobs[key]=job
-        task=asyncio.create_task(self.pump(key,text,language,job));self.tasks.add(task);task.add_done_callback(self.tasks.discard)
+        task=asyncio.create_task(self.pump(key,text,language,job,short));self.tasks.add(task);task.add_done_callback(self.tasks.discard)
         return job
     async def follow(self,key,job):
         offset=0;deadline=time.monotonic()+45;path=self.directory/(key+'.mp3');partial=self.directory/(key+'.stream')
@@ -104,7 +106,7 @@ class AudioStore:
             if await asyncio.to_thread((self.directory/(key+'.error')).is_file):raise ValueError('Speech unavailable')
             await asyncio.sleep(.03)
         raise TimeoutError()
-    async def pump(self,key,text,language,job):
+    async def pump(self,key,text,language,job,short=False):
         lock=None;partial_fd=None;path=self.directory/(key+'.mp3')
         try:
             deadline=time.monotonic()+45
@@ -122,17 +124,28 @@ class AudioStore:
                 client=self.client or shared();owned=client is None
                 if owned:client=httpx.AsyncClient(timeout=httpx.Timeout(25,connect=5),follow_redirects=False)
                 try:
-                    async def download():
+                    async def raw_chunks():
+                        # Reuse identical existing public speech, not a second paid call.
+                        if short:
+                            candidates=[self.directory/(self.key(text,language)+'.mp3'),self.directory/(self.key(text,language,True,policy='short-pauses-v3')+'.mp3')]
+                            for raw_path in candidates:
+                                try:data=await asyncio.to_thread(raw_path.read_bytes)
+                                except OSError:continue
+                                if data:yield data;return
                         async with client.stream('POST','https://api.elevenlabs.io/v1/text-to-speech/'+settings.ELEVENLABS_VOICE_ID+'/stream',headers={'xi-api-key':settings.ELEVENLABS_API_KEY,'Accept':'audio/mpeg'},json={'text':pronounce(text,language),'model_id':settings.ELEVENLABS_MODEL,'voice_settings':{'speed':settings.TTS_SPEED}},timeout=httpx.Timeout(25,connect=5)) as response:
                             if response.status_code!=200:raise ValueError('Speech provider unavailable')
                             length=0
                             async for chunk in response.aiter_bytes():
                                 length+=len(chunk)
                                 if length>2*1024*1024:raise ValueError('Speech exceeds limit')
-                                if chunk:
-                                    await asyncio.to_thread(os.write,partial_fd,chunk)
-                                    await job.append(chunk)
-                        if not length:raise ValueError('Speech empty')
+                                if chunk:yield chunk
+                            if not length:raise ValueError('Speech empty')
+                    async def download():
+                        from ilma_api.agent_audio import trim_long_pauses
+                        chunks=trim_long_pauses(raw_chunks()) if short else raw_chunks()
+                        async for chunk in chunks:
+                            await asyncio.to_thread(os.write,partial_fd,chunk)
+                            await job.append(chunk)
                     await asyncio.wait_for(download(),25)
                 finally:
                     if owned:await client.aclose()
@@ -140,7 +153,7 @@ class AudioStore:
             from ilma_api.agent_audio import duration_ms
             try:measured=await duration_ms(data)
             except Exception:measured=None
-            await asyncio.to_thread(self.atomic,path.with_suffix('.json'),json.dumps({'duration_ms':measured,'created':time.time()}).encode())
+            await asyncio.to_thread(self.atomic,path.with_suffix('.json'),json.dumps({'duration_ms':measured,'created':time.time(),'short':short,'tempo':1.03 if short else 1.0}).encode())
             await job.finish()
         except asyncio.CancelledError:
             await job.finish(True);raise
@@ -173,7 +186,7 @@ class AudioStore:
         path=self.directory/(item['key']+'.mp3')
         headers={'Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no','X-ILMA-Cache':'hit'}
         if await asyncio.to_thread(path.is_file):return FileResponse(path,media_type='audio/mpeg',headers=headers)
-        job=await self.job(item['key'],item['text'],item['language']);await job.ready.wait()
+        job=await self.job(item['key'],item['text'],item['language'],item.get('short',False));await job.ready.wait()
         if job.failed and not job.chunks:raise HTTPException(503,'Speech unavailable')
         headers['X-ILMA-Cache']=job.cache
         return StreamingResponse(job.stream(),media_type='audio/mpeg',headers=headers)
@@ -186,7 +199,7 @@ def get_store():
     global _store
     if _store is None:_store=AudioStore()
     return _store
-async def register_speech(texts,language):
-    try:return await get_store().register(texts,language)
+async def register_speech(texts,language,short=False):
+    try:return await get_store().register(texts,language,short)
     except (OSError,HTTPException):return None
 async def audio_response(token):return await get_store().response(token)

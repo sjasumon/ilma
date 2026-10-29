@@ -41,18 +41,19 @@ def test_five_turn_conversation_is_connected_source_backed_and_does_not_repeat(w
         if choice=='bank':
             assert ('কারণ' if language=='bn' else 'because') in result['speech']
             assert ('প্রায় ১৮%' if language=='bn' else 'about 18%') in result['speech']
-            assert ('১২.৫%' if language=='bn' else '12.5%') in result['speech']
-            assert ('সুরক্ষার আওতায় থাকা আমানত' if language=='bn' else 'protected deposits at a member bank') in result['speech']
+            assert ('সাড়ে ১২%' if language=='bn' else '12.5%') in result['speech']
+            assert 'insurance:bank' not in ids
+            assert any(f['fact_id']=='insurance:bank' for f in result['facts'])
         if choice=='detail':
             assert 'synthetic-capital' not in ids
-            assert 'synthetic-rating' in ids and 'test-npl-1' in ids
-        if choice=='figures':assert ids=={'synthetic-profit'}
+            assert 'test-npl-1' in ids
+        if choice=='figures':assert 'synthetic-profit' in ids
         if choice=='history':assert ('সরকারিভাবে নিশ্চিত নয়' if language=='bn' else 'not officially confirmed') in result['speech']
         if choice=='fdr':
             assert '8.5%' in result['speech'] if language=='en' else '৮.৫%' in result['speech']
             assert not re.search(r'Strong|good condition|ভালো অবস্থা|ঝুঁকির',result['speech'])
-            assert ('কর কাটার আগে' if language=='bn' else 'before tax') in result['speech']
-    assert insurance==1
+            assert result['speech_fact_ids'] and len(result['speech'].split())<=30
+    assert insurance==0
 
 
 def test_exact_card_facts_are_unchanged_and_spoken_numbers_are_rounded(wording_db):
@@ -68,8 +69,9 @@ def test_insurance_does_not_promise_payment_from_bank_closure_or_flat_seventeen_
     rule.text_en+=' On liquidation: 10 working days for the depositor list, then 7 after required information.'
     wording_db.commit()
     result=ask(wording_db,'insurance',Conversation(state='BANK',institution_id=1,language='en'))
-    assert 'member bank' in result['speech'] and 'all accounts' in result['speech']
-    assert 'not every type' in result['speech'] and 'after the required information' in result['speech']
+    assert 'member bank' in result['speech'] and 'accounts combined' in result['speech']
+    assert 'Eligible deposits' in result['speech']
+    assert 'after required information' in result['facts'][0]['text_en']
     assert '17' not in result['speech'] and 'will receive' not in result['speech']
 
 
@@ -81,7 +83,7 @@ def test_explicit_repeat_can_repeat_but_does_not_create_extra_fact_ids(wording_d
 
 def test_missing_service_is_explicit_and_does_not_narrate_a_status(db):
     result=ask(db,'',Conversation(state='BANK',institution_id=1,language='bn'),'home_loan')
-    assert 'আমাদের কাছে এখনো নেই' in result['speech'] and 'ভালো অবস্থা' not in result['speech']
+    assert 'এখনো নেই' in result['speech'] and 'ভালো অবস্থা' not in result['speech']
 
 
 def test_explicit_figure_question_is_answered_even_if_earlier_explained(wording_db):
@@ -93,7 +95,7 @@ def test_explicit_figure_question_is_answered_even_if_earlier_explained(wording_
 
 def test_insurance_finishes_with_a_related_question_not_a_bank_status_question(wording_db):
     result=ask(wording_db,'insurance',Conversation(state='BANK',institution_id=1,language='bn'))
-    assert result['conversation']['state']=='NEXT' and 'আর কোনো ব্যাংকের কথা' in result['next']['question']
+    assert result['conversation']['state']=='NEXT' and 'অন্য ব্যাংকের কথা' in result['next']['question']
     assert 'কেন এমন বললাম' not in result['speech']
 
 
@@ -107,6 +109,7 @@ def test_legacy_bank_answer_preserves_exact_card_beside_connected_speech(wording
         assert ('১৮.০৭%' if language=='bn' else '18.07%') in result['card_text']
         assert ('১৮.০৭%' if language=='bn' else '18.07%') not in result['speech_text']
         assert readout_result('report_card',1,language,wording_db)['text']==result['card_text']
+        assert readout_result('report_card',1,language,wording_db)['speech_text']==result['card_text']
 
 
 @pytest.mark.parametrize('text',['deposit insurance','What is deposit insurance?','deposit protection','আমানত সুরক্ষা'])
@@ -175,8 +178,41 @@ def test_repeat_of_already_explained_reply_does_not_restart_old_figures(wording_
     repeated=ask(wording_db,'',conv(again),'repeat')
     assert repeated['speech']==again['speech'] and repeated['speech_fact_ids']==[]
     current=first
-    for choice in ['detail','figures','figures']:
+    for choice in ['detail','figures','figures','figures']:
         current=ask(wording_db,'',conv(current),choice)
     assert current['speech_fact_ids']==[]
     repeated=ask(wording_db,'',conv(current),'repeat')
     assert repeated['speech']==current['speech'] and repeated['speech_fact_ids']==[]
+
+
+
+def test_card_minimum_and_fdr_caption_keep_exact_data_without_health_labels(wording_db):
+    capital=next(f for f in bank_summary(wording_db,1) if f['fact_id']=='synthetic-capital')
+    assert '১৮.০৭%' in capital['text_bn'] and 'ন্যূনতম ১২.৫%' in capital['text_bn']
+    offer=service_detail(wording_db,1,'fdr')[0]
+    for language in ['bn','en']:
+        text=offer['text_'+language]
+        assert not re.search(r'PLC|পিএলসি|Strong|ভালো অবস্থা|conditions apply|শর্ত প্রযোজ্য',text)
+    assert '৮.৫%' in offer['text_bn'] and '৮,৫০০' in offer['text_bn']
+    assert 'if this rate applies' in offer['text_en'] and 'before tax' in offer['text_en']
+    assert 'Synthetic rate' in offer['source']['quote']
+
+
+def test_weak_intro_retains_conditional_protection_and_negative_figure_uses_tenths(wording_db):
+    row=wording_db.get(Fact,'synthetic-capital');row.value=Decimal('-.0548');row.quote='Synthetic capital minus 5.48 percent';wording_db.commit()
+    first=ask(wording_db,'BRAC Bank',Conversation(language='bn'))
+    assert 'insurance:bank' in first['speech_fact_ids'] and 'শর্ত' in first['speech']
+    assert len(first['speech'].split())<=30
+    figure=ask(wording_db,'মূলধন কত',conv(first))
+    assert 'মাইনাস সাড়ে ৫%' in figure['speech']
+    assert '-৫.৪৮%' in figure['sentences'][0]['text']
+
+
+
+def test_non_currency_offer_units_are_not_spoken_as_money(wording_db):
+    from ilma_api.answer_wording import brief_offer
+    row=wording_db.get(ServiceOffer,'test-fdr-1');row.unit='count';row.attribute='lounge_access';row.product_type='card';row.value_num=5;wording_db.commit()
+    item={'fact_id':row.offer_id,'institution_id':1}
+    assert 'taka' not in brief_offer(wording_db,item,False)
+    assert 'টাকা' not in brief_offer(wording_db,item,True)
+    assert 'card' in brief_offer(wording_db,item,False)

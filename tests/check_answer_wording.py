@@ -24,6 +24,7 @@ with httpx.Client(timeout=30) as client:
   assert results and results[0]['type']=='agent_turn',response.text[:500]
   result=results[0];assert result['speech']==result['text'] and result['speech_format']=='paragraph'
   assert not re.search(r'[:;()—]|\bPLC\b|পিএলসি|\b[HWP][1-9]\b',result['speech']),result['speech']
+  assert len(result['speech'].split())<=30
   assert set(result['speech_fact_ids'])<={f['fact_id'] for f in result['facts']}
   return result,round((time.monotonic()-started)*1000)
  first={}
@@ -40,9 +41,14 @@ with httpx.Client(timeout=30) as client:
    result,ms=ask(conversation=result['conversation'],choice=choice,language=language)
    ids=set(result['speech_fact_ids']);assert not seen&ids,(choice,seen&ids);seen|=ids
    rows.append({'bank':'primebank','language':language,'turn':choice,'text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
+  compared,ms=ask(conversation=result['conversation'],choice='compare',language=language)
+  rows.append({'bank':'primebank','language':language,'turn':'compare','text_ms':ms,'speech':compared['speech'],'speech_fact_ids':compared['speech_fact_ids']})
   result,ms=ask('আমার টাকা ব্যাংক বন্ধ হলে কি পাবো?' if language=='bn' else 'deposit insurance',result['conversation'],language=language)
   assert result['conversation']['state']=='NEXT'
   rows.append({'bank':'primebank','language':language,'turn':'insurance','text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
+ for language in ['bn','en']:
+  result,ms=ask('মূলধন কত' if language=='bn' else 'capital ratio',first[('nbl',language)]['conversation'],language=language)
+  rows.append({'bank':'nbl','language':language,'turn':'capital','text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
  args.output.write_text(json.dumps(rows,ensure_ascii=False,indent=2))
  print('Reviewed',len(rows),'actual source-backed paragraphs across 11 banks and BN/EN; no provider or microphone call.')
 

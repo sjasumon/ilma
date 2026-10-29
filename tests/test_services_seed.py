@@ -88,7 +88,9 @@ class TestServicesSeed(unittest.TestCase):
         self.assertEqual(response.status_code,200)
         spoken=speak.await_args.args[0][0]
         self.assertNotIn('5000',spoken)  # waiver arithmetic is not the published annual fee
-        self.assertIn('10000',spoken)
+        self.assertNotIn('10000',spoken)  # third quote stays on the comparison cards
+        self.assertLessEqual(len(spoken.split()),30)
+        self.assertTrue(speak.await_args.kwargs['short'])
         self.assertEqual(response.json()['text'],spoken)
         self.assertEqual(len(response.json()['audio_urls']),1)
         self.assertIn('7000',spoken)
@@ -100,9 +102,9 @@ class TestServicesSeed(unittest.TestCase):
         self.assertEqual(result['comparison']['network'],'Visa')
         self.assertEqual(result['comparison']['tier'],'Signature')
         self.assertTrue(result['sources'])
-        self.assertIn('১০০০০',result['speech_text'])
+        self.assertIn('১০,০০০',result['card_text'])
         self.assertIn('৭০০০',result['speech_text'])
-        self.assertIn('১০০০০',result['speech_text'])
+        self.assertIn('১০,০০০',result['card_text'])
         self.assertNotIn('১২০০০',result['speech_text'])
         self.assertNotIn('২০০০০',result['speech_text'])
         self.assertEqual(result['speech_text'],result['text']);self.assertTrue(result['card_text'])

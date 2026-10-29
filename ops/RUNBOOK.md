@@ -175,3 +175,20 @@ Chromium's fake microphone with real MediaRecorder/upload/Meta/TTS. No transcrip
 or audio is printed or committed; normal target diagnostic settings still apply.
 Run other browser/matrix checks sequentially to avoid competing admission leases.
 `docs/VOICE_PIPELINE_CHECKS.md` records scope and outstanding native/human gates.
+
+## Short speech acceptance
+
+`tests/check_answer_wording.py` writes a private source-backed review artifact.
+With the existing private environment, run
+`PYTHONPATH=api python tests/check_short_answer_audio.py` to synthesize/reuse those
+public paragraphs and fail any clip over 10,000 ms or over the word budget.
+The tool can incur TTS calls; generated audio and its metadata remain private.
+Short-answer cache identity now has a processing-policy version. Its normalizer
+streams through ffmpeg, retains quiet voiced content, and terminates the child
+process on cancellation. Ordinary short answers and explicit full-report
+readouts use different policies. Do not publish the cache or review artifact.
+
+Keep the deployed source tree stable during review. Prefer a preview checkout
+with its private configuration loaded outside the published tree, then copy the
+tested release and restart the service together. Poll health before browser
+checks; systemctl returning does not establish that the HTTP listener is ready.

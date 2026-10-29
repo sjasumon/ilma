@@ -141,7 +141,19 @@ def bank_figures(db,institution_id,figure=None):
         bn=detail_facts(keys[key],institution_id,'bn',db);en=detail_facts(keys[key],institution_id,'en',db)
         by_id={r['fact_id']:r for r in en}
         for row in bn:
-            if row['fact_id'] in by_id:result.append(fact(row['fact_id'],row['text'],by_id[row['fact_id']]['text'],row,institution_id=institution_id))
+            if row['fact_id'] in by_id:
+                item=fact(row['fact_id'],row['text'],by_id[row['fact_id']]['text'],row,institution_id=institution_id)
+                if key=='crar':
+                    from decimal import Decimal
+                    from pathlib import Path
+                    stored=db.get(Fact,row['fact_id'])
+                    cfg=json.loads(Path(__file__).with_name('rules').joinpath('thresholds.json').read_text())
+                    minimum=(Decimal(str(cfg['crar_min']))+Decimal(str(cfg['crar_buffer'])))*100
+                    if stored:
+                        for bn,label in [(True,'text_bn'),(False,'text_en')]:
+                            item[label]=('হিসাব করে পাওয়া ' if bn and stored.basis.endswith('_calculated') else 'Calculated ' if stored.basis.endswith('_calculated') else '')+('মূলধন অনুপাত ' if bn else 'Capital ratio ')+format_number(stored.value*100,bn=bn,group=False)+'% · '+('ন্যূনতম ' if bn else 'minimum ')+format_number(minimum,bn=bn,group=False)+'% · '+format_number(stored.period_end.year,bn=bn,group=False)
+                        item['minimum_percent']=float(minimum)
+                result.append(item)
     return result
 
 
@@ -184,12 +196,18 @@ def comparison(db,product,tenor=12,tier='Gold',network='Visa',basis='conventiona
 
 def offer_fact(row,bank):
     def line(bn):
-        name=bank['name_bn' if bn else 'name_en'];status=bank['status']['label_bn' if bn else 'label_en'] if bank.get('status') else ('অবস্থা যাচাই হয়নি' if bn else 'Condition unverified')
+        from ilma_api.answer_wording import clean
+        name=clean(bank['name_bn' if bn else 'name_en'])
         value=format_number(row['value_num'],bn=bn)
         unit='%' if row['unit']=='pct_year' else (' টাকা' if bn else ' BDT') if row['unit']=='bdt' else ' '+row['unit']
         product={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'card':('কার্ড','Card')}.get(row['product_type'],('ঋণ/হিসাবের ফি',row['product_type'].replace('_',' ')))[0 if bn else 1]
         term=(f' {format_number(row["tenor_months"],bn=bn)} '+('মাস' if bn else 'months')) if row['tenor_months'] else ''
-        return f'{name}: {product}{term} {value}{unit}, {format_date(row["doc_date"],bn=bn)}; {status}'+((' (শর্ত প্রযোজ্য)' if bn else ' (conditions apply)') if row['condition'] else '')
+        text=f'{name} · {product}{term} {value}{unit} · '+('হারতালিকা ' if bn else 'Schedule ')+format_date(row['doc_date'],bn=bn)
+        if row['product_type']=='fdr' and row['tenor_months']==12 and row['basis']=='conventional' and row['unit']=='pct_year' and not row['stale'] and (date.today()-date.fromisoformat(str(row['doc_date']))).days<=365:
+            from decimal import Decimal
+            example=format_number(Decimal(100000)*Decimal(str(row['value_num']))/100,bn=bn)
+            text+=('। হিসাবের উদাহরণ, এই হার প্রযোজ্য হলে এক লাখে বছরে '+example+' টাকা সুদ, কর কাটার আগে') if bn else '. Fixed example, if this rate applies, one lakh earns '+example+' taka yearly before tax'
+        return text
     return fact(row['offer_id'],line(True),line(False),{'source_url':row['source_url'],'source_title':row['product'],'published_at':str(row['doc_date']),'page':row['page'],'quote':row['quote'],'condition':row['condition']},value=row['value_num'],institution_id=bank['id'],status=bank.get('status'))
 
 

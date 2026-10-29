@@ -111,3 +111,11 @@ mic. The real ASR stage took about 2.6 seconds in that run. Cloudflare page/API-
 headers and responsive navigation were rechecked; the free-form planner question
 was also tested through the deployed HTTP route. These are individual probe
 measurements with generated input, not population latency or human-accuracy claims.
+
+## Short wording update — 29 October 2026
+
+The later short-answer specification supersedes the long-audio limitation above.
+The 36-answer real-audio gate now passes at 4.608–9.888 seconds, with the synthesis
+setting at 1.1 plus the documented short-speech processing. Exact values, statutory
+conditions and schedule dates remain on the card. Native listening and physical
+accessibility acceptance remain open. See `specs/APP_SPEC_10_answer_wording.md`.

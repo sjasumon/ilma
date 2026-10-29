@@ -40,7 +40,7 @@ def test_real_seed_insurance_has_official_source_and_qualified_payment_steps():
         assert 'required information' in insurance['text_en']
         answer=voice_service_result('এফডিআরের হার',VoiceIntent(intent='rates',product='fdr'),VoiceContext(tab='services'),db,'bn')
         assert '৯.২৫%' in answer['text']
-        assert 'সেপ্টেম্বর' in answer['text']
+        assert 'সেপ্টেম্বর' in answer['card_text']
         assert '2026-' not in answer['text']
         assert 'ব্যাংকের অবস্থা যাচাই হয়নি' in answer['card_text']
         assert answer['bank_warnings'] and 'যাচাই হয়নি' in answer['bank_warnings'][0]
