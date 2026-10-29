@@ -1,6 +1,6 @@
 """Polite next questions and a single coherent narration paragraph."""
 QUESTIONS={
- 'BANK':('কারণ নাকি সেবা শুনবেন?','Hear details or services?'),
+ 'BANK':('আরও শুনবেন, নাকি সেবা দেখবেন?','Hear more, or see services?'),
  'DETAIL':('হিসাব শুনবেন, নাকি আগের ঘটনা?','Hear figures, or past events?'),
  'FIGURES':('সেবা দেখবেন, নাকি অন্য ব্যাংক?','See services, or ask another bank?'),
  'HISTORY':('সেবা দেখবেন, নাকি অন্য ব্যাংক?','See services, or ask another bank?'),

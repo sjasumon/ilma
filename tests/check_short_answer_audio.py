@@ -15,7 +15,7 @@ async def main():
   store=AudioStore(client=client)
   async def one(row):
    async with gate:
-    validate_spoken_answer(row['speech'],row['language'])
+    validate_spoken_answer(row['speech'],row['language'],first=row['turn']=='first')
     ticket=await store.register([row['speech']],row['language'],short=True)
     assert ticket and len(ticket['audio_urls'])==1
     assert await store.wait(ticket),'Speech generation failed'
@@ -29,6 +29,8 @@ async def main():
   try:await asyncio.gather(*(one(row) for row in rows))
   finally:await store.close()
  args.output.write_text(json.dumps({'speed':settings.TTS_SPEED,'results':results},indent=2))
- for row in results:validate_spoken_answer('',row['language'],duration_ms=row['duration_ms'])
- print('All',len(results),'paragraphs meet the 30-word and 10-second gates; configured speed',settings.TTS_SPEED)
+ for row in results:
+  validate_spoken_answer('',row['language'],duration_ms=row['duration_ms'])
+  if row['turn']=='first':assert 12000<=row['duration_ms']<=22000,('Introduction target miss',row)
+ print('All',len(results),'paragraphs meet the word, introduction 12–22-second and ordinary 30-second gates; configured speed',settings.TTS_SPEED)
 asyncio.run(main())

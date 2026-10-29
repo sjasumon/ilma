@@ -119,3 +119,12 @@ The 36-answer real-audio gate now passes at 4.608–9.888 seconds, with the synt
 setting at 1.1 plus the documented short-speech processing. Exact values, statutory
 conditions and schedule dates remain on the card. Native listening and physical
 accessibility acceptance remain open. See `specs/APP_SPEC_10_answer_wording.md`.
+
+
+## Natural-speech update — 29 October 2026
+
+The ten-second target and extra silence/tempo processing above are superseded
+by [the natural speech contract](specs/APP_SPEC_11_speech_wording_and_pronunciation.md).
+Replies now use full bank names, fuller sentences and a separate pronunciation
+string. Two-person listening/comprehension and physical echo-rejection checks
+remain pending; automated duration checks do not establish those outcomes.

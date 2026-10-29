@@ -24,7 +24,8 @@ with httpx.Client(timeout=30) as client:
   assert results and results[0]['type']=='agent_turn',response.text[:500]
   result=results[0];assert result['speech']==result['text'] and result['speech_format']=='paragraph'
   assert not re.search(r'[:;()—]|\bPLC\b|পিএলসি|\b[HWP][1-9]\b',result['speech']),result['speech']
-  assert len(result['speech'].split())<=30
+  assert len(result['speech'].split())<=70
+  assert not re.search(r'[0-9০-৯%()·—]|[A-Za-z]',result['speech_tts']) if result['language']=='bn' else '%' not in result['speech_tts']
   assert set(result['speech_fact_ids'])<={f['fact_id'] for f in result['facts']}
   return result,round((time.monotonic()-started)*1000)
  first={}
@@ -34,21 +35,21 @@ with httpx.Client(timeout=30) as client:
    assert ('কারণ' if language=='bn' else 'because') in result['speech'],(bank['slug'],result['speech'])
    assert result['speech'].endswith('?')
    first[(bank['slug'],language)]=result
-   rows.append({'bank':bank['slug'],'language':language,'turn':'first','text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
+   rows.append({'bank':bank['slug'],'language':language,'turn':'first','text_ms':ms,'speech':result['speech'],'speech_tts':result['speech_tts'],'speech_fact_ids':result['speech_fact_ids']})
  for language in ['bn','en']:
   result=first[('primebank',language)];seen=set(result['speech_fact_ids'])
   for choice in ['detail','figures','history','fdr']:
    result,ms=ask(conversation=result['conversation'],choice=choice,language=language)
    ids=set(result['speech_fact_ids']);assert not seen&ids,(choice,seen&ids);seen|=ids
-   rows.append({'bank':'primebank','language':language,'turn':choice,'text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
+   rows.append({'bank':'primebank','language':language,'turn':choice,'text_ms':ms,'speech':result['speech'],'speech_tts':result['speech_tts'],'speech_fact_ids':result['speech_fact_ids']})
   compared,ms=ask(conversation=result['conversation'],choice='compare',language=language)
   rows.append({'bank':'primebank','language':language,'turn':'compare','text_ms':ms,'speech':compared['speech'],'speech_fact_ids':compared['speech_fact_ids']})
   result,ms=ask('আমার টাকা ব্যাংক বন্ধ হলে কি পাবো?' if language=='bn' else 'deposit insurance',result['conversation'],language=language)
   assert result['conversation']['state']=='NEXT'
-  rows.append({'bank':'primebank','language':language,'turn':'insurance','text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
+  rows.append({'bank':'primebank','language':language,'turn':'insurance','text_ms':ms,'speech':result['speech'],'speech_tts':result['speech_tts'],'speech_fact_ids':result['speech_fact_ids']})
  for language in ['bn','en']:
   result,ms=ask('মূলধন কত' if language=='bn' else 'capital ratio',first[('nbl',language)]['conversation'],language=language)
-  rows.append({'bank':'nbl','language':language,'turn':'capital','text_ms':ms,'speech':result['speech'],'speech_fact_ids':result['speech_fact_ids']})
+  rows.append({'bank':'nbl','language':language,'turn':'capital','text_ms':ms,'speech':result['speech'],'speech_tts':result['speech_tts'],'speech_fact_ids':result['speech_fact_ids']})
  args.output.write_text(json.dumps(rows,ensure_ascii=False,indent=2))
  print('Reviewed',len(rows),'actual source-backed paragraphs across 11 banks and BN/EN; no provider or microphone call.')
 

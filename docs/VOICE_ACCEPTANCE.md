@@ -467,3 +467,37 @@ typing recovery passed. Live Cloudflare root, API docs and OpenAPI returned 200
 with security headers; layout passed phone rotation, keyboard-sized viewport,
 desktop and 200% text. These checks do not establish human ASR accuracy or
 native-device accessibility acceptance.
+
+
+## Natural-speech update — 29 October 2026
+
+The ten-second target and extra silence/tempo processing above are superseded
+by [the natural speech contract](specs/APP_SPEC_11_speech_wording_and_pronunciation.md).
+Replies now use full bank names, fuller sentences and a separate pronunciation
+string. Two-person listening/comprehension and physical echo-rejection checks
+remain pending; automated duration checks do not establish those outcomes.
+
+Release verification passed 306 Python tests plus 27 subtests and all seven
+frontend suites. The real-audio gate passed all 36 source-backed BN/EN samples:
+introductions 16.771–21.708 seconds; all replies 4.911–21.708 seconds, one clip each.
+Prime's Bangla introduction measured 20.271 seconds; National's 20.114 seconds.
+Synthesis remains at the configured 1.1 setting, with no additional tempo or
+silence processing. These timings describe the measured cached voice/model,
+not every possible future source or voice.
+
+The preview browser passed phone/rotation/keyboard-sized viewport/desktop/200%
+layout and Repeat/source/typing recovery. Real audio interruption completed in
+2.3–5.6 ms for Stop, reply tap and a synthetic voice-detection handoff. The level
+detector separately passed sustained-input, permission, echo-support and cleanup
+fixtures. These synthetic checks do not prove physical speaker echo rejection.
+A reply-language regression also confirms English replies use English TTS even
+when the previous UI language was Bangla.
+
+After deployment, the live service health reported an active database and ready
+bank/voice tables. Cloudflare root, Swagger, ReDoc and OpenAPI returned 200 with
+CSP, HSTS and nosniff; the application kept its strict self-only script policy.
+The live layout check passed, and actual playback stopped in 1.7–2.4 ms through
+the three tested interruption paths. The voice-detection path used a synthetic
+handoff; physical microphone/echo and two-person comprehension remain pending.
+A complete preview playback used one cached MP3 and reopened capture after
+playback ended (20.5 seconds elapsed), with no document scroll jump.

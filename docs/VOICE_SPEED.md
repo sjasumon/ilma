@@ -163,3 +163,12 @@ Ordinary answers now have a 30-word budget and a measured ten-second gate. The
 synthesis setting remains 1.1; short speech also trims long digital pauses and
 uses a 3% pitch-preserving pace adjustment. Full-report readouts and user-selected
 Slow playback are separate. Current evidence is in `VOICE_ACCEPTANCE.md`.
+
+
+## Natural-speech update — 29 October 2026
+
+The ten-second target and extra silence/tempo processing above are superseded
+by [the natural speech contract](specs/APP_SPEC_11_speech_wording_and_pronunciation.md).
+Replies now use full bank names, fuller sentences and a separate pronunciation
+string. Two-person listening/comprehension and physical echo-rejection checks
+remain pending; automated duration checks do not establish those outcomes.

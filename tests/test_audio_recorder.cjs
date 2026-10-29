@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-function createRecorder({ permissionError = null, stopStalls = false } = {}) {
+function createRecorder({ permissionError = null, stopStalls = false, permissionState = "granted", echoCancellation = true } = {}) {
   const intervals = new Map(), timeouts = new Map();
   let now = 0, level = .1, next = 0, tracksStopped = 0;
   const decoded = { length: 48000, sampleRate: 48000, numberOfChannels: 1, getChannelData: () => new Float32Array(48000).fill(.1) };
@@ -22,9 +22,9 @@ function createRecorder({ permissionError = null, stopStalls = false } = {}) {
   }
   const context = vm.createContext({
     Blob, Date: { now: () => now },
-    navigator: { mediaDevices: { async getUserMedia() {
+    navigator: { permissions: {async query(){return {state:permissionState}}}, mediaDevices: { async getUserMedia() {
       if (permissionError) throw Object.assign(Error('Permission denied'), { name: permissionError });
-      return { getTracks: () => [{ stop() { tracksStopped++; } }] };
+      const track={stop(){tracksStopped++},getSettings(){return {echoCancellation}}};return {getTracks:()=>[track],getAudioTracks:()=>[track]};
     } } },
     window: { AudioContext, MediaRecorder },
     setInterval(fn) { intervals.set(++next, fn); return next; }, clearInterval(id) { intervals.delete(id); },
@@ -49,6 +49,16 @@ function createRecorder({ permissionError = null, stopStalls = false } = {}) {
   assert.ok(app.stopped());
   assert.equal(app.timers(), 0);
 
+  const barge=createRecorder();let transferred=null;
+  const monitor=new barge.context.window.IlmaBargeMonitor();await monitor.start(stream=>transferred=stream);
+  for(let i=0;i<10;i++)barge.sample(i*50,0);
+  for(let i=0;i<3;i++)barge.sample(550+i*50,.1);
+  assert.equal(transferred,null,'Require sustained voice, not one sound');
+  barge.sample(700,.1);assert.ok(transferred);assert.equal(barge.stopped(),0,'Transfer microphone without stopping it');assert.equal(barge.timers(),0);
+  await barge.recorder.start({stream:transferred,onComplete(){},onError(){}});barge.recorder.cancel();assert.ok(barge.stopped());
+  const deniedMonitor=createRecorder({permissionState:'prompt'});await new deniedMonitor.context.window.IlmaBargeMonitor().start(()=>assert.fail());assert.equal(deniedMonitor.timers(),0,'Never ask for microphone permission during speech');
+  const noEcho=createRecorder({echoCancellation:false});await new noEcho.context.window.IlmaBargeMonitor().start(()=>assert.fail());assert.ok(noEcho.stopped());assert.equal(noEcho.timers(),0);
+  const cancelledMonitor=createRecorder();const pending=new cancelledMonitor.context.window.IlmaBargeMonitor();const starting=pending.start(()=>assert.fail());pending.cancel();await starting;assert.equal(cancelledMonitor.timers(),0);
   const noSpeech = createRecorder();
   let error;
   await noSpeech.recorder.start({ onComplete() {}, onError: code => error = code });

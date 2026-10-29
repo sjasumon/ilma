@@ -42,18 +42,19 @@ def test_five_turn_conversation_is_connected_source_backed_and_does_not_repeat(w
             assert ('কারণ' if language=='bn' else 'because') in result['speech']
             assert ('প্রায় ১৮%' if language=='bn' else 'about 18%') in result['speech']
             assert ('সাড়ে ১২%' if language=='bn' else '12.5%') in result['speech']
-            assert 'insurance:bank' not in ids
+            assert 'insurance:bank' in ids
             assert any(f['fact_id']=='insurance:bank' for f in result['facts'])
         if choice=='detail':
             assert 'synthetic-capital' not in ids
-            assert 'test-npl-1' in ids
+            assert 'test-npl-1' not in ids
+            assert 'synthetic-rating' in ids
         if choice=='figures':assert 'synthetic-profit' in ids
         if choice=='history':assert ('সরকারিভাবে নিশ্চিত নয়' if language=='bn' else 'not officially confirmed') in result['speech']
         if choice=='fdr':
             assert '8.5%' in result['speech'] if language=='en' else '৮.৫%' in result['speech']
             assert not re.search(r'Strong|good condition|ভালো অবস্থা|ঝুঁকির',result['speech'])
-            assert result['speech_fact_ids'] and len(result['speech'].split())<=30
-    assert insurance==0
+            assert result['speech_fact_ids'] and len(result['speech'].split())<=70
+    assert insurance==1
 
 
 def test_exact_card_facts_are_unchanged_and_spoken_numbers_are_rounded(wording_db):
@@ -202,7 +203,7 @@ def test_weak_intro_retains_conditional_protection_and_negative_figure_uses_tent
     row=wording_db.get(Fact,'synthetic-capital');row.value=Decimal('-.0548');row.quote='Synthetic capital minus 5.48 percent';wording_db.commit()
     first=ask(wording_db,'BRAC Bank',Conversation(language='bn'))
     assert 'insurance:bank' in first['speech_fact_ids'] and 'শর্ত' in first['speech']
-    assert len(first['speech'].split())<=30
+    assert len(first['speech'].split())<=45
     figure=ask(wording_db,'মূলধন কত',conv(first))
     assert 'মাইনাস সাড়ে ৫%' in figure['speech']
     assert '-৫.৪৮%' in figure['sentences'][0]['text']
@@ -216,3 +217,48 @@ def test_non_currency_offer_units_are_not_spoken_as_money(wording_db):
     assert 'taka' not in brief_offer(wording_db,item,False)
     assert 'টাকা' not in brief_offer(wording_db,item,True)
     assert 'card' in brief_offer(wording_db,item,False)
+
+
+def test_long_source_wording_pages_with_no_lost_words_or_premature_fact_completion(wording_db):
+    record=wording_db.get(BankIncident,'synthetic-history')
+    # Handwritten repeated synthetic clauses stress paging, not copied source data.
+    title='একটি প্রক্রিয়াগত ত্রুটির অভিযোগ নিয়ে তদন্ত করা হয়েছে, '
+    record.title_bn=title*12;wording_db.commit()
+    result=ask(wording_db,'',Conversation(state='BANK',institution_id=1,language='bn'),'history')
+    chunks=[];original_id='synthetic-history';pages=0
+    while True:
+        pages+=1;assert pages<10
+        assert len(result['speech'].split())<=70
+        assert original_id in result['speech_fact_ids']
+        chunks.append(result['speech'])
+        c=conv(result)
+        if not c.speech_page_fact_ids:break
+        assert original_id not in c.spoken_fact_ids,'Do not mark the unseen remainder as completed'
+        assert result['next']['options'][0]['value']=='more'
+        replay=ask(wording_db,'',c,'repeat')
+        assert replay['speech']==result['speech']
+        result=ask(wording_db,'আরও শুনব',c)
+    assert pages>1 and original_id in c.spoken_fact_ids
+    assert sum(t.count('প্রক্রিয়াগত') for t in chunks)==12
+
+
+def test_tts_uses_resolved_reply_language_not_the_old_ui_language(wording_db):
+    from ilma_api.voice_pipeline import run_pipeline
+    import json
+    async def run():
+        register=AsyncMock(return_value=None)
+        ctx=context(Conversation(state='BANK',institution_id=1,language='bn')).model_copy(update={'speak':True})
+        with patch('ilma_api.audio_cache.register_speech',new=register):
+            frames=[f async for f in run_pipeline(None,'How is BRAC Bank?','',ctx,BANKS,wording_db,mode='text')]
+        result=next(json.loads(f.split('data: ',1)[1]) for f in frames if f.startswith('event: result'))
+        assert result['language']=='en'
+        assert register.await_args.args[1]=='en'
+        assert '%' not in result['speech_tts'] and 'percent' in result['speech_tts']
+    asyncio.run(run())
+
+
+def test_continuation_spoken_options_and_ordinals_match_visible_choices():
+    from ilma_api.voice_agent import spoken_choice
+    c=Conversation(state='HISTORY',institution_id=1,speech_page=1,speech_page_fact_ids=['synthetic-history'])
+    for word in ['আরও শুনুন','এক','one','হ্যাঁ','yes']:assert spoken_choice(word,c)=='more'
+    for word in ['দুই','two','না','no']:assert spoken_choice(word,c)=='end'

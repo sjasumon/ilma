@@ -49,7 +49,9 @@
         else this.recordingTap=now;
         return;
       }
+      const speaking=['speaking','audio-wait'].includes(this.phase);
       this.a.interrupt();++this.generation;this.phase='waiting';
+      if(speaking){this.clear();return this.a.listen();}
       if(!this.guided)return this.a.listen();
       if(event.detail===0||this.a.assistive()){this.clock.clearTimeout(this.tapTimer);this.tapTimer=null;return this.choose(this.result.next.options[0]?.value||'listen');}
       if(this.tapTimer!=null){this.clock.clearTimeout(this.tapTimer);this.tapTimer=null;return this.choose(this.result.next.options[1]?.value||'end');}

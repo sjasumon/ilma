@@ -36,7 +36,7 @@ class AudioJob:
 class AudioStore:
     def __init__(self,directory=None,client=None):
         self.directory=Path(directory or settings.TTS_CACHE_DIR);self.client=client;self.jobs={};self.tasks=set();self.gate=asyncio.Semaphore(2)
-    def key(self,text,language,short=False,policy='short-pauses-v4'):
+    def key(self,text,language,short=False,policy='natural-speech-v5'):
         identity=[settings.ELEVENLABS_VOICE_ID,settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)]
         if short:identity.append(policy)
         return hashlib.sha256(json.dumps(identity,ensure_ascii=False).encode()).hexdigest()
@@ -127,7 +127,7 @@ class AudioStore:
                     async def raw_chunks():
                         # Reuse identical existing public speech, not a second paid call.
                         if short:
-                            candidates=[self.directory/(self.key(text,language)+'.mp3'),self.directory/(self.key(text,language,True,policy='short-pauses-v3')+'.mp3')]
+                            candidates=[self.directory/(self.key(text,language)+'.mp3')]
                             for raw_path in candidates:
                                 try:data=await asyncio.to_thread(raw_path.read_bytes)
                                 except OSError:continue
@@ -153,7 +153,7 @@ class AudioStore:
             from ilma_api.agent_audio import duration_ms
             try:measured=await duration_ms(data)
             except Exception:measured=None
-            await asyncio.to_thread(self.atomic,path.with_suffix('.json'),json.dumps({'duration_ms':measured,'created':time.time(),'short':short,'tempo':1.03 if short else 1.0}).encode())
+            await asyncio.to_thread(self.atomic,path.with_suffix('.json'),json.dumps({'duration_ms':measured,'created':time.time(),'short':short,'tempo':1.0}).encode())
             await job.finish()
         except asyncio.CancelledError:
             await job.finish(True);raise

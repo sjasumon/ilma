@@ -11,14 +11,14 @@
       this.chunks = [];
       this.finishing = false;
     }
-    async start({ onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500, maxMs = 15000, noSpeechMs = 6000 }) {
+    async start({ stream: providedStream, onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500, maxMs = 15000, noSpeechMs = 6000 }) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       this.context = sharedContext();
       // Resume during the user's tap, before waiting for the permission prompt.
       const resume = this.context.resume();
       resume.catch(() => {});
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+        this.stream = providedStream || await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
         if (this.cancelled) { this.cleanup(); return; }
         await resume;
         const types = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'];
@@ -100,5 +100,31 @@
       this.cleanup();
     }
   }
+  // Only observe with permission already granted; never prompt during playback.
+  // Raw levels stay in memory. Echo cancellation support is required.
+  class BargeMonitor {
+    async start(onSpeech) {
+      this.cancelled=false;
+      try {
+        if(!navigator.permissions?.query)return;
+        const permission=await navigator.permissions.query({name:'microphone'});
+        if(permission.state!=='granted'||this.cancelled)return;
+        this.stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true}});
+        if(this.cancelled||this.stream.getAudioTracks()[0]?.getSettings?.().echoCancellation!==true){this.cancel();return;}
+        const context=sharedContext();await context.resume();if(this.cancelled)return;
+        this.source=context.createMediaStreamSource(this.stream);this.analyser=context.createAnalyser();this.analyser.fftSize=1024;this.source.connect(this.analyser);
+        this.mute=context.createGain();this.mute.gain.value=0;this.analyser.connect(this.mute).connect(context.destination);
+        const data=new Float32Array(1024);let count=0,floor=0,voiced=0;
+        this.monitor=setInterval(()=>{
+          this.analyser.getFloatTimeDomainData(data);const rms=Math.sqrt(data.reduce((a,b)=>a+b*b,0)/data.length);
+          if(count++<10){floor+=rms/10;return;}
+          voiced=rms>Math.max(.04,floor*3.5)?voiced+1:0;
+          if(voiced>=4){const stream=this.stream;this.stream=null;this.cancel();onSpeech(stream);}
+        },50);
+      }catch{this.cancel();}
+    }
+    cancel(){this.cancelled=true;clearInterval(this.monitor);this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;this.source?.disconnect?.();this.analyser?.disconnect?.();this.mute?.disconnect?.();}
+  }
+  window.IlmaBargeMonitor=BargeMonitor;
   window.IlmaVoiceRecorder = VoiceRecorder;
 })();

@@ -193,8 +193,8 @@ def test_audio_target_without_truncating_content():
     url='data:audio/mpeg;base64,'+base64.b64encode(data).decode()
     audio,metadata=asyncio.run(normalize_agent_audio(url))
     assert audio.startswith('data:audio/mpeg;base64,')
-    assert metadata['original_duration_ms']>20000 and metadata['duration_ms']<20000
-    assert 1<metadata['tempo']<=1.15
+    assert metadata['original_duration_ms']>20000 and metadata['duration_ms']==metadata['original_duration_ms']
+    assert metadata['tempo']==1.0 and audio==url
 
 
 def routing_banks(db):

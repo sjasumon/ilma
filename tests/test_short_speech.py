@@ -1,6 +1,6 @@
 """Small handwritten signal fixtures and source-backed wording constraints."""
 import asyncio,io,json,wave
-from unittest.mock import patch
+from unittest.mock import patch,AsyncMock
 import numpy as np
 import httpx
 import pytest
@@ -17,7 +17,7 @@ async def synthetic_mp3():
     return await process(wav.getvalue(),['-c:a','libmp3lame','-b:a','96k','-f','mp3','pipe:1'])
 
 
-def test_streaming_pause_removal_retains_quiet_speech_and_cleans_up_on_cancel():
+def test_streaming_preserves_natural_pauses_and_quiet_speech():
     async def run():
         encoded=await synthetic_mp3();release=asyncio.Event()
         async def chunks():
@@ -26,20 +26,13 @@ def test_streaming_pause_removal_retains_quiet_speech_and_cleans_up_on_cancel():
         stream=trim_long_pauses(chunks());first=await asyncio.wait_for(stream.__anext__(),3)
         assert first and not release.is_set(),'Must stream before provider completion'
         release.set();output=first+b''.join([c async for c in stream])
-        measured=await duration_ms(output);assert 2100<=measured<=3000,measured
+        measured=await duration_ms(output);assert 5200<=measured<=5600,measured
         decoded=np.frombuffer(await process(output,['-ac','1','-ar','24000','-f','s16le','pipe:1']),dtype='<i2').astype(float)/32768
         # Both the loud first and quiet final tone must survive at full length.
         assert np.count_nonzero(np.abs(decoded)>.001)/24000>1.7
-        for sample,frequency in [(decoded[7200:16800],440),(decoded[-16800:-9600],660)]:
-            spectrum=np.abs(np.fft.rfft(sample));peak=np.fft.rfftfreq(len(sample),1/24000)[spectrum.argmax()]
-            assert abs(peak-frequency)<8,'Pace processing must retain pitch'
-        handles=[];original=asyncio.create_subprocess_exec
-        async def start(*a,**kw):
-            child=await original(*a,**kw);handles.append(child);return child
-        release.clear()
-        with patch('ilma_api.agent_audio.asyncio.create_subprocess_exec',new=start):
-            stream=trim_long_pauses(chunks());await asyncio.wait_for(stream.__anext__(),3);await stream.aclose()
-        assert handles and all(h.returncode is not None for h in handles)
+        assert output==encoded,'Natural TTS must not be accelerated or silence gated'
+        release.clear();stream=trim_long_pauses(chunks())
+        await stream.__anext__();await stream.aclose()
     asyncio.run(run())
 
 
@@ -58,17 +51,19 @@ def test_short_cache_reuses_identical_raw_public_speech_with_separate_policy(tmp
                 for _ in range(40):
                     if meta.exists():break
                     await asyncio.sleep(.05)
-                assert json.loads(meta.read_text())['duration_ms']<3000
+                assert json.loads(meta.read_text())['duration_ms']>5000
                 item['short']=False;store.atomic(tmp_path/'tickets'/(token+'.json'),json.dumps(item).encode())
                 assert store.ticket(token) is None
             await store.close()
     asyncio.run(run())
 
 
-def test_word_sentence_and_actual_audio_duration_gates():
-    validate_spoken_answer('A short answer. Hear more?','en',10000)
-    for text,ms in [(' '.join(['word']*31),1000),('One. Two. Three. Four?',1000),('Short.',10001)]:
-        with pytest.raises(ValueError):validate_spoken_answer(text,'en',ms)
+def test_word_and_actual_audio_duration_gates():
+    validate_spoken_answer('A natural answer. Hear more?','en',30000)
+    validate_spoken_answer(' '.join(['word']*45),'en',first=True)
+    validate_spoken_answer(' '.join(['word']*70),'en')
+    for text,ms,first in [(' '.join(['word']*46),1000,True),(' '.join(['word']*71),1000,False),('Short.',30001,False)]:
+        with pytest.raises(ValueError):validate_spoken_answer(text,'en',ms,first=first)
 
 
 def test_negative_ratio_keeps_half_percent_and_small_values_do_not_become_zero():
@@ -77,3 +72,24 @@ def test_negative_ratio_keeps_half_percent_and_small_values_do_not_become_zero()
     assert spoken_percent('0.04',True)=='০.০৪%'
     assert spoken_percent('0.004',False)=='0.004%'
     assert rounded('0.04',True)=='০.০৪'
+
+
+def test_provider_receives_normalized_words_with_one_consistent_voice_and_model(tmp_path):
+    from ilma_api.audio_cache import AudioStore
+    from ilma_api.voice_numbers import pronounce
+    async def run():
+        requests=[]
+        async def provider(request):
+            requests.append(request);return httpx.Response(200,content=b'synthetic-provider-audio')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(provider)) as client:
+            store=AudioStore(tmp_path,client)
+            with patch.object(settings,'ELEVENLABS_API_KEY','synthetic-key'),patch.object(settings,'ELEVENLABS_VOICE_ID','synthetic-voice'),patch('ilma_api.agent_audio.duration_ms',new=AsyncMock(return_value=1000)):
+                for display,lang in [('CRAB AAA ১৮%','bn'),('FDR ৭.৭৫%','bn'),('AAA earns 7.75%','en')]:
+                    ticket=await store.register([display],lang,short=True);assert await store.wait(ticket)
+                    payload=json.loads(requests[-1].content)
+                    assert payload['text']==pronounce(display,lang)
+                    assert payload['model_id']==settings.ELEVENLABS_MODEL
+                    assert requests[-1].url.path.endswith('/synthetic-voice/stream')
+                assert len(requests)==3
+            await store.close()
+    asyncio.run(run())

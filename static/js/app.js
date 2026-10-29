@@ -135,7 +135,7 @@ try {
   }
 } catch { /* Preferences still work when storage is unavailable. */ }
 let lastAgentChoice = "";
-let agentConversation = null, agentPanel = null, agentPendingResult = null;
+let agentConversation = null, agentPanel = null, agentPendingResult = null, bargeMonitor = null;
 let voiceLanguageReturn = null, voiceLanguageOverride = null;
 let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
 let currentLang = appSettings.language;
@@ -573,8 +573,8 @@ function setVoiceState(text) {
   setMiniVoiceState(text);
 }
 
-async function startListening() {
-  if (isListening || recognitionStarting || isSearching) return;
+async function startListening(providedStream = null) {
+  if (isListening || recognitionStarting || isSearching) {providedStream?.getTracks().forEach(t=>t.stop());return;}
   lastVoiceTranscript = "";
   document.getElementById("voice-transcript").hidden = true;
   stopAudio();
@@ -613,6 +613,7 @@ async function startListening() {
   audioRecorder = recorder;
   try {
     await recorder.start({
+      stream: providedStream,
       silenceMs: voiceConfig.silence_ms,
       maxMs: 15000,
       noSpeechMs: currentTab==='home'||ivr?.active||agentPanel?.active ? 8000 : 6000,
@@ -796,6 +797,8 @@ function showTyping() {
 }
 
 function stopAudio() {
+  bargeMonitor?.cancel();bargeMonitor=null;
+  const speechStop=document.getElementById("agent-stop-speech");if(speechStop)speechStop.hidden=true;
   if (ivrAudioCancel) { const cancel = ivrAudioCancel; ivrAudioCancel = null; cancel(); }
   setWaveformState(isListening ? "listening" : recognitionStarting ? "starting" : isSearching ? "thinking" : "idle");
   playbackRequest++;
@@ -1407,6 +1410,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("ilma-player").addEventListener("ended", () => { if (!ivrAudioCancel) stopAudio(); });
   document.getElementById("ilma-player").addEventListener("playing", () => {
     setWaveformState("speaking");
+    if(agentPanel?.active){
+      const stop=document.getElementById('agent-stop-speech');stop.hidden=false;stop.textContent=currentLang==='bn'?'থামান':'Stop speaking';
+      bargeMonitor?.cancel();
+      if(window.IlmaBargeMonitor&&appSettings.micExplained){
+        const generation=agentPanel.generation;
+        bargeMonitor=new window.IlmaBargeMonitor();void bargeMonitor.start(stream=>{
+          if(!agentPanel?.active||generation!==agentPanel.generation){stream.getTracks().forEach(t=>t.stop());return;}
+          agentPanel.suspend();void startListening(stream);
+        });
+      }
+    }
     if (!ivr?.active) document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "ইলমা উত্তর পড়ে শোনাচ্ছে।" : "ILMA is reading the answer.";
   });
   document.getElementById("ilma-player").addEventListener("error", () => {
@@ -1930,6 +1944,7 @@ function setupAgentPanel() {
     exit: hideAgentConversation
   });
   document.getElementById('agent-text-form').addEventListener('submit',event=>{event.preventDefault();const input=document.getElementById('agent-text-input');if(!input.value.trim())return;stopAudio();void submitTextQuestion(input.value);});
+  document.getElementById('agent-stop-speech').addEventListener('click',()=>agentPanel.suspend());
   document.getElementById('agent-tap').addEventListener('click',event=>agentPanel.tap(event));
   for (const [id,choice] of [['agent-report','report'],['agent-repeat','repeat'],['agent-end','end']]) document.getElementById(id).addEventListener('click',()=>agentPanel.choose(choice));
 }

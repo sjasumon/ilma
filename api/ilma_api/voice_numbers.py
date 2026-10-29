@@ -45,21 +45,51 @@ def bangla_integer(number):
     for divisor, suffix in [(10000000, 'কোটি'), (100000, 'লাখ'), (1000, 'হাজার'), (100, 'শত')]:
         if number >= divisor:
             quotient, remainder = divmod(number, divisor)
-            return bangla_integer(quotient) + ' ' + suffix + (' ' + bangla_integer(remainder) if remainder else '')
+            return (WORDS[quotient] + 'শো' if divisor == 100 else bangla_integer(quotient) + ' ' + suffix) + (' ' + bangla_integer(remainder) if remainder else '')
+
+
+def bangla_number(value, *, ratio=False):
+    """Lakh/crore words; ratios round to whole positive or tenths negative."""
+    from decimal import ROUND_HALF_UP
+    number=Decimal(str(value));negative=number<0;number=abs(number)
+    if ratio:
+        quantum=Decimal(1).scaleb(number.adjusted()) if 0<number<Decimal('.1') else Decimal('.1') if negative else Decimal('1')
+        number=number.quantize(quantum,rounding=ROUND_HALF_UP)
+    whole=int(number);fraction=number-whole
+    if fraction==Decimal('.25') and whole>=1:words='সোয়া '+bangla_integer(whole)
+    elif fraction==Decimal('.5'):
+        words='অর্ধেক' if whole==0 else 'দেড়' if whole==1 else 'আড়াই' if whole==2 else 'সাড়ে '+bangla_integer(whole)
+    elif fraction==Decimal('.75'):words='পৌনে '+bangla_integer(whole+1)
+    else:
+        decimal=format(number,'f').partition('.')[2].rstrip('0')
+        words=bangla_integer(whole)+(' দশমিক '+' '.join(WORDS[int(d)] for d in decimal) if decimal else '')
+    return ('মাইনাস ' if negative else '')+words
+
+
+BN_LEXICON={'AAA':'ট্রিপল এ','CRAB':'ক্র্যাব','CRISL':'ক্রিসল','ECRL':'ই সি আর এল',
+ 'FDR':'এফডিআর','DPS':'ডিপিএস','NBFI':'আর্থিক প্রতিষ্ঠান','BRAC':'ব্র্যাক','DBBL':'ডাচ বাংলা',
+ 'NCC':'এন সি সি','MTB':'এম টি বি','SBAC':'সাউথ বাংলা','EBL':'ইস্টার্ন ব্যাংক',
+ 'NPL':'খেলাপি ঋণ','CRAR':'মূলধনের অনুপাত','AA':'ডাবল এ','A':'এ','B':'বি','C':'সি',
+ 'PLC':'','Ltd':'','Limited':''}
+LATIN_LETTERS=dict(zip('ABCDEFGHIJKLMNOPQRSTUVWXYZ',('এ বি সি ডি ই এফ জি এইচ আই জে কে এল এম এন ও পি কিউ আর এস টি ইউ ভি ডাবলিউ এক্স ওয়াই জেড').split()))
 
 
 def pronounce(text, language):
-    text = re.sub(r'\b(?:PLC|Ltd)\.?\b|পিএলসি|লিমিটেড', '', text, flags=re.I)
-    if language != 'bn': return text
-    text = text.translate(str.maketrans(BN_DIGITS, '0123456789'))
-    for before, after in [('22 অক্টোবর 2026', 'বাইশে অক্টোবর দুই হাজার ছাব্বিশ'), ('10.5%', 'সাড়ে দশ শতাংশ')]:
-        text = text.replace(before, after)
-    for before, after in [('FDR', 'এফডিআর'), ('DPS', 'ডিপিএস'), ('NBFI', 'আর্থিক প্রতিষ্ঠান')]:
-        text = re.sub(r'\b' + before + r'\b', after, text, flags=re.I)
+    """Idempotent TTS-only normalization; the displayed speech keeps its digits."""
+    text=re.sub(r'\b(?:PLC|Ltd|Limited)\b\.?|পিএলসি|লিমিটেড','',text,flags=re.I)
+    text=text.translate(str.maketrans(BN_DIGITS,'0123456789')).replace('−','-')
+    text=re.sub(r'[()\[\]·—–;]',', ',text)
+    if language!='bn':
+        text=re.sub(r'\bAAA\b','triple A',text)
+        text=re.sub(r'\bTk\.?\s*([\d,]+(?:\.\d+)?)',r'\1 taka',text,flags=re.I)
+        return ' '.join(text.replace('%',' percent').split())
+    text=text.replace('22 অক্টোবর 2026','বাইশে অক্টোবর দুই হাজার ছাব্বিশ')
+    for before,after in BN_LEXICON.items():
+        text=re.sub(r'(?<![A-Za-z])'+re.escape(before)+r'(?![A-Za-z])',after,text,flags=re.I)
+    # Unknown Latin words are spelled, never silently removed from a source name.
+    text=re.sub(r'[A-Za-z]+',lambda m:' '.join(LATIN_LETTERS[c] for c in m[0].upper()),text)
+    text=re.sub(r'-([0-9,]+(?:\.[0-9]+)?)\s*%',lambda m:bangla_number('-'+m[1].replace(',',''),ratio=True)+' শতাংশ',text)
     def speak_number(match):
-        value = match[0].replace(',', '')
-        whole, dot, decimal = value.partition('.')
-        words = bangla_integer(int(whole))
-        return words + (' দশমিক ' + ' '.join(WORDS[int(digit)] for digit in decimal) if dot else '')
-    text = re.sub(r'\d[\d,]*(?:\.\d+)?', speak_number, text)
-    return text.replace('%', ' শতাংশ')
+        return bangla_number(match[0].replace(',',''))
+    text=re.sub(r'-?\d[\d,]*(?:\.\d+)?',speak_number,text)
+    return ' '.join(text.replace('%',' শতাংশ').split())

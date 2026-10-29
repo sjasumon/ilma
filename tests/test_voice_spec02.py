@@ -93,7 +93,7 @@ class TestVoiceText(unittest.TestCase):
         with self.assertRaises(ValidationError): VoiceIntent(intent='rates', product='crypto')
         with self.assertRaises(ValidationError): VoiceContext(ui_lang='unknown')
         self.assertEqual(normalize_alias('IFIC Bank-এর PLC'), 'ific')
-        self.assertEqual(pronounce('২,০০,০০০ PLC 10.5%', 'bn').strip(), 'দুই লাখ  সাড়ে দশ শতাংশ')
+        self.assertEqual(pronounce('২,০০,০০০ PLC 10.5%', 'bn').strip(), 'দুই লাখ সাড়ে দশ শতাংশ')
 
     @unittest.skipUnless(importlib.util.find_spec('rapidfuzz'), 'RapidFuzz cannot be installed in this restricted workspace')
     def test_actual_rapidfuzz_scoring(self):

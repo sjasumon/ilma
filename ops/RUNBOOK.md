@@ -192,3 +192,16 @@ Keep the deployed source tree stable during review. Prefer a preview checkout
 with its private configuration loaded outside the published tree, then copy the
 tested release and restart the service together. Poll health before browser
 checks; systemctl returning does not establish that the HTTP listener is ready.
+
+
+### Natural-speech release checks
+
+Use `check_answer_wording.py` to create a private source-backed review artifact,
+then `check_short_answer_audio.py --review /tmp/<review>.json --output /tmp/<metrics>.json`
+with the deployment configuration loaded privately. Names remain historical;
+the current ordinary-answer gate is 30 seconds, with a 45-word introduction
+budget. Record introduction target misses honestly. Use
+`check_speech_interrupt_browser.py` for real playback stop timing with synthetic
+microphone handoff. Native listening and physical echo rejection are separate.
+The natural-speech cache policy regenerates changed pronunciation without
+removing private historical cache data or altering published history.

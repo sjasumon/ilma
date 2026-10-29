@@ -369,7 +369,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 if timings:
                     timings.mark('tts_start')
                     for frame in timings.events():yield frame
-                ticket=await register_speech(speech_parts,context.ui_lang,short=True)
+                ticket=await register_speech(speech_parts,result['language'],short=True)
                 if ticket:
                     yield event('speech',ticket)
                     from ilma_api.audio_cache import get_store
