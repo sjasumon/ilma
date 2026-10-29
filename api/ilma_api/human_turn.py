@@ -465,7 +465,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             # Say the bank name once, in the first sentence that carries it.
             named=False
             for i,(sentence,ids) in enumerate(lines):
-                for prefix in (polish(name.text+'ের ',{},bn),name.text+' '):
+                for prefix in (polish(name.text+'ের ',{},bn),name.text+"'s ",name.text+' '):
                     if sentence.startswith(prefix):
                         if named:sentence=sentence[len(prefix):]
                         named=True;break
