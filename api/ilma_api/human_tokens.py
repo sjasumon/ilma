@@ -179,7 +179,7 @@ def fill(sentence,registry,used,*,insurance=False):
     named={registry[key].bank_id for key in keys if registry[key].kind=='bank' or key.startswith('row:') and key.endswith('.bank')}
     claimed={registry[key].bank_id for key in keys if registry[key].fact_ids and registry[key].bank_id is not None}
     if named and not claimed<=named:raise ValueError('bank_fact_binding')
-    text=TOKEN.sub(lambda m:registry[m[1]].text,sentence)
+    text=re.sub(r'([।.?])\1+',r'\1',TOKEN.sub(lambda m:registry[m[1]].text,sentence))
     if not insurance and PROTECTION_WORDS.search(text):raise ValueError('unsolicited_protection')
     if BANNED.search(text) and not insurance:raise ValueError('jargon')
     return text,ids

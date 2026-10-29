@@ -1,6 +1,16 @@
-/* Short-lived microphone audio. No storage, browser speech service or API keys. */
+/* Microphone audio for one visit; recordings are short-lived. No storage, browser speech service or API keys. */
 (function () {
   let fallbackContext=null;
+  // One microphone grant per visit: reuse the live stream, release it when the page is hidden.
+  let sessionStream=null;
+  async function sessionMicrophone(){
+    if(sessionStream?.getAudioTracks().some(track=>track.readyState!=='ended'))return sessionStream;
+    sessionStream=await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+    return sessionStream;
+  }
+  function releaseMicrophone(){sessionStream?.getTracks().forEach(track=>track.stop());sessionStream=null}
+  function stopUnlessSession(stream){if(stream&&stream!==sessionStream)stream.getTracks().forEach(track=>track.stop())}
+  if(typeof document!=='undefined')document.addEventListener?.('visibilitychange',()=>{if(document.hidden)releaseMicrophone()});
   function sharedContext(){if(window.IlmaAudioSession)return window.IlmaAudioSession.getContext();if(!fallbackContext||fallbackContext.state==='closed'){const C=window.AudioContext||window.webkitAudioContext;fallbackContext=new C()}return fallbackContext}
   class VoiceRecorder {
     static supported() {
@@ -18,7 +28,7 @@
       const resume = this.context.resume();
       resume.catch(() => {});
       try {
-        this.stream = providedStream || await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+        this.stream = providedStream || await sessionMicrophone();
         if (this.cancelled) { this.cleanup(); return; }
         await resume;
         const types = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'];
@@ -79,7 +89,7 @@
       this.clearTimers();
       try {
         if (this.media.state !== 'inactive') this.media.stop();
-        this.stream?.getTracks().forEach(track => track.stop());
+        stopUnlessSession(this.stream);
         await Promise.race([this.stopped, new Promise((_, reject) => {
           this.stopWaitTimer = setTimeout(() => reject(new Error('recording_finalize_timeout')), 5000);
         })]);
@@ -93,7 +103,7 @@
     clearTimers() { clearInterval(this.monitor); clearTimeout(this.deadline); clearTimeout(this.stopWaitTimer); }
     cleanup() {
       this.clearTimers();
-      this.stream?.getTracks().forEach(track => track.stop());
+      stopUnlessSession(this.stream);
       this.source?.disconnect?.();this.analyser?.disconnect?.();this.mute?.disconnect?.();
       this.chunks = [];
     }
@@ -131,4 +141,5 @@
   }
   window.IlmaBargeMonitor=BargeMonitor;
   window.IlmaVoiceRecorder = VoiceRecorder;
+  window.IlmaMicrophone={release:releaseMicrophone};
 })();

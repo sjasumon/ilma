@@ -394,13 +394,23 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 lines.append((sentence,list(item.fact_ids)));numeric_count+=count
     # Never narrate old protection, raw incident headlines or unbounded paragraphs.
     if not r.direct_protection:lines=[(s,ids) for s,ids in lines if not PROTECTION_WORDS.search(s)]
+    lines=[(re.sub(r'([।.?])\1+',r'\1',s),ids) for s,ids in lines]
     if intent!='compare' and len(lines)>1:
         name=registry.get('bank:'+str(c.institution_id))
         if name:
-            for i,(sentence,ids) in enumerate(lines[1:],1):
+            # Lead with the bank: a general term's meaning follows the bank's own facts.
+            if intent!='explain_term':
+                general=lambda row:bool(row[1]) and all(facts.get(fid,{}).get('kind')=='term' for fid in row[1])
+                lines=[row for row in lines if not general(row)]+[row for row in lines if general(row)]
+            # Say the bank name once, in the first sentence that carries it.
+            named=False
+            for i,(sentence,ids) in enumerate(lines):
                 for prefix in (name.text+'ের ',name.text+' '):
-                    if sentence.startswith(prefix):sentence=sentence[len(prefix):];break
-                if not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
+                    if sentence.startswith(prefix):
+                        if named:
+                            sentence=sentence[len(prefix):]
+                            if not bn and sentence:sentence=sentence[0].upper()+sentence[1:]
+                        named=True;break
                 lines[i]=(sentence,ids)
     chosen,pending=paginate(lines,question,c.language)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
