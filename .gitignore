@@ -67,8 +67,6 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 # Mobile App & Review files
 .idea/
-.gradle/
-build/
 mobile/node_modules/
 mobile/android/.gradle/
 mobile/android/build/
