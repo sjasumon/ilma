@@ -295,3 +295,40 @@ text and complete-response timing are now separate; older reports measured only
 completion. No nightly timer has been installed while the Phase 2 implementation
 and audio/variety measurements are incomplete. External alerts also need a
 private destination/configuration; they are not currently operational.
+
+## Dedicated preview deployment
+
+`preview.sumon.me` has a separate named Cloudflare tunnel and application checkout
+at `/home/ubuntu/shared/all_projects/preview.sumon.me`. The production checkout,
+port and services are not changed by preview deployment. Install the versioned
+`ops/ilma-preview.service` and `ops/cloudflared-preview.service`, then enable them
+so the preview resumes after a host restart. The app binds only to loopback port
+8018; the tunnel provides public HTTPS.
+
+The private tunnel directory is
+`/home/ubuntu/.cloudflared/preview.sumon.me/`: `credentials.json` is the secret
+Cloudflare credential, `config.yml` is the actual tunnel configuration, and
+`deployment.json` / `deployment.xml` record nonsecret deployment metadata. Keep
+this directory mode 0700 and its files mode 0600, outside the Git checkout.
+Cloudflare consumes YAML, not XML; XML is a deployment manifest only.
+
+The preview's ignored `.env` is mode 0600. Initially its Meta and ElevenLabs
+credentials, endpoints, voice, model, speech speed and model deadline match the
+production configuration. TTS is enabled, including normal operational prewarming;
+automated tests still use synthetic audio/provider fixtures. To separate ElevenLabs
+usage later, replace only the preview's `ELEVENLABS_API_KEY`, then restart
+`ilma-preview.service`. Never print the environment or credentials into logs.
+
+Both installations use only MySQL `ilma`. No seed reload or source-data replacement
+is part of preview deployment. The preview uses its own signing salt, cache
+`/var/cache/ilma-preview/tts`, and `API_ADMISSION_NAMESPACE=preview`. An empty
+namespace preserves production's existing MySQL counter and lock names. The
+namespace isolates preview budgets while retaining the same budget values and
+two-worker configuration; it does not isolate physical server/provider resources.
+
+Verify localhost health before routing the new hostname. Verify the public shell,
+health, streaming responses and security headers through Cloudflare. Compare the
+private environment's provider settings without printing their values. Keep a
+commit-stamped deployment manifest and update it after each preview release.
+A preview deployment does not constitute production acceptance or a completed
+Phase 1 evaluation.

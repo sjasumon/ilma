@@ -1,8 +1,45 @@
 import asyncio
+from types import SimpleNamespace
+from unittest.mock import MagicMock
+import pytest
 from unittest.mock import patch
 
 from ilma_api import settings
 from ilma_api.admission import Admission, ProviderAdmissionMiddleware
+
+
+def test_mysql_preview_counters_leases_and_locks_are_namespaced():
+    from sqlalchemy.dialects import mysql
+    from ilma_api.shared_admission import SharedAdmission
+    observed=[]
+    def gate(namespace):
+        connection=MagicMock()
+        def execute(statement,parameters=None):
+            compiled=statement.compile(dialect=mysql.dialect())
+            observed.append((namespace,str(compiled),parameters or compiled.params))
+            result=MagicMock();result.scalar.return_value=1;result.all.return_value=[];result.scalars.return_value.all.return_value=[]
+            return result
+        connection.execute.side_effect=execute
+        bind=MagicMock();bind.dialect.name='mysql';bind.url.database='ilma';bind.connect.return_value.__enter__.return_value=connection
+        with patch.object(settings,'API_ADMISSION_NAMESPACE',namespace):return SharedAdmission(bind)
+    with patch.multiple(settings,VOICE_LOG_SALT_CONFIGURED=True,VOICE_LOG_SALT='synthetic-log-salt-for-isolation'):
+        production=gate('');preview=gate('preview')
+        original,_=production.enter('synthetic-client');new,_=preview.enter('synthetic-client')
+    assert original.startswith('api:active:') and new.startswith('api:preview:active:')
+    assert production.lock_name!=preview.lock_name
+    for namespace,sql,values in observed:
+        if 'INSERT' in sql:
+            assert values['key'].startswith('api:preview:' if namespace else 'api:')
+            if not namespace:assert not values['key'].startswith('api:preview:')
+        if 'GET_LOCK' in sql:assert values['name']==('ilma:provider:admission:preview' if namespace else 'ilma:provider:admission')
+
+
+@pytest.mark.parametrize('namespace',['x'*17,'invalid namespace','bad%name'])
+def test_invalid_admission_namespace_is_rejected(namespace):
+    from ilma_api.shared_admission import SharedAdmission
+    bind=SimpleNamespace(dialect=SimpleNamespace(name='mysql'),url=SimpleNamespace(database='ilma'))
+    with patch.object(settings,'API_ADMISSION_NAMESPACE',namespace),pytest.raises(ValueError,match='API_ADMISSION_NAMESPACE'):
+        SharedAdmission(bind)
 
 
 def test_budgets_share_routes_expire_and_release():

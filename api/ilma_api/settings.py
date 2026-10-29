@@ -63,6 +63,7 @@ TTS_PREWARM = os.getenv('TTS_PREWARM','false').lower() == 'true'
 TTS_SPEED = max(.7,min(1.2,float(os.getenv('TTS_SPEED','1.1'))))
 
 API_ADMISSION_BACKEND = os.getenv('API_ADMISSION_BACKEND','process')
+API_ADMISSION_NAMESPACE = os.getenv('API_ADMISSION_NAMESPACE','')
 
 HUMAN_VOICE_ENABLED = os.getenv('HUMAN_VOICE_ENABLED','false').lower()=='true'
 DAILY_QUESTIONS_LIMIT = max(1,int(os.getenv('DAILY_QUESTIONS_LIMIT','20')))

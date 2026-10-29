@@ -1,0 +1,28 @@
+[Unit]
+Description=ILMA preview web application
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/shared/all_projects/preview.sumon.me
+Environment=PYTHONPATH=/home/ubuntu/shared/all_projects/preview.sumon.me/api
+Environment=API_ADMISSION_BACKEND=mysql
+Environment=TTS_PREWARM=true
+ExecStart=/home/ubuntu/venv/bin/python3 -m uvicorn ilma_api.main:app --host 127.0.0.1 --port 8018 --workers 2
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+UMask=0077
+CacheDirectory=ilma-preview
+CacheDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/cache/ilma-preview
+
+[Install]
+WantedBy=multi-user.target
