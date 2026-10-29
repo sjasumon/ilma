@@ -65,6 +65,7 @@ API_ADMISSION_BACKEND = os.getenv('API_ADMISSION_BACKEND','process')
 
 HUMAN_VOICE_ENABLED = os.getenv('HUMAN_VOICE_ENABLED','false').lower()=='true'
 DAILY_QUESTIONS_LIMIT = max(1,int(os.getenv('DAILY_QUESTIONS_LIMIT','20')))
+HUMAN_MODEL_TIMEOUT_SECONDS = max(2,min(8,float(os.getenv('HUMAN_MODEL_TIMEOUT_SECONDS','4.5'))))
 
 def validate_environment():
     if ILMA_ENV not in {'production','development','test'}:

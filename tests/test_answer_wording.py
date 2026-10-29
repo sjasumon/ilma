@@ -27,6 +27,17 @@ def ask(db,text,c=None,choice=None):
     with patch('ilma_api.voice_agent.model_call',new=AsyncMock(side_effect=AssertionError('Scripted questions need no model'))):
         return asyncio.run(run_agent_turn(text,context(c),BANKS,db,match_candidates(text,BANKS) if text else [],choice))
 
+@pytest.mark.parametrize('bn',[True,False])
+def test_contextual_capital_wording_names_the_ratio_denominator(wording_db,bn):
+    from ilma_api.answer_wording import brief_fact
+    item={'fact_id':'synthetic-capital'}
+    text=brief_fact(wording_db,item,bn,1)
+    assert ('ঝুঁকিভিত্তিক সম্পদ' if bn else 'risk-weighted assets') in text
+    row=wording_db.get(Fact,'synthetic-capital');row.value=Decimal('-.0548');wording_db.flush()
+    text=brief_fact(wording_db,item,bn,1)
+    assert ('মাইনাস' if bn else 'minus') in text
+    assert ('লোকসানে' if bn else 'Losses') not in text
+
 @pytest.mark.parametrize('language',['bn','en'])
 def test_five_turn_conversation_is_connected_source_backed_and_does_not_repeat(wording_db,language):
     db=wording_db;c=Conversation(state='BANK',institution_id=1,language=language);seen=set();insurance=0

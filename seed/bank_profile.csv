@@ -20,3 +20,20 @@ profile:2025:primebank:founded_year,primebank,founded_year,1995,2025-12-31,https
 profile:2025:primebank:branches,primebank,branches,147,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 26,147 Branches
 profile:2025:primebank:sub_branches,primebank,sub_branches,10,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 26,10 Sub-branches
 profile:2025:primebank:agent_outlets,primebank,agent_outlets,174,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 26,174 Agent Outlets
+profile:2025:mtb:founded_year,mtb,founded_year,1999,2025-12-31,https://www.mutualtrustbank.com/wp-content/uploads/2026/06/MTB-Annual-Report-2025_Revised-_Final.pdf,PDF 14,Date of Incorporation 29 September 1999
+profile:2025:mtb:branches,mtb,branches,122,2025-12-31,https://www.mutualtrustbank.com/wp-content/uploads/2026/06/MTB-Annual-Report-2025_Revised-_Final.pdf,PDF 14,Number of Branch & Sub Branch 122 & 58
+profile:2025:mtb:sub_branches,mtb,sub_branches,58,2025-12-31,https://www.mutualtrustbank.com/wp-content/uploads/2026/06/MTB-Annual-Report-2025_Revised-_Final.pdf,PDF 14,Number of Branch & Sub Branch 122 & 58
+profile:2025:sbacbank:founded_year,sbacbank,founded_year,2013,2025-12-31,https://cdn.sbacbank.com/files/investors-relations/annual-report-2025.pdf,PDF 11,Incorporation 20 February 2013
+profile:2025:sbacbank:branches,sbacbank,branches,90,2025-12-31,https://cdn.sbacbank.com/files/investors-relations/annual-report-2025.pdf,PDF 11,Branches 90
+profile:2025:sbacbank:sub_branches,sbacbank,sub_branches,32,2025-12-31,https://cdn.sbacbank.com/files/investors-relations/annual-report-2025.pdf,PDF 11,Sub Branches 32
+profile:2025:sbacbank:agent_outlets,sbacbank,agent_outlets,36,2025-12-31,https://cdn.sbacbank.com/files/investors-relations/annual-report-2025.pdf,PDF 11,Agent Outlets 36
+profile:2025:nccbank:founded_year,nccbank,founded_year,1993,2025-12-31,https://www.nccbank.com.bd/assets/files/annual_report/NCC_Bank_AR_2025_Updated_15_06.pdf,PDF 14,1993 May 15 Converted and newly incorporated from Investment Company to Banking Company
+profile:2025:nccbank:branches,nccbank,branches,132,2025-12-31,https://www.nccbank.com.bd/assets/files/annual_report/NCC_Bank_AR_2025_Updated_15_06.pdf,PDF 113,132 branches
+profile:2025:nccbank:sub_branches,nccbank,sub_branches,10,2025-12-31,https://www.nccbank.com.bd/assets/files/annual_report/NCC_Bank_AR_2025_Updated_15_06.pdf,PDF 113,10 sub-branches
+profile:2025:nbl:founded_year,nbl,founded_year,1983,2025-12-31,https://www.nblbd.com/public/assets/annual-reports/1785227780_Annual%20Report%202025.pdf,PDF 283,"Incorporation of the Bank, 15.03.1983"
+profile:2025:nbl:branches,nbl,branches,221,2025-12-31,https://www.nblbd.com/public/assets/annual-reports/1785227780_Annual%20Report%202025.pdf,PDF 63,221 full-service branches
+profile:2025:nbl:sub_branches,nbl,sub_branches,65,2025-12-31,https://www.nblbd.com/public/assets/annual-reports/1785227780_Annual%20Report%202025.pdf,PDF 63,65 sub-branches
+profile:2025:islamibank:founded_year,islamibank,founded_year,1983,2025-12-31,https://islamibankbd.com/public/assets/annual-report/1780917670_Annual_Report_2025.pdf,33 Corporate Information,"Date of Incorporation of IBBL C-10589, Date: 13.03.1983"
+profile:2025:islamibank:branches,islamibank,branches,400,2025-12-31,https://islamibankbd.com/public/assets/annual-report/1780917670_Annual_Report_2025.pdf,33 Corporate Information,Total Branches 400
+profile:2025:islamibank:sub_branches,islamibank,sub_branches,271,2025-12-31,https://islamibankbd.com/public/assets/annual-report/1780917670_Annual_Report_2025.pdf,33 Corporate Information,Sub-branches 271
+profile:2025:islamibank:agent_outlets,islamibank,agent_outlets,2788,2025-12-31,https://islamibankbd.com/public/assets/annual-report/1780917670_Annual_Report_2025.pdf,33 Corporate Information,"Agent Banking Outlet 2,788"

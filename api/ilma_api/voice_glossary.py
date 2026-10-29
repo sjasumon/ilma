@@ -4,6 +4,9 @@ An entry's optional fourth value is its content version; corrected wording gets 
 new version so existing databases pick it up while the old row stays auditable.
 """
 TERMS = [
+    (['net profit', 'নিট মুনাফা'], 'আয় থেকে সব খরচ ও কর বাদ দেওয়ার পর অবশিষ্ট লাভ।', 'The profit remaining after expenses and taxes.'),
+    (['median', 'মধ্যমান'], 'অঙ্কগুলো ছোট থেকে বড় সাজালে মাঝের মান; জোড় সংখ্যক অঙ্ক হলে মাঝের দুটির গড়।', 'The middle value after sorting; for an even number of values, the average of the middle two.'),
+    (['capital buffer', 'বাফার'], 'মূলধনের ন্যূনতম চাহিদার ওপরে অতিরিক্ত মূলধন, যা ক্ষতি সামলানোর জায়গা বাড়ায়।', 'Extra capital above the minimum requirement, adding capacity to absorb losses.'),
     (['npl', 'খেলাপি ঋণ'], 'যে ঋণের কিস্তি নির্ধারিত সময় পেরিয়েও ফেরত আসেনি; মোট ঋণের শতাংশ হিসেবে দেখানো হয়।', 'Loans whose repayments are overdue beyond the set period, shown as a share of total loans.', 2),
     (['crar', 'capital adequacy', 'মূলধন'], 'ঝুঁকিভিত্তিক সম্পদের তুলনায় ব্যাংকের মূলধনের অনুপাত; বেশি হলে ক্ষতি সামলানোর সামর্থ্য বেশি।', 'The bank’s capital as a share of its risk-weighted assets; a higher ratio means more capacity to absorb losses.', 2),
     (['provision', 'প্রভিশন'], 'ক্ষতির আশঙ্কায় আগে থেকে আলাদা করে রাখা টাকা।', 'Money set aside in advance for possible losses.'),

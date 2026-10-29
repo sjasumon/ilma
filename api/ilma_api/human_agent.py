@@ -9,7 +9,7 @@ from ilma_api.human_contract import HumanReply,STATE,LABELS,ALLOWED
 from ilma_api.human_prompt import SYSTEM
 from ilma_api.human_checker import check,sentences
 from ilma_api.human_memory import load,save,token,redact_user
-from ilma_api.human_facts import fact_pack,compact_pack,comparison_facts,service_facts
+from ilma_api.human_facts import fact_pack,compact_pack,comparison_facts,service_facts,term_facts
 from ilma_api.database_tasks import call
 from ilma_api.voice_numbers import pronounce
 from ilma_api.voice_text import normalize_alias,match_candidates
@@ -31,11 +31,24 @@ def exact_choice(text,c,memory,choice):
 async def spark(payload,db,trace,turn_id,client=None,repair=None):
     from ilma_api.voice_agent import safe_schema
     started=time.monotonic();status='unavailable';usage={};reason='provider';provider_error=[]
-    body={'model':settings.MUSE_SPARK_MODEL,'temperature':.7,'reasoning_effort':'minimal','max_tokens':650,
-          'messages':[{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps({**payload,**({'repair_errors':repair} if repair else {})},ensure_ascii=False,default=str)}],
+    # Short, turn-local references reduce constrained-JSON generation time.
+    # Expand them back to the original immutable fact IDs before checking.
+    ids=[]
+    for pack in payload.get('fact_packs',[]):ids.extend(f['id'] for f in pack.get('facts',[]))
+    ids.extend(f['fact_id'] for f in payload.get('retrieved_facts',[]))
+    ids.extend(payload.get('memory',{}).get('spoken_fact_ids',[]))
+    refs={id:'f'+str(i) for i,id in enumerate(dict.fromkeys(ids))};original={ref:id for id,ref in refs.items()}
+    def encode(value):
+        if isinstance(value,dict):return {key:encode(item) for key,item in value.items() if key not in {'input_fact_ids','unusual'}}
+        if isinstance(value,list):return [encode(item) for item in value]
+        return refs.get(value,value) if isinstance(value,str) else value
+    # The provider counts hidden reasoning inside this budget as well as JSON.
+    # Spoken length is enforced independently; 650 truncated valid short replies.
+    body={'model':settings.MUSE_SPARK_MODEL,'temperature':.7,'reasoning_effort':'minimal','max_tokens':1600,
+          'messages':[{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps(encode({**payload,**({'repair_errors':repair} if repair else {})}),ensure_ascii=False,default=str)}],
           'response_format':{'type':'json_schema','json_schema':{'name':'human_voice_turn','strict':True,'schema':safe_schema(HumanReply)}}}
     async def attempts(http):
-        deadline=time.monotonic()+4.5
+        deadline=time.monotonic()+settings.HUMAN_MODEL_TIMEOUT_SECONDS
         for attempt in range(2):
             remaining=deadline-time.monotonic()
             if remaining<=.05:raise asyncio.TimeoutError()
@@ -49,7 +62,9 @@ async def spark(payload,db,trace,turn_id,client=None,repair=None):
                     parameter=str(error.get('param') or '') if isinstance(error,dict) else ''
                     provider_error.append('http_'+str(response.status_code)+(':'+parameter if re.fullmatch(r'[A-Za-z_.-]{1,64}',parameter) else ''))
                     raise ValueError('provider_status')
-                data=response.json();return HumanReply.model_validate_json(data['choices'][0]['message']['content']),data.get('usage') or {}
+                data=response.json();answer=HumanReply.model_validate_json(data['choices'][0]['message']['content'])
+                answer=answer.model_copy(update={'used_fact_ids':[original.get(id,id) for id in answer.used_fact_ids],'sentence_fact_ids':[[original.get(id,id) for id in row] for row in answer.sentence_fact_ids]})
+                return answer,data.get('usage') or {}
             except (httpx.TimeoutException,httpx.ConnectError,asyncio.TimeoutError):
                 if attempt or time.monotonic()>=deadline:raise
                 await asyncio.sleep(.05+random.random()*.1)
@@ -76,13 +91,14 @@ async def spark(payload,db,trace,turn_id,client=None,repair=None):
 
 def guess(text):
     # Used only on provider/checker failure. Free text always reaches Spark first.
-    patterns=[('stop',r'^(?:থামুন|থামান|stop)$'),('repeat',r'আবার|পুনরায়|repeat|again'),('smalltalk',r'হ্যালো|সালাম|ধন্যবাদ|thank|hello|\bhi\b'),
+    patterns=[('stop',r'^(?:থামুন|থামান|stop)$'),('repeat',r'আবার|পুনরায়|আগের উত্তর|আগের কথা|repeat|again|last answer|previous reply|once more'),('smalltalk',r'হ্যালো|সালাম|ধন্যবাদ|কেমন আছেন|thank|hello|\bhi\b'),
+      ('out_of_scope',r'আবহাওয়া|কৌতুক|রান্না|রেসিপি|ক্রিকেট|কবিতা|weather|joke|recipe|poem|cricket'),
       ('advice_request',r'কোথায়.*রাখ|কোন ব্যাংকে.*রাখ|which bank should|recommend|best bank'),
       ('bank_history',r'আগের|অতীত|পূর্ব|ইতিহাস|ঘটনা|ঝামেলা|কেলেঙ্কারি|past|history|scandal|পাস্ট ইভেন্ট'),
       ('compare',r'তুলনা|মিলিয়ে|compare|another bank'),('service_detail',r'এফডিআর|ডিপিএস|\bfdr\b|\bdps\b|কার্ড|loan|সঞ্চয়'),
       ('bank_reasons',r'বিস্তারিত|কারণ|details|why|reasons'),('bank_figures',r'মুনাফা|লোকসান|মূলধন|খেলাপি|figures|profit|capital|rating'),
       ('bank_profile',r'শাখা|প্রতিষ্ঠা|যাত্রা|profile|founded|branches'),('insurance',r'বীমা|বিমা|সুরক্ষা|insurance|বন্ধ হলে'),('services_list',r'সেবা|services'),
-      ('bank_condition',r'নিরাপদ|safe'),('bank_overview',r'কেমন|সম্পর্কে|how|about')]
+      ('bank_condition',r'নিরাপদ|safe'),('bank_overview',r'কেমন|সম্পর্কে|পরিচয়|খোঁজখবর|how|about|introduce|overview')]
     return next((intent for intent,pattern in patterns if re.search(pattern,text,re.I)),'unclear')
 
 
@@ -102,11 +118,17 @@ def choose_initial(db,text,context,banks,memory):
     strong=[b for b in candidates if b['confidence']>=.9 and not b.get('confirm')]
     ids=list(dict.fromkeys(([c.institution_id] if c.institution_id else [])+[b['id'] for b in strong[:2]]))
     packs=[fact_pack(db,id,c.product if id==c.institution_id else None,c.tenor if id==c.institution_id else None,c.basis,c.network,c.tier) for id in ids]
+    glossary=term_facts(text)
+    if glossary:
+        if packs:packs[0]['facts'].extend(glossary)
+        else:packs.append({'bank':None,'status':None,'facts':glossary})
     return c,candidates,packs
 
 
 def resolve_bank(answer,text,c,banks,candidates):
     id=answer.bank.id
+    named=[b for b in candidates if b['confidence']>=.9 and not b.get('confirm')]
+    if len(named)==1 and answer.intent!='compare':return named[0]['id']
     if answer.bank.source=='conversation' or id is None and c.institution_id:return c.institution_id
     if id==c.institution_id:return id
     known=next((b for b in banks if b['id']==id),None)
@@ -123,7 +145,7 @@ def resolve_bank(answer,text,c,banks,candidates):
 def update_slots(c,answer,id,text):
     changed=c.institution_id is not None and id!=c.institution_id
     product=answer.product if answer.product is not None else None if changed else c.product
-    tenor=answer.tenor_months if answer.tenor_months is not None else None if changed else c.tenor
+    tenor=answer.tenor_months if answer.tenor_months is not None else None if changed or product!=c.product else c.tenor
     network=answer.network if product=='card' else None;tier=answer.tier if product=='card' else None
     if product=='card' and not changed:network=network or c.network;tier=tier or c.tier
     return c.model_copy(update={'institution_id':id,'product':product,'tenor':tenor,'network':network,'tier':tier,'basis':answer.basis or c.basis,'language':answer.language,'last_intent':answer.intent})
@@ -146,6 +168,14 @@ def options_for(answer,c,facts):
 
 
 def limit_body(answer):
+    # Legal suffixes are display-only, not part of spoken bank names.
+    body=re.sub(r'\s*(?:\bPLC\b|পিএলসি)[.]?','',answer.reply,flags=re.I)
+    body=re.sub(r'([0-9০-৯]+)\s+দশমিক\s+([0-9০-৯]+)',r'\1.\2',body)
+    answer=answer.model_copy(update={'reply':body})
+    if not answer.used_fact_ids:
+        answer=answer.model_copy(update={'sentence_fact_ids':[[] for _ in sentences(body)]})
+    if len(answer.used_fact_ids)==1 and len(answer.sentence_fact_ids)==1:
+        answer=answer.model_copy(update={'sentence_fact_ids':[answer.used_fact_ids[:] for _ in sentences(body)]})
     # Complete sentences only; remainder stays in signed server memory.
     parts=sentences(answer.reply);budget=60-max(6,len(answer.next_question.split()));selected=[]
     for index,part in enumerate(parts):
@@ -194,12 +224,12 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         return await finish(result,safe,id,memory,db,started)
     # Charge before the paid model. Pure UI lookups/buttons remain available.
     await call(db,lambda owned:consume_question(owned,watch_identity or device_hash or 'human-anonymous'))
-    payload={'user_words':safe,'raw_transcript':safe,'alias_candidates':[{k:v for k,v in b.items() if k in {'id','name_bn','name_en','confidence','alias'}} for b in candidates[:3]],
+    payload={'snapshot_date':date.today().isoformat(),'user_words':safe,'raw_transcript':safe,'alias_candidates':[{k:v for k,v in b.items() if k in {'id','name_bn','name_en','confidence','alias'}} for b in candidates[:3]],
       'memory':{'current_bank_id':c.institution_id,'product':c.product,'tenor_months':c.tenor,'basis':c.basis,'network':c.network,'tier':c.tier,'last_turns':memory.get('last_turns',[])[-4:],'spoken_fact_ids':c.spoken_fact_ids,'insurance_said':c.insurance_said,'last_intent':c.last_intent},
       'fact_packs':[compact_pack(p,context.ui_lang) for p in packs],'language':context.ui_lang,'allowed_buttons':list(LABELS)}
     if context.audio_truncated:payload['audio_notice']='Recording reached 15 seconds. Say the ending may not have been heard; invite a shorter question.'
     payload['memory']['clarify_candidates']=memory.get('clarify_candidates',[])
-    answer=await spark(payload,db,trace,turn_id,client);pending=None;all_facts=[f for p in packs for f in p['facts']]
+    answer=await spark(payload,db,trace,turn_id,client);pending=None;routed=None;extra=[];all_facts=[f for p in packs for f in p['facts']]
     if answer:
         from ilma_api.other_banks import find_other_bank
         if find_other_bank(safe):
@@ -223,13 +253,14 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         answer=answer.model_copy(update={'bank':answer.bank.model_copy(update={'id':target}),'language':context.ui_lang})
         proposed=update_slots(c,answer,target,safe)
         c=proposed
+        routed=answer
         need=answer.needs_facts or answer.intent=='compare' or (answer.intent=='service_detail' and (answer.product!=payload['memory']['product'] or answer.tenor_months!=payload['memory']['tenor_months'] or answer.basis and answer.basis!=payload['memory']['basis'])) or (target and target not in [p['bank']['id'] for p in packs if p['bank']])
         if need:
             packs,extra=await call(db,lambda owned:retrieve(owned,answer,proposed,banks))
             all_facts=[f for p in packs for f in p['facts']]+extra
             payload.update(fact_packs=[compact_pack(p,context.ui_lang) for p in packs],retrieved_facts=extra,needs_facts_resolved=True)
             answer=await spark(payload,db,trace,turn_id,client)
-            if answer:answer=answer.model_copy(update={'bank':answer.bank.model_copy(update={'id':target}),'language':context.ui_lang})
+            if answer:answer=answer.model_copy(update={'intent':routed.intent,'bank':routed.bank,'product':routed.product,'basis':routed.basis,'tenor_months':routed.tenor_months,'network':routed.network,'tier':routed.tier,'compare_banks':routed.compare_banks,'language':context.ui_lang})
         if answer:
             if answer.intent=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
             answer,pending=limit_body(answer)
@@ -238,9 +269,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 trace.append(dict(stage='CHECK',model='code',ms=0,status='rejected',reason=','.join(errors)))
                 logging.getLogger(__name__).warning('human_reply_rejected reasons=%s',','.join(errors))
                 await audit_rejection(db,turn_id,errors)
-                answer=await spark(payload,db,trace,turn_id,client,errors)
+                draft=answer
+                answer=await spark({**payload,'rejected_draft':draft.model_dump()},db,trace,turn_id,client,errors)
                 if answer:
-                    answer=answer.model_copy(update={'bank':answer.bank.model_copy(update={'id':target}),'language':context.ui_lang});answer,pending=limit_body(answer)
+                    answer=answer.model_copy(update={'intent':draft.intent,'bank':draft.bank,'product':draft.product,'basis':draft.basis,'tenor_months':draft.tenor_months,'network':draft.network,'tier':draft.tier,'compare_banks':draft.compare_banks,'language':context.ui_lang});answer,pending=limit_body(answer)
                     errors=check(answer,all_facts,banks,c.spoken_fact_ids,allow_repeat=explicit_revisit(text,answer),insurance_said=c.insurance_said)
                     if errors:
                         trace.append(dict(stage='CHECK',model='code',ms=0,status='rejected',reason=','.join(errors)))
@@ -254,12 +286,16 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 if pending:result['_all_facts']=all_facts
                 return await finish(result,safe,id,memory,db,started,pending)
     # Network/schema/check failure is not evidence that the user was unclear.
-    result=await call(db,lambda owned:make_fallback(owned,safe,c,packs,banks,trace))
+    if routed is None and guess(safe)=='repeat' and memory.get('last_result'):
+        return await repeat_turn(c,id,memory,db,trace,started)
+    result=await call(db,lambda owned:make_fallback(owned,safe,c,packs,banks,trace,intent=routed.intent if routed else None,comparison=extra if routed and routed.intent=='compare' else None))
     return await finish(result,safe,id,memory,db,started,result.pop('_pending_reply',None))
 
 
 def explicit_revisit(text,answer):
-    return answer.intent=='repeat' or answer.intent in {'bank_figures','bank_condition','service_detail','insurance'} and bool(re.search(r'কত|কী|কি|আবার|\bwhat|\bhow|\brate|\bratio',text,re.I))
+    # A directly requested fact may be explained again. This does not authorize
+    # unsolicited protection repetitions, which have their own separate check.
+    return bool(text.strip()) and answer.intent in {'repeat','compare','bank_overview','bank_condition','bank_reasons','bank_figures','bank_history','bank_profile','service_detail','insurance'}
 
 
 def retrieve(db,answer,c,banks):
@@ -290,11 +326,17 @@ async def repeat_turn(c,id,memory,db,trace,started):
 def make_fallback(db,text,c,packs,banks,trace,intent=None,comparison=None):
     from ilma_api.answer_wording import brief_fact,brief_insurance,brief_offer,bank_name,clean
     from ilma_api.voice_agent import service_request
+    routed=intent is not None
     intent=intent or guess(text);bn=c.language=='bn';ending='।' if bn else '.'
     if intent=='repeat':intent='bank_overview'
     confident=[b for b in match_candidates(text,banks) if b['confidence']>=.9 and not b.get('confirm')]
     if confident and intent=='unclear':intent='bank_overview'
-    if confident and confident[0]['id']!=c.institution_id:c=c.model_copy(update={'institution_id':confident[0]['id'],'product':None,'tenor':None,'network':None,'tier':None})
+    if not routed and len(confident)>1:
+        parts=re.split(r'নয়|নয়|\bnot\b|বরং|\binstead\b',text,flags=re.I)
+        if len(parts)>1 and any(b['confidence']>=.9 for b in match_candidates(parts[0],banks)):
+            affirmative=[b for b in match_candidates(parts[-1],banks) if b['confidence']>=.9 and not b.get('confirm')]
+            if len(affirmative)==1:confident=affirmative
+    if not routed and confident and confident[0]['id']!=c.institution_id:c=c.model_copy(update={'institution_id':confident[0]['id'],'product':None,'tenor':None,'network':None,'tier':None})
     request=service_request(text,c,c.institution_id)
     if request:
         intent='compare' if intent=='compare' else 'service_detail'
@@ -312,7 +354,8 @@ def make_fallback(db,text,c,packs,banks,trace,intent=None,comparison=None):
         return render(a,c,[],trace,'template')
     if intent in {'stop','out_of_scope','unclear'}:
         body=('পড়া থামালাম।' if bn else 'I’ve stopped speaking.') if intent=='stop' else ('আমি ব্যাংকের তথ্য নিয়ে কথা বলতে পারি।' if bn else 'I can help with bank information.') if intent=='out_of_scope' else ('এখন উত্তর সাজাতে একটু সমস্যা হচ্ছে।' if bn else 'I’m having trouble preparing that answer right now.')
-        a=controls(intent,c,body,'' if intent=='stop' else 'কোন ব্যাংকের তথ্য শুনবেন?' if bn else 'Which bank would you like to discuss?',[] if intent=='stop' else ['ask_bank','end'])
+        question='' if intent=='stop' else ('প্রশ্নটি আবার বলবেন?' if bn else 'Could you ask that again?') if c.institution_id else 'কোন ব্যাংকের তথ্য শুনবেন?' if bn else 'Which bank would you like to discuss?'
+        a=controls(intent,c,body,question,[] if intent=='stop' else ['listen' if c.institution_id else 'ask_bank','end'])
         return render(a,c,[],trace,'template')
     if not c.institution_id:
         a=controls('unclear',c,'ব্যাংকের নাম বললে খুঁজে দেখতে পারি।' if bn else 'Tell me the bank name and I can look it up.','কোন ব্যাংকের কথা বলছেন?' if bn else 'Which bank do you mean?',['ask_bank','end'])
@@ -339,15 +382,25 @@ def make_fallback(db,text,c,packs,banks,trace,intent=None,comparison=None):
             if f:add(brief_insurance(db,c.institution_id,bn),f)
         buttons=['detail','services'] if intent in {'bank_overview','bank_condition'} else ['figures','history'] if intent=='bank_reasons' else ['services','ask_bank']
     elif intent=='bank_history':
+        news=[]
         for f in [f for f in facts if f['kind']=='history']:
             when=format_date_local(f['values']['event_date'],bn)
-            qualifier='খবরে এসেছে' if bn else 'news reports described'
-            add(f'{when} {qualifier}, {f["text_bn" if bn else "text_en"]}' if bn else f'In {when}, {qualifier} {f["text_en"]}',f)
-            if not f['values']['official']:add('এটি খবরের তথ্য, সরকারিভাবে নিশ্চিত নয়, তাই অবস্থার হিসাবে ধরা হয়নি' if bn else 'This is reported news, not officially confirmed, and is excluded from the condition',f)
+            add(f'{when} {f["text_bn"]} নিয়ে খবর প্রকাশিত হয়েছিল' if bn else f'In {when}, news reports described {f["text_en"]}',f)
+            if not f['values']['official']:news.append(f['fact_id'])
+        if news:
+            rows.append(('এগুলো সংবাদ প্রতিবেদন, সরকারিভাবে নিশ্চিত নয় এবং বর্তমান অবস্থা যাচাইয়ে ধরা হয়নি।' if bn else 'These are news reports, not officially confirmed, and excluded from the condition.'));ids.append(news)
         if not rows:add('আমাদের সংগ্রহে এই ব্যাংকের বড় ঘটনার খবর নেই' if bn else 'Our collection has no major incident reports for this bank',None)
     elif intent=='bank_profile':
-        for f in [f for f in facts if f['kind']=='profile'][:2]:add(f'{name} সম্পর্কে প্রতিবেদনে {f["values"]["field"]} হিসেবে {f["values"]["value"]} লেখা আছে' if bn else f'The report lists {name}’s {f["values"]["field"]} as {f["values"]["value"]}',f)
-        if not rows:add('এই ব্যাংকের প্রোফাইলের নির্ভরযোগ্য উদ্ধৃতি এখনো আমাদের কাছে নেই' if bn else 'We do not yet have a reliable quoted profile for this bank',None)
+        labels={'branches':('শাখা','branches'),'sub_branches':('উপশাখা','sub-branches'),'atms':('এটিএম','ATMs'),'agent_outlets':('এজেন্ট আউটলেট','agent outlets'),'customers':('গ্রাহক','customers')}
+        wanted=next((field for field,pattern in [('founded_year',r'প্রতিষ্ঠা|কবে|কোন সালে|founded|established|incorporat'),('sub_branches',r'উপশাখা|sub.branch'),('branches',r'শাখা|branches'),('atms',r'এটিএম|\batm'),('agent_outlets',r'এজেন্ট|agent'),('customers',r'গ্রাহক|customers'),('known_for',r'পরিচিত|known for')] if re.search(pattern,text,re.I)),None)
+        profile=[f for f in facts if f['kind']=='profile' and (wanted is None or f['values']['field']==wanted)]
+        for f in profile[:2]:
+            v=f['values'];field=v['field'];value=v['value'];year=v['as_of'][:4]
+            if field=='founded_year':line=f'{name} প্রতিষ্ঠিত হয় {value} সালে' if bn else f'{name} was established in {value}'
+            elif field in labels:line=f'{year} সালের শেষে {name}ের {labels[field][0]} ছিল {value}' if bn else f'At the end of {year}, {name} reported {value} {labels[field][1]}'
+            else:line=f'{name}ের প্রতিবেদনে {value} বলা হয়েছে' if bn else f'{name} describes itself in the report as {value}'
+            add(line,f)
+        if not rows:add('এই তথ্যের নির্ভরযোগ্য উদ্ধৃতি এখনো আমাদের কাছে নেই' if bn else 'We do not yet have a reliable quotation for that detail',next((f for f in facts if f['kind']=='coverage'),None))
     elif intent=='services_list':
         products=list(dict.fromkeys(f['values']['product_type'] for f in facts if f['kind']=='service'))
         from ilma_api.answer_wording import PRODUCTS
@@ -357,10 +410,10 @@ def make_fallback(db,text,c,packs,banks,trace,intent=None,comparison=None):
     elif intent=='service_detail':
         selected=[f for f in facts if f['kind']=='service' and f['values']['product_type']==c.product]
         for f in selected[:6]:
-            v=f['values'];term=v['tenor_options'] or [v['tenor_min_months'],v['tenor_max_months']]
-            term=[t for t in dict.fromkeys(term) if t]
-            term_text=', '.join(str(int(t/12))+' বছর' if t%12==0 else str(t)+' মাস' for t in term) if bn else ', '.join(str(int(t/12))+' years' if t%12==0 else str(t)+' months' for t in term)
-            text=f'{name}ে {v["product"]}ে {term_text} মেয়াদে হার {v["rate"]}%' if bn else f'{name} quotes {v["rate"]}% for {v["product"]}, for {term_text}'
+            v=f['values'];term_text=term_label(v,bn,c.tenor)
+            amount=str(v['rate'])+('%' if v['unit']=='pct_year' else ' টাকা' if bn else ' taka')
+            label=('বার্ষিক ফি' if v.get('attribute')=='annual_fee' else 'হার') if bn else ('annual fee' if v.get('attribute')=='annual_fee' else 'rate')
+            text=f'{name}ে {product_label(v,bn)}ে '+(f'{term_text} মেয়াদে ' if term_text else '')+f'{label} {amount}' if bn else f'{name} quotes '+('an ' if label=='annual fee' else 'a ')+f'{label} of {amount} for {product_label(v,bn)}'+(f', for {term_text}' if term_text else '')
             if v['dated']:text+=', হারতালিকা '+v['doc_date'] if bn else ', schedule dated '+v['doc_date']
             add(text,f)
         if not rows:add('চাওয়া মেয়াদে এই সেবার হার আমাদের কাছে নেই' if bn else 'We do not have a published quote for this service and requested term',None)
@@ -369,7 +422,9 @@ def make_fallback(db,text,c,packs,banks,trace,intent=None,comparison=None):
         facts=comparison or comparison_facts(db,c.institution_id,c.product or 'fdr',c.tenor,c.basis,(),c.network,c.tier)
         for f in facts:
             other=db.get(Institution,f['institution_id']);v=f['values'];label=v.get('status_bn' if bn else 'status_en','অবস্থা যাচাই হয়নি' if bn else 'condition unverified')
-            text=f'{bank_name(db,other.id,True)}ে {v["product"]}ে হার {v["rate"]}%, আর {label}' if bn else f'{bank_name(db,other.id,False)} quotes {v["rate"]}% for {v["product"]}, with {label.lower()}'
+            amount=str(v['rate'])+('%' if v['unit']=='pct_year' else ' টাকা' if bn else ' taka')
+            term=term_label(v,bn,v.get('selected_tenor'))
+            text=f'{bank_name(db,other.id,True)}ে {product_label(v,bn)}ে '+(term+' মেয়াদে ' if term else '')+f'প্রকাশিত অঙ্ক {amount}, আর {label}' if bn else f'{bank_name(db,other.id,False)} quotes {amount} for {product_label(v,bn)}'+(f' over {term}' if term else '')+f', with {label.lower()}'
             if v.get('nearest'):text+=', মেয়াদ আলাদা' if bn else ', at a different term'
             if v['dated']:text+=', তালিকা '+v['doc_date'] if bn else ', schedule '+v['doc_date']
             add(text,f)
@@ -390,6 +445,27 @@ def format_date_local(value,bn):
     from ilma_api.rules.reasons import MONTHS_BN
     value=date.fromisoformat(value)
     return f'{value.year} সালের {MONTHS_BN[value.month]} মাসে' if bn else value.strftime('%B %Y')
+
+
+def term_label(v,bn,asked=None):
+    def one(months):return str(months//12)+(' বছর' if bn else ' year' if months==12 else ' years') if months%12==0 else str(months)+(' মাস' if bn else ' month' if months==1 else ' months')
+    if asked:return one(asked)
+    options=v.get('tenor_options')
+    if options:return (' বা ' if bn else ' or ').join(one(t) for t in options)
+    low,high=v.get('tenor_min_months'),v.get('tenor_max_months')
+    return one(low)+((' থেকে ' if bn else ' to ')+one(high) if high and high!=low else '') if low else ''
+
+
+def product_label(v,bn):
+    if not bn:return v['product']
+    from ilma_api.answer_wording import PRODUCTS
+    names=[('Confidence','কনফিডেন্স ডিপিএস'),('Kotipoti','কোটিপতি ডিপিএস'),('Lakhopati','লাখপতি স্কিম'),('Monthly Savings Scheme','মাসিক সঞ্চয় স্কিম')]
+    for token,label in names:
+        if token.lower() in v['product'].lower():
+            prefix='নারীদের ' if 'women' in v['product'].lower() else 'শিশুদের ' if 'child' in v['product'].lower() else ''
+            return prefix+label
+    if v['product_type']=='card':return ' '.join(s for s in [v.get('network'),v.get('tier'),'কার্ড'] if s)
+    return PRODUCTS.get(v['product_type'],('এই পণ্য',v['product']))[0]
 
 
 async def action_turn(selected,text,c,id,memory,packs,banks,db,trace,started,watch_identity):

@@ -92,8 +92,8 @@ def brief_fact(db,item,bn,bank_id):
             cfg=json.loads(Path(__file__).with_name('rules').joinpath('thresholds.json').read_text())
             total=(Decimal(str(cfg['crar_min']))+Decimal(str(cfg['crar_buffer'])))*100
             limit=spoken_percent(total,bn,negative=True);number=spoken_percent(value*100,bn,negative=value<0)
-            if value<0:return calculated+(f'লোকসানে ব্যাংকের নিজের মূলধন শেষ হয়ে গেছে, এখন মাইনাস {number}, অথচ বাফারসহ লাগে {limit}' if bn else f'Losses have exhausted its own capital, now minus {number}, against a {limit} minimum including the buffer')
-            return calculated+(f'ব্যাংকের নিজের মূলধন প্রায় {number}, বাফারসহ ন্যূনতম লাগে {limit}' if bn else f'Its own capital is about {number}, against a {limit} minimum including the buffer')
+            if value<0:return calculated+(f'ঝুঁকিভিত্তিক সম্পদের তুলনায় মূলধনের অনুপাত মাইনাস {number}, অথচ বাফারসহ লাগে {limit}' if bn else f'Its capital ratio is minus {number} of risk-weighted assets, against a {limit} minimum including the buffer')
+            return calculated+(f'ঝুঁকিভিত্তিক সম্পদের তুলনায় মূলধনের অনুপাত প্রায় {number}, বাফারসহ ন্যূনতম লাগে {limit}' if bn else f'Its capital ratio is about {number} of risk-weighted assets, against a {limit} minimum including the buffer')
         if row.metric=='npl_ratio':
             number=rounded(value*100,bn)
             return calculated+(f'প্রতি ১০০ টাকা ঋণে প্রায় {number} টাকা ফেরত আসছে না' if bn else f'About {number} taka in every 100 lent has repayment problems')

@@ -7,12 +7,23 @@ The new optional engine, signed MySQL memory, fact checker, range-aware service
 comparisons and sourced profile loader are implemented behind an activation flag.
 Real-data checks confirm one-year BRAC DPS comparisons include SBAC MSS and EBL
 Confidence DPS, and Prime's longer DPS terms are preserved. The curated profile
-import covers 21 quoted facts across six banks; remaining coverage is pending.
+import covers 38 quoted facts across eleven banks; absent fields remain empty.
 
-Live Spark returned HTTP 402 during this update. Real-model paraphrase accuracy,
+Live Spark access is restored. The 285-case baseline passed 213 cases, below the
+95% target, and 44 cases encountered provider timeouts. Later fixes still need
+complete live acceptance. Real-model paraphrase accuracy,
 varied wording, three live dialogs, speaking-latency acceptance and two-person
 listening are pending. Production activation remains disabled by default. Existing
 device, native-speaker and accessibility acceptance is not replaced by mock tests.
+
+Continuation checks: 354 Python tests plus 27 subtests and all seven Node suites
+passed. A subsequent isolated live sample passed 45 of 57 cases, with no bank
+target failures; all 12 unsuccessful cases encountered a model timeout, sometimes
+after a checker rejection. This sample predates the final fallback-only wording
+adjustment and is not a replacement for the complete 285-case acceptance run.
+A synthetic spoken Prime Bank query was transcribed correctly and selected Prime;
+its fallback audio lasted 26.7 seconds. This establishes one round-trip result,
+not human listening quality or generated-response latency acceptance.
 
 Verification for this update: 346 Python tests and 27 subtests passed, as did all
 seven documented Node suites. Browser checks passed at 360×640, 390×844 and

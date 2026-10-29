@@ -9,6 +9,7 @@ from ilma_api.db import BankProfile,Institution,engine
 FIELDS={'founded_year','branches','sub_branches','atms','agent_outlets','customers','known_for'}
 
 def validate(row):
+    if date.fromisoformat(row['as_of'])>date.today():raise ValueError('Future profile date')
     if row['field'] not in FIELDS:raise ValueError('Unknown profile field')
     if not row.get('quote') or not row.get('page') or not row.get('source_url','').startswith('https://'):
         raise ValueError('Profile requires a source URL, page and quotation')

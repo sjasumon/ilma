@@ -39,7 +39,7 @@ def matches_term(row,months):
 
 def nearest_term(row,months):
     info=terms(row)
-    if months is None:return row.tenor_months or info['tenor_min_months']
+    if months is None:return info['tenor_min_months'] or row.tenor_months
     if matches_term(row,months):return months
     if info['tenor_options']:return min(info['tenor_options'],key=lambda n:(abs(n-months),n))
     if info['tenor_min_months'] is not None:return max(info['tenor_min_months'],min(months,info['tenor_max_months']))

@@ -26,9 +26,9 @@ alternatives. Missing terms are not silently treated as a one-year request.
 Comparisons without a specified term disclose the anchor term used.
 
 Profile facts require a source URL, page and quotation. The curated profile file
-currently contains 21 facts for six banks from their 2025 annual reports. It is
+currently contains 38 facts for eleven banks from their 2025 annual reports. It is
 a source import, not a completed manual review. Missing fields stay absent;
-profiles for the remaining five banks and full profile coverage remain pending.
+full profile coverage and independent source review remain pending.
 Peer comparisons use computed conditions, comparable periods and cited inputs.
 They include available capital, problem-loan, profit, profit-change, rating and
 one-year deposit-rate comparisons. Incident counts describe the sourced
@@ -42,11 +42,19 @@ commands are in the runbook. Production requires a stable private log salt and
 disabled diagnostic recording.
 
 Local regression tests are separate from live model acceptance. During this
-implementation, live Spark returned HTTP 402. Consequently the real-model
+implementation, provider access was restored after an earlier HTTP 402. The
+285-case baseline passed 213 cases; 44 encountered provider timeouts. Subsequent
+fixes require a fresh complete evaluation. Consequently the real-model
 paraphrase accuracy, answer variation, three spoken dialogs, 95th-percentile
 speaking latency and two-person listening acceptance have **not passed**.
 Successful fallback replies must not be reported as successful Spark replies.
 Production activation remains pending those checks and source/profile review.
+
+The model deadline defaults to 4.5 seconds. `HUMAN_MODEL_TIMEOUT_SECONDS` permits
+an explicit deployment choice between 2 and 8 seconds; a longer deadline trades
+waiting time for fewer timeout fallbacks. Unverified financial bases are excluded
+from peer rankings. Capital percentages refer to risk-weighted assets, not
+deposits. Generated replies must pass numeric and citation checks before speech.
 
 `tests/human_voice_cases.json` contains 285 handwritten paraphrases, ten Bangla
 and five English phrasings per intent. The opt-in evaluator

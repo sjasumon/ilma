@@ -3,7 +3,7 @@ import pytest
 from ilma_api.profile_loader import validate
 
 def row(**changes):
-    return dict(field='branches',value='7',quote='7 branches',page='PDF 3',source_url='https://example.test/report.pdf',**changes)
+    return dict(field='branches',value='7',quote='7 branches',page='PDF 3',as_of='2025-12-31',source_url='https://example.test/report.pdf',**changes)
 
 def test_missing_quote_and_number_are_rejected():
     r=row();r['quote']=''

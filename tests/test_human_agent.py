@@ -32,6 +32,57 @@ def test_tenor_cannot_become_interest_and_bank_rates_cannot_be_swapped(db):
     a=answer('service_detail','BRAC Test Bank quotes 12 percent.',('test-fdr-1',))
     assert 'unsupported_percentage' in check(a,facts,BANKS)
 
+def test_bangla_term_word_is_not_the_month_may(db):
+    facts=comparison_facts(db,1,'fdr',12)
+    a=answer('service_detail','১২ মাস মেয়াদে হার ৮.৫ শতাংশ।',('test-fdr-1',)).model_copy(update={'language':'bn'})
+    assert 'unsupported_month' not in check(a,facts,BANKS)
+    a=a.model_copy(update={'reply':'মে মাসের হার ৮.৫ শতাংশ।'})
+    assert 'unsupported_month' in check(a,facts,BANKS)
+
+def test_decimal_word_and_precise_rounding_are_checked_as_one_claim():
+    from ilma_api.human_checker import numeric_claims,percent_support
+    from decimal import Decimal
+    assert numeric_claims('৯৩২ দশমিক ৮৯ কোটি')==[Decimal('932.89')]
+    assert numeric_claims('সরকারিভাবে নিশ্চিত নয়')==[]
+    assert numeric_claims('নয় শতাংশ')==[Decimal(9)]
+    assert numeric_claims('মাইনাস ৫.৫ শতাংশ')==[Decimal('-5.5')]
+    allowed=percent_support([{'kind':'peer','values':{'metric':'profit_change','value':20.069296,'median':30.265326}}])
+    assert Decimal('20.07') in allowed and Decimal('20.06') not in allowed
+
+def test_capital_ratio_cannot_be_recast_as_money_per_deposit():
+    fact={'fact_id':'capital-test','kind':'figure','institution_id':1,'text_en':'Capital ratio 15 percent','text_bn':'মূলধন ১৫ শতাংশ','source':{},'values':{'metric':'crar','value':.15}}
+    a=answer('bank_figures','There are 15 taka of capital per 100 taka.',('capital-test',))
+    assert 'capital_denominator' in check(a,[fact],BANKS)
+    a=a.model_copy(update={'reply':'Capital is 15 percent of risk-weighted assets.'})
+    assert 'capital_denominator' not in check(a,[fact],BANKS)
+
+def test_rank_direction_distinguishes_highest_from_lowest():
+    fact={'fact_id':'peer-test','kind':'peer','institution_id':1,'text_en':'Problem loans 2 percent','text_bn':'খেলাপি ঋণ ২ শতাংশ','source':{},'values':{'metric':'npl_ratio','value':2,'median':3,'rank':1,'rank_low':1,'rank_high':3}}
+    assert 'wrong_rank' in check(answer('bank_figures','This is the highest problem-loan ratio.',('peer-test',)),[fact],BANKS)
+    assert 'wrong_rank' not in check(answer('bank_figures','This is the lowest problem-loan ratio.',('peer-test',)),[fact],BANKS)
+
+def test_short_provider_references_expand_to_original_fact_ids(db):
+    async def scenario():
+        def respond(request):
+            body=json.loads(request.content);payload=json.loads(body['messages'][-1]['content'])
+            assert payload['fact_packs'][0]['facts'][0]['id']=='f0'
+            assert body['max_tokens']>=1000
+            draft=answer().model_copy(update={'used_fact_ids':['f0'],'sentence_fact_ids':[['f0']]})
+            return httpx.Response(200,json={'choices':[{'message':{'content':draft.model_dump_json()}}]})
+        async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+            result=await spark({'fact_packs':[{'facts':[{'id':'test-npl-1'}]}]},db,[],'synthetic',client)
+        assert result.used_fact_ids==['test-npl-1'] and result.sentence_fact_ids==[['test-npl-1']]
+    asyncio.run(scenario())
+
+def test_same_basis_annual_profit_change_uses_sourced_inputs(db):
+    from ilma_api.human_facts import annual_profit_change
+    from ilma_api.db import Fact
+    from datetime import date
+    for id,year,value in [('now',2025,300),('before',2024,200)]:
+        db.add(Fact(fact_id='synthetic-profit-'+id,institution_id=1,metric='net_profit',value=value,unit='bdt',period=str(year),period_end=date(year,12,31),basis='solo',source_id='synthetic-source',quote='Synthetic profit '+str(value),checked_by='test-fixture',checked_on=date(2026,10,1)))
+    db.flush();fact=annual_profit_change(db,1)
+    assert fact['values']['value']==50 and len(fact['source']['inputs'])==2
+
 def test_new_product_fetches_then_checks_the_second_call(db):
     async def scenario():
         first=answer('compare','',()).model_copy(update={'product':'fdr','tenor_months':12,'needs_facts':'compare','sentence_fact_ids':[]})

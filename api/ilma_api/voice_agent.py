@@ -359,7 +359,7 @@ def service_request(text,c,institution_id):
     normalized=normalize_numbers(text).translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
     months=re.search(r'\b(\d+)\s*(?:months?|মাস)',normalized,re.I)
     years=re.search(r'\b(\d+)\s*(?:years?|বছর)',normalized,re.I)
-    tenor=int(months[1]) if months else int(years[1])*12 if years else c.tenor
+    tenor=int(months[1]) if months else int(years[1])*12 if years else c.tenor if product==c.product else None
     if tenor is not None and not 1<=tenor<=600:return None
     tier=next((value for pattern,value in [(r'signature|সিগনেচার','Signature'),(r'platinum|প্লাটিনাম','Platinum'),(r'gold|গোল্ড','Gold'),(r'world|ওয়ার্ল্ড','World'),(r'infinite|ইনফিনিট','Infinite'),(r'classic|ক্লাসিক','Classic'),(r'titanium|টাইটানিয়াম','Titanium')] if re.search(pattern,text,re.I)),c.tier)
     network='Mastercard' if re.search(r'mastercard|মাস্টারকার্ড',text,re.I) else 'Amex' if re.search(r'amex|আমেক্স',text,re.I) else 'Visa' if re.search(r'visa|ভিসা',text,re.I) else c.network

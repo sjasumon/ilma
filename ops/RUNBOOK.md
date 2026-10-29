@@ -244,6 +244,13 @@ An HTTP 402 from Spark requires resolving provider account/model access; changin
 templates does not resolve that provider response. Do not paste credentials into
 logs, issue descriptions or chat.
 
+Provider access was restored during the 29 October validation. Keep activation
+disabled until the complete evaluation meets its target; successful fallback
+speech does not count as generated-answer acceptance. The model timeout defaults
+to 4.5 seconds and can explicitly be set with `HUMAN_MODEL_TIMEOUT_SECONDS`
+(2–8 seconds). Evaluate both response latency and fallback frequency before
+changing this deployment setting.
+
 Production startup rejects a missing/short stable `VOICE_LOG_SALT`, enabled audio
 diagnostics or a database name other than `ilma`. Conversation tokens use the
 stable salt, so changing it invalidates existing conversation tokens.

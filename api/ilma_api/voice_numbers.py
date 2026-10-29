@@ -67,6 +67,9 @@ def bangla_number(value, *, ratio=False):
 
 
 BN_LEXICON={'AAA':'ট্রিপল এ','CRAB':'ক্র্যাব','CRISL':'ক্রিসল','ECRL':'ই সি আর এল',
+ 'Visa':'ভিসা','Mastercard':'মাস্টারকার্ড','Amex':'অ্যামেক্স','Gold':'গোল্ড','Platinum':'প্লাটিনাম',
+ 'Signature':'সিগনেচার','World':'ওয়ার্ল্ড','Infinite':'ইনফিনিট','Titanium':'টাইটানিয়াম','Classic':'ক্লাসিক',
+ 'Confidence':'কনফিডেন্স','Kotipoti':'কোটিপতি','Lakhopati':'লাখপতি',
  'FDR':'এফডিআর','DPS':'ডিপিএস','MSS':'এম এস এস','NBFI':'আর্থিক প্রতিষ্ঠান','BRAC':'ব্র্যাক','DBBL':'ডাচ বাংলা',
  'NCC':'এন সি সি','MTB':'এম টি বি','SBAC':'সাউথ বাংলা','EBL':'ইস্টার্ন ব্যাংক',
  'NPL':'খেলাপি ঋণ','CRAR':'মূলধনের অনুপাত','AA':'ডাবল এ','A':'এ','B':'বি','C':'সি',
@@ -78,6 +81,7 @@ def pronounce(text, language):
     """Idempotent TTS-only normalization; the displayed speech keeps its digits."""
     text=re.sub(r'\b(?:PLC|Ltd|Limited)\b\.?|পিএলসি|লিমিটেড','',text,flags=re.I)
     text=text.translate(str.maketrans(BN_DIGITS,'0123456789')).replace('−','-')
+    text=re.sub(r'(?:মাইনাস|ঋণাত্মক|minus)\s+(?=\d)','-',text,flags=re.I)
     text=re.sub(r'[()\[\]·—–;]',', ',text)
     if language!='bn':
         text=re.sub(r'\bAAA\b','triple A',text)
