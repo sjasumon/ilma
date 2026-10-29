@@ -1,5 +1,79 @@
 # APP_SPEC_02: implementation and acceptance record
 
+## Full live validation with the 8-second model deadline, 29 October 2026
+
+The pushed release `90caf6e` was tested with the contextual engine enabled and
+an 8-second model deadline. Paid-provider corpus and scenario tests used an
+isolated preview with the same application code and the `ilma` database;
+admission limits were raised only on that preview. Public-site checks covered
+layout and security headers. No user recording was used or published.
+
+| Check | Observed result |
+| --- | --- |
+| Backend | 355 tests and 27 subtests passed |
+| Frontend | All seven documented Node suites passed |
+| Full live corpus | 240/285 passed the evaluator gate, 84.2%; target 95% not met |
+| Intent labels | 267/285 matched, 93.7%; includes fallback routing, not generated-answer acceptance |
+| Bank retention | Zero bank-target failures and zero unintended bank changes |
+| Provider failures | 11 cases encountered a timeout; four unavailable calls had schema failures |
+| Typed response time | Median 3,548 ms, p95 8,865 ms, maximum 14,163 ms; excludes ASR/TTS |
+| Model calls | 223 turns used one Spark call, 52 used two, ten used three including repair |
+| Additional scenarios | 28 turns across dialogs A/B/C, memory, nine demo banks, comparisons and unavailable-bank replies |
+| Pronunciation shape | All 28 scenario speech texts passed the no-digits/no-Latin/no-percent/brackets Bangla check; this is not listening acceptance |
+| Live app layout | Header/menu, all tabs, BN/EN, scrolling, phone/landscape/keyboard-size/desktop and 200% text checks passed |
+| Live headers | Shell, API docs, OpenAPI and health returned 200 with CSP, HSTS and nosniff |
+| Repository checks | Policy and full-history redacted secrets scan passed |
+
+The corpus gate requires the expected intent, expected bank and a checked
+generated answer; Repeat accepts exact server replay. A successful template
+fallback alone does not pass the gate. These are single-run observations, not a
+population accuracy or p95 speech-latency guarantee.
+
+Dialog A produced checked generated answers for the opening, history, DPS and
+thanks. Dialog B's opening and comparison passed, but its Prime correction used
+a template and changed to a three-year comparison instead of explaining the
+missing one-year Prime quote and available alternatives. Dialog C declined to
+choose a bank and offered factual comparison. Card-to-deposit filters cleared,
+bank switching cleared tenor, exact Repeat retained the preceding answer, and
+Pubali/Rupali explicitly reported unavailable bank information.
+
+The explicit one-year BRAC FDR probe returned three other banks. The BRAC DPS
+probe included EBL Confidence at 8% and SBAC MSS at 10%. The card comparison
+probe used fallback wording and spoke the same three banks as its source cards;
+this does not establish generated comparison reliability across other inputs.
+
+### Failed and remaining gates
+
+- Comparisons passed only 5/15 corpus cases; corrections passed 7/15. Rejected
+  outputs included bank/rate binding, ranks, citations, unsupported values,
+  repeated facts and wording constraints. Checks remained enabled.
+- First-answer variation failed: ten of 36 bank pairs exceeded 50% shared unique
+  words, measured against the smaller word set after removing the next question.
+  The two fresh EBL conversations returned identical fallback text. The demo has
+  eight strong banks plus one with insufficient status data, not nine strong
+  banks; no status was changed to satisfy a test.
+- Six real TTS dialog clips measured 30,929, 29,153, 26,906, 24,111, 30,746 and
+  11,076 ms. Two exceeded the 30-second limit. TTS-only onset ranged from 859 to
+  1,176 ms, excluding understanding, recording and ASR, so it cannot establish
+  the end-to-end speed target.
+- A browser synthetic-mic round trip transcribed Prime correctly, uploaded one
+  compressed recording, played a response and reopened the microphone. Its first
+  run failed the one-audio-URL assertion; a diagnostic repeat passed with one
+  URL. Treat the initial extra-request/playback observation as unresolved.
+  Playback began about 14.7–14.8 seconds after the initial tap in these two runs,
+  including capture and ASR. No 95th-percentile speech-start claim is made.
+- Real playback stopped in 6 ms or less via Stop, reply tap and synthetic
+  voice-detection handoff. Physical microphone echo rejection, noisy speech,
+  older phones, TalkBack/VoiceOver and the two-person listening exercise remain
+  unverified. Independent financial/source review remains outstanding.
+
+The full automated/live round is recorded; release acceptance has **not passed**.
+The owner-authorized live engine remains enabled with the 8-second deadline.
+Prioritize term-preserving corrections, factual comparison wording, speech
+pagination/duration, intermittent audio requests and fallback variety before
+repeating the failed gates and the complete corpus. Private audio and detailed
+response artifacts remain outside the published tree.
+
 ## Contextual human voice update, 29 October 2026
 
 See [contextual voice behavior and remaining acceptance](specs/HUMAN_VOICE.md).

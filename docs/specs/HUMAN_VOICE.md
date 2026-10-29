@@ -52,6 +52,12 @@ On 29 October the owner authorized production activation with an 8-second model
 deadline while these checks and independent source/profile review remain pending.
 Activation does not establish completion of the acceptance requirements.
 
+The subsequent complete 8-second preview evaluation passed 240/285 cases (84.2%)
+with zero bank-target failures; the 95% gate remains unmet. Comparisons,
+corrections, answer variation and measured speech duration still have failures.
+See the full live validation section in `docs/VOICE_ACCEPTANCE.md` for methods,
+timing limits, intermittent browser observations and remaining human acceptance.
+
 The model deadline defaults to 4.5 seconds. `HUMAN_MODEL_TIMEOUT_SECONDS` permits
 an explicit deployment choice between 2 and 8 seconds; a longer deadline trades
 waiting time for fewer timeout fallbacks. Unverified financial bases are excluded
