@@ -109,6 +109,45 @@ def polish(sentence,registry,bn):
         return sentence
     return sentence
 
+def bank_status(facts,bank_id):
+    for f in facts.values():
+        if f.get('kind')=='status' and f.get('institution_id')==bank_id:
+            return f.get('status',{}).get('code') or f.get('values',{}).get('status','no_data')
+    return 'no_data'
+
+def introduction(db,c,registry,facts):
+    """First answer about a strong bank: name, founding year if quoted, and one confirmed award."""
+    bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
+    if not name or bank_status(facts,c.institution_id)!='strong':return [],{}
+    lines=[];extra={}
+    founded=next((f for f in facts.values() if f.get('kind')=='profile' and f.get('institution_id')==c.institution_id and f['values'].get('field')=='founded_year'),None)
+    if founded:
+        year=str(founded['values']['value'])
+        lines.append((f"{name.text} {year.translate(str.maketrans('0123456789','০১২৩৪৫৬৭৮৯'))} সালে প্রতিষ্ঠিত।" if bn else f"{name.text} was established in {year}.",[founded['fact_id']]))
+    from ilma_api.awards import intro_award,phrase,fact
+    try:found=intro_award(db,c.institution_id)
+    except Exception:found=None  # The awards tables may not be loaded yet.
+    if found:
+        award,awarder,sources=found;item=fact(award,awarder,sources,c.language)
+        lines.append((phrase(award,awarder,c.language,None if lines else name.text),[item['fact_id']]));extra[item['fact_id']]=item
+    return (lines,extra) if lines and (found or founded) else ([],{})
+
+def award_answer(db,c,registry):
+    from ilma_api.awards import rows,phrase,fact,HIGH_RISK
+    from ilma_api.report_card import get_institution_report_card
+    bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
+    label=name.text if name else ''
+    try:found=rows(db,c.institution_id)[:3]
+    except Exception:found=[]
+    lines=[];items=[]
+    for index,(award,awarder,sources) in enumerate(found):
+        item=fact(award,awarder,sources,c.language);items.append(item)
+        lines.append((phrase(award,awarder,c.language,label if index==0 else None),[item['fact_id']]))
+    if not lines:lines.append((polish(label+'ের ',{},True)+'যাচাই করা কোনো পুরস্কারের তথ্য আমাদের কাছে নেই।' if bn else f"We have no verified award information for {label}.",[]))
+    status=((get_institution_report_card(db,c.institution_id) or {}).get('status') or {}).get('code')
+    if status=='high' and found:lines.append((HIGH_RISK[0 if bn else 1],[]))
+    return lines,items
+
 RATE_LINE=re.compile(r'^(?P<head>.*?)(?P<product>(?<!\S)(?!থেকে)\S+ে) (?P<term>[০-৯\d.]+ (?:বছর|মাস)) মেয়াদে (?P<label>সুদ|আনুমানিক মুনাফা) (?P<rate>[০-৯\d.]+%)।$')
 def merge_rates(lines,facts,banks=()):
     """Say the product once: "ডিপিএসে ১ বছরে সুদ ৭%, ৩ বছরে ৭.৫%।"; a term's meaning is named."""
@@ -308,9 +347,16 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         question=(' নাকি '.join(o['label'] for o in options)+' বলছেন?' if c.language=='bn' else 'Did you mean '+' or '.join(o['label'] for o in options)+'?')
         result=render(controls('unclear',c,question),c,[],trace,'code');result['next']={'question':question,'options':options}
         return await finish(result,safe,id,memory,db,started)
-    if r.bank_id is None and (selected=='ask_bank' or r.intent in {'bank_overview','bank_condition','bank_reasons','bank_figures','bank_profile','bank_history','services_list','service_detail'}):
+    if r.bank_id is None and (selected=='ask_bank' or r.intent in {'bank_overview','bank_condition','bank_reasons','bank_figures','bank_profile','bank_history','bank_awards','services_list','service_detail'}):
         question='কোন ব্যাংকের কথা জানতে চান?' if c.language=='bn' else 'Which bank would you like to know about?'
         result=render(controls('unclear',c,'',question,['listen','end']),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
+    if r.intent=='bank_awards' and not selected:
+        # Awards are answered by code from sourced rows; the model never names them.
+        lines,award_facts=await call(db,lambda owned:award_answer(owned,c,registry))
+        question,buttons=next_steps('bank_awards',c,id)
+        a=controls('bank_awards',c,' '.join(t for t,_ in lines),question,buttons).model_copy(update={'used_fact_ids':[f for _,ids in lines for f in ids],'sentence_fact_ids':[ids for _,ids in lines]})
+        result=render(a,c,award_facts,trace,'code')
         return await finish(result,safe,id,memory,db,started)
     # Persist code-resolved context before a paid wait, so interrupting a new
     # bank request cannot restore the previous bank on the next question.
@@ -452,6 +498,13 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
             if numeric_count+count>1 or BANNED.search(sentence):continue
             if len(pronounce(' '.join(s for s,_ in lines)+' '+sentence+' '+question,c.language).split())<=45:
                 lines.append((sentence,list(item.fact_ids)));numeric_count+=count
+    if intent in {'bank_overview','bank_condition'} and c.institution_id and c.institution_id not in memory.get('introduced_banks',[]):
+        intro,extra=await call(db,lambda owned:introduction(owned,c,registry,facts))
+        if intro:
+            founded={fid for _,ids in intro for fid in ids}
+            lines=intro+[(s,ids) for s,ids in lines if not set(ids)&founded]
+            facts.update(extra)
+        memory['introduced_banks']=[*memory.get('introduced_banks',[]),c.institution_id][-20:]
     # Never narrate old protection, raw incident headlines or unbounded paragraphs.
     if not r.direct_protection:lines=[(s,ids) for s,ids in lines if not PROTECTION_WORDS.search(s)]
     lines=[(polish(re.sub(r'([।.?])\1+',r'\1',s),registry,bn),ids) for s,ids in lines]

@@ -11,6 +11,8 @@ ACRONYMS={'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
 PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsur(?:ance|ed|e)\b|\bprotect(?:ion|ed)\b|(?:ব্যাংক|bank).{0,20}(?:বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
 CORRECTION=re.compile(r'^না(?:[\s,।]|$)|না আমি|নয়|নয়|ভুল|শুধরে|বদলে|সংশোধন|ধরুন|আগের প্রশ্ন|আমার কথা ছিল|কথাই বলছি|আমি বলেছিলাম|নাম.{0,24}হবে|জন্যই জানতে চেয়েছি|\b(?:i meant|not|correct|instead|that should|use .*previous|was asking|previous question|bank in my last question)\b',re.I)
 
+AWARDS=re.compile(r'পুরস্কার|পুরষ্কার|অ্যাওয়ার্ড|এওয়ার্ড|স্বীকৃতি|\bawards?\b|\brecogni[sz]',re.I)
+
 def is_best_dps_question(text):
     """Only the global best-DPS question family; no ASR normalization changes."""
     value=unicodedata.normalize('NFC',text).casefold()
@@ -123,7 +125,8 @@ def resolve(text,c,banks):
         if explain and (metric or product or re.search(r'মধ্যমান|বাফার|median|buffer',text,re.I)):intent='explain_term'
         elif wanted:intent='bank_profile'
         elif metric and re.search(r'কত|অঙ্ক|হিসাব|figure|how much|ratio|percentage|profit',text,re.I):intent='bank_figures'
-    if not direct and intent not in {'repeat','stop'}:
+    if not correction and intent not in {'compare','insurance','stop','repeat'} and AWARDS.search(text):intent='bank_awards'
+    if not direct and intent not in {'repeat','stop','bank_awards'}:
         if re.search(r'সেরা|(?:সবচেয়ে|সবার চেয়ে).*(?:ভালো|ভাল|নিরাপদ|ভরসা)|এক নম্বর ব্যাংক|\b(?:best|safest|most reliable|number (?:one|1))\b',text,re.I):intent='best_bank'
         elif re.search(r'টাকা.*(?:রাখব|রাখা উচিত|তুলে|সরাব)|কোথায়.*রাখ|কোন ব্যাংকে.*সঞ্চয়|বেছে|সিদ্ধান্ত.*(?:নিন|নেব|নিতে)|পরামর্শ চাই|আমার হয়ে|\brecommend\b|\bshould (?:i|we)\b|\b(?:i|we) should\b|(?:which|what) bank should|decide.*(?:keep|savings)|choose.*bank|where.*(?:keep|invest|deposit)',text,re.I):intent='advice_request'
     if intent is None and re.search(r'সেবা|পণ্য|services|products',text,re.I):intent='services_list'
