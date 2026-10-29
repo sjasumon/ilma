@@ -130,7 +130,8 @@ class TestMetaVoice(unittest.IsolatedAsyncioTestCase):
         with patch('ilma_api.voice.asyncio.sleep', new_callable=AsyncMock) as sleep:
             async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
                 self.assertEqual(await voice.transcribe(wav(), 'en', [], client), 'Sample Bank')
-            self.assertEqual([call.args[0] for call in sleep.await_args_list], [2, 4])
+            self.assertEqual(sleep.await_count,2)
+            self.assertTrue(all(.1<=call.args[0]<=.25 for call in sleep.await_args_list))
         self.assertEqual(len(calls), 3)
 
     async def test_upstream_errors_do_not_expose_key_or_response(self):

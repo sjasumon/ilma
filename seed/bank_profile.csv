@@ -1,0 +1,22 @@
+fact_id,bank_slug,field,value,as_of,source_url,page,quote
+profile:2025:ebl:branches,ebl,branches,85,2025-12-31,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2025.pdf,PDF 10,85 Branches
+profile:2025:ebl:sub_branches,ebl,sub_branches,52,2025-12-31,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2025.pdf,PDF 10,52 Sub-branches
+profile:2025:ebl:atms,ebl,atms,222,2025-12-31,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2025.pdf,PDF 10,222 ATM
+profile:2025:ebl:agent_outlets,ebl,agent_outlets,119,2025-12-31,https://www.ebl.com.bd/assets/reports/annual/EBL-ANNUAL-REPORT-2025.pdf,PDF 10,119 Agent Outlets
+profile:2025:bracbank:branches,bracbank,branches,194,2025-12-31,https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/BRAC_Bank_AR_2025_Final_Version_updated_on_09.07.2026_compressed6a549062be056.pdf,PDF 10,Branches 194
+profile:2025:bracbank:sub_branches,bracbank,sub_branches,116,2025-12-31,https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/BRAC_Bank_AR_2025_Final_Version_updated_on_09.07.2026_compressed6a549062be056.pdf,PDF 10,Sub-Branches 116
+profile:2025:bracbank:atms,bracbank,atms,329,2025-12-31,https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/BRAC_Bank_AR_2025_Final_Version_updated_on_09.07.2026_compressed6a549062be056.pdf,PDF 10,ATMs 329
+profile:2025:bracbank:agent_outlets,bracbank,agent_outlets,1122,2025-12-31,https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/BRAC_Bank_AR_2025_Final_Version_updated_on_09.07.2026_compressed6a549062be056.pdf,PDF 10,"Agent Banking Outlets 1,122"
+profile:2025:bracbank:customers,bracbank,customers,2300000,2025-12-31,https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/BRAC_Bank_AR_2025_Final_Version_updated_on_09.07.2026_compressed6a549062be056.pdf,PDF 10,Customers 2.3 mn
+profile:2025:bankasia:founded_year,bankasia,founded_year,1999,2025-12-31,https://www.bankasia-bd.com/assets/reports/annual/Bank-Asia-AIR-2025.pdf,PDF 17,Certificate of incorporation received 28/09/1999
+profile:2025:bankasia:branches,bankasia,branches,131,2025-12-31,https://www.bankasia-bd.com/assets/reports/annual/Bank-Asia-AIR-2025.pdf,PDF 17,Number of branches 131
+profile:2025:bankasia:sub_branches,bankasia,sub_branches,14,2025-12-31,https://www.bankasia-bd.com/assets/reports/annual/Bank-Asia-AIR-2025.pdf,PDF 17,Number of Sub-Branches 14
+profile:2025:bankasia:atms,bankasia,atms,210,2025-12-31,https://www.bankasia-bd.com/assets/reports/annual/Bank-Asia-AIR-2025.pdf,PDF 13,210 ATMs
+profile:2025:bankasia:agent_outlets,bankasia,agent_outlets,5057,2025-12-31,https://www.bankasia-bd.com/assets/reports/annual/Bank-Asia-AIR-2025.pdf,PDF 13,"5,057 outlets"
+profile:2025:dutchbangl:branches,dutchbangl,branches,243,2025-12-31,https://www.dutchbanglabank.com/investor-relations/Annual-Report-2025/Annual-Report-2025.pdf,PDF 14,243 branches
+profile:2025:dutchbangl:sub_branches,dutchbangl,sub_branches,334,2025-12-31,https://www.dutchbanglabank.com/investor-relations/Annual-Report-2025/Annual-Report-2025.pdf,PDF 14,334 sub-branches
+profile:2025:citybank:customers,citybank,customers,2700000+,2025-12-31,https://citybankplc.com/admin/uploads/files/reports/annual-report/~2025~City-Bank-AR-2025.pdf,PDF 11,2.7+ mn Total Customer Base
+profile:2025:primebank:founded_year,primebank,founded_year,1995,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 28,Date of Incorporation 12.02.1995
+profile:2025:primebank:branches,primebank,branches,147,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 26,147 Branches
+profile:2025:primebank:sub_branches,primebank,sub_branches,10,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 26,10 Sub-branches
+profile:2025:primebank:agent_outlets,primebank,agent_outlets,174,2025-12-31,https://www.primebank.com.bd/assets/reports/annual-disclosure/Prime-Bank-Annual-Report-2025.pdf,PDF 26,174 Agent Outlets

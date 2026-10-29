@@ -4,7 +4,7 @@ from decimal import Decimal
 import json
 import re
 from pathlib import Path
-from sqlalchemy import Boolean, Date, DateTime, Integer, Numeric, inspect, text, delete
+from sqlalchemy import Boolean, Date, DateTime, Integer, Numeric, JSON, inspect, text, delete
 from sqlalchemy.orm import Session
 from ilma_api import db as models
 from ilma_api.export_seed import read, quote_numbers
@@ -25,6 +25,8 @@ def prepare_schema(engine):
                 connection.execute(text("ALTER TABLE fact ADD COLUMN basis VARCHAR(32) NOT NULL DEFAULT 'unknown'"))
             if not next(c for c in schema.get_columns('source') if c['name'] == 'published_at')['nullable']:
                 connection.execute(text('ALTER TABLE source MODIFY published_at DATE NULL'))
+            for name,sql in [('tenor_min_months','INT NULL'),('tenor_max_months','INT NULL'),('tenor_options','JSON NULL')]:
+                if name not in {c['name'] for c in schema.get_columns('service_offer')}:connection.execute(text('ALTER TABLE service_offer ADD COLUMN '+name+' '+sql))
             if 'variant' not in {c['name'] for c in schema.get_columns('service_offer')}:
                 connection.execute(text("ALTER TABLE service_offer ADD COLUMN variant VARCHAR(16) NOT NULL DEFAULT 'main'"))
 
@@ -41,6 +43,7 @@ def typed(model, row):
         elif isinstance(kind, Date): value = date.fromisoformat(value)
         elif isinstance(kind, Integer): value = int(value)
         elif isinstance(kind, Numeric): value = Decimal(value)
+        elif isinstance(kind, JSON): value = json.loads(value)
         result[key] = value
     return result
 
@@ -83,6 +86,8 @@ def load(directory, engine):
                 seen.add(unique)
                 if row['unit']=='ratio' and not 0 <= row['value'] <= 1: fail('ratio outside 0..1')
             if name == 'service_offer':
+                from ilma_api.service_terms import parse_terms
+                row.update(parse_terms(row['product'],row['condition'],row.get('tenor_months')))
                 for field in ('source_url','page','quote','doc_date'):
                     if not row.get(field): fail('missing ' + field)
                 if row.get('value_num') is not None and row['value_num'] not in quote_numbers(row['quote']) and not (

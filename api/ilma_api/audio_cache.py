@@ -77,7 +77,11 @@ class AudioStore:
             descriptor={'key':key,'text':text,'language':language,'short':short,'expires':time.time()+600}
             await asyncio.to_thread(self.atomic,self.directory/'tickets'/(token+'.json'),json.dumps(descriptor,ensure_ascii=False).encode())
             urls.append('/v1/audio/'+token+'.mp3')
-            if not await asyncio.to_thread(self.valid_cache,key,short):await self.job(key,text,language,short)
+            if not await asyncio.to_thread(self.valid_cache,key,short):
+                try:await self.job(key,text,language,short)
+                except HTTPException as error:
+                    if error.status_code!=503:raise
+                    # Keep the ticket: its GET can retry when capacity opens.
         return {'audio_url':urls[0],'audio_urls':urls} if urls else None
     def ticket(self,token):
         if not re.fullmatch('[A-Za-z0-9_-]{32}',token):return None
@@ -93,7 +97,7 @@ class AudioStore:
         except BlockingIOError:os.close(fd);return None
     async def job(self,key,text,language,short=False):
         if key in self.jobs:return self.jobs[key]
-        if len(self.jobs)>=32:raise HTTPException(503,'Speech is busy')
+        if len(self.jobs)>=2:raise HTTPException(503,{'code':'speech_busy','retry_after':1},headers={'Retry-After':'1'})
         job=AudioJob();self.jobs[key]=job
         task=asyncio.create_task(self.pump(key,text,language,job,short));self.tasks.add(task);task.add_done_callback(self.tasks.discard)
         return job
@@ -184,7 +188,7 @@ class AudioStore:
             self.jobs.pop(key,None)
     async def wait(self,ticket):
         descriptors=[await asyncio.to_thread(self.ticket,url.rsplit('/',1)[-1][:-4]) for url in ticket['audio_urls']]
-        deadline=time.monotonic()+40
+        deadline=time.monotonic()+30
         while time.monotonic()<deadline:
             ready=True
             for item in descriptors:
@@ -197,6 +201,14 @@ class AudioStore:
                 if job is None and await asyncio.to_thread((self.directory/(key+'.error')).is_file):return False
             if ready:return True
             await asyncio.sleep(.05)
+        return False
+    async def failed(self,ticket):
+        for url in ticket['audio_urls']:
+            item=await asyncio.to_thread(self.ticket,url.rsplit('/',1)[-1][:-4])
+            if not item:return True
+            key=item['key'];job=self.jobs.get(key)
+            if job and job.done.is_set() and job.failed:return True
+            if job is None and await asyncio.to_thread((self.directory/(key+'.error')).is_file):return True
         return False
     async def response(self,token):
         item=await asyncio.to_thread(self.ticket,token)

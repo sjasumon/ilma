@@ -5,6 +5,8 @@ import shutil
 import json
 import unicodedata
 import wave
+import random
+import time
 
 import httpx
 from ilma_api import settings
@@ -55,11 +57,17 @@ async def transcribe(audio: bytes, language: str, keywords: list[str], client=No
                    'audio': ('recording.wav', audio, 'audio/wav')},
         )
     async def send_with_retry(http):
+        deadline=time.monotonic()+25
         for attempt in range(3):
-            response = await asyncio.wait_for(send(http), 8)
-            if response.status_code not in (429, 500) or attempt == 2:
+            try:
+                response = await asyncio.wait_for(send(http), min(8,max(.01,deadline-time.monotonic())))
+            except (httpx.ConnectError,httpx.TimeoutException,asyncio.TimeoutError):
+                if attempt==2:raise
+                await asyncio.sleep(.1+random.random()*.15)
+                continue
+            if response.status_code not in (429,500,502,503,504) or attempt==2:
                 return response
-            await asyncio.sleep(2 * (attempt + 1))
+            await asyncio.sleep(.1+random.random()*.15)
     if client is None:
         from ilma_api.http_clients import shared
         client=shared()
@@ -102,6 +110,8 @@ def ffmpeg_executable():
 
 async def convert_audio(audio: bytes, mime: str) -> bytes:
     """Convert browser audio using pipes only; no audio file touches disk."""
+    if not audio:
+        raise VoiceError('no_speech',422,'কথা শোনা যায়নি। আবার বলুন।','No audio was received. Please try again.')
     if len(audio) > MAX_AUDIO_BYTES:
         raise VoiceError('audio_too_large', 413, 'রেকর্ডিংটি খুব বড়।', 'Recording is too large.')
     if mime not in {'audio/webm', 'audio/mp4', 'audio/wav', 'audio/x-wav'}:

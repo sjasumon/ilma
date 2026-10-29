@@ -195,6 +195,9 @@ class ServiceOffer(Base):
     network = Column(String(32), nullable=True)
     tier = Column(String(32), nullable=True)
     tenor_months = Column(Integer, nullable=True)
+    tenor_min_months = Column(Integer, nullable=True)
+    tenor_max_months = Column(Integer, nullable=True)
+    tenor_options = Column(JSON, nullable=True)
     attribute = Column(String(64), nullable=False)
     value_num = Column(Numeric(20, 6), nullable=True)
     value_text = Column(Text, nullable=False)
@@ -293,7 +296,32 @@ class AppModelCall(Base):
     status = Column(String(16), nullable=False)
     input_tokens = Column(Integer, nullable=True)
     output_tokens = Column(Integer, nullable=True)
+    failure_reason = Column(String(255), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
+class BankProfile(Base):
+    __tablename__='bank_profile'
+    fact_id=Column(String(64),primary_key=True)
+    bank_id=Column(Integer,ForeignKey('institution.id'),nullable=False,index=True)
+    field=Column(String(32),nullable=False)
+    value=Column(Text,nullable=False)
+    as_of=Column(Date,nullable=False)
+    source_url=Column(Text,nullable=False)
+    page=Column(String(32),nullable=False)
+    quote=Column(Text,nullable=False)
+    checked_by=Column(String(64),nullable=False,default='source-import')
+    checked_on=Column(Date,nullable=False,default=date.today)
+    __table_args__=(UniqueConstraint('bank_id','field','as_of',name='uq_profile_bank_field_date'),)
+
+
+class AppConversation(Base):
+    __tablename__='app_conversation'
+    conversation_id=Column(String(32),primary_key=True)
+    memory=Column(JSON,nullable=False)
+    created_at=Column(DateTime,nullable=False,default=datetime.utcnow)
+    updated_at=Column(DateTime,nullable=False,default=datetime.utcnow)
+    expires_at=Column(DateTime,nullable=False,index=True)
 
 
 class AppRateCounter(Base):
@@ -306,7 +334,7 @@ class AppRateCounter(Base):
 for table in Base.metadata.tables.values():
     table.dialect_options["mysql"]["charset"] = "utf8mb4"
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 5,"read_timeout":5,"write_timeout":5}, pool_recycle=1800)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 5,"read_timeout":5,"write_timeout":5}, pool_recycle=1800, pool_size=5, max_overflow=5, pool_timeout=5)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():

@@ -1,10 +1,11 @@
 import re
+import time,threading,copy
 from datetime import date
 from unicodedata import normalize
 from typing import Literal
 from typing import Optional
 from pathlib import Path
-from fastapi import FastAPI, Depends, Query, HTTPException, status, Request
+from fastapi import FastAPI, Depends, Query, HTTPException, status, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,9 +22,13 @@ from ilma_api.admission import ProviderAdmissionMiddleware
 from ilma_api.security_headers import SecurityHeadersMiddleware
 
 from contextlib import asynccontextmanager
+_index_cache={}
+_index_lock=threading.Lock()
 
 @asynccontextmanager
 async def lifespan(app):
+    from ilma_api.settings import validate_environment
+    validate_environment()
     from ilma_api import http_clients
     await http_clients.start()
     import asyncio
@@ -89,7 +94,7 @@ def serve_index():
     return {"message": "ILMA App API is running."}
 
 @app.get("/v1/health")
-def health_check(db: Session = Depends(get_db)):
+def health_check(db: Session = Depends(get_db), response: Response = None):
     try:
         rel = db.query(Release).order_by(Release.loaded_at.desc()).first()
         release_id = rel.release_id if rel else "unknown"
@@ -97,6 +102,7 @@ def health_check(db: Session = Depends(get_db)):
         bank_ready = {'institution', 'institution_alias', 'fact', 'source', 'rate', 'insurance_rule'} <= tables
         bank_ready = bank_ready and db.query(Institution.id).first() is not None
         voice_ready = {'app_question_log', 'app_rate_counter', 'app_content'} <= tables
+        if response is not None and (not bank_ready or not voice_ready):response.status_code=503
         return {
             "ok": bool(bank_ready and voice_ready),
             "release_id": release_id,
@@ -105,6 +111,7 @@ def health_check(db: Session = Depends(get_db)):
             "voice_tables_ready": voice_ready,
         }
     except Exception as e:
+        if response is not None:response.status_code=503
         return {
             "ok": False,
             "release_id": None,
@@ -178,6 +185,11 @@ def search_institutions(
 
 @app.get("/v1/institutions/index")
 def get_institution_index(db: Session = Depends(get_db)):
+    key=str(db.get_bind().url)
+    if db.get_bind().dialect.name=='mysql':
+        with _index_lock:
+            cached=_index_cache.get(key)
+            if cached and cached[0]>time.monotonic():return copy.deepcopy(cached[1])
     institutions = db.query(Institution).all()
     from ilma_api.extra_data import related_names
     excluded=related_names(db)
@@ -195,6 +207,8 @@ def get_institution_index(db: Session = Depends(get_db)):
             "aliases": aliases,
             "related_entities": [r.name for r in excluded if r.parent_bank_id==inst.id]
         })
+    if db.get_bind().dialect.name=='mysql':
+        with _index_lock:_index_cache[key]=(time.monotonic()+60,copy.deepcopy(output))
     return output
 
 @app.get("/v1/institutions/{id_or_slug}/report-card")

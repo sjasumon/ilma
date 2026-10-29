@@ -9,6 +9,8 @@ function fixture(){
  return{panel,calls,a,result,settle,async end(){complete(true);complete=null;await settle()},async advance(ms){time+=ms;for(const [id,t] of [...timers])if(t.at<=time){timers.delete(id);await t.fn()}await settle()}};
 }
 (async()=>{
+ const late=fixture();late.result.audio_pending=true;let offered=0;late.a.offerReplay=()=>offered++;await late.panel.show(late.result);late.panel.tap({detail:1});await late.panel.deliverSpeech({audio_url:'/synthetic'});assert.equal(offered,1,'late speech offers replay after a tap');
+ const searching=fixture();searching.panel.active=true;searching.panel.phase='searching';searching.panel.tap();await searching.settle();assert.equal(searching.a.recording(),true,'search can be interrupted to ask another question');
  const app=fixture();app.panel.show(app.result,true);assert.equal(app.calls.filter(c=>c[0]==='listen').length,0);await app.end();assert.equal(app.a.recording(),true);
  app.panel.tap({detail:1});await app.advance(200);app.panel.tap({detail:2});assert.deepEqual(app.calls.at(-1),['finish']);assert.ok(!app.calls.some(c=>c[0]==='send'));
  app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,1);app.a.cancel();app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,2);app.a.cancel();app.panel.silent();await app.advance(8000);assert.equal(app.calls.filter(c=>c[0]==='question').length,2);

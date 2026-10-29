@@ -62,6 +62,8 @@ docs/TAP_OR_TALK_FIXES_*.md
 /docs/FIX_10_answer_wording.md
 
 /docs/FIX_11_speech_wording_and_pronunciation.md
+/docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md
+/docs/FIX_*.md
 
 # Mobile App & Review files
 .idea/
@@ -84,4 +86,3 @@ mobile/ios/App/build/
 *.aab
 APP_SPEC_*.md
 MOBILE_APP_REVIEW_*.md
-

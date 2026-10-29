@@ -4,6 +4,11 @@ from decimal import Decimal
 from typing import Any
 import json
 from pathlib import Path
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
+def threshold_config():
+    return json.loads((Path(__file__).parent / 'thresholds.json').read_text(encoding='utf-8'))
 
 from ilma_api.rules.ratings import is_at_or_below, is_at_or_above, normalize_rating, SCALE_INDEX
 from ilma_api.rules.reasons import (
@@ -39,9 +44,7 @@ def months_between(d1: date, d2: date) -> int:
 
 def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> EvalResult:
     if cfg is None:
-        cfg_path = Path(__file__).parent / "thresholds.json"
-        with open(cfg_path, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+        cfg = threshold_config()
             
     # rules_version has no default: serving statuses stamped with a version
     # that never shipped would mislabel every report card.

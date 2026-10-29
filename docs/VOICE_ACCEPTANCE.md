@@ -1,5 +1,32 @@
 # APP_SPEC_02: implementation and acceptance record
 
+## Contextual human voice update, 29 October 2026
+
+See [contextual voice behavior and remaining acceptance](specs/HUMAN_VOICE.md).
+The new optional engine, signed MySQL memory, fact checker, range-aware service
+comparisons and sourced profile loader are implemented behind an activation flag.
+Real-data checks confirm one-year BRAC DPS comparisons include SBAC MSS and EBL
+Confidence DPS, and Prime's longer DPS terms are preserved. The curated profile
+import covers 21 quoted facts across six banks; remaining coverage is pending.
+
+Live Spark returned HTTP 402 during this update. Real-model paraphrase accuracy,
+varied wording, three live dialogs, speaking-latency acceptance and two-person
+listening are pending. Production activation remains disabled by default. Existing
+device, native-speaker and accessibility acceptance is not replaced by mock tests.
+
+Verification for this update: 346 Python tests and 27 subtests passed, as did all
+seven documented Node suites. Browser checks passed at 360×640, 390×844 and
+1366×768, with doubled text, fixed header/menu across all tabs, phone rotation
+and keyboard resize. Live Cloudflare responses for the shell, API docs, OpenAPI
+and health carried the required security headers. These are automated browser
+checks, not physical-device or screen-reader acceptance.
+
+ASR now uses bounded retries with jitter for transient provider responses and
+connection/timeouts, within a 25-second total budget. Empty recordings are rejected
+as no speech; reaching the recording cap asks for a shorter question. Contextual
+memory keeps four redacted turns. These supersede the historical three-turn and
+fixed 2/4-second retry entries below.
+
 Authority: [APP_SPEC_02_voice.md](specs/APP_SPEC_02_voice.md). This record distinguishes
 implemented code from checks that require the deployment host or real people.
 It does not claim that unexecuted live or human checks passed.

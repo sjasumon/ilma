@@ -62,3 +62,16 @@ TTS_PREWARM = os.getenv('TTS_PREWARM','false').lower() == 'true'
 TTS_SPEED = max(.7,min(1.2,float(os.getenv('TTS_SPEED','1.1'))))
 
 API_ADMISSION_BACKEND = os.getenv('API_ADMISSION_BACKEND','process')
+
+HUMAN_VOICE_ENABLED = os.getenv('HUMAN_VOICE_ENABLED','false').lower()=='true'
+DAILY_QUESTIONS_LIMIT = max(1,int(os.getenv('DAILY_QUESTIONS_LIMIT','20')))
+
+def validate_environment():
+    if ILMA_ENV not in {'production','development','test'}:
+        raise RuntimeError('ILMA_ENV must be production, development or test.')
+    if ILMA_ENV=='production' and (not VOICE_LOG_SALT_CONFIGURED or len(VOICE_LOG_SALT)<32):
+        raise RuntimeError('Production requires a stable VOICE_LOG_SALT of at least 32 characters.')
+    if ILMA_ENV=='production' and VOICE_DIAGNOSTICS_ENABLED:
+        raise RuntimeError('Diagnostic recording must be disabled in production.')
+    if ILMA_ENV!='test' and DATABASE_URL.database!='ilma':
+        raise RuntimeError('The application must use only the ilma MySQL database.')
