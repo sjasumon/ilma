@@ -119,18 +119,23 @@ def introduction(db,c,registry,facts):
     """First answer about a strong bank: name, founding year if quoted, and one confirmed award."""
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     if not name or bank_status(facts,c.institution_id)!='strong':return [],{}
-    lines=[];extra={}
     founded=next((f for f in facts.values() if f.get('kind')=='profile' and f.get('institution_id')==c.institution_id and f['values'].get('field')=='founded_year'),None)
-    if founded:
-        year=str(founded['values']['value'])
-        lines.append((f"{name.text} {year.translate(str.maketrans('0123456789','০১২৩৪৫৬৭৮৯'))} সালে প্রতিষ্ঠিত।" if bn else f"{name.text} was established in {year}.",[founded['fact_id']]))
     from ilma_api.awards import intro_award,phrase,fact
     try:found=intro_award(db,c.institution_id)
     except Exception:found=None  # The awards tables may not be loaded yet.
+    if not founded and not found:return [],{}
+    ids=[founded['fact_id']] if founded else [];extra={}
     if found:
-        award,awarder,sources=found;item=fact(award,awarder,sources,c.language)
-        lines.append((phrase(award,awarder,c.language,None if lines else name.text),[item['fact_id']]));extra[item['fact_id']]=item
-    return (lines,extra) if lines and (found or founded) else ([],{})
+        award,awarder,sources=found;item=fact(award,awarder,sources,c.language);ids.append(item['fact_id']);extra[item['fact_id']]=item
+    if not founded:return [(phrase(award,awarder,c.language,name.text),ids)],extra
+    year=str(founded['values']['value'])
+    if bn:
+        text=f"{name.text} যাত্রা শুরু করে {year.translate(str.maketrans('0123456789','০১২৩৪৫৬৭৮৯'))} সালে"
+        text+=f", আর {phrase(award,awarder,'bn')}" if found else '।'
+    else:
+        text=f"{name.text} was established in {year}"
+        text+=', and '+phrase(award,awarder,'en')[0].lower()+phrase(award,awarder,'en')[1:] if found else '.'
+    return [(text,ids)],extra
 
 def award_answer(db,c,registry):
     from ilma_api.awards import rows,phrase,fact,HIGH_RISK

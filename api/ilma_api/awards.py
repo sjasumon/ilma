@@ -36,26 +36,30 @@ def title(name):
 
 
 def phrase(award,awarder,language,subject=None):
-    """One spoken sentence. `subject` names the bank when no earlier sentence did."""
+    """One spoken sentence. With `subject` it starts with the bank's name."""
     bn=language=='bn';year=str(award.award_year)
     medal=MEDALS.get(award.medal)
     if bn:
-        who=subject+'কে' if subject else 'একে'
-        name=title(award.award_name_bn)
-        if medal:return f"{year.translate(DIGITS)} সালে {awarder.name_bn} {who} {name} বিভাগে {medal[0]}পদক দিয়েছে।"
-        if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{year.translate(DIGITS)} সালে {awarder.name_bn} {who} {name} বলেছে।"
-        return f"{year.translate(DIGITS)} সালে {awarder.name_bn} {who} {name} পুরস্কার দিয়েছে।"
-    who=subject or 'it';name=title(award.award_name_en)
-    if medal:return f"In {year}, {awarder.name} gave {who} {medal[1]} in {name}."
-    if re.search(r'\bbank|institution',name,re.I):return f"In {year}, {awarder.name} named {who} {name}."
-    return f"In {year}, {awarder.name} gave {who} the {name} award."
+        when=f"{year.translate(DIGITS)} সালে {awarder.name_bn}";name=title(award.award_name_bn)
+        start=f"{subject}কে {when}" if subject else f"{when} একে"
+        if medal:return f"{start} {name} বিভাগে {medal[0]}পদক দিয়েছে।"
+        if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{start} {name} বলেছে।"
+        return f"{start} {name} পুরস্কার দিয়েছে।"
+    name=title(award.award_name_en)
+    if subject:
+        if medal:return f"{subject} won {medal[1]} in {awarder.name}’s {name} in {year}."
+        if re.search(r'\bbank|institution',name,re.I):return f"{subject} was named {name} by {awarder.name} in {year}."
+        return f"{subject} received the {name} award from {awarder.name} in {year}."
+    if medal:return f"In {year}, {awarder.name} gave it {medal[1]} in {name}."
+    if re.search(r'\bbank|institution',name,re.I):return f"In {year}, {awarder.name} named it {name}."
+    return f"In {year}, {awarder.name} gave it the {name} award."
 
 
 def fact(award,awarder,sources,language):
     """Card line under recognition; the paid flag is never shown."""
     bn=language=='bn';source=sources[0] if sources else None
-    text_bn=f"স্বীকৃতি: {title(award.award_name_bn)} — {awarder.name_bn}, {str(award.award_year).translate(DIGITS)}। {DISCLAIMER[0]}"
-    text_en=f"Recognition: {title(award.award_name_en)} — {awarder.name}, {award.award_year}. {DISCLAIMER[1]}"
+    text_bn=f"স্বীকৃতি: {award.award_name_bn} — {awarder.name_bn}, {str(award.award_year).translate(DIGITS)}। {DISCLAIMER[0]}"
+    text_en=f"Recognition: {award.award_name_en} — {awarder.name}, {award.award_year}. {DISCLAIMER[1]}"
     return {'fact_id':'award:'+award.award_id,'institution_id':award.institution_id,'kind':'award','text_bn':text_bn,'text_en':text_en,
         'values':{'award_year':award.award_year,'confirmation':award.confirmation},
         'source':{'source_url':source.url if source else '','source_title':(source.outlet if source else awarder.name) or awarder.name,
