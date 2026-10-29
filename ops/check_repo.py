@@ -9,12 +9,12 @@ import shutil
 import subprocess
 import sys
 
-AUTHOR = 'sjasumon <me@sumon.me>'
-LEGACY_AUTHOR = 'sjasumon <5217484+sjasumon@users.noreply.github.com>'
+AUTHOR = 'sjasumon <5217484+sjasumon@users.noreply.github.com>'
+LEGACY_AUTHOR = 'sjasumon <me@sumon.me>'
 # Existing history at the identity change; never rewrite published commits.
 # These immutable tips do not permit the old identity on new descendants.
 LEGACY_IDENTITY_TIPS = (
-    '9ce0f263694c4f1ced9393e3aca0bccd93c9164e',
+    '4da1ab26851ac4f28e12a51c57b1af51537cea3b',
     '4a524feab585b3c7d2f6a229c216e85d24693bfa',
 )
 PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
