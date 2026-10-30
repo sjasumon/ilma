@@ -822,8 +822,8 @@ function stopAudio() {
   if(compareListen)compareListen.textContent=currentLang==='bn'?'শুনুন':'Listen';
 }
 
-function playVoiceAudio(url, request = playbackRequest, manual = false) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return;
+function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || /^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3$/.test(url || "") || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -831,7 +831,8 @@ function playVoiceAudio(url, request = playbackRequest, manual = false) {
   if (label) document.getElementById(label).textContent = currentLang === "bn" ? "থামুন" : "Stop";
   const compareListen=document.getElementById('compare-listen');
   if(currentTab==='services'&&compareListen)compareListen.textContent=currentLang==='bn'?'থামুন':'Stop';
-  player.play?.().catch(() => { stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; });
+  player.play?.().catch(() => { stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
+  return true;
 }
 
 function playFixedClip(key) {
@@ -1283,21 +1284,21 @@ function calculateInsuranceSplit() {
     const insured = Math.min(amt, 200000);
     const uninsured = Math.max(0, amt - 200000);
     resDiv.innerHTML = `
-      <div style="font-size: 18px; font-weight: 700; color: var(--good-on-stage); margin-bottom: 6px;">
+      <div style="font-size: calc(var(--fs) * 1); font-weight: 700; color: var(--good-on-stage); margin-bottom: 6px;">
         ${T[currentLang].services.insuredPart} ${formatTaka(insured)} টাকা (১০০% বীমাযুক্ত)
       </div>
       ${uninsured > 0 ? `
-      <div style="font-size: 16px; color: var(--watch-on-stage); margin-bottom: 6px;">
+      <div style="font-size: calc(var(--fs) * 1); color: var(--watch-on-stage); margin-bottom: 6px;">
         ${T[currentLang].services.uninsuredPart} ${formatTaka(uninsured)} টাকা
       </div>` : ''}
-      <div style="font-size: 14px; color: var(--ink-2);">${T[currentLang].services.payoutNote}</div>
+      <div style="font-size: calc(var(--fs) * .85); color: var(--ink-2);">${T[currentLang].services.payoutNote}</div>
     `;
   } else {
     resDiv.innerHTML = `
-      <div style="font-size: 17px; font-weight: 700; color: var(--watch-on-stage); margin-bottom: 6px;">
+      <div style="font-size: calc(var(--fs) * 1); font-weight: 700; color: var(--watch-on-stage); margin-bottom: 6px;">
         ${T[currentLang].services.insuredPart} ${formatTaka(0)} টাকা
       </div>
-      <div style="font-size: 14px; color: var(--ink-2);">${T[currentLang].services.nbfiNote}</div>
+      <div style="font-size: calc(var(--fs) * .85); color: var(--ink-2);">${T[currentLang].services.nbfiNote}</div>
     `;
   }
 }
@@ -1324,7 +1325,7 @@ function calculateRealReturn() {
     <div><strong>${T[currentLang].services.netProfit}</strong> ${formatTaka(netProfit)} টাকা</div>
     <div style="margin-top: 8px; font-weight: 700; color: ${realReturn >= 0 ? 'var(--good-on-stage)' : 'var(--risk-on-stage)'};">
       ${T[currentLang].services.realReturn} ${formatTaka(realReturn)} টাকা
-      <span style="font-size: 13px; font-weight: normal; display: block; color: var(--ink-2); margin-top: 2px;">
+      <span style="font-size: calc(var(--fs) * .85); font-weight: normal; display: block; color: var(--ink-2); margin-top: 2px;">
         ${realReturn >= 0 ? 'মুদ্রাস্ফীতির চেয়ে বেশি ক্রয়ক্ষমতা অর্জিত হচ্ছে।' : 'মুদ্রাস্ফীতির কারণে প্রকৃত ক্রয়ক্ষমতা হ্রাস পাচ্ছে।'}
       </span>
     </div>
@@ -1366,12 +1367,12 @@ async function loadNews() {
       card.setAttribute("role", "listitem");
       card.style.cssText = "background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px;";
       card.innerHTML = `
-        <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
+        <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: calc(var(--fs) * .85); font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
           ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
         </span>
-        <h2 style="font-family: var(--display); font-size: 20px; font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
+        <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
         ${isBn&&!/[\u0980-\u09ff]/.test(n.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}
-        <div style="font-size: 14px; color: var(--ink-2); display: flex; justify-content: space-between;">
+        <div style="font-size: calc(var(--fs) * .85); color: var(--ink-2); display: flex; justify-content: space-between;">
           <span>${escapeHTML(n.publisher || '—')}</span>
           <span>${escapeHTML(new Intl.DateTimeFormat(isBn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(n.date+'T00:00:00')))}</span>
         </div>

@@ -1,7 +1,8 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-voice61';
+const SHELL = 'ilma-shell-voice62';
+const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ["/static/fonts/fonts.css?v=voice-tokens-v2-20261030-61", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-tokens-v2-20261030-61', '/static/js/ivr.js?v=voice-tokens-v2-20261030-61', '/static/js/voice-agent.js?v=voice-tokens-v2-20261030-61', '/static/js/app.js?v=voice-tokens-v2-20261030-61', '/static/js/bank-services-ui.js?v=voice-tokens-v2-20261030-61', '/static/js/audio-session.js?v=voice-tokens-v2-20261030-61', '/static/js/voice-recorder.js?v=voice-tokens-v2-20261030-61'];
+const ASSETS = ["/static/fonts/fonts.css?v=voice-tokens-v2-20261030-62", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-tokens-v2-20261030-62', '/static/js/ivr.js?v=voice-tokens-v2-20261030-62', '/static/js/voice-agent.js?v=voice-tokens-v2-20261030-62', '/static/js/app.js?v=voice-tokens-v2-20261030-62', '/static/js/bank-services-ui.js?v=voice-tokens-v2-20261030-62', '/static/js/audio-session.js?v=voice-tokens-v2-20261030-62', '/static/js/voice-recorder.js?v=voice-tokens-v2-20261030-62'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -15,7 +16,8 @@ self.addEventListener('fetch', event => {
   const asset = url.pathname === '/' || url.pathname.startsWith('/static/');
   if (!bank && !asset && url.pathname !== '/v1/content/fixed') return;
   event.respondWith((async () => {
-    const cache = await caches.open(bank ? BANKS : SHELL);
+    const serviceAudio=/^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3$/.test(url.pathname);
+    const cache = await caches.open(serviceAudio ? SERVICE_AUDIO : bank ? BANKS : SHELL);
     try {
       const response = await fetch(request);
       if (response.ok) {

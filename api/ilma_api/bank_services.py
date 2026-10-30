@@ -86,9 +86,16 @@ def compare_cards(db,network,tier,primary='annual_fee',basis='conventional'):
         output.append(item)
     def sort(row):
         offer=row.get('offer');value=offer.get('value_num') if offer else None
+        # Percentage-only cash charges cannot be ranked as if they were taka.
+        if primary=='cash_advance_fee' and offer and offer['unit']!='bdt':value=None
         return (not bool(offer),bool(offer and offer['stale']),value is None,value if value is not None else float('inf'),row['name_bn'])
     output.sort(key=sort)
-    return {'choice':dict(product_type='card',network=network,tier=tier,attribute=primary,compare_by=primary,basis=basis,tenor_months=None),'rows':output,'sort':'lower_cost_first','insurance':None}
+    result = {'choice':dict(product_type='card',network=network,tier=tier,attribute=primary,compare_by=primary,basis=basis,tenor_months=None),'rows':output,'sort':'lower_cost_first','insurance':None}
+    result['unit_note_bn']='টাকার অঙ্ক আগে; শতাংশের ফি আলাদা, সরাসরি তুলনীয় নয়।' if primary=='cash_advance_fee' else ''
+    result['unit_note_en']='Taka amounts first; percentage charges are separate and not directly comparable.' if primary=='cash_advance_fee' else ''
+    from ilma_api.service_clips import readout
+    result['readout']=readout(result)
+    return result
 
 
 def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
@@ -256,16 +263,14 @@ def make_router(get_db):
         network:str|None=None
         tier:str|None=None
         attribute:str|None=None
+        compare_by:str|None=None
         basis:Literal['conventional','islamic']='conventional'
         language:Literal['bn','en']='bn'
     @router.post('/v1/services/readout')
     async def comparison_readout(payload:ReadComparison,db:Session=Depends(get_db)):
         from ilma_api.database_tasks import call
-        from ilma_api.audio_cache import register_speech
-        paragraph=await call(db,lambda owned:comparison_narration(owned,compare(owned,**payload.model_dump(exclude={'language'})),payload.language))
-        audio=await register_speech([paragraph],payload.language,short=True)
-        if not audio:raise HTTPException(503,'Spoken playback unavailable')
-        return {**audio,'text':paragraph}
+        from ilma_api.service_clips import readout
+        return await call(db,lambda owned:readout(compare(owned,**payload.model_dump(exclude={'language'})),payload.language))
     return router
 
 

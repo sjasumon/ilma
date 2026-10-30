@@ -81,20 +81,18 @@ class TestServicesSeed(unittest.TestCase):
         self.assertEqual(self.client.post('/v1/services/readout',json={'product_type':'fdr','amount':100000}).status_code,422)
         self.assertEqual(self.client.get('/v1/services/compare?product_type=card').status_code,422)
 
-    def test_comparison_readout_uses_only_source_backed_rows(self):
+    def test_comparison_readout_has_no_runtime_provider_calls(self):
         from unittest.mock import patch, AsyncMock
-        with patch('ilma_api.audio_cache.register_speech',new=AsyncMock(return_value={'audio_url':'/v1/audio/'+'a'*32+'.mp3','audio_urls':['/v1/audio/'+'a'*32+'.mp3']})) as speak:
-            response=self.client.post('/v1/services/readout',json=dict(product_type='card',network='Visa',tier='Signature',language='en'))
+        with patch('ilma_api.audio_cache.register_speech',new=AsyncMock(side_effect=AssertionError('No runtime TTS'))) as speak, patch('httpx.AsyncClient.post',new=AsyncMock(side_effect=AssertionError('No provider HTTP'))) as http:
+            response=self.client.post('/v1/services/readout',json=dict(product_type='card',network='Visa',tier='Gold',language='bn'))
         self.assertEqual(response.status_code,200)
-        spoken=speak.await_args.args[0][0]
-        self.assertNotIn('5000',spoken)  # waiver arithmetic is not the published annual fee
-        self.assertNotIn('10000',spoken)  # third quote stays on the comparison cards
-        self.assertLessEqual(len(spoken.split()),30)
-        self.assertTrue(speak.await_args.kwargs['short'])
-        self.assertEqual(response.json()['text'],spoken)
-        self.assertEqual(len(response.json()['audio_urls']),1)
-        self.assertIn('7000',spoken)
-        self.assertNotIn('20000',spoken)  # stale DBBL is not in the first three or savings line
+        speak.assert_not_awaited();http.assert_not_awaited()
+        self.assertIsNone(response.json()['audio_url'])
+        spoken=response.json()['text']
+        self.assertIn('ভিসা গোল্ড',spoken)
+        self.assertNotIn('ডাচ্ বাংলা',spoken)
+        self.assertNotIn('সেরা',spoken)
+        self.assertTrue(500<=len(spoken)<=750)
 
     def test_services_voice_navigates_to_signature_comparison(self):
         with Session(self.engine) as db:

@@ -43,3 +43,13 @@ def test_fresh_first_joined_facts_and_selected_fact_order(cards):
     assert rows[0]['alternatives']==[]
     assert [r['id'] for r in compare(cards,'card',network='Visa',tier='Gold',compare_by='late_fee')['rows']]==[1,2,3]
     assert rows[0]['facts']['late_fee']['source_url']=='https://example.test/synthetic'
+
+def test_percentage_cash_fee_is_not_compared_as_a_taka_amount(cards):
+    row=cards.query(ServiceOffer).filter_by(institution_id=1,attribute='late_fee').one()
+    row.attribute='cash_advance_fee';row.unit='text';row.value_text='3%';row.value_num=3
+    other=cards.query(ServiceOffer).filter_by(institution_id=2,attribute='late_fee').one()
+    other.attribute='cash_advance_fee';other.value_num=100;other.value_text='100'
+    cards.commit()
+    result=compare(cards,'card',network='Visa',tier='Gold',compare_by='cash_advance_fee')
+    assert [r['id'] for r in result['rows']][:2]==[2,1]
+    assert 'সরাসরি তুলনীয় নয়' in result['unit_note_bn']

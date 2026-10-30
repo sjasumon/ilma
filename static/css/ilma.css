@@ -729,7 +729,8 @@ button, input, select { font: inherit; }
 .scr { min-height: 100svh; overflow-x: clip; padding-bottom: 0; }
 .top-bar { position: sticky; top: 0; z-index: 60; margin: 16px 14px 0 14px; padding: 10px 12px; gap: 16px; background: rgba(30, 69, 66, 0.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-radius: 18px; }
 .wordmark { flex-wrap: wrap; min-width: 0; }
-.wordmark span, .pill { font-size: 16px; }
+.wordmark span { font-size: 16px; }
+.pill { font-size:var(--fs); }
 .pill { min-height: 48px; flex-shrink: 0; }
 .tab-content { flex: 1; min-width: 0; padding-bottom: 24px; }
 /* Fixed bottom dock floats above content: keep the last card clear of it. */
@@ -1190,7 +1191,7 @@ button, input, select, textarea { font-family: inherit; }
 .card-top-fact .catalog-value { display:inline; }
 .card-waiver { font-size:calc(var(--fs)*.85); }
 .card-fact-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-.card-fact-cell { display:flex; flex-direction:column; gap:2px; min-width:0; padding:7px; border:0; border-bottom:1px solid var(--line); background:var(--ivory-2); color:var(--ink); font:inherit; text-align:start; overflow-wrap:anywhere; }
+.card-fact-cell { display:flex; flex-direction:column; gap:1px; min-width:0; padding:5px; border:0; border-bottom:1px solid var(--line); background:var(--ivory-2); color:var(--ink); font:inherit; text-align:start; overflow-wrap:anywhere; }
 .card-fact-cell:nth-child(odd) { border-right:1px solid var(--line); }
 .card-fact-cell span { font-size:calc(var(--fs)*.85); }
 .card-fact-cell strong { font-size:var(--fs); font-weight:600; }
@@ -1203,3 +1204,8 @@ button, input, select, textarea { font-family: inherit; }
 .card-detail-fact { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:4px 12px; border-bottom:1px solid var(--line); padding:10px 0; }
 .card-detail-fact small { grid-column:1/-1; }
 .card-variant { border:1px solid var(--line); border-radius:12px; padding:8px; margin:6px 0; }
+
+.card-tile .card-waiver { margin:4px 0; }
+.card-tile .catalog-status { font-size:calc(var(--fs)*.85); }
+
+html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,small,label,h1,h2,h3) { line-height:1.5; }

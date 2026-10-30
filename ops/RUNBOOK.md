@@ -365,3 +365,25 @@ ranks and sources; it does not independently validate the original financial
 documents. Source sign-off remains a later human gate. Samples and partial runs
 can diagnose failures but cannot close Phase 1. Stop the temporary evaluation
 service after the run; keep the permanent public preview services running.
+
+## Offline service comparison clips
+
+Card readouts never synthesize audio at request time. First run the offline dry run and show its texts/character total to Sumon before spending credits:
+
+```sh
+PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --dry-run --json-output /tmp/ilma-service-clip-plan.json
+```
+
+After credit authorization, generation uses the explicitly selected private environment and writes drafts outside the checkout:
+
+```sh
+PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --generate --env-file /home/ubuntu/shared/all_projects/preview.sumon.me/.env --output /tmp/ilma-service-audio-review
+```
+
+There is one provider call per changed text/voice. No generator runs in CI. Review the actual clips, record truthful `reviewed`, `reviewer` and `reviewed_at` fields in the private manifest, then publish only unchanged reviewed audio:
+
+```sh
+PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --publish-reviewed --output /tmp/ilma-service-audio-review
+```
+
+Review the exact staged manifest/audio list, run the documented suites and policy/secrets checks, and push normally. Deploy to preview first. Keep production unchanged until Sumon's phone acceptance. Confirm the visible text, immediate Listen/Stop behavior and the no-audio fallback; a generated file alone is not listening acceptance.

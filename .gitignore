@@ -66,3 +66,13 @@ docs/TAP_OR_TALK_FIXES_*.md
 /docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md
 /docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENTV1.md
 /docs/FIX_*.md
+
+# Only approved service comparison audio and its manifest are publishable here.
+!/static/audio/
+/static/audio/*
+!/static/audio/services/
+/static/audio/services/*
+!/static/audio/services/manifest.json
+!/static/audio/services/bn/
+/static/audio/services/bn/*
+!/static/audio/services/bn/card-*.mp3
