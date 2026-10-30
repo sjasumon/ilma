@@ -24,7 +24,7 @@ def test_readout_is_text_only_until_exact_audio_is_reviewed(tmp_path):
     manifest={'version':1,'clips':{key('Visa','Gold'):item}}
     def save():(tmp_path/'manifest.json').write_text(json.dumps(manifest))
     save();assert readout(data,directory=tmp_path)=={'audio_url':None,'text':text}
-    item['reviewed']=True;save();assert readout(data,directory=tmp_path)['audio_url'].endswith(file)
+    item['reviewed']=True;save();assert readout(data,directory=tmp_path)['audio_url']=='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16]
     path.write_bytes(b'changed');assert readout(data,directory=tmp_path)['audio_url'] is None
     path.write_bytes(b'synthetic-audio');data['rows'][0]['facts']['annual_fee']['value_num']=1200
     assert readout(data,directory=tmp_path)['audio_url'] is None

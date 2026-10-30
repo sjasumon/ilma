@@ -36,8 +36,11 @@ assert.ok(!element('ret-result-box').innerHTML.includes('NaN'));
 console.log('Frontend runtime regressions passed');
 const html = fs.readFileSync('static/index.html', 'utf8');
 assert.match(html, /id="home-listening-view" hidden/);
-assert.match(html, /ilma\.css\?v=voice-tokens-v2-20261030-62/);
-assert.match(html, /app\.js\?v=voice-tokens-v2-20261030-62/);
+for (const asset of ['css/ilma.css','js/app.js','js/bank-services-ui.js','fonts/fonts.css']) {
+  const hash=require('node:crypto').createHash('sha256').update(fs.readFileSync('static/'+asset)).digest('hex').slice(0,16);
+  assert.ok(html.includes('/static/'+asset+'?v=sha256-'+hash),'Asset URL must match current bytes: '+asset);
+  assert.ok(fs.readFileSync('static/sw.js','utf8').includes('/static/'+asset+'?v=sha256-'+hash),'Worker asset URL must match: '+asset);
+}
 assert.match(html, /id="home-tap-target" class="home-speak-button"/);
 console.log('Home visibility and asset-version regressions passed');
 
@@ -71,3 +74,6 @@ for (const [saved, expected] of [[null,'14px'],['14','14px'],['16','16px'],['19'
 }
 assert.doesNotThrow(()=>require('node:vm').runInNewContext(bootstrap,{localStorage:{getItem:()=>{throw Error('blocked');}}}));
 console.log('Text size bootstrap passed: supported values, default, invalid storage and blocked storage');
+
+const workerHash=require('node:crypto').createHash('sha256').update(fs.readFileSync('static/sw.js')).digest('hex').slice(0,16);
+assert.ok(html.includes('data-worker-version="'+workerHash+'"'),'Worker registration version must match worker bytes');

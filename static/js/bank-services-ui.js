@@ -9,7 +9,7 @@
   let choice={product_type:'fdr',tenor_months:12,basis:'conventional'}, comparison=null, bankOffers=null, offerDetail=null, epoch=0;
   let calculatorPrefill={};
   let serviceManifest={clips:{}};
-  function loadServiceManifest(){return fetch('/static/audio/services/manifest.json').then(response=>response.ok?response.json():{clips:{}}).then(data=>{serviceManifest=data;}).catch(()=>{});}
+  function loadServiceManifest(){return fetch('/v1/services/audio-manifest',{cache:'no-store'}).then(response=>response.ok?response.json():{clips:{}}).then(data=>{serviceManifest=data;}).catch(()=>{});}
   const labels={fdr:['এফডিআর','FDR'],dps:['ডিপিএস','DPS'],savings:['সঞ্চয়ী হিসাব','Savings'],card:['কার্ড','Card'],
     home_loan:['গৃহঋণ','Home loan'],auto_loan:['গাড়ির ঋণ','Auto loan'],personal_loan:['ব্যক্তিগত ঋণ','Personal loan'],
     loan_against_fdr:['এফডিআরের বিপরীতে ঋণ','Loan against FDR'],account_fee:['অ্যাকাউন্ট','Accounts'],
@@ -321,7 +321,7 @@
     text.hidden=false;text.textContent=data?.text||tr('এই তুলনার সংরক্ষিত বর্ণনা নেই। নিচের তথ্য পড়ুন।','Saved English narration is not available. Read the comparison below.');
     const failed=()=>{message.hidden=false;message.textContent=tr('এখন শোনানো যাচ্ছে না, লেখাটি পড়ুন','Audio is unavailable now. Please read the text.');};
     message.hidden=true;
-    const approved=Object.values(serviceManifest.clips||{}).find(item=>item.reviewed===true&&'/static/audio/services/'+item.file===data?.audio_url&&item.text===data?.text);
+    const approved=Object.values(serviceManifest.clips||{}).find(item=>item.reviewed===true&&'/static/audio/services/'+item.file+'?v='+item.audio_sha256?.slice(0,16)===data?.audio_url&&item.text===data?.text);
     if(!approved||!data?.audio_url){failed();return;}
     // No fetch or await here: play() must run during the original tap gesture.
     try{if(!playVoiceAudio(data.audio_url,request,true,failed))failed();}catch{failed();}

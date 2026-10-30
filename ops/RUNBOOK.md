@@ -387,3 +387,9 @@ PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --pub
 ```
 
 Review the exact staged manifest/audio list, run the documented suites and policy/secrets checks, and push normally. Deploy to preview first. Keep production unchanged until Sumon's phone acceptance. Confirm the visible text, immediate Listen/Stop behavior and the no-audio fallback; a generated file alone is not listening acceptance.
+
+Before frontend release checks, run `python3 ops/version_assets.py`. Asset URLs contain content hashes to avoid collisions with old Cloudflare cache entries. The frontend suite checks that HTML and the service-worker precache point to the current file bytes. Never reuse a manual asset version label.
+
+Saved service audio URLs also include the audio hash, so replacing a clip after a data update cannot reuse an old Cloudflare audio cache entry. Keep the manifest hash and runtime URL checks together.
+
+The worker registration URL is versioned by worker bytes too. The services UI reads the audio manifest through `/v1/services/audio-manifest` with `Cache-Control: no-store`, so an old empty manifest cannot block newly reviewed clips.

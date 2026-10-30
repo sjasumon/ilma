@@ -217,6 +217,11 @@ def make_router(get_db):
         from ilma_api.incidents import history as incident_history
         return incident_history(db,id)
 
+    @router.get('/v1/services/audio-manifest')
+    def audio_manifest():
+        from ilma_api.service_clips import manifest
+        return JSONResponse(manifest(),headers={'Cache-Control':'no-store'})
+
     @router.get('/v1/services/categories')
     def categories(db:Session=Depends(get_db)):
         rows=db.query(ServiceOffer).filter_by(hidden=False).filter(ServiceOffer.variant!='excluded').all()

@@ -1,8 +1,8 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-voice62';
+const SHELL = 'ilma-shell-6350314d6a0c36ac';
 const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ["/static/fonts/fonts.css?v=voice-tokens-v2-20261030-62", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=voice-tokens-v2-20261030-62', '/static/js/ivr.js?v=voice-tokens-v2-20261030-62', '/static/js/voice-agent.js?v=voice-tokens-v2-20261030-62', '/static/js/app.js?v=voice-tokens-v2-20261030-62', '/static/js/bank-services-ui.js?v=voice-tokens-v2-20261030-62', '/static/js/audio-session.js?v=voice-tokens-v2-20261030-62', '/static/js/voice-recorder.js?v=voice-tokens-v2-20261030-62'];
+const ASSETS = ["/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-097a3546d20e42ae', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-0f4cbed4dec7bdf5', '/static/js/bank-services-ui.js?v=sha256-edb3dac21f95a4cd', '/static/js/audio-session.js?v=sha256-5054f0d844b15ef6', '/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -12,7 +12,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request, url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
-  const bank = (url.pathname === '/v1/institutions' && url.searchParams.get('list') === 'demo') || /^\/v1\/institutions\/(?:index|[^/]+\/(?:report-card|figures|ratings|events|history|services))$/.test(url.pathname) || /^\/v1\/services\/(?:categories|compare|offers\/[^/]+)$/.test(url.pathname);
+  const bank = (url.pathname === '/v1/institutions' && url.searchParams.get('list') === 'demo') || /^\/v1\/institutions\/(?:index|[^/]+\/(?:report-card|figures|ratings|events|history|services))$/.test(url.pathname) || /^\/v1\/services\/(?:categories|audio-manifest|compare|offers\/[^/]+)$/.test(url.pathname);
   const asset = url.pathname === '/' || url.pathname.startsWith('/static/');
   if (!bank && !asset && url.pathname !== '/v1/content/fixed') return;
   event.respondWith((async () => {

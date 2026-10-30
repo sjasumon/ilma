@@ -823,7 +823,7 @@ function stopAudio() {
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || /^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3$/.test(url || "") || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || /^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -1468,7 +1468,7 @@ document.addEventListener("DOMContentLoaded", () => {
       worker.active?.postMessage({ type: "cache-fixed-clips", urls });
     }
   }).catch(() => {});
-  if (navigator.serviceWorker && window.isSecureContext !== false) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  if (navigator.serviceWorker && window.isSecureContext !== false) navigator.serviceWorker.register("/sw.js?v=" + (document.documentElement.dataset?.workerVersion || "legacy")).catch(() => {});
   setupSpeech();
 
   document.querySelectorAll(".dock button.dock-item").forEach(btn => {

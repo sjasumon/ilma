@@ -72,5 +72,5 @@ def readout(result,language='bn',directory=None):
     if item and item.get('reviewed') is True and item.get('reviewer') and item.get('reviewed_at') and item.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest() and re.fullmatch(r'bn/card-[a-z0-9-]+\.mp3',item.get('file','')):
         path=directory/item['file']
         if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):
-            return {'audio_url':'/static/audio/services/'+item['file'],'text':text}
+            return {'audio_url':'/static/audio/services/'+item['file']+'?v='+item['audio_sha256'][:16],'text':text}
     return {'audio_url':None,'text':text}

@@ -94,6 +94,12 @@ class TestServicesSeed(unittest.TestCase):
         self.assertNotIn('সেরা',spoken)
         self.assertTrue(500<=len(spoken)<=750)
 
+    def test_audio_manifest_is_not_cached_by_the_cdn(self):
+        response=self.client.get('/v1/services/audio-manifest')
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.headers['cache-control'],'no-store')
+        self.assertIn('clips',response.json())
+
     def test_services_voice_navigates_to_signature_comparison(self):
         with Session(self.engine) as db:
             result=voice_service_result('সিগনেচার কার্ডের ফি',VoiceIntent(intent='rates',product='credit_card'),VoiceContext(tab='services'),db,'bn')
