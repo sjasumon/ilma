@@ -431,7 +431,7 @@ function updateLocalizedText() {
   document.getElementById("voice-text-submit").textContent = currentLang === "bn" ? "খুঁজুন" : "Search";
   document.getElementById("voice-dialog-title").textContent = currentLang === "bn" ? "ভয়েস অনুসন্ধান" : "Voice search";
   document.getElementById("voice-dialog-close").setAttribute("aria-label", currentLang === "bn" ? "বন্ধ করুন" : "Close");
-  for (const id of ["bank-voice-btn", "services-voice-btn"]) document.getElementById(id).textContent = currentLang === "bn" ? "প্রশ্ন বলুন" : "Ask by voice";
+  document.getElementById("bank-voice-btn").textContent = currentLang === "bn" ? "প্রশ্ন বলুন" : "Ask by voice";
   const miniTitle = document.getElementById("mini-voice-title");
   if (miniTitle) miniTitle.textContent = currentLang === "bn" ? "প্রশ্ন বলুন" : "Ask by voice";
   const miniClose = document.getElementById("mini-voice-close");
@@ -841,7 +841,7 @@ function syncConnectivity() {
   const offline = navigator.onLine === false;
   // Mic controls stay operable offline: activating one explains that voice needs
   // the internet, which aria-disabled would hide from touch and screen-reader users.
-  for (const id of ["home-tap-target", "bank-voice-btn", "services-voice-btn"]) {
+  for (const id of ["home-tap-target", "bank-voice-btn"]) {
     const control = document.getElementById(id);
     control.removeAttribute?.("aria-disabled");
     if (offline) control.setAttribute("aria-describedby", "offline-note"); else control.removeAttribute?.("aria-describedby");
@@ -1545,7 +1545,7 @@ document.addEventListener("DOMContentLoaded", () => {
     appSettings.micExplained = true; saveSettings(); document.getElementById("mic-permission-dialog").close(); return startListening();
   });
   document.getElementById("mic-permission-later").addEventListener("click", () => { document.getElementById("mic-permission-dialog").close(); showTyping(); });
-  for (const [id, tab] of [["bank-voice-btn", "bank"], ["services-voice-btn", "services"]]) {
+  for (const [id, tab] of [["bank-voice-btn", "bank"]]) {
     document.getElementById(id).addEventListener("click", () => {
       if (isListening || recognitionStarting || isSearching) stopListening();
       stopAudio();

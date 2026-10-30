@@ -201,14 +201,18 @@ function voiceApp(options = {}) {
   assert.match(html, /id="mini-voice-close"/);
 
   const services = voiceApp();
+  services.context.fetch = async () => ({ ok: true, json: async () => [] });
+  services.run(fs.readFileSync('static/js/bank-services-ui.js', 'utf8'));
+  await services.context.window.IlmaCatalog.enter('services');
   services.context.fetch = async () => response([
     ['transcript', { text: 'আমানত বীমা কত?', language: 'bn' }],
     ['result', { type: 'service_answer', text: 'আমানত বীমা ২ লাখ টাকা পর্যন্ত।', sources: [] }]
   ]);
   services.run('switchTab("services")');
   assert.equal(services.run('currentTab'), 'services');
-  await services.fire('services-voice-btn', 'click');
-  assert.equal(services.run('currentTab'), 'services', 'services voice must not jump to home');
+  await services.node('service-search-mic').onclick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(services.run('currentTab'), 'home', 'catalog microphone uses the existing voice screen');
   assert.equal(services.run('activeVoiceContext.tab'), 'services');
   assert.equal(services.run('isListening'), true);
   assert.equal(services.node('mini-voice-modal').open, true);
@@ -232,5 +236,5 @@ function voiceApp(options = {}) {
   await bank.fire('mini-voice-close', 'click');
   assert.equal(bank.run('isListening'), false);
   assert.equal(bank.node('mini-voice-modal').open, false);
-  console.log('Services/bank in-place voice modal passed: no tab jump, record in modal, inline answer');
+  console.log('Services search microphone and bank report microphone passed: scoped voice context, recording and inline answer');
 })().catch(error => { console.error(error); process.exitCode = 1; });
