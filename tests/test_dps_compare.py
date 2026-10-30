@@ -162,3 +162,12 @@ def test_english_best_rate_question_gets_an_english_answer(dps_db):
 def test_english_insured_question_is_a_protection_question():
     result=resolve('How much of my deposit is insured at this bank?',Conversation(institution_id=19,language='en'),[])
     assert result.direct_protection
+
+
+def test_three_rates_and_two_flagged_banks_fit_the_fixed_answer():
+    from ilma_api.dps_compare import template,validate
+    row=lambda id,name,value,status='strong',**extra:dict(bank_id=id,offer_id='o'+str(id),name_bn=name,rate_percent=value,status=status,**extra)
+    top=[row(1,'প্রথম পরীক্ষা ব্যাংক','8'),row(2,'দ্বিতীয় পরীক্ষা ব্যাংক','7.75'),row(3,'তৃতীয় পরীক্ষা ব্যাংক','7.5')]
+    flagged=[row(4,'চতুর্থ পরীক্ষা ব্যাংক','9.25','no_data',comparison_months=12,matches_five_years=True),row(5,'পঞ্চম পরীক্ষা ব্যাংক','8.25','watch',comparison_months=12,matches_five_years=True)]
+    data=dict(top=top,cutoff_ties=[],flagged=flagged,inventory=top+flagged,years=1,word='এফডিআর',product='fdr')
+    assert all(validate(template(data,variant),data) is None for variant in range(3))

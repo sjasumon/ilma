@@ -176,11 +176,12 @@ ADVICE=re.compile(r'নিরাপদ|সেরা|সবচেয়ে ভা
 def key(name):
     return name[:-len(' ব্যাংক')] if name.endswith(' ব্যাংক') else name
 
+MAX_SPOKEN_WORDS=70  # Three rates plus two flagged banks must all be said.
 def validate(answer,data):
     """Checks what matters: right rate with the right bank, warnings kept, nothing invented."""
     normalized=answer.translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
     if not answer.rstrip().endswith('?'):return 'closing_question'
-    if len(pronounce(answer,'bn').split())>60:return 'word_limit'
+    if len(pronounce(answer,'bn').split())>MAX_SPOKEN_WORDS:return 'word_limit'
     if re.search('[A-Za-z]',answer):return 'non_bangla'
     if ADVICE.search(answer):return 'advice_or_amount'
     spoken=[r for _,rows in groups(data) for r in rows]+data['flagged'][:2]
