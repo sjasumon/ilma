@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public environment field names captured after empty numbered key assignments"
+regexTarget = "secret"
+regexes = ['''^[-+]?ELEVENLABS_VOICE_ID_[123]=?$''']
