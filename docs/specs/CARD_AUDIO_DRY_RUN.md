@@ -1,8 +1,8 @@
 # Revised card narration — complete sentences
 
-These replace the compressed 30 October drafts following wording feedback. Facts are rebuilt from the stored source data, not copied from the incoming rewrite: monetary cash-fee floors are taka, not percentages; percentage floors and ATM conditions remain explicit. Missing information is not guessed. The old MP3s are not approved for activation.
+These replace the compressed 30 October drafts following wording feedback. Facts are rebuilt from the stored source data, not copied from the incoming rewrite: monetary cash-fee floors are taka, not percentages; percentage floors and ATM conditions remain explicit. Missing information is not guessed. The earlier compressed MP3s are not approved for activation.
 
-This revision has 7 texts and 8,427 characters after number pronunciation. It exceeds the old 500–750-character summary target to preserve complete explanations. The user authorized regeneration of this exact revision. Seven new MP3 drafts were generated and all decode, with durations of 83.57–123.09 seconds. Their text/audio hashes were checked. They remain private and unapproved for activation pending listening review; the earlier drafts are preserved separately.
+This revision has 7 texts and 8,427 characters after number pronunciation. It exceeds the old 500–750-character summary target to preserve complete explanations. The user authorized regeneration of this exact revision. Seven new MP3 drafts were generated and all decode, with durations of 83.57–123.09 seconds. Their text/audio hashes were checked. The user subsequently authorized preview activation for listening. These source/hash/decoding-checked files are published for that purpose; native listening acceptance is still pending. Earlier drafts are preserved separately.
 
 ## bn:card-mastercard-titanium — 995 characters
 

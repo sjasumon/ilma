@@ -83,7 +83,7 @@ class TestServicesSeed(unittest.TestCase):
 
     def test_comparison_readout_has_no_runtime_provider_calls(self):
         from unittest.mock import patch, AsyncMock
-        with patch('ilma_api.audio_cache.register_speech',new=AsyncMock(side_effect=AssertionError('No runtime TTS'))) as speak, patch('httpx.AsyncClient.post',new=AsyncMock(side_effect=AssertionError('No provider HTTP'))) as http:
+        with patch('ilma_api.audio_cache.register_speech',new=AsyncMock(side_effect=AssertionError('No runtime TTS'))) as speak, patch('httpx.AsyncClient.post',new=AsyncMock(side_effect=AssertionError('No provider HTTP'))) as http, patch('ilma_api.service_clips.manifest',return_value={'version':1,'clips':{}}):
             response=self.client.post('/v1/services/readout',json=dict(product_type='card',network='Visa',tier='Gold',language='bn'))
         self.assertEqual(response.status_code,200)
         speak.assert_not_awaited();http.assert_not_awaited()
