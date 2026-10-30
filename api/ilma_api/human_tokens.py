@@ -18,16 +18,26 @@ def unit_label(unit,bn):
 def term(v,bn,selected=None):
     def one(m):return f'{m//12} '+('বছর' if bn else 'year' if m==12 else 'years') if m%12==0 else f'{m} '+('মাস' if bn else 'month' if m==1 else 'months')
     if selected:return one(selected)
-    if v.get('tenor_options'):return (' বা ' if bn else ' or ').join(one(m) for m in v['tenor_options'])
+    joiner=' বা ' if bn else ' or '
+    if v.get('tenor_options'):
+        options=v['tenor_options']
+        # Whole years share one unit: "৩, ৫, ৭ বা ১০ বছর".
+        if len(options)>1 and all(m%12==0 for m in options):
+            head=', '.join(str(m//12) for m in options[:-1])
+            return head+joiner+one(options[-1])
+        return joiner.join(one(m) for m in options)
     lo,hi=v.get('tenor_min_months'),v.get('tenor_max_months')
+    if lo and hi and hi!=lo and lo%12==0 and hi%12==0:return f"{lo//12}"+(' থেকে ' if bn else ' to ')+one(hi)
     return one(lo)+((' থেকে ' if bn else ' to ')+one(hi) if hi and hi!=lo else '') if lo else ''
 
+TIERS={'Blue':'ব্লু','Ultramarine':'আল্ট্রামেরিন','Emerald':'এমারেল্ড','Cashback':'ক্যাশব্যাক','Diners Club':'ডাইনার্স ক্লাব'}
 def product(v,bn):
     name=re.sub(r'\s+PLC\.?','',v.get('product',''),flags=re.I)
-    if not bn:return name
-    for pattern,label in [('Women Confidence','নারীদের কনফিডেন্স ডিপিএস'),('Child Future','শিশুদের ফিউচার প্ল্যান ডিপিএস'),('Confidence','কনফিডেন্স ডিপিএস'),('Kotipoti','কোটিপতি ডিপিএস'),('Lakhopati','লাখপতি স্কিম'),('Monthly Savings Scheme','মাসিক সঞ্চয় স্কিম'),('Extra Value','এক্সট্রা ভ্যালু এফডিআর')]:
+    # An English answer drops the Bangla half of a two-language product title.
+    if not bn:return re.sub(r'\s+Account$','',re.sub(r'\s*[–—-]?\s*[\u0980-\u09ff]+','',name)).strip()
+    for pattern,label in [('Monthly Benefit Plus','প্রবীণদের মান্থলি বেনিফিট প্লাস এফডিআর'),('আঁচল','আঁচল ডিপিএস'),('DPS+','ডিপিএস প্লাস'),('Insurance Backed','ইন্স্যুরেন্স ব্যাকড ডিপিএস'),('General DPS','সাধারণ ডিপিএস'),('Women Confidence','নারীদের কনফিডেন্স ডিপিএস'),('Child Future','শিশুদের ফিউচার প্ল্যান ডিপিএস'),('Confidence','কনফিডেন্স ডিপিএস'),('Kotipoti','কোটিপতি ডিপিএস'),('Lakhopati','লাখপতি স্কিম'),('Monthly Savings Scheme','মাসিক সঞ্চয় স্কিম'),('Extra Value','এক্সট্রা ভ্যালু এফডিআর')]:
         if pattern.casefold() in name.casefold():return label
-    if v.get('product_type')=='card':return pronounce(' '.join(x for x in (v.get('network'),v.get('tier'),'কার্ড') if x),'bn')
+    if v.get('product_type')=='card':return pronounce(' '.join(TIERS.get(x,x) for x in dict.fromkeys((v.get('network'),v.get('tier'),'কার্ড')) if x),'bn')
     return PRODUCTS.get(v.get('product_type'),('এই সেবা',name))[0]
 
 @dataclass(frozen=True)
@@ -71,12 +81,12 @@ def rating_words(grade):
     return ' '.join(x for x in (('','ডাবল','ট্রিপল')[count-1],letter,{'+':'প্লাস','-':'মাইনাস','':''}[found[3]]) if x)
 
 
-GENERIC=re.compile(r'\d|\bmonths?\b|\byears?\b|^fixed deposit|^retail|^term deposit|^general',re.I)
+GENERIC=re.compile(r'\d|\bmonths?\b|\byears?\b|^fixed deposit|^retail|^term deposit',re.I)
 def english_offer(v,when,label,amount):
     """Plain English: "pays 7% on a 1-year fixed deposit"; raw sheet titles are not read out."""
     name=product(v,False);kind={'fdr':'fixed deposit','dps':'DPS'}.get(v.get('product_type'))
     single=re.fullmatch(r'(\d+) (year|month)s?',when or '')
-    if not kind:return f'{name} '+(f'over {when} ' if when else '')+f'has {label} of {amount}'
+    if not kind:return f'{name} '+(f'over {when} ' if when else '')+f'has an {label} of {amount}' if label=='annual fee' else f'{name} '+(f'over {when} ' if when else '')+f'has {label} of {amount}'
     verb='pays' if label=='interest' else 'pays a provisional profit of'
     if kind and (not name or GENERIC.search(name)):
         if single:return f'{verb} {amount} on a {single[1]}-{single[2]} {kind}'
@@ -103,9 +113,10 @@ def fact_clause(f,language,meaning=False):
         return 'নিজের মূলধন ন্যূনতম চাহিদার নিচে আছে, যা চিন্তার বিষয়' if bn else 'its own capital is below the minimum, which is concerning'
     if metric=='npl_ratio' and meaning:
         if v['value']<=.03:return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ' if bn else 'only a small share of lending has repayment problems, a positive sign'
+        if v['value']>=.15:return 'ঋণের বড় একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা বড় চিন্তার বিষয়' if bn else 'repayment problems affect a large part of its lending, a serious concern'
         return 'ঋণের একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা নজরে রাখা দরকার' if bn else 'repayment problems affect part of its lending and deserve attention'
     if kind=='figure' and metric=='crar':return f'মূলধনের অনুপাত {number(Decimal(str(v["value"]))*100)}%, ন্যূনতম চাহিদা {number(v.get("minimum_percent",12.5))}%' if bn else f'The capital ratio is {number(Decimal(str(v["value"]))*100)}%, against a minimum of {number(v.get("minimum_percent",12.5))}%'
-    if kind=='figure' and metric=='npl_ratio':return f'মোট ঋণের {number(Decimal(str(v["value"]))*100)}% খেলাপি হয়েছে' if bn else f'{number(Decimal(str(v["value"]))*100)}% of total lending has repayment problems'
+    if kind=='figure' and metric=='npl_ratio':return f'মোট ঋণের {number(Decimal(str(v["value"]))*100)}% খেলাপি হয়েছে' if bn else f'The problem-loan share is {number(Decimal(str(v["value"]))*100)}% of total lending'
     if kind=='figure' and metric=='net_profit':
         value=Decimal(str(v['value']));amount=number(abs(value)/10000000)
         return f'নিট '+('লোকসান' if value<0 else 'মুনাফা')+f' {amount} কোটি টাকা' if bn else f'Net '+('loss' if value<0 else 'profit')+f' is {amount} crore taka'
@@ -119,8 +130,10 @@ def fact_clause(f,language,meaning=False):
         year=v['event_date'][:4];caution='' if v.get('official') else ', খবরের তথ্য সরকারিভাবে নিশ্চিত নয়' if bn else '; the news report is not officially confirmed'
         return f'{year} সালে {category}র খবর আসে'+caution if bn else f'In {year}, reports described {english}'+caution
     if kind=='insurance' and v.get('limit'):
-        amount=number(Decimal(str(v['limit']))/100000)+' লাখ' if bn and v['limit']%100000==0 else number(v['limit'])
-        return f'একই ব্যাংকের সব হিসাব মিলিয়ে জনপ্রতি {amount} টাকার সীমা আছে, কিছু শর্তের ওপর এটি নির্ভর করে, সেগুলো কার্ডে আছে' if bn else f'The limit is {amount} taka per depositor per bank, combining accounts; conditions apply and are explained on the card'
+        lakh=number(Decimal(str(v['limit']))/100000)
+        amount=lakh+' লাখ' if bn and v['limit']%100000==0 else number(v['limit'])
+        figure=f"Tk {lakh} lakh ({int(v['limit']):,})" if v['limit']%100000==0 else f"Tk {int(v['limit']):,}"
+        return f'একই ব্যাংকের সব হিসাব মিলিয়ে আইন অনুযায়ী জনপ্রতি সর্বোচ্চ {amount} টাকা পর্যন্ত সুরক্ষা আছে, কিছু শর্তের ওপর এটি নির্ভর করে, সেগুলো কার্ডে আছে' if bn else f'The limit is {figure} per depositor per bank, combining accounts; conditions apply and are explained on the card'
     if kind=='profile':
         if v['field']=='founded_year':return f"প্রতিষ্ঠিত হয় {v['value']} সালে" if bn else f"was established in {v['value']}"
         from datetime import date
@@ -139,7 +152,7 @@ def fact_clause(f,language,meaning=False):
             from datetime import date
             from ilma_api.rules.reasons import format_date
             when=format_date(date.fromisoformat(v['doc_date']),bn)
-            text+=', হারতালিকা '+when if bn else ', schedule dated '+when
+            text+=f', {when}-এর তালিকা অনুযায়ী' if bn else ', schedule dated '+when
         return text
     if kind=='peer' and metric=='rating' and material(f):
         median=re.search(r'মধ্যমান\s+(\S+)',f.get('text_bn',''))

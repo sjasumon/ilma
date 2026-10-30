@@ -4,7 +4,7 @@ from decimal import Decimal,ROUND_HALF_UP
 from collections import defaultdict
 from types import SimpleNamespace
 from statistics import median
-import hashlib,json,threading,time,copy
+import hashlib,json,re,threading,time,copy
 from sqlalchemy import inspect
 from ilma_api.db import Institution,Fact,Rating,ServiceOffer,BankProfile,BankIncident,InsuranceRule
 from ilma_api.report_card import get_institution_report_card
@@ -61,9 +61,12 @@ def annual_profit_change(db,id):
     rows=db.query(Fact).filter_by(institution_id=id,metric='net_profit').filter(Fact.period_end<=date.today()).order_by(Fact.period_end.desc()).all()
     if not rows:return None
     current=rows[0]
-    previous=next((r for r in rows[1:] if r.period_end.year==current.period_end.year-1 and r.basis==current.basis and r.unit==current.unit and (r.basis not in {None,'','unknown'} or r.source_id==current.source_id)),None)
+    previous=next((r for r in rows[1:] if r.period_end.year==current.period_end.year-1 and r.basis==current.basis and r.unit==current.unit),None)
     if previous is None or previous.value<=0:return None
     change=((Decimal(str(current.value))/Decimal(str(previous.value))-1)*100).quantize(Decimal('.01'),rounding=ROUND_HALF_UP)
+    # An unknown basis may mix group and bank figures, so it needs one source or the
+    # current figure's own quote stating this same change.
+    if previous.basis in {None,'','unknown'} and previous.source_id!=current.source_id and not any(abs(Decimal(n)-abs(change))<=Decimal('.1') for n in re.findall(r'(\d+(?:\.\d+)?)\s*%',current.quote or '')):return None
     return item('profit-change:'+str(id)+':'+str(current.period_end.year),id,'figure',f'নিট মুনাফার বার্ষিক পরিবর্তন {change} শতাংশ',f'Annual net-profit change is {change} percent',dict(kind='computed',source_url=current.source.url,source_title='Annual profit change computed from published figures',quote='Computed from the cited current and previous annual profit figures',inputs=[provenance(f.source,f.quote) for f in (current,previous)]),metric='profit_change',value=float(change),current=float(current.value),previous=float(previous.value),period_end=str(current.period_end),previous_period_end=str(previous.period_end),basis=current.basis)
 
 
@@ -156,7 +159,7 @@ def offer_item(row,bank,asked_term=None):
     number=float(row.value_num) if row.value_num is not None else None
     en=f'{bank.name_en}: {row.product}; {number if number is not None else row.value_text} {row.unit}; {row.condition}; schedule {row.doc_date}'
     bn=f'{bank.name_bn}: {row.product}; {format_number(number,True) if number is not None else row.value_text} {row.unit}; {row.condition}; হারতালিকা {format_date(row.doc_date,True)}'
-    entry=item(row.offer_id,bank.id,'service',bn,en,dict(source_url=row.source_url,source_title=row.product,page=row.page,quote=row.quote,published_at=str(row.doc_date),condition=row.condition),product=row.product,product_type=row.product_type,rate=number,unit=row.unit,basis=row.basis,tenor_months=row.tenor_months,selected_tenor=selected,asked_tenor=asked_term,nearest=asked_term is not None and not matches_term(row,asked_term),network=row.network,tier=row.tier,stale=bool(row.stale or age>365),dated=age>90,doc_date=str(row.doc_date),**info)
+    entry=item(row.offer_id,bank.id,'service',bn,en,dict(source_url=row.source_url,source_title=row.product,page=row.page,quote=row.quote,published_at=str(row.doc_date),condition=row.condition),product=row.product,product_type=row.product_type,rate=number,unit=row.unit,basis=row.basis,tenor_months=row.tenor_months,selected_tenor=selected,variant=row.variant,asked_tenor=asked_term,nearest=asked_term is not None and not matches_term(row,asked_term),network=row.network,tier=row.tier,stale=bool(row.stale or age>365),dated=age>90,doc_date=str(row.doc_date),**info)
     entry['values']['attribute']=row.attribute
     entry.update(bank_name_bn=bank.name_bn,bank_name_en=bank.name_en)
     return entry
@@ -188,6 +191,17 @@ def service_facts(db,id,product=None,tenor=None,basis=None,network=None,tier=Non
         # one sample per category, so fees cannot crowd out FDR/DPS/savings.
         highlights.append(offer_item(plain[0],bank))
     return highlights[:12]
+
+
+def card_waiver(db,id,network,tier):
+    """The published yearly-transaction waiver of the main card with this network and tier."""
+    rows=db.query(ServiceOffer).filter_by(institution_id=id,hidden=False,product_type='card',tier=tier)
+    rows=rows.filter_by(network=network) if network else rows
+    main=next((r for r in rows if r.attribute=='annual_fee' and r.variant=='main'),None)
+    rule=next((r for r in rows if main and r.attribute=='fee_waiver_rule' and r.product==main.product),None)
+    found=re.search(r'(\d+)[ -](?:transactions?|times?)\b',rule.value_text or '') if rule else None
+    if not found:return None
+    return item(rule.offer_id,id,'service_note',f'বছরে {found[1]} বার লেনদেন করলে নবায়ন ফি দিতে হয় না',f'No renewal fee applies after {found[1]} transactions in a year',dict(source_url=rule.source_url,source_title=rule.product,page=rule.page,quote=rule.quote,published_at=str(rule.doc_date),condition=rule.condition))
 
 
 def service_inventory(db,id):

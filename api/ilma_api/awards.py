@@ -41,8 +41,11 @@ def phrase(award,awarder,language,subject=None):
     medal=MEDALS.get(award.medal)
     if bn:
         when=f"{year.translate(DIGITS)} সালে {awarder.name_bn}";name=title(award.award_name_bn)
+        # A word-for-word translation reads badly aloud; the pack's short name does not.
+        if 'অসামান্য' in name and award.short_name_bn:name=award.short_name_bn
         start=f"{subject}কে {when}" if subject else f"{when} একে"
         if medal:return f"{start} {name} বিভাগে {medal[0]}পদক দিয়েছে।"
+        if 'সম্মাননা' in name:return f"{start} {name} দিয়েছে।"
         if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{start} {name} বলেছে।"
         return f"{start} {name} পুরস্কার দিয়েছে।"
     name=title(award.award_name_en)

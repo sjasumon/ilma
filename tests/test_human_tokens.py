@@ -241,17 +241,14 @@ def test_provider_timeout_after_checked_prefix_keeps_the_prefix(db):
 def test_specific_service_and_assessment_requests_do_not_become_generic_intro(question,intent):
     assert resolve(question,Conversation(institution_id=1),BANKS).intent==intent
 
-def test_answer_leads_with_bank_name_before_a_term_meaning(db):
-    async def model(payload,trace,client,**kwargs):
-        term=next(e for e in payload['tokens'] if e['token'].startswith('⟨f:') and 'জমানোর স্কিম' in e['meaning'])
-        rate=next(e for e in payload['tokens'] if e['token'].startswith('⟨f:') and 'এফডিআরে' in e['meaning'])
-        return Draft(Header(intent='service_detail',used=term['used']+rate['used']),[term['token']+'।','⟨bank:1⟩ের '+rate['token']+'।'])
+def test_an_about_question_gives_the_meaning_first_then_the_banks_rates(db):
     async def scenario():
-        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)):
-            return await run('এফডিআর আর ডিপিএস সম্পর্কে বলুন',VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(institution_id=1,language='bn')),BANKS,db)
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=AssertionError('no model'))):
+            return await run('এফডিআর সম্বন্ধে বলবেন',VoiceContext(agent=True,ui_lang='bn',speak=False,conversation=Conversation(institution_id=1,language='bn')),BANKS,db)
     result=asyncio.run(scenario())
-    assert result['speech'].startswith('পরীক্ষা ব্র্যাক ব্যাংকের ')
-    assert 'জমানোর স্কিম।' in result['speech'] and '।।' not in result['speech']
+    assert result['speech'].startswith('এফডিআর মানে ')
+    assert 'পরীক্ষা ব্র্যাক ব্যাংকের এফডিআরে' in result['speech'] and '।।' not in result['speech']
+    assert result['intent']=='service_detail'
 
 def test_later_english_sentences_start_with_a_capital(db):
     async def model(payload,trace,client,**kwargs):
