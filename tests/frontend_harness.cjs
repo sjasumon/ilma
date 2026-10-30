@@ -52,7 +52,7 @@ function createApp({ reducedMotion = false, animationThrows = false, savedSettin
     clearInterval(id) { intervals.delete(id); }
   });
   vm.runInContext(fs.readFileSync('static/js/app.js', 'utf8'), context);
-  const emit = name => (handlers.get(name) || []).forEach(callback => callback({ key: 'Tab' }));
+  const emit = (name, event = {}) => (handlers.get(name) || []).forEach(callback => callback({ key: 'Tab', ...event }));
   emit('DOMContentLoaded');
   return {
     context, document, node, emit, stored, recorders,

@@ -1539,11 +1539,14 @@ document.addEventListener("DOMContentLoaded", () => {
     langBtn.addEventListener("click", toggleLanguage);
   }
 
-  document.addEventListener("pointerdown", event => {
+  // Unlock on contact, but interrupt only on activation: a touch may become a scroll.
+  document.addEventListener("pointerdown", () => {
+    window.IlmaAudioSession?.unlock(document.getElementById("ilma-player"));
+  }, { capture: true });
+  document.addEventListener("click", event => {
     const player = document.getElementById("ilma-player");
     suppressReadoutClick = Boolean(player.src && !player.paused && event.target?.closest?.(".btn-primary-listen"));
     if (!ivr?.active) stopAudio();
-    window.IlmaAudioSession?.unlock(document.getElementById("ilma-player"));
   }, { capture: true });
   document.getElementById("voice-type").addEventListener("click", showTyping);
   document.getElementById("voice-text-form").addEventListener("submit", event => { event.preventDefault(); return submitTextQuestion(); });

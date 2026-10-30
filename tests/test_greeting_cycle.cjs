@@ -105,3 +105,20 @@ cancelled.fire('home-tap-target', 'pointercancel');
 cancelled.fire('home-tap-target', 'pointerup', { pointerId: 1, clientX: 100, clientY: 100 });
 assert.equal(cancelled.document.documentElement.lang, 'bn');
 console.log('Swipe input paths passed: touch, left mouse drag, right mouse rejection, legacy Touch Events and cancellation');
+
+// Touch scrolling must preserve playback; completed activations still interrupt.
+const scrollingAudio = createApp();
+const playback = scrollingAudio.node('ilma-player');
+playback.src = '/static/audio/example.mp3'; playback.paused = false;
+const playbackEpoch = scrollingAudio.run('playbackRequest');
+scrollingAudio.emit('pointerdown', { pointerType: 'touch', target: playback });
+scrollingAudio.emit('pointermove', { pointerType: 'touch', clientY: 180 });
+scrollingAudio.emit('pointercancel', { pointerType: 'touch' });
+scrollingAudio.emit('scroll'); scrollingAudio.emit('wheel');
+assert.equal(scrollingAudio.run('playbackRequest'), playbackEpoch, 'scroll/contact must not cancel audio');
+scrollingAudio.emit('click', { target: { closest: () => null } });
+assert.ok(scrollingAudio.run('playbackRequest') > playbackEpoch, 'completed tap still interrupts audio');
+playback.src = '/static/audio/example.mp3'; playback.paused = false;
+scrollingAudio.emit('click', { target: { closest: () => ({}) } });
+assert.equal(scrollingAudio.run('suppressReadoutClick'), true, 'Stop activation must not restart the same recording');
+console.log('Playback interaction passed: mobile scroll and desktop wheel preserve audio, tap/Stop interrupt');
