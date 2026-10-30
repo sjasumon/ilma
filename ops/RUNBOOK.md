@@ -395,3 +395,5 @@ Saved service audio URLs also include the audio hash, so replacing a clip after 
 The worker registration URL is versioned by worker bytes too. The services UI reads the audio manifest through `/v1/services/audio-manifest` with `Cache-Control: no-store`, so an old empty manifest cannot block newly reviewed clips.
 
 Narration revisions must be dry-run reviewed again. For the complete-sentence revision, use a separate private output folder so earlier audio remains available for comparison. After approval of the revised credit total, a single-sample command can use `--key bn:card-visa-gold --max-characters 1500 --output /tmp/ilma-service-audio-review-v2`; omit `--key` only if all seven revised clips were authorized. Never infer approval of new paid generation from approval of an earlier text version.
+
+Service audio range responses must stream directly to the player. A complete 206 representation is converted to 200 only for background CacheStorage storage; partial fragments are never stored as complete clips. Cache writes must not delay playback or turn a successful network response into an error.

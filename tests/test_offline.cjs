@@ -3,13 +3,14 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const handlers = new Map(), stores = new Map();
 let offline = false;
+let background=[];
 const origin = 'https://ilma.test';
 const key = request => new URL(typeof request === 'string' ? request : request.url, origin).href;
 function store(name) {
   if (!stores.has(name)) stores.set(name, new Map());
   const data = stores.get(name);
   return {
-    async put(request, response) { data.set(key(request), response.clone()); },
+    async put(request, response) { if(response.status===206)throw TypeError('Partial response cannot be cached');data.set(key(request), response.clone()); },
     async match(request) { return data.get(key(request))?.clone(); },
     async keys() { return [...data.keys()].map(url => new Request(url)); },
     async delete(request) { return data.delete(key(request)); },
@@ -25,7 +26,7 @@ const context = vm.createContext({
 vm.runInContext(fs.readFileSync('static/sw.js', 'utf8'), context);
 async function request(path, method='GET') {
   let response;
-  handlers.get('fetch')({ request: new Request(origin + path, { method }), respondWith(result) { response = result; } });
+  handlers.get('fetch')({ request: new Request(origin + path, { method }), respondWith(result) { response = result; }, waitUntil(result) { background.push(result); } });
   return response;
 }
 (async () => {
@@ -41,5 +42,20 @@ async function request(path, method='GET') {
   assert.equal(await request('/.env'), undefined);
   assert.equal(await request('/v1/watch'), undefined);
   assert.equal((await store('ilma-public-banks-v1').keys()).length, 25);
+  offline=false;
+  const originalFetch=context.fetch;
+  context.fetch=async()=>new Response('audio',{status:206,headers:{'Content-Type':'audio/mpeg','Content-Range':'bytes 0-4/5'}});
+  let media=await request('/static/audio/services/bn/card-visa-gold.mp3?v=aaaaaaaaaaaaaaaa');
+  assert.equal(media.status,206,'Range response must reach the player unchanged');
+  await Promise.all(background);background=[];
+  offline=true;context.fetch=async()=>{throw Error('offline')};
+  media=await request('/static/audio/services/bn/card-visa-gold.mp3?v=aaaaaaaaaaaaaaaa');
+  assert.equal(media.status,200);assert.equal(await media.text(),'audio');
+  assert.equal(media.headers.get('Content-Range'),null);
+  offline=false;context.fetch=async()=>new Response('part',{status:206,headers:{'Content-Range':'bytes 3-6/9'}});
+  media=await request('/static/audio/services/bn/card-visa-classic.mp3?v=bbbbbbbbbbbbbbbb');assert.equal(media.status,206);
+  assert.equal(await store('ilma-service-audio-v1').match(origin+'/static/audio/services/bn/card-visa-classic.mp3?v=bbbbbbbbbbbbbbbb'),undefined);
+  context.fetch=originalFetch;
+  console.log('Saved audio cache passed: 206 streaming, complete background caching, offline playback and incomplete ranges excluded');
   console.log('Offline cache passed: public index retained, report cap, stale marker, no uploads/private endpoints cached');
 })().catch(error => { console.error(error); process.exitCode = 1; });

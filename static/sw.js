@@ -1,5 +1,5 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-6350314d6a0c36ac';
+const SHELL = 'ilma-shell-d03fbba75870ac35';
 const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
 const ASSETS = ["/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-097a3546d20e42ae', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-0f4cbed4dec7bdf5', '/static/js/bank-services-ui.js?v=sha256-edb3dac21f95a4cd', '/static/js/audio-session.js?v=sha256-5054f0d844b15ef6', '/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23'];
@@ -20,12 +20,27 @@ self.addEventListener('fetch', event => {
     const cache = await caches.open(serviceAudio ? SERVICE_AUDIO : bank ? BANKS : SHELL);
     try {
       const response = await fetch(request);
-      if (response.ok) {
-        await cache.put(request, response.clone());
-        if (bank) {
-          const keys = (await cache.keys()).filter(key => new URL(key.url).pathname !== '/v1/institutions/index');
-          while (keys.length > 24) await cache.delete(keys.shift());
+      if (serviceAudio && response.ok) {
+        // CacheStorage rejects 206 responses. Keep the media response streaming
+        // to the player; only cache a complete representation in the background.
+        const range = response.headers.get('Content-Range')?.match(/^bytes (\d+)-(\d+)\/(\d+)$/);
+        const complete = response.status === 200 || (response.status === 206 && range && Number(range[1]) === 0 && Number(range[2]) + 1 === Number(range[3]));
+        if (complete) {
+          const headers = new Headers(response.headers); headers.delete('Content-Range');
+          const full = new Response(response.clone().body, { status: 200, headers });
+          event.waitUntil(cache.put(new Request(request.url), full).catch(() => {}));
         }
+        return response;
+      }
+      if (response.ok && response.status !== 206) {
+        // Quota/storage failures must never turn a successful fetch into an error.
+        try {
+          await cache.put(request, response.clone());
+          if (bank) {
+            const keys = (await cache.keys()).filter(key => new URL(key.url).pathname !== '/v1/institutions/index');
+            while (keys.length > 24) await cache.delete(keys.shift());
+          }
+        } catch (_) {}
       }
       return response;
     } catch (error) {
