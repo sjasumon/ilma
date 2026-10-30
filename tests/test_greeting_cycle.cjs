@@ -122,3 +122,7 @@ playback.src = '/static/audio/example.mp3'; playback.paused = false;
 scrollingAudio.emit('click', { target: { closest: () => ({}) } });
 assert.equal(scrollingAudio.run('suppressReadoutClick'), true, 'Stop activation must not restart the same recording');
 console.log('Playback interaction passed: mobile scroll and desktop wheel preserve audio, tap/Stop interrupt');
+
+playback.src = 'blob:audio-unlock'; playback.paused = false;
+scrollingAudio.emit('click', { target: { closest: () => ({}) } });
+assert.equal(scrollingAudio.run('suppressReadoutClick'), false, 'silent browser unlock must not suppress the first Listen activation');

@@ -1545,7 +1545,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { capture: true });
   document.addEventListener("click", event => {
     const player = document.getElementById("ilma-player");
-    suppressReadoutClick = Boolean(player.src && !player.paused && event.target?.closest?.(".btn-primary-listen"));
+    suppressReadoutClick = Boolean(player.src && !player.src.startsWith("blob:") && !player.paused && event.target?.closest?.(".btn-primary-listen"));
     if (!ivr?.active) stopAudio();
   }, { capture: true });
   document.getElementById("voice-type").addEventListener("click", showTyping);
