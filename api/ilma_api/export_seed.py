@@ -41,7 +41,8 @@ def tenor(row):
 def card_variants(rows):
     """Select a tier's printed retail header, then earliest source column."""
     def identity(row):
-        return (row['bank_id'],row['network'],row['tier'],row['basis'],row['product'],row['column_header'])
+        from ilma_api.card_catalog import card_key
+        return (row['bank_id'],row['network'],row['tier'],row['basis'],card_key(row))
     excluded={identity(row) for row in rows if row['category']=='card' and re.search(
         r'\b(corporate|defen[cs]e|army|payroll|rfcd|erq|fx|co.branded)\b|US\$',
         row['product']+' '+row['column_header']+' '+row['value'],re.I)}
@@ -49,7 +50,8 @@ def card_variants(rows):
     for row in rows:
         if row['category']!='card' or identity(row) in excluded:continue
         group=identity(row)[:4];card=identity(row)[4:]
-        english=' '.join(re.findall(r"[A-Za-z]+",row['column_header'])).casefold()
+        from ilma_api.card_catalog import clean_name
+        english=clean_name(row).casefold()
         rank=(english!=row['tier'].casefold(),int(row.get('col_num') or 100000),card)
         current=groups.setdefault(group,{})
         current[card]=min(current.get(card,rank),rank)

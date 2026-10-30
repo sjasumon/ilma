@@ -1179,3 +1179,27 @@ button, input, select, textarea { font-family: inherit; }
 .text-size-options button { padding: 6px 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--stage); color: var(--on-stage); font: inherit; overflow-wrap:anywhere; }
 .text-size-options button[aria-pressed="true"] { border: 2px solid var(--gold); }
 #text-size-preview { font-size: var(--fs); line-height: 1.5; }
+
+/* Source-linked card comparisons and details. */
+.card-tile { padding: 14px 0; }
+.card-bank-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:start; gap:6px; }
+.card-bank-heading strong { font-size:calc(var(--fs)*1.15); }
+.card-bank-heading small,.card-tile small,.card-detail-fact small { display:block; font-size:calc(var(--fs)*.85); overflow-wrap:anywhere; }
+.card-tile h3 { margin:6px 0; font-size:calc(var(--fs)*1.15); }
+.card-top-fact { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; }
+.card-top-fact .catalog-value { display:inline; }
+.card-waiver { font-size:calc(var(--fs)*.85); }
+.card-fact-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.card-fact-cell { display:flex; flex-direction:column; gap:2px; min-width:0; padding:7px; border:0; border-bottom:1px solid var(--line); background:var(--ivory-2); color:var(--ink); font:inherit; text-align:start; overflow-wrap:anywhere; }
+.card-fact-cell:nth-child(odd) { border-right:1px solid var(--line); }
+.card-fact-cell span { font-size:calc(var(--fs)*.85); }
+.card-fact-cell strong { font-size:var(--fs); font-weight:600; }
+.card-tile-footer { display:flex; flex-wrap:wrap; gap:5px 12px; align-items:center; justify-content:space-between; }
+.card-tile-footer button,.card-variant button,.card-compare-controls button { background:transparent; border:1px solid var(--line); border-radius:10px; color:inherit; padding:5px; font:inherit; }
+.card-compare-chips { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.card-compare-chips [aria-pressed=true] { border-color:var(--stage); background:var(--stage); color:var(--on-stage); }
+.card-detail-section { margin:18px 0; }
+.card-detail-section h3 { font-size:calc(var(--fs)*1.15); }
+.card-detail-fact { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:4px 12px; border-bottom:1px solid var(--line); padding:10px 0; }
+.card-detail-fact small { grid-column:1/-1; }
+.card-variant { border:1px solid var(--line); border-radius:12px; padding:8px; margin:6px 0; }

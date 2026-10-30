@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'api'))
 from ilma_api.export_seed import convert
+from ilma_api.card_catalog import card_key  # shared by conversion, comparison and details
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1]/'.env')
 

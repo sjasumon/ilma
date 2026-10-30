@@ -1,6 +1,7 @@
 """Read-only bank/service views. Hidden offers never cross the API boundary."""
 from datetime import date
 from ilma_api.service_terms import terms
+from ilma_api.card_catalog import card_key,display,condition,numeric
 from pathlib import Path
 import csv
 import json
@@ -32,7 +33,7 @@ def source_view(source, quote='', checked_by=None):
 
 def offer_view(row, today=None):
     today = today or date.today()
-    return {**{column.name:getattr(row,column.name) for column in ServiceOffer.__table__.columns
+    result = {**{column.name:getattr(row,column.name) for column in ServiceOffer.__table__.columns
         if column.name not in {'hidden','hidden_reason','checked_by'}},
         'value_num':float(row.value_num) if row.value_num is not None else None,
         'tenor_min_months':terms(row)['tenor_min_months'],
@@ -42,9 +43,57 @@ def offer_view(row, today=None):
         'checked':row.checked_by.casefold()=='sumon', 'source_title':row.column_header if row.product_type=='card' and row.column_header else row.product,
         'group_key':f'{row.institution_id}:{row.product}:{row.column_header if row.product_type=="card" else ""}:{row.network or ""}:{row.tier or ""}:{row.tenor_months or ""}:{row.basis}'}
 
+    if row.product_type=='card':
+        result.update(display(row),condition_bn=condition(row),condition_en=condition(row,language='en'))
+        result['group_key']=card_key(row)
+        number=numeric(row)
+        if number is not None:result['value_num']=float(number)
+    return result
+
+CARD_ATTRIBUTES=('annual_fee','renewal_fee','fee_waiver_rule','interest_rate','late_fee','cash_advance_fee','foreign_currency_markup','supplementary_card_fee','card_replacement_fee','lounge_access')
+CARD_COMPARE={'annual_fee','interest_rate','late_fee','cash_advance_fee','foreign_currency_markup','renewal_fee'}
+
+def card_facts(rows):
+    result={key:None for key in CARD_ATTRIBUTES}
+    for row in sorted(rows,key=lambda r:(r.stale or (date.today()-r.doc_date).days>365,-r.doc_date.toordinal(),r.offer_id)):
+        if row.attribute in result and result[row.attribute] is None:
+            view=offer_view(row);view['condition_bn']=condition(row,renewal=any(r.attribute=='renewal_fee' for r in rows));view['condition_en']=condition(row,renewal=any(r.attribute=='renewal_fee' for r in rows),language='en')
+            result[row.attribute]=view
+    return result
+
+def compare_cards(db,network,tier,primary='annual_fee',basis='conventional'):
+    if primary not in CARD_COMPARE:raise HTTPException(422,'Unsupported card comparison fact')
+    all_rows=db.query(ServiceOffer).filter_by(product_type='card',basis=basis).all()
+    if network:all_rows=[r for r in all_rows if r.network==network]
+    if tier:all_rows=[r for r in all_rows if r.tier==tier]
+    output=[]
+    for bank in demo_banks(db):
+        groups={}
+        for row in all_rows:
+            if row.institution_id==bank.id and not row.hidden and row.variant!='excluded':groups.setdefault(card_key(row),[]).append(row)
+        candidates=[]
+        for key,rows in groups.items():
+            facts=card_facts(rows);annual=facts.get('annual_fee')
+            if annual is None:continue
+            chosen=facts.get(primary)
+            candidates.append({'key':key,'annual':annual,'chosen':chosen,'facts':facts})
+        candidates.sort(key=lambda c:(c['annual']['card_printed_name']!='',c['annual']['stale'],c['annual']['card_key']))
+        item=bank_view(db,bank)
+        if candidates:
+            selected=candidates[0];offer=selected['chosen']
+            item.update(state='published',offer=offer,facts=selected['facts'],card=selected['annual'],renewal_offer=selected['facts'].get('renewal_fee'),range_max=None,alternatives=[{**c['annual'],'facts':c['facts']} for c in candidates[1:]])
+        else:item.update(state='checking' if any(r.hidden and r.institution_id==bank.id for r in all_rows) else 'missing',facts={key:None for key in CARD_ATTRIBUTES},alternatives=[])
+        output.append(item)
+    def sort(row):
+        offer=row.get('offer');value=offer.get('value_num') if offer else None
+        return (not bool(offer),bool(offer and offer['stale']),value is None,value if value is not None else float('inf'),row['name_bn'])
+    output.sort(key=sort)
+    return {'choice':dict(product_type='card',network=network,tier=tier,attribute=primary,compare_by=primary,basis=basis,tenor_months=None),'rows':output,'sort':'lower_cost_first','insurance':None}
+
 
 def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
-            attribute=None, basis='conventional'):
+            attribute=None, basis='conventional',compare_by=None):
+    if product_type=='card':return compare_cards(db,network,tier,compare_by or attribute or 'annual_fee',basis)
     primary = attribute or ('rate' if product_type in {'fdr','dps','savings'} else 'annual_fee' if product_type=='card'
         else 'maintenance_fee_half_yearly' if product_type=='account_fee' else 'rate_min')
     query = db.query(ServiceOffer).filter_by(product_type=product_type,basis=basis)
@@ -173,13 +222,13 @@ def make_router(get_db):
 
     @router.get('/v1/services/compare')
     def comparison(request:Request,product_type:str='fdr',tenor_months:int|None=Query(None,ge=1,le=600),network:str|None=None,
-                   tier:str|None=None,attribute:str|None=None,basis:str='conventional',db:Session=Depends(get_db)):
-        if set(request.query_params)-{'product_type','tenor_months','network','tier','attribute','basis'}:raise HTTPException(422,'Unsupported query fields; calculator amounts stay on the device')
+                   tier:str|None=None,attribute:str|None=None,basis:str='conventional',compare_by:str|None=None,db:Session=Depends(get_db)):
+        if set(request.query_params)-{'product_type','tenor_months','network','tier','attribute','basis','compare_by'}:raise HTTPException(422,'Unsupported query fields; calculator amounts stay on the device')
         if product_type not in {'fdr','dps','savings','card','home_loan','auto_loan','personal_loan','loan_against_fdr','account_fee'}: raise HTTPException(422,'Unknown product type')
         if basis not in {'conventional','islamic'}:raise HTTPException(422,'Unknown basis')
         if product_type in {'fdr','dps'} and tenor_months is None:raise HTTPException(422,'Select one tenor')
         if product_type=='card' and (not network or not tier):raise HTTPException(422,'Select network and tier')
-        return compare(db,product_type,tenor_months,network,tier,attribute,basis)
+        return compare(db,product_type,tenor_months,network,tier,attribute,basis,compare_by)
 
     @router.get('/v1/institutions/{id}/services')
     def bank_services(id:int,db:Session=Depends(get_db)):
@@ -193,9 +242,11 @@ def make_router(get_db):
         if not row or row.hidden:raise HTTPException(404,'Offer not available')
         group=db.query(ServiceOffer).filter_by(institution_id=row.institution_id,product=row.product,network=row.network,
                     tier=row.tier,tenor_months=row.tenor_months,basis=row.basis,hidden=False)
-        if row.product_type=='card':group=group.filter_by(column_header=row.column_header)
-        group=group.all()
-        return dict(institution=bank_view(db,row.institution),product=row.product,offers=[offer_view(item) for item in group])
+        if row.product_type=='card':
+            group=db.query(ServiceOffer).filter_by(institution_id=row.institution_id,product_type='card',network=row.network,tier=row.tier,basis=row.basis,hidden=False)
+            group=[item for item in group.all() if card_key(item)==card_key(row)]
+        else:group=group.all()
+        return dict(institution=bank_view(db,row.institution),product=row.product,offers=[{**offer_view(item),**({'condition_bn':condition(item,renewal=any(r.attribute=='renewal_fee' for r in group)),'condition_en':condition(item,renewal=any(r.attribute=='renewal_fee' for r in group),language='en')} if item.product_type=='card' else {})} for item in group])
 
     from pydantic import BaseModel, ConfigDict
     class ReadComparison(BaseModel):

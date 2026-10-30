@@ -1,0 +1,11 @@
+id,pattern,attribute,bn,en
+higher,whichever is higher,,"{x}% অথবা {y} টাকা, যেটি বেশি","{x}% or BDT {y}, whichever is higher"
+two_free,1st\s*&\s*2nd\s*(?:supplementary\s*)?card\s*free,supplementary_card_fee,প্রথম দুটি অতিরিক্ত কার্ড বিনামূল্যে,First two supplementary cards free
+first_free,(?:1st|first)\s+(?:supplementary\s+)?card\s+free,supplementary_card_fee,প্রথম অতিরিক্ত কার্ড বিনামূল্যে,First supplementary card free
+waiver,(?:waived if\s+(?:min\s+)?)?(?P<n>\d+)\s+transactions,fee_waiver_rule,বছরে {n}টি লেনদেন করলে বার্ষিক ফি মওকুফ,Annual fee waived with {n} transactions a year
+points,Reward Points redemption,fee_waiver_rule,রিওয়ার্ড পয়েন্ট দিয়ে ফি মওকুফ করা যায়,Fee waiver through reward points
+vat,(?:plus\s*)?15\s*%\s*VAT,,+১৫% ভ্যাট,+15% VAT
+anniversary,charged (?:when the card is activated and )?on every anniversary,,কার্ড চালুর সময় ও প্রতি বছর কাটে,Charged at activation and each anniversary
+first_year,1st Year,annual_fee,প্রথম বছর,First year
+renewal,2nd Year onwards,,দ্বিতীয় বছর থেকে,From the second year
+non_usd,non-USD,foreign_currency_markup,ডলার ছাড়া অন্য মুদ্রায় কেনাকাটায়,Purchases in currencies other than USD
