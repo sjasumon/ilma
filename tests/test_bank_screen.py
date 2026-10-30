@@ -74,3 +74,19 @@ def test_saved_bank_script_requires_matching_frozen_facts(db,tmp_path,monkeypatc
 
     revised=card();revised['reasons'][1]['source_url']='https://example.example/revised-source'
     assert enrich(db,revised)['readout']['audio_url'] is None
+
+def test_approved_original_key_and_underscore_filename_with_profile_guard(db,tmp_path,monkeypatch):
+    import hashlib,json
+    from ilma_api import bank_screen
+    seed=tmp_path/'seed';seed.mkdir()
+    (seed/'rating_scale_bn.csv').write_text('agency,grade,meaning_bn,meaning_en\nCRISL,A,উঁচু,High\n')
+    (seed/'bank_awards.csv').write_text('bank_slug,title_bn,title_en,source_url,quote,year,awarder_confirmed,likely_paid\n')
+    monkeypatch.setattr(bank_screen,'ROOT',tmp_path)
+    initial=enrich(db,card());audio=b'synthetic-bytes';directory=tmp_path/'static/audio/bank/bn';directory.mkdir(parents=True);(directory/'sample_bank.mp3').write_bytes(audio)
+    entry=dict(key='bank:bn:sample_bank',bank_slug='synthetic',file='bn/sample_bank.mp3',text='পরীক্ষার অনুমোদিত পাঠ।',text_sha256=hashlib.sha256('পরীক্ষার অনুমোদিত পাঠ।'.encode()).hexdigest(),audio_sha256=hashlib.sha256(audio).hexdigest(),source_sha256=initial['readout']['source_sha256'],approved_exact_text=True,reviewed=True)
+    (directory.parent/'manifest.json').write_text(json.dumps({'clips':{'bank:bn:sample_bank':entry}}))
+    assert '/sample_bank.mp3?v=' in enrich(db,card())['readout']['audio_url']
+    import csv
+    with (seed/'bank_profile_facts.csv').open('w',newline='') as f:
+        writer=csv.DictWriter(f,['bank','fact_bn','value','source_url','as_of','source_note']);writer.writeheader();writer.writerow(dict(bank='synthetic',fact_bn='পরীক্ষার পরিচিতি।',value='{}',source_url='https://example.example/profile',as_of='',source_note='Synthetic evidence'))
+    updated=enrich(db,card());assert updated['profile_facts'][0]['fact_bn']=='পরীক্ষার পরিচিতি।' and updated['readout']['audio_url'] is None

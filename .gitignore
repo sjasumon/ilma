@@ -76,3 +76,21 @@ docs/TAP_OR_TALK_FIXES_*.md
 !/static/audio/services/bn/
 /static/audio/services/bn/*
 !/static/audio/services/bn/card-*.mp3
+
+# Reviewed bank reports only; unreviewed recordings remain private.
+!/static/audio/bank/
+/static/audio/bank/*
+!/static/audio/bank/manifest.json
+!/static/audio/bank/bn/
+/static/audio/bank/bn/*
+!/static/audio/bank/bn/bank_asia.mp3
+!/static/audio/bank/bn/brac.mp3
+!/static/audio/bank/bn/city.mp3
+!/static/audio/bank/bn/dbbl.mp3
+!/static/audio/bank/bn/ebl.mp3
+!/static/audio/bank/bn/islami.mp3
+!/static/audio/bank/bn/mtb.mp3
+!/static/audio/bank/bn/nbl.mp3
+!/static/audio/bank/bn/ncc.mp3
+!/static/audio/bank/bn/prime.mp3
+!/static/audio/bank/bn/sbac.mp3

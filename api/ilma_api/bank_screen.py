@@ -32,6 +32,15 @@ def enrich(db,card):
     if inspect(db.connection()).has_table('bank_profile'):profile=db.query(BankProfile).filter_by(bank_id=bank['id'],field='founded_year').order_by(BankProfile.as_of.desc()).all()
     card['founded_year']=profile[0].value if profile and re.fullmatch(r'\d{4}',profile[0].value) else None
     card['founding_source']={'source_url':profile[0].source_url,'quote':profile[0].quote,'page':profile[0].page} if card['founded_year'] else None
+    path=ROOT/'seed/bank_profile_facts.csv'
+    card['profile_facts']=[r for r in csv.DictReader(path.open()) if r['bank']==bank['slug']] if path.exists() else []
+    if not card['founded_year']:
+        for fact in card['profile_facts']:
+            year=json.loads(fact['value']).get('founded_year')
+            if year and re.fullmatch(r'\d{4}',str(year)):
+                card['founded_year']=str(year);card['founding_source']=dict(source_url=fact['source_url'],quote=fact['fact_bn'],page=None,summary=True);break
+    from ilma_api.bank_profile_support import comparisons
+    card['comparison_facts']=comparisons(db,bank['slug'])
     card['award']=eligible_award(bank['slug'],code)
     card['section_counts']={'health':len(card['figures']),'rating':len(card['ratings']),'history':card['incident_count'],
       'news':db.query(Event).filter_by(institution_id=bank['id'],type='other',official=False).count(),
@@ -61,13 +70,15 @@ def enrich(db,card):
     from ilma_api.voice_numbers import bangla_number
     raw=re.sub(r'(-\d+(?:\.\d+)?)\s*%',lambda m:bangla_number(m[1])+' শতাংশ',raw)
     text=pronounce(raw,'bn');key=bank['slug'];clip={}
-    frozen={'bank':bank,'risk':code,'founding':card['founded_year'],'reasons':card['reasons'],'figures':sorted(card['figures'],key=lambda f:f['metric']),'ratings':card['ratings'],'insurance':card['insurance'],'award':card['award']}
+    frozen={'bank':bank,'risk':code,'founding':card['founded_year'],'reasons':card['reasons'],'figures':sorted(card['figures'],key=lambda f:f['metric']),'ratings':card['ratings'],'insurance':card['insurance'],'award':card['award'],'profile_facts':card['profile_facts'],'comparison_facts':card['comparison_facts']}
     source_sha=hashlib.sha256(json.dumps(frozen,sort_keys=True,ensure_ascii=False,default=str).encode()).hexdigest()
-    try:clip=json.loads((ROOT/'static/audio/bank/manifest.json').read_text()).get('clips',{}).get(key,{})
+    try:
+        clips=json.loads((ROOT/'static/audio/bank/manifest.json').read_text()).get('clips',{})
+        clip=clips.get(key) or next((c for c in clips.values() if c.get('bank_slug')==key),{})
     except (OSError,ValueError):pass
     if clip.get('approved_exact_text') and clip.get('source_sha256')==source_sha and clip.get('text_sha256')==hashlib.sha256(clip.get('text','').encode()).hexdigest():text=clip['text']
     url=None;filename=clip.get('file','')
-    if clip.get('reviewed') and (not clip.get('approved_exact_text') or clip.get('source_sha256')==source_sha) and re.fullmatch(r'bn/[a-z0-9-]+\.mp3',filename) and clip.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest():
+    if clip.get('reviewed') and (not clip.get('approved_exact_text') or clip.get('source_sha256')==source_sha) and re.fullmatch(r'bn/[a-z0-9_-]+\.mp3',filename) and clip.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest():
         path=ROOT/'static/audio/bank'/filename
         if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==clip.get('audio_sha256'):url='/static/audio/bank/'+filename+'?v='+clip['audio_sha256'][:16]
     card['readout']={'text':text,'audio_url':url,'source_sha256':source_sha}
