@@ -237,6 +237,6 @@ def test_manual_profile_rows_need_wording_but_no_link():
     with pytest.raises(ValueError):validate({**row,'page':'PDF 1'})
 
 def test_vat_is_worded_as_may_apply():
-    rows=[rate(i,'Card',12,1500,kind='card',condition='plus 15% VAT',tier='Gold',network='Visa',attribute='annual_fee') for i in 'ab']
+    rows=[rate(i,'Card',12,1500,kind='card',condition=condition,tier='Gold',network='Visa',attribute='annual_fee') for i,condition in (('a','plus 15% VAT'),('b','15% VAT may apply'))]
     answer=lambda language:' '.join(s for s,_ in service_lines('card fee',[line(r) for r in rows],Conversation(institution_id=1,language=language,product='card'),SimpleNamespace(product='card',tenor=None),{'bank:1':FactToken('Test',(),1,'bank')},{r['fact_id']:r for r in rows}))
-    assert '15% ভ্যাট প্রযোজ্য হতে পারে' in answer('bn') and '15% VAT may apply' in answer('en')
+    assert '15% ভ্যাট যোগ হতে পারে' in answer('bn') and '15% VAT may apply' in answer('en')

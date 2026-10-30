@@ -291,8 +291,8 @@ def service_lines(text,lines,c,r,registry,facts):
     if card and len(rows)>1:lines=[fee_list(rows,whose,bn),*others]
     elif deposit and len(rows)>1 and len(amounts)==1 and not r.tenor and not any(f['values'].get('dated') for f in rows):lines=[one_rate(rows,whose,bn),*others]
     if len(rows)>1 and r.tenor:lines=standard_named(lines,facts,bn)
-    conditions=[re.search(r'plus (\d+)% VAT',f['source'].get('condition') or '') for f in rows]
-    if card and all(conditions):lines=[*lines,(f'এই ফির সঙ্গে {conditions[0][1]}% ভ্যাট প্রযোজ্য হতে পারে।' if bn else f'{conditions[0][1]}% VAT may apply to the fee.',[rows[0]['fact_id']])]
+    conditions=[re.search(r'(\d+)% VAT',f['source'].get('condition') or '') for f in rows]
+    if card and all(conditions):lines=[*lines,(f'এই ফির সঙ্গে {conditions[0][1]}% ভ্যাট যোগ হতে পারে।' if bn else f'{conditions[0][1]}% VAT may apply.',[rows[0]['fact_id']])]
     # The framing sentence says no more than the list, so the list keeps the room.
     said=' '.join(s for s,_ in [*lead,*frame,*(merge_rates(lines,facts,[name.text]) if bn else lines)])
     if len(pronounce(said+' '+next_steps('service_detail',c,0)[0],c.language).split())>LIST_WORDS:frame=[]
