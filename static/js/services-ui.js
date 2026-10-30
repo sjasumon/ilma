@@ -23,7 +23,7 @@
   }
   async function openComparison(next,calculator={}){ stopAudio(); $('main-content').scrollTop=0;
     if(currentTab!=='services')switchTab('services');
-    choice={...next,basis:next.basis||'conventional'};bankFilter=null;servicePage='compare';
+    choice=window.IlmaLoans?.types.includes(next.product_type)?{product_type:next.product_type,basis:next.basis||'conventional'}:{...next,basis:next.basis||'conventional'};bankFilter=null;servicePage='compare';
     calculatorPrefill=calculator;$('service-voice-answer').hidden=!calculator.fromVoice;
     const request=++state.epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{if(!categories.length)categories=await json('/v1/services/categories');
@@ -32,6 +32,7 @@
     }catch(e){if(request===state.epoch)error(root,e);}
   }
   function renderComparison(){
+    if(window.IlmaLoans?.types.includes(choice.product_type))return window.IlmaLoans.mount(comparison,{back:enterServices,compare:openComparison,offer:openOffer},calculatorPrefill);
     serviceHeader();
     const root=$('services-catalog'),category=choice.product_type==='card'?'card':['fdr','dps','savings'].includes(choice.product_type)?'deposit':choice.product_type==='account_fee'?'account_fee':'loan';
     const data=categories.find(c=>c.category===category)||{}, isDeposit=category==='deposit',isLoan=category==='loan';
@@ -84,7 +85,8 @@
     $('service-voice-answer').hidden=true;const request=++state.epoch,root=$('services-catalog');servicePage='offer';root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{const data=await json('/v1/services/offers/'+encodeURIComponent(id));if(request!==state.epoch)return;offerDetail=data;renderOffer();}catch(e){if(request===state.epoch)error(root,e);}
   }
-  function renderOffer(){const root=$('services-catalog'),data=offerDetail;
+  function renderOffer(){
+    if(offerDetail.loan_type)return window.IlmaLoans.detail(offerDetail,{back:()=>bankFilter?openBankServices(bankFilter):openComparison(choice),compare:openComparison,offer:openOffer});const root=$('services-catalog'),data=offerDetail;
     if(data.offers[0]?.product_type==='card')return renderCardOffer();
     serviceHeader();
     root.innerHTML=`${back('offer-back',tr('ফিরুন','Back'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}<h3>${E(productText(data.offers[0]||{product:data.product}))}</h3>${data.offers[0]?.variant==='excluded'?`<p class="catalog-note">${tr('সীমিত বা বিশেষ কার্ড — সাধারণ গ্রাহকের তুলনায় অন্তর্ভুক্ত নয়।','Restricted or special card — excluded from retail comparisons.')}</p>`:''}${data.offers.map(row=>`<article class="catalog-card"><h3>${E(label(row.attribute))}</h3><p class="catalog-value">${valueText(row)}</p><p>${E(conditionText(row))}</p><p>${dateText(row.doc_date)} ${row.stale?tr('· পুরনো তথ্য','· Old data'):''}</p>${sourceButton(row)}</article>`).join('')}<p class="catalog-note">${tr('ব্যাংকের প্রকাশিত তালিকা থেকে। আবেদন করার আগে ব্যাংকের সাথে নিশ্চিত হোন।','From the bank’s published schedule. Confirm with the bank before applying.')}</p><button class="catalog-action" id="offer-bank-report" type="button">${tr('এই ব্যাংকের অবস্থা দেখুন','See this bank’s condition')}</button>`;
@@ -95,7 +97,7 @@
   }
   function renderBankServices(){const data=bankOffers,root=$('services-catalog'),groups=new Map();data.offers.forEach(r=>{if(!groups.has(r.group_key))groups.set(r.group_key,r);});
     serviceHeader();
-    root.innerHTML=`${back('bank-services-back',tr('ব্যাংক সেবা','Bank services'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}${['deposit','card','loan','account_fee'].map(category=>`<h3>${E(({deposit:tr('জমা ও সঞ্চয়','Deposits and savings'),card:tr('কার্ড','Cards'),loan:tr('ঋণ','Loans'),account_fee:tr('অ্যাকাউন্ট','Accounts')})[category])}</h3>${category==='card'?bankCardLines(data.offers):[...groups.values()].filter(r=>r.category===category).map(r=>`<button class="catalog-detail-row" data-bank-offer="${E(r.offer_id)}" type="button">${E(productText(r))} ›</button>`).join('')||empty()}`).join('')}`;
+    root.innerHTML=`${back('bank-services-back',tr('ব্যাংক সেবা','Bank services'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}${['deposit','card','loan','account_fee'].filter(category=>category==='loan'?((data.loan_products||[]).length||(data.special_loans||[]).length):data.offers.some(row=>row.category===category)).map(category=>`<h3>${E(({deposit:tr('জমা ও সঞ্চয়','Deposits and savings'),card:tr('কার্ড','Cards'),loan:tr('ঋণ','Loans'),account_fee:tr('অ্যাকাউন্ট','Accounts')})[category])}</h3>${category==='card'?bankCardLines(data.offers):category==='loan'?window.IlmaLoans.bankLines(data.loan_products||[],data.special_loans||[]):[...groups.values()].filter(r=>r.category===category).map(r=>`<button class="catalog-detail-row" data-bank-offer="${E(r.offer_id)}" type="button">${E(productText(r))} ›</button>`).join('')||empty()}`).join('')}`;
     $('bank-services-back').onclick=enterServices;root.querySelectorAll('[data-bank-offer]').forEach(b=>b.onclick=()=>openOffer(b.dataset.bankOffer));
   }
   const cardCompareFacts=['annual_fee','interest_rate','late_fee','cash_advance_fee','foreign_currency_markup'];

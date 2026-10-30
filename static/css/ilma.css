@@ -1243,3 +1243,14 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 
 #bank-profile-chips button {min-height:48px;color:var(--on-stage);background:var(--stage-lo);}
 #card-status-panel[data-risk="high"] {border:1px solid var(--risk-on-stage);}
+
+/* Loan-only controls use the existing theme and text-size scale. */
+.loan-chips {display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0;}
+.loan-chips button {min-height:48px;border:1px solid var(--on-stage-2);border-radius:1rem;background:var(--stage-lo);color:var(--on-stage);padding:.6rem .9rem;font:inherit;}
+.loan-chips button[aria-pressed="true"] {border-color:var(--gold);color:var(--gold);}
+.loan-calculator {margin:1rem 0;padding:1rem;border:1px solid var(--on-stage-2);border-radius:1rem;}
+#loan-amount {display:block;width:100%;min-height:48px;box-sizing:border-box;font:inherit;padding:.75rem;background:var(--stage-lo);color:var(--on-stage);border:1px solid var(--on-stage-2);border-radius:.75rem;}
+.loan-tile .card-fact-grid:empty {display:none;}
+#loan-narration {line-height:1.5;}
+
+.loan-chips button {max-width:100%;overflow-wrap:anywhere;}

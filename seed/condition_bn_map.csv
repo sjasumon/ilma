@@ -9,3 +9,7 @@ anniversary,charged (?:when the card is activated and )?on every anniversary,,�
 first_year,1st Year,annual_fee,প্রথম বছর,First year
 renewal,2nd Year onwards,,দ্বিতীয় বছর থেকে,From the second year
 non_usd,non-USD,foreign_currency_markup,ডলার ছাড়া অন্য মুদ্রায় কেনাকাটায়,Purchases in currencies other than USD
+loan_margin_range,(?P<low>\d+(?:\.\d+)?)\s*%\s*[-–]\s*(?P<high>\d+(?:\.\d+)?)\s*%.*above,loan_margin,এফডিআরের হারের চেয়ে {low}–{high}% বেশি,{low}–{high} percentage points above FDR
+loan_margin_min,(?:minimum|min)\s*(?P<margin>\d+(?:\.\d+)?)\s*%,loan_margin,এফডিআরের হারের চেয়ে কমপক্ষে {margin}% বেশি,At least {margin} percentage points above FDR
+loan_margin_max,up to\s*(?P<margin>\d+(?:\.\d+)?)\s*%,loan_margin,এফডিআরের হারের চেয়ে সর্বোচ্চ {margin}% বেশি,Up to {margin} percentage points above FDR
+loan_margin_fixed,(?:instrument\s*rate|td\s*rate|scheme\s*rate|ir of security)\s*\+\s*(?P<margin>\d+(?:\.\d+)?)\s*%,loan_margin,এফডিআরের হারের চেয়ে {margin}% বেশি,{margin} percentage points above FDR

@@ -48,6 +48,9 @@ def offer_view(row, today=None):
         result['group_key']=card_key(row)
         number=numeric(row)
         if number is not None:result['value_num']=float(number)
+    if row.product_type in {'home_loan','auto_loan','personal_loan','loan_against_fdr'}:
+        from ilma_api.loan_catalog import decorate
+        result=decorate(row,result)
     return result
 
 CARD_ATTRIBUTES=('annual_fee','renewal_fee','fee_waiver_rule','interest_rate','late_fee','cash_advance_fee','foreign_currency_markup','supplementary_card_fee','card_replacement_fee','lounge_access')
@@ -102,6 +105,9 @@ def compare_cards(db,network,tier,primary='annual_fee',basis='conventional'):
 
 def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
             attribute=None, basis='conventional',compare_by=None):
+    if product_type in {'home_loan','auto_loan','personal_loan','loan_against_fdr'}:
+        from ilma_api.loan_catalog import compare as compare_loans
+        return compare_loans(db,product_type,basis)
     if product_type=='card':return compare_cards(db,network,tier,compare_by or attribute or 'annual_fee',basis)
     primary = attribute or ('rate' if product_type in {'fdr','dps','savings'} else 'annual_fee' if product_type=='card'
         else 'maintenance_fee_half_yearly' if product_type=='account_fee' else 'rate_min')
@@ -243,18 +249,34 @@ def make_router(get_db):
         if basis not in {'conventional','islamic'}:raise HTTPException(422,'Unknown basis')
         if product_type in {'fdr','dps'} and tenor_months is None:raise HTTPException(422,'Select one tenor')
         if product_type=='card' and (not network or not tier):raise HTTPException(422,'Select network and tier')
+        if product_type in {'home_loan','auto_loan','personal_loan','loan_against_fdr'} and tenor_months is not None:raise HTTPException(422,'Loan terms stay on the device')
         return compare(db,product_type,tenor_months,network,tier,attribute,basis,compare_by)
 
     @router.get('/v1/institutions/{id}/services')
     def bank_services(id:int,db:Session=Depends(get_db)):
         bank=institution(db,id)
         rows=db.query(ServiceOffer).filter_by(institution_id=id,hidden=False).order_by(ServiceOffer.category,ServiceOffer.product,ServiceOffer.attribute).all()
-        return dict(institution=bank_view(db,bank),offers=[offer_view(row) for row in rows])
+        from ilma_api.loan_catalog import group,TYPES,scopes,fresh
+        loan_rows=db.query(ServiceOffer).filter_by(institution_id=id,category='loan').all()
+        loans=[item for kind in TYPES if (item:=group(db,bank,loan_rows,kind))]
+        special={}
+        for row in loan_rows:
+            if not row.hidden and fresh(row) and scopes(row,bank.slug)==['none']:special.setdefault(row.product,offer_view(row))
+        return dict(institution=bank_view(db,bank),offers=[offer_view(row) for row in rows],loan_products=loans,special_loans=list(special.values()))
 
     @router.get('/v1/services/offers/{offer_id}')
     def offer(offer_id:str,db:Session=Depends(get_db)):
-        row=db.get(ServiceOffer,offer_id)
-        if not row or row.hidden:raise HTTPException(404,'Offer not available')
+        from ilma_api.loan_catalog import TYPES,recoverable,group as loan_group,view as loan_view,scopes
+        proxy=offer_id.startswith('loan-mid-')
+        row=db.get(ServiceOffer,offer_id.removeprefix('loan-mid-'))
+        if not row or (row.hidden and not (proxy and recoverable(row))):raise HTTPException(404,'Offer not available')
+        if row.product_type in TYPES:
+            sources=db.query(ServiceOffer).filter_by(institution_id=row.institution_id,category='loan',basis=row.basis).all()
+            detail=loan_group(db,row.institution,sources,row.product_type,detail_product=row.product,allow_stale=row.stale)
+            if detail:
+                facts=[r for r in [detail['rate'],detail['rate_min'],detail['rate_max'],*detail['fees']] if r]
+            else:facts=[loan_view(r) for r in sources if r.product==row.product and not r.hidden]
+            return dict(institution=bank_view(db,row.institution),product=row.product,offers=facts,loan=detail,loan_type=row.product_type)
         group=db.query(ServiceOffer).filter_by(institution_id=row.institution_id,product=row.product,network=row.network,
                     tier=row.tier,tenor_months=row.tenor_months,basis=row.basis,hidden=False)
         if row.product_type=='card':
@@ -278,7 +300,13 @@ def make_router(get_db):
     async def comparison_readout(payload:ReadComparison,db:Session=Depends(get_db)):
         from ilma_api.database_tasks import call
         from ilma_api.service_clips import readout
-        return await call(db,lambda owned:readout(compare(owned,**payload.model_dump(exclude={'language'})),payload.language))
+        def saved(owned):
+            result=compare(owned,**payload.model_dump(exclude={'language'}))
+            if payload.product_type in {'home_loan','auto_loan','personal_loan','loan_against_fdr'}:
+                if payload.tenor_months is not None:raise HTTPException(422,'Loan terms stay on the device')
+                return result['readout'] if payload.language=='bn' else {'text':'','audio_url':None}
+            return readout(result,payload.language)
+        return await call(db,saved)
     return router
 
 

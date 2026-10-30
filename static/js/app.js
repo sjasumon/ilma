@@ -819,11 +819,12 @@ function stopAudio() {
   const labels = { "lbl-listen-rpt": T[currentLang].detail.listenReport, "lbl-listen-srv": T[currentLang].services.listenBtn, "lbl-listen-news": T[currentLang].news.listenNews };
   Object.entries(labels).forEach(([id, text]) => document.getElementById(id).textContent = text);
   const compareListen=document.getElementById('compare-listen');
+  const loanListen=document.getElementById('loan-listen');if(loanListen)loanListen.textContent=window.IlmaLoans?.listenLabel?.()||'Listen';
   if(compareListen)compareListen.textContent=window.IlmaCatalog?.listenLabel?.()||(currentLang==='bn'?'শুনুন':'Listen');
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/bank\/bn\/[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans)\/bn\/[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -831,6 +832,7 @@ function playVoiceAudio(url, request = playbackRequest, manual = false, onError 
   if (label) document.getElementById(label).textContent = currentLang === "bn" ? "থামুন" : "Stop";
   const compareListen=document.getElementById('compare-listen');
   if(currentTab==='services'&&compareListen)compareListen.textContent=currentLang==='bn'?'থামুন':'Stop';
+  const loanListen=document.getElementById('loan-listen');if(currentTab==='services'&&loanListen)loanListen.textContent=currentLang==='bn'?'থামুন':'Stop';
   player.play?.().catch(() => { if(request!==playbackRequest)return; stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
   return true;
 }

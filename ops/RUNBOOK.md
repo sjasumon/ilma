@@ -419,3 +419,12 @@ The completed resume now contains all 31 approved cost-specific card recordings 
 The bank module is separate from services. Deploy `screen/bank-tab-v2` to preview for review; do not merge into the services branch or production before phone acceptance. Check EBL, NBL and South Bangla, hidden empty sections, loss formatting, source sheets, insurance details, announcement filters and history. Capture bank list, three report cards, EBL announcements and NBL history at Small and Extra large. Test rotation, keyboard resize, desktop and 200% text. Existing 31 card recordings must still pass exact-text/hash and actual-playback checks.
 
 Bank reports make no runtime TTS call. Text review is required before offline generation. `scripts/build_bank_clips.py --approved-json /private/path/review.json --output /private/path/staging` is a dry run; add `--generate --env-file /private/path/.env` only after approval. The JSON carries eleven bank slugs, exact text and `source_sha256` values; keep it private until approved. Decode and hash-check generated files before publishing to `static/audio/bank/`. Source fingerprint mismatch must suppress playback.
+
+
+## Loan preview
+
+Loan examples use the same preview branch as the bank review. Do not reseed the shared MySQL database during preview deployment. Published CSV normalization and read-time API normalization support the existing database without a production migration.
+
+`scripts/build_loan_clips.py --approved-json /private/path/loan-review.json --output /private/path/staging` prints four exact scripts and their character total without calling a provider. Add `--generate --env-file /private/path/.env` only after text and credit approval. The offline request limit is 120 seconds per numbered account in the shared ordered fallback. Keep private draft files outside the repository. Validate text/source/audio hashes and decoded MP3s before publishing reviewed files under `static/audio/loans/bn/`; never mark unheard clips as listening-reviewed. A changed source fingerprint suppresses playback.
+
+Check all four types, amount and term edits without requests or storage, fee-cap changes, source sheets and min/max bounds. Loan audio is not complete until the four reviewed recordings are activated and physical-device playback passes. Preserve the existing 31 card clips and pending bank-report review.

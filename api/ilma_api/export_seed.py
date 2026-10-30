@@ -101,9 +101,15 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
             product_type = classify(row)
             reason = next((rule['reason'] for rule in hidden_rules if rule['bank'] == row['bank']
                 and rule['category'] == row['category'] and rule['product_type'] in ('*', product_type)
-                and rule['tier'] in ('*', row['tier'])), '')
+                and rule['tier'] in ('*', row['tier'])
+                and (rule.get('product','*')=='*' or rule['product'].casefold() in row['product'].casefold())
+                and rule.get('attribute','*') in ('*',row['attribute'])
+                and (not rule.get('condition_pattern') or re.search(rule['condition_pattern'],row['condition'],re.I))), '')
             try: number = Decimal(row['value'].replace(',', ''))
             except InvalidOperation: number = None
+            if row['category']=='loan':
+                percentage=re.fullmatch(r'(\d+(?:\.\d+)?)\s*%',row['value'].strip())
+                if percentage:number=Decimal(percentage[1])
             free=row['value'].casefold()=='free' and re.search(r'\bfree\b',row['quote'],re.I)
             if free:number=Decimal(0)
             if number is not None and not number.is_finite():raise ValueError('Non-finite service number')
@@ -115,13 +121,18 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
                     reason = reason or 'numeric value is not printed in quote; requires verification'
                 issues.append(dict(offer_id=row['id'], reason='numeric value not literal in quote'))
             if 'quote_unreadable' in row['condition']: reason = 'source quote unreadable; requires verification'
+            if row['category']=='loan' and row['attribute']=='rate_min':
+                from ilma_api.loan_catalog import mid_rate
+                middle=mid_rate(row)
+                if middle and (not reason or reason.startswith('numeric value is not printed')):
+                    number=Decimal(str(middle[0]));row={**row,'attribute':'interest_rate','value':format(number,'g')+'%','condition':f'Mid-Rate {middle[0]:g}% ± {middle[1]:g}%'};reason=''
             doc_date = date.fromisoformat(row['doc_date'])
             stale = 'stale' in row['condition'].lower() or (date.fromisoformat(exported) - doc_date).days > 365
             offers.append(dict(offer_id='svc-' + row['id'], institution_id=int(row['bank_id']),
                 category=row['category'], product=row['product'], product_type=product_type,
                 network=row['network'] or None, tier=row['tier'] or None, tenor_months=tenor(row),
                 **parse_terms(row['product'],row['condition'],tenor(row)),
-                attribute=row['attribute'], value_num=number, value_text=row['value'], unit=row['unit'],
+                attribute=row['attribute'], value_num=number, value_text=row['value'], unit='pct_once' if row['category']=='loan' and row['attribute'] in {'processing_fee','early_settlement_fee','partial_payment_fee'} else row['unit'],
                 condition=row['condition'], basis=row['basis'], doc_date=row['doc_date'], stale=stale,
                 source_url=row['source_url'], page=int(row['page']), quote=row['quote'],
                 column_header=row['column_header'], variant=variants[row['id']], hidden=bool(reason), hidden_reason=reason,

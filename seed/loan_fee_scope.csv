@@ -1,0 +1,10 @@
+bank,product,applies_to
+NCCBANK,Retail Loan,home_loan|auto_loan|personal_loan
+SBACBANK,SBAC Retail Loans,home_loan|auto_loan|personal_loan
+PRIMEBANK,Prime Retail Loans,home_loan|auto_loan|personal_loan
+BRACBANK,Thikana Home Loan,home_loan
+CITYBANK,Personal Loan,personal_loan
+DUTCHBANGL,Personal Loan / Retail Lending,personal_loan
+BANKASIA,Loan for Professional,none
+EBL,Executive Loan,personal_loan
+EBL,Auto Loan,auto_loan

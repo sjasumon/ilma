@@ -37,7 +37,7 @@ assert.ok(!element('ret-result-box').innerHTML.includes('NaN'));
 console.log('Frontend runtime regressions passed');
 const html = fs.readFileSync('static/index.html', 'utf8');
 assert.match(html, /id="home-listening-view" hidden/);
-for (const asset of ['css/ilma.css','js/app.js','js/bank-services-ui.js','js/catalog-common.js','js/bank-ui.js','js/services-ui.js','fonts/fonts.css']) {
+for (const asset of ['css/ilma.css','js/app.js','js/bank-services-ui.js','js/catalog-common.js','js/bank-ui.js','js/services-ui.js','js/loan-ui.js','fonts/fonts.css']) {
   const hash=require('node:crypto').createHash('sha256').update(fs.readFileSync('static/'+asset)).digest('hex').slice(0,16);
   assert.ok(html.includes('/static/'+asset+'?v=sha256-'+hash),'Asset URL must match current bytes: '+asset);
   assert.ok(fs.readFileSync('static/sw.js','utf8').includes('/static/'+asset+'?v=sha256-'+hash),'Worker asset URL must match: '+asset);

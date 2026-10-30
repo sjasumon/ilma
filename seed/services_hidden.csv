@@ -1,3 +1,5 @@
-bank,category,product_type,tier,reason
-PRIMEBANK,card,card,Signature,Signature ZERO free conditions await manual review (v5.3 N1)
-CITYBANK,deposit,fdr,*,12M 7.00 vs 5.75 waiting for Sumon's check (v5.2 S4)
+bank,category,product_type,tier,reason,product,attribute,condition_pattern
+PRIMEBANK,card,card,Signature,Signature ZERO free conditions await manual review (v5.3 N1),*,*,
+CITYBANK,deposit,fdr,*,12M 7.00 vs 5.75 waiting for Sumon's check (v5.2 S4),*,*,
+EBL,loan,auto_loan,*,quote not readable,Auto Loan,*,quote_unreadable
+EBL,loan,personal_loan,*,quote not readable,Executive Loan,*,quote_unreadable
