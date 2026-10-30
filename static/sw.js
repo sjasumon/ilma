@@ -1,8 +1,8 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-8b051b2a4d36b6a7';
+const SHELL = 'ilma-shell-fb28fcf5a0386da4';
 const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ['/static/js/account-ui.js?v=sha256-654f3cf1785e638e','/static/js/deposit-ui.js?v=sha256-80767ee11111f25f','/static/js/loan-ui.js?v=sha256-84eb1c1ffe580101','/static/js/catalog-common.js?v=sha256-0b2e5985c81e8b3e','/static/js/bank-ui.js?v=sha256-b94de70813faa126','/static/js/services-ui.js?v=sha256-6270f1638c4da5ac',"/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-76f59c4e9b71b9bd', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-dc3ca37271812320', '/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd', '/static/js/audio-session.js?v=sha256-5054f0d844b15ef6', '/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23'];
+const ASSETS = ['/static/js/account-ui.js?v=sha256-0b333231a1df342c','/static/js/deposit-ui.js?v=sha256-f57cd2c5d62459dd','/static/js/loan-ui.js?v=sha256-84eb1c1ffe580101','/static/js/catalog-common.js?v=sha256-0b2e5985c81e8b3e','/static/js/bank-ui.js?v=sha256-b94de70813faa126','/static/js/services-ui.js?v=sha256-6270f1638c4da5ac',"/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-76f59c4e9b71b9bd', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-c5a2be593ff5cc0e', '/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd', '/static/js/audio-session.js?v=sha256-5054f0d844b15ef6', '/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -16,7 +16,7 @@ self.addEventListener('fetch', event => {
   const asset = url.pathname === '/' || url.pathname.startsWith('/static/');
   if (!bank && !asset && url.pathname !== '/v1/content/fixed') return;
   event.respondWith((async () => {
-    const serviceAudio=/^\/static\/audio\/(?:services\/bn\/card-[a-z0-9-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9-]+)\.mp3$/.test(url.pathname);
+    const serviceAudio=/^\/static\/audio\/(?:services\/bn\/(?:card-|deposit_)[a-z0-9-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+)\.mp3$/.test(url.pathname);
     const cache = await caches.open(serviceAudio ? SERVICE_AUDIO : bank ? BANKS : SHELL);
     try {
       const response = await fetch(request);

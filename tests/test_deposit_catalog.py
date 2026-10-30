@@ -82,3 +82,22 @@ def test_service_answer_separates_general_and_women_dps(db):
     assert [r['fact_id'] for r in answer('ডিপিএসের হার')['sources']]==['general']
     assert [r['fact_id'] for r in answer('নারীদের ডিপিএসের হার')['sources']]==['women']
     assert answer('নারীদের ডিপিএসের হার')['comparison']['audience']=='women'
+
+def test_nxt_is_reference_only_and_never_joins_general_calculation():
+    from ilma_api.deposit_references import references
+    row=dict(product_type='savings',audience='check',tenor_list_months=[],product='NCC NXT Savings Account',offer_id='synthetic-nxt',value_num=4)
+    result=dict(catalog_banks=[dict(slug='nccbank',name_bn='পরীক্ষা',name_en='Synthetic',status={'code':'strong'},rates=[row])])
+    refs=references(result,'savings',12,'all');assert refs[0]['reference_only'] and refs[0]['offer']['audience']=='check'
+    assert select([row],'savings',12,'all',100000)==[]
+
+def test_saved_deposit_uses_services_manifest_and_source_change_suppresses_audio(db,tmp_path,monkeypatch):
+    import json,hashlib
+    from ilma_api import deposit_readout
+    from ilma_api.deposit_catalog import catalog
+    initial=catalog(db);read=initial['readouts']['fdr-12-all'];monkeypatch.setattr(deposit_readout,'ROOT',tmp_path)
+    directory=tmp_path/'static/audio/services/bn';directory.mkdir(parents=True);audio=b'synthetic-audio';(directory/'deposit_fdr-12-all.mp3').write_bytes(audio)
+    text='অনুমোদিত পরীক্ষার পাঠ।';item=dict(text=text,text_sha256=hashlib.sha256(text.encode()).hexdigest(),source_sha256=read['source_sha256'],audio_sha256=hashlib.sha256(audio).hexdigest(),file='bn/deposit_fdr-12-all.mp3',approved_exact_text=True,reviewed=True)
+    (directory.parent/'manifest.json').write_text(json.dumps({'clips':{'deposit:bn:fdr-12-all':item}}))
+    ready=catalog(db)['readouts']['fdr-12-all'];assert ready['text']==text and '/services/bn/deposit_fdr-12-all.mp3?v=' in ready['audio_url']
+    row=db.get(ServiceOffer,'synthetic-fdr');row.value_num=9;row.value_text='9';row.quote='Synthetic fixed deposit rate9%.';db.flush()
+    stale=catalog(db)['readouts']['fdr-12-all'];assert stale['audio_url'] is None and stale['text']!=text

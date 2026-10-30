@@ -94,3 +94,6 @@ docs/TAP_OR_TALK_FIXES_*.md
 !/static/audio/bank/bn/ncc.mp3
 !/static/audio/bank/bn/prime.mp3
 !/static/audio/bank/bn/sbac.mp3
+
+# Approved final deposit recordings.
+!/static/audio/services/bn/deposit_*.mp3

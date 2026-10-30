@@ -59,6 +59,13 @@ async function request(path, method='GET') {
   media=await request('/static/audio/bank/bn/synthetic.mp3?v=cccccccccccccccc');assert.equal(media.status,206);
   await Promise.all(background);background=[];context.fetch=async()=>{throw Error('offline')};
   media=await request('/static/audio/bank/bn/synthetic.mp3?v=cccccccccccccccc');assert.equal(media.status,200);assert.equal(await media.text(),'bank');
+  for (const path of ['/static/audio/services/bn/deposit_fdr-12-all.mp3?v=dddddddddddddddd','/static/audio/bank/bn/synthetic_bank.mp3?v=eeeeeeeeeeeeeeee']) {
+    context.fetch=async()=>new Response('saved',{headers:{'Content-Type':'audio/mpeg'}});
+    assert.equal((await request(path)).status,200);
+    await Promise.all(background);background=[];
+    context.fetch=async()=>{throw Error('offline')};
+    assert.equal(await (await request(path)).text(),'saved','Approved deposit and underscore bank paths cache for offline playback');
+  }
   context.fetch=originalFetch;
   console.log('Saved audio cache passed: 206 streaming, complete background caching, offline playback and incomplete ranges excluded');
   console.log('Offline cache passed: public index retained, report cap, stale marker, no uploads/private endpoints cached');

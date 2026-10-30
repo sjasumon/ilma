@@ -71,4 +71,7 @@ def catalog(db,item='savings',audience='all'):
     result=dict(choice=dict(product_type='account_fee',item=item,audience=audience),banks=banks(db),defaults=dict(balance=100000,card=True,sms=True))
     from ilma_api.account_readout import readouts
     result['readouts']=readouts(result)
+    from ilma_api.deposit_catalog import catalog as deposit_catalog
+    deposits=deposit_catalog(db,'savings')
+    result['deposit_readouts']={k:v for k,v in deposits['readouts'].items() if k.startswith('savings-')}
     return result
