@@ -232,7 +232,7 @@ def voice_service_result(question,intent,context,db,language):
     account_attribute=intent.service_attribute
     if product is None:
         for pattern,attribute in [(r'\bsms\b|এসএমএস','sms_alert_fee'),(r'cheque|চেকবই','cheque_book_fee'),
-                                  (r'debit card|ডেবিট','annual_fee'),(r'maintenance|রক্ষণাবেক্ষণ|account charge|অ্যাকাউন্টের খরচ','maintenance_fee_half_yearly')]:
+                                  (r'debit card|ডেবিট','annual_fee'),(r'maintenance|রক্ষণাবেক্ষণ|account charge|অ্যাকাউন্ট|হিসাব|\baccount\b','maintenance_fee_half_yearly')]:
             if re.search(pattern,text):product='account_fee';account_attribute=attribute;break
     if not product:
         for pattern,key in [(r'against.*fdr|(?:fdr|এফডিআর).*বিপরীতে','loan_against_fdr'),(r'কার্ড|card','credit_card'),(r'এফডিআর|fdr|fixed deposit','fdr'),

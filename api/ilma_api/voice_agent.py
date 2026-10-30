@@ -174,7 +174,7 @@ def visible_offers(db,institution_id):
 def services_overview(db,institution_id):
     rows=visible_offers(db,institution_id)
     counts=Counter(row.product_type for row in rows)
-    bn_labels={'fdr':'এফডিআর','dps':'ডিপিএস','card':'কার্ড','savings':'সঞ্চয়','home_loan':'গৃহঋণ','personal_loan':'ব্যক্তিগত ঋণ','auto_loan':'গাড়ির ঋণ','loan_against_fdr':'এফডিআরের বিপরীতে ঋণ','account_fee':'হিসাবের ফি'}
+    bn_labels={'fdr':'এফডিআর','dps':'ডিপিএস','card':'কার্ড','savings':'সঞ্চয়','home_loan':'গৃহঋণ','personal_loan':'ব্যক্তিগত ঋণ','auto_loan':'গাড়ির ঋণ','loan_against_fdr':'এফডিআরের বিপরীতে ঋণ','account_fee':'অ্যাকাউন্ট'}
     groups=[(key,n) for key,n in sorted(counts.items()) if key in bn_labels]
     if not groups:return []
     return [fact('services:'+str(institution_id),bank_name(db,institution_id,True)+': '+', '.join(f'{bn_labels[key]} {format_number(n,bn=True)}টি তথ্য' for key,n in groups),bank_name(db,institution_id,False)+': '+', '.join(f'{key.replace("_"," ")} {n} records' for key,n in groups),{'kind':'database_count','source_title':'Published service schedules','source_url':rows[0].source_url,'offer_ids':[r.offer_id for r in rows],'count_kind':'attributes, not unique products'},institution_id=institution_id,counts=dict(groups))]
@@ -204,7 +204,7 @@ def offer_fact(row,bank):
         name=clean(bank['name_bn' if bn else 'name_en'])
         value=format_number(row['value_num'],bn=bn)
         unit='%' if row['unit']=='pct_year' else (' টাকা' if bn else ' BDT') if row['unit']=='bdt' else ' '+row['unit']
-        product={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'card':('কার্ড','Card')}.get(row['product_type'],('ঋণ/হিসাবের ফি',row['product_type'].replace('_',' ')))[0 if bn else 1]
+        product={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'card':('কার্ড','Card')}.get(row['product_type'],('ঋণ/অ্যাকাউন্ট',row['product_type'].replace('_',' ')))[0 if bn else 1]
         term=(f' {format_number(row["tenor_months"],bn=bn)} '+('মাস' if bn else 'months')) if row['tenor_months'] else ''
         text=f'{name} · {product}{term} {value}{unit} · '+('হারতালিকা ' if bn else 'Schedule ')+format_date(row['doc_date'],bn=bn)
         if row['product_type']=='fdr' and row['tenor_months']==12 and row['basis']=='conventional' and row['unit']=='pct_year' and not row['stale'] and (date.today()-date.fromisoformat(str(row['doc_date']))).days<=365:

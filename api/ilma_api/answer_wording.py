@@ -53,7 +53,7 @@ def year(row,bn):
     return format_number(int(value),bn=bn,group=False)
 
 
-PRODUCTS={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'savings':('সঞ্চয়ী হিসাব','savings account'),'card':('কার্ড','card'),'home_loan':('গৃহঋণ','home loan'),'auto_loan':('গাড়ির ঋণ','car loan'),'personal_loan':('ব্যক্তিগত ঋণ','personal loan'),'loan_against_fdr':('এফডিআরের বিপরীতে ঋণ','loan against FDR'),'account_fee':('হিসাবের ফি','account fee')}
+PRODUCTS={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'savings':('সঞ্চয়ী হিসাব','savings account'),'card':('কার্ড','card'),'home_loan':('গৃহঋণ','home loan'),'auto_loan':('গাড়ির ঋণ','car loan'),'personal_loan':('ব্যক্তিগত ঋণ','personal loan'),'loan_against_fdr':('এফডিআরের বিপরীতে ঋণ','loan against FDR'),'account_fee':('অ্যাকাউন্ট','account')}
 FEES={'annual_fee':('বার্ষিক ফি','annual fee'),'renewal_fee':('নবায়ন ফি','renewal fee'),'late_fee':('দেরিতে পরিশোধের ফি','late payment fee'),'cash_advance_fee':('নগদ তোলার ফি','cash advance fee'),'rate':('হার','rate'),'interest_rate':('সুদের হার','interest rate')}
 
 
