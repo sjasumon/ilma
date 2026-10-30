@@ -53,7 +53,7 @@ class TestStatusRules(unittest.TestCase):
         data = {
             "facts": {
                 "crar": {"fact_id": "f1", "value": 0.14, "period": "2025", "period_end": date(2025, 12, 31), "source_info": {}},
-                "npl_ratio": {"fact_id": "f2", "value": 0.03, "period": "2025", "period_end": date(2025, 12, 31), "basis": "solo_calculated", "source_info": {}}
+                "npl_ratio": {"fact_id": "f2", "value": 0.02, "period": "2025", "period_end": date(2025, 12, 31), "basis": "solo_calculated", "source_info": {}}
             },
             "ratings": [{"fact_id": "r1", "agency": "CRISL", "long_term": "A", "rated_on": date(2026, 8, 25), "outlook": "developing", "source_info": {}}],
             "events": [], "rates": {}, "median_12m_fdr": 0.08

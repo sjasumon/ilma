@@ -1,4 +1,6 @@
 """Wording alternatives for code-computed meanings, never new claims."""
+from ilma_api.human_tokens import low_npl
+
 def alternatives(f,language):
     bn=language=='bn';v=f.get('values',{});metric=v.get('metric')
     if f.get('kind')=='status' and f.get('status',{}).get('code')=='strong':
@@ -25,7 +27,7 @@ def alternatives(f,language):
           'the required capital level is covered with additional room for potential losses',
           'its own capital has room above the threshold rather than a shortfall'
         ])
-    if metric=='npl_ratio' and f.get('kind')=='figure' and v.get('value',1)<=.03:
+    if metric=='npl_ratio' and f.get('kind')=='figure' and low_npl(v.get('value',1)):
         return ([
           'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ',
           'ঋণের বেশির ভাগ খেলাপি হিসেবে চিহ্নিত নয়, যা ইতিবাচক',

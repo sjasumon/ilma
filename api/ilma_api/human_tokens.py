@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 import re
+from ilma_api.rules.status import threshold_config
 from ilma_api.voice_numbers import pronounce
 
 TOKEN=re.compile(r'⟨([^⟨⟩]+)⟩')
@@ -12,6 +13,7 @@ CONNECTORS=set('আর এছাড়া পাশাপাশি তবে ব
 PRODUCTS={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'savings':('সঞ্চয়ী হিসাব','savings account'),'card':('কার্ড','card'),'home_loan':('গৃহঋণ','home loan'),'auto_loan':('গাড়ির ঋণ','car loan'),'personal_loan':('ব্যক্তিগত ঋণ','personal loan')}
 FIELDS={'founded_year':('প্রতিষ্ঠা','Established'),'branches':('শাখা','Branches'),'sub_branches':('উপশাখা','Sub-branches'),'atms':('এটিএম','ATMs'),'agent_outlets':('এজেন্ট আউটলেট','Agent outlets'),'customers':('গ্রাহক','Customers'),'known_for':('পরিচিতি','Known for')}
 
+def low_npl(value):return value<threshold_config()['npl_watch']
 def number(value):return format(Decimal(str(value)).normalize(),'f')
 def unit_label(unit,bn):
     return {'pct_year':('%','%'),'bdt':(' টাকা',' taka'),'usd':(' মার্কিন ডলার',' US dollars'),'count':('টি',' items'),'days':(' দিন',' days'),'months':(' মাস',' months')}.get(unit,('',''))[0 if bn else 1]
@@ -103,7 +105,7 @@ def fact_clause(f,language,meaning=False):
     if kind=='status':
         code=f.get('status',{}).get('code') or v.get('status','no_data')
         return {'strong':('অবস্থা ভালো, বর্তমান সূচকগুলো ইতিবাচক','is in good condition based on the current indicators'),
-          'watch':('কিছু বিষয়ে সতর্কতা দরকার, সূচকে দুর্বলতার লক্ষণ আছে','has warning signs in some indicators'),
+          'watch':('ক্ষেত্রে সতর্ক থাকুন, কিছু সূচকে দুর্বলতার লক্ষণ আছে','is on Watch, with warning signs in some indicators'),
           'high':('ঝুঁকির লক্ষণ বেশি, আর্থিক সূচকে বড় দুর্বলতা আছে','shows substantial weaknesses in its financial indicators'),
           'no_data':('অবস্থা যাচাই করার মতো যথেষ্ট তথ্য এখনো নেই','does not yet have enough information to assess its condition')}.get(code,('তথ্য কম','has insufficient information'))[0 if bn else 1]
     if metric=='crar' and meaning:
@@ -112,7 +114,7 @@ def fact_clause(f,language,meaning=False):
         if value>=minimum:return 'নিজের মূলধন ন্যূনতম চাহিদার ওপরে আছে, তাই ক্ষতি সামলানোর বাড়তি জায়গা আছে' if bn else 'its own capital exceeds the minimum, giving it extra capacity to absorb losses'
         return 'নিজের মূলধন ন্যূনতম চাহিদার নিচে আছে, যা চিন্তার বিষয়' if bn else 'its own capital is below the minimum, which is concerning'
     if metric=='npl_ratio' and meaning:
-        if v['value']<=.03:return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ' if bn else 'only a small share of lending has repayment problems, a positive sign'
+        if low_npl(v['value']):return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ' if bn else 'only a small share of lending has repayment problems, a positive sign'
         if v['value']>=.15:return 'ঋণের বড় একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা বড় চিন্তার বিষয়' if bn else 'repayment problems affect a large part of its lending, a serious concern'
         return 'ঋণের একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা নজরে রাখা দরকার' if bn else 'repayment problems affect part of its lending and deserve attention'
     if kind=='figure' and metric=='crar':return f'মূলধনের অনুপাত {number(Decimal(str(v["value"]))*100)}%, ন্যূনতম চাহিদা {number(v.get("minimum_percent",12.5))}%' if bn else f'The capital ratio is {number(Decimal(str(v["value"]))*100)}%, against a minimum of {number(v.get("minimum_percent",12.5))}%'
@@ -201,6 +203,9 @@ def build_registry(packs,comparison,language,insurance=False):
         if v.get('status')=='no_data':
             base=registry[prefix+'offer']
             registry[prefix+'offer']=FactToken(base.text+(', তবে ব্যাংকটির অবস্থা যাচাইয়ের তথ্য কম' if bn else '; there is insufficient information to assess this bank'),base.fact_ids,base.bank_id,base.kind)
+        elif v.get('status') in {'watch','high'}:
+            base=registry[prefix+'offer'];note=(', তবে ব্যাংকটিতে কিছু সতর্কতার লক্ষণ আছে','; this bank has some warning signs') if v['status']=='watch' else (', তবে ব্যাংকটির ঝুঁকি বেশি','; this bank is high risk')
+            registry[prefix+'offer']=FactToken(base.text+note[0 if bn else 1],base.fact_ids,base.bank_id,base.kind)
     return registry,facts
 
 

@@ -137,7 +137,8 @@ def load(directory,engine):
             statuses={r['slug']:get_institution_report_card(db,r['id'],as_of)['status']['code'] for r in data['institution']}
             if statuses!=manifest['expected_status']:raise ValueError('Unexpected supplemental status; transaction rolled back.')
             original={r.slug:get_institution_report_card(db,r.id,as_of)['status']['code'] for r in db.query(models.Institution).filter(models.Institution.slug.in_(DEMO_CODES))}
-            if any(value!=('no_data' if code=='sbacbank' else 'strong') for code,value in original.items()):raise ValueError('Original bank baseline changed.')
+            from ilma_api.rules.status import demo_status
+            if any(value!=demo_status(code) for code,value in original.items()):raise ValueError('Original bank baseline changed.')
             db.merge(models.Release(release_id=manifest['release_id'],note='Approved incident supplement; sourced financial flags; manual review pending.'))
             db.commit()
         except Exception:

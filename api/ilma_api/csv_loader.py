@@ -124,7 +124,8 @@ def load(directory, engine):
             from ilma_api.report_card import get_institution_report_card
             baseline = date.fromisoformat(release['export_date'])
             statuses = {row['slug']:get_institution_report_card(db,row['id'],baseline)['status']['code'] for row in data.get('institution',[])}
-            if len(statuses)!=9 or any(status != ('no_data' if code=='sbacbank' else 'strong') for code,status in statuses.items()):
+            from ilma_api.rules.status import demo_status
+            if len(statuses)!=9 or any(status != demo_status(code) for code,status in statuses.items()):
                 raise ValueError('Demo status mismatch; thresholds unchanged, load rolled back: '+str(statuses))
             db.merge(models.Release(release_id=release['release_id'], note='Supplied v5.2 export; agent checked, manual checks pending'))
             db.commit()

@@ -175,3 +175,32 @@ def test_award_short_name_replaces_a_stiff_translation():
 def test_product_answers_are_code_owned_and_repeat_exactly(db):
     first=ask(db,'এফডিআরের সুদ কত?');second=ask(db,'এফডিআরের হার বলুন')
     assert first['speech']==second['speech'] and first['checked']=='code'
+
+@pytest.mark.parametrize('value,code',[(.0299,'strong'),(.03,'watch'),(.0838,'watch'),(.2499,'watch'),(.25,'high')])
+def test_bad_loan_share_sets_the_status_word(value,code):
+    from ilma_api.rules.status import evaluate
+    facts={'crar':{'fact_id':'c','value':.16,'period':'2025','period_end':date(2025,12,31),'source_info':{}},'npl_ratio':{'fact_id':'n','value':value,'period':'2025','period_end':date(2025,12,31),'basis':'solo','source_info':{}}}
+    result=evaluate({'id':1,'slug':'t','type':'bank','coverage':'full'},{'facts':facts,'ratings':[{'fact_id':'r','agency':'CRISL','long_term':'AA','rated_on':date(2026,8,25),'outlook':'stable','source_info':{}}],'events':[],'rates':{},'median_12m_fdr':.08},as_of=date(2026,10,27))
+    assert result.code==code
+
+def test_watch_word_and_warning_agree_in_both_languages():
+    f=dict(kind='status',status={'code':'watch'},values={})
+    loans=dict(kind='figure',values={'metric':'npl_ratio','value':.0838})
+    assert 'সতর্ক থাকুন' in fact_clause(f,'bn') and 'ভালো' not in fact_clause(f,'bn')
+    assert 'Watch' in fact_clause(f,'en') and 'good' not in fact_clause(f,'en')
+    assert 'নজরে রাখা দরকার' in fact_clause(loans,'bn',True) and 'deserve attention' in fact_clause(loans,'en',True)
+
+def test_a_share_at_the_watch_line_is_not_called_small():
+    f=dict(kind='figure',values={'metric':'npl_ratio','value':.03})
+    assert 'সামান্য' not in fact_clause(f,'bn',True) and 'small share' not in fact_clause(f,'en',True)
+
+@pytest.mark.parametrize('status,bn,en',[('watch','সতর্কতার লক্ষণ','warning signs'),('high','ঝুঁকি বেশি','high risk')])
+def test_compare_rows_carry_the_bank_status(status,bn,en):
+    from ilma_api.human_tokens import build_registry
+    row=rate('a','Plain',12,7,status=status);row.update(bank_name_bn='টেস্ট',bank_name_en='Test')
+    assert bn in build_registry([],[row],'bn')[0]['row:0.offer'].text
+    assert en in build_registry([],[row],'en')[0]['row:0.offer'].text
+
+def test_demo_baseline_lists_the_watch_banks():
+    from ilma_api.rules.status import demo_status
+    assert [demo_status(x) for x in ('bankasia','ebl','sbacbank')]==['watch','strong','no_data']
