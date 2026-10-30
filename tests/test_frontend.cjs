@@ -36,8 +36,8 @@ assert.ok(!element('ret-result-box').innerHTML.includes('NaN'));
 console.log('Frontend runtime regressions passed');
 const html = fs.readFileSync('static/index.html', 'utf8');
 assert.match(html, /id="home-listening-view" hidden/);
-assert.match(html, /ilma\.css\?v=voice-tokens-v2-20261029-61/);
-assert.match(html, /app\.js\?v=voice-tokens-v2-20261029-61/);
+assert.match(html, /ilma\.css\?v=voice-tokens-v2-20261030-62/);
+assert.match(html, /app\.js\?v=voice-tokens-v2-20261030-62/);
 assert.match(html, /id="home-tap-target" class="home-speak-button"/);
 console.log('Home visibility and asset-version regressions passed');
 
@@ -63,3 +63,5 @@ assert.ok(!appSrc.includes('color: #555') && !appSrc.includes('color: #666'), 'n
 console.log('Unified Home theme regressions passed');
 
 // Header/dock geometry and content scrolling are checked by check_app_frame.py.
+assert.match(html, /id="agent-home"/);
+assert.match(fs.readFileSync('static/js/app.js', 'utf8'), /tab === "home"\) goHome\(\)/);
