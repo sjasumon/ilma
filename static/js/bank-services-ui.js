@@ -198,7 +198,7 @@
     const choices=missing?[selected,...values]:values;
     return choices.map(value=>`<option value="${E(value)}" ${String(value)===String(selected)?'selected':''}>${E(formatter(value))}${missing&&String(value)===String(selected)?' · '+tr('প্রকাশিত পছন্দ নেই','no published option'):''}</option>`).join('');
   }
-  async function openComparison(next,calculator={}){ $('main-content').scrollTop=0;
+  async function openComparison(next,calculator={}){ stopAudio(); $('main-content').scrollTop=0;
     if(currentTab!=='services')switchTab('services');
     choice={...next,basis:next.basis||'conventional'};bankFilter=null;servicePage='compare';
     calculatorPrefill=calculator;$('service-voice-answer').hidden=!calculator.fromVoice;
@@ -219,7 +219,7 @@
       ${category==='account_fee'?`<label>${tr('বিষয়','Item')}<select id="compare-attribute">${options(data.attributes||[],choice.attribute||'maintenance_fee_half_yearly',label)}</select></label>`:''}
       ${category!=='card'?`<label>${tr('হিসাবের ধরন','Basis')}<select id="compare-basis">${options(['conventional','islamic'],choice.basis,v=>v==='islamic'?tr('ইসলামী','Islamic'):tr('প্রচলিত','Conventional'))}</select></label>`:''}</div>${category==='card'?cardCompareControls():''}
       ${isDeposit||isLoan?`<div class="catalog-calculator"><label for="comparison-example">${tr('একটি উদাহরণ দেখুন — আপনার টাকার পরিমাণ নয়','Choose an example — not your own balance')}</label><select id="comparison-example" class="calc-field">${options([100000,200000,500000,1000000],isLoan?500000:100000,value=>number(value/100000)+' '+tr('লাখ টাকা','lakh BDT'))}</select><p class="catalog-note">${tr('নির্দিষ্ট উদাহরণের হিসাব। ব্যক্তিগত পরিমাণ চাওয়া বা সংরক্ষণ করা হয় না।','Fixed examples only. Your personal amount is neither requested nor stored.')}</p>${isLoan?`<label for="comparison-term">${tr('ঋণের মেয়াদ (মাস)','Loan term (months)')}</label><input id="comparison-term" class="calc-field" type="number" min="1" max="600" value="${Number.isFinite(calculatorPrefill.term)?Math.min(600,Math.max(1,calculatorPrefill.term)):240}">`:''}</div>`:''}
-      <p>${comparison.sort==='higher_rate_first'?tr('বেশি হার আগে','Higher rate first'):tr('কম খরচ আগে','Lower cost first')} · ${tr('প্রকাশিত সংখ্যার ক্রম, ব্যাংকের র‌্যাঙ্কিং নয়','Sorted by published number, not a bank ranking')}</p>${comparison.unit_note_bn?`<p class="catalog-note">${E(currentLang==='bn'?comparison.unit_note_bn:comparison.unit_note_en)}</p>`:''}<p id="service-savings" class="catalog-saving" role="status"></p><button type="button" id="compare-listen" class="catalog-action btn-primary-listen">${tr('শুনুন','Listen')}</button><p id="comparison-narration" class="catalog-note" hidden></p><p id="comparison-audio-error" role="status" hidden></p><div id="comparison-rows"></div>${comparison.insurance?`<p class="catalog-note">${E(currentLang==='bn'?comparison.insurance.text_bn:comparison.insurance.text_en)} ${comparison.insurance.source_url?`<a class="catalog-source" href="${E(comparison.insurance.source_url)}" target="_blank" rel="noopener noreferrer">${tr('আইনের সূত্র ↗','Legal source ↗')}</a>`:''}</p>`:isDeposit?`<p class="catalog-note">${tr('বীমার যাচাইকৃত সূত্র এখনও যোগ করা হয়নি।','A verified insurance source has not been loaded yet.')}</p>`:''}`;
+      <p class="comparison-sort-note">${comparison.sort==='higher_rate_first'?tr('বেশি হার আগে','Higher rate first'):tr('কম খরচ আগে','Lower cost first')} · ${tr('প্রকাশিত সংখ্যার ক্রম, ব্যাংকের র‌্যাঙ্কিং নয়','Sorted by published number, not a bank ranking')}</p>${comparison.unit_note_bn&&category!=='card'?`<p class="catalog-note">${E(currentLang==='bn'?comparison.unit_note_bn:comparison.unit_note_en)}</p>`:''}${category==='card'?`<article id="card-explanation" class="card-explanation" aria-labelledby="card-explanation-title"></article>`:`<p id="service-savings" class="catalog-saving" role="status"></p>`}<button type="button" id="compare-listen" class="catalog-action btn-primary-listen">${comparisonListenLabel()}</button>${category==='card'?`<p class="catalog-note audio-overview-note">${tr('এই অডিওতে পুরো কার্ডের খরচের সারাংশ আছে। উপরের লেখাটি আপনার নির্বাচিত বিষয়ের জন্য।','This recording covers the whole card overview. The article above follows your selected cost.')}</p><details id="comparison-audio-transcript"><summary>${tr('পুরো কার্ডের অডিওলিপি পড়ুন','Read the full card audio transcript')}</summary><div id="comparison-narration" class="catalog-note"></div></details>`:`<p id="comparison-narration" class="catalog-note" hidden></p>`}<p id="comparison-audio-error" role="status" hidden></p><div id="comparison-rows"></div>${comparison.insurance?`<p class="catalog-note">${E(currentLang==='bn'?comparison.insurance.text_bn:comparison.insurance.text_en)} ${comparison.insurance.source_url?`<a class="catalog-source" href="${E(comparison.insurance.source_url)}" target="_blank" rel="noopener noreferrer">${tr('আইনের সূত্র ↗','Legal source ↗')}</a>`:''}</p>`:isDeposit?`<p class="catalog-note">${tr('বীমার যাচাইকৃত সূত্র এখনও যোগ করা হয়নি।','A verified insurance source has not been loaded yet.')}</p>`:''}`;
     $('services-back').onclick=enterServices;
     if($('compare-product'))$('compare-product').onchange=e=>openComparison({product_type:e.target.value,tenor_months:['fdr','dps'].includes(e.target.value)?12:undefined,basis:choice.basis});
     if($('compare-tenor'))$('compare-tenor').onchange=e=>openComparison({...choice,tenor_months:Number(e.target.value)});
@@ -230,7 +230,8 @@
     if($('comparison-example'))$('comparison-example').onchange=renderRows;
     if($('comparison-term'))$('comparison-term').oninput=renderRows;
     $('compare-listen').onclick=listenComparison;
-    if(category==='card'){root.querySelectorAll('[data-compare-by]').forEach(button=>button.onclick=()=>openComparison({...choice,attribute:undefined,compare_by:button.dataset.compareBy}));$('card-meanings').onclick=()=>{const sheet=$('card-meaning-dialog');sheet.showModal();};$('card-meaning-close').onclick=()=>$('card-meaning-dialog').close();}
+    if(category==='card'){$('card-compare-by').onchange=async event=>{await openComparison({...choice,attribute:undefined,compare_by:event.target.value});$('card-compare-by')?.focus({preventScroll:true});};$('card-meanings').onclick=()=>{const sheet=$('card-meaning-dialog');sheet.showModal();};$('card-meaning-close').onclick=()=>$('card-meaning-dialog').close();}
+    if(category==='card'){renderCardExplanation();renderAudioTranscript();}
     renderRows();
   }
   function renderRows(){
@@ -283,7 +284,7 @@
   function cardCompareControls(){
     const meanings=['বার্ষিক ফি: কার্ড রাখার জন্য প্রতি বছর যা কাটে','সুদের হার: পুরো বিল সময়মতো না দিলে বাকি টাকার উপর বছরে যত সুদ','বিলম্ব ফি: শেষ তারিখের পরে বিল দিলে প্রতিবার যা কাটে','নগদ তোলার ফি: কার্ড দিয়ে এটিএম থেকে টাকা তুললে যা কাটে','বিদেশে খরচ: ডলার ছাড়া অন্য মুদ্রায় কেনাকাটায় অতিরিক্ত যা কাটে','অতিরিক্ত কার্ড: পরিবারের কারো জন্য দ্বিতীয় কার্ডের ফি'];
     const english=['Annual fee: yearly cost of keeping the card','Interest: annual rate on an unpaid balance','Late fee: charge when a bill is paid after its due date','Cash withdrawal: charge for taking cash using the card','Foreign spending: extra charge for purchases in currencies other than USD','Supplementary card: fee for an extra family card'];
-    return `<div class="card-compare-controls"><strong>${tr('কী তুলনা করবেন','Compare by')}</strong><button type="button" id="card-meanings" aria-haspopup="dialog" aria-label="${tr('খরচের অর্থ জানুন','Explain these costs')}">ⓘ</button><div class="card-compare-chips">${cardCompareFacts.map(key=>`<button type="button" data-compare-by="${key}" aria-pressed="${key===(choice.compare_by||choice.attribute||'annual_fee')}">${cardLabel(key)}</button>`).join('')}</div></div><dialog id="card-meaning-dialog" class="settings-dialog"><h2>${tr('খরচের অর্থ','What these costs mean')}</h2>${(currentLang==='bn'?meanings:english).map(text=>`<p>${text}</p>`).join('')}<button type="button" id="card-meaning-close">${tr('বন্ধ করুন','Close')}</button></dialog>`;
+    return `<div class="card-compare-controls"><div class="card-compare-heading"><label for="card-compare-by">${tr('কী তুলনা করবেন','Compare by')}</label><button type="button" id="card-meanings" aria-haspopup="dialog" aria-label="${tr('খরচের অর্থ জানুন','Explain these costs')}">ⓘ</button></div><select id="card-compare-by">${options(cardCompareFacts,choice.compare_by||choice.attribute||'annual_fee',cardLabel)}</select></div><dialog id="card-meaning-dialog" class="settings-dialog"><h2>${tr('খরচের অর্থ','What these costs mean')}</h2>${(currentLang==='bn'?meanings:english).map(text=>`<p>${text}</p>`).join('')}<button type="button" id="card-meaning-close">${tr('বন্ধ করুন','Close')}</button></dialog>`;
   }
   function renderCardRows(){
     const primary=comparison.choice.attribute;const sources=[];
@@ -297,8 +298,7 @@
       return `<article class="catalog-offer-row card-tile"><div class="card-bank-heading"><div>${bankNames(bank)}</div>${cardStatus(bank)}</div><h3>${E(productText(card))}</h3>${card.card_printed_name?`<small lang="en">${E(card.card_printed_name)}</small>`:''}<div class="card-top-fact"><span>${E(cardLabel(primary))}</span><strong class="catalog-value">${E(cardValue(row))}</strong>${row&&conditionText(row)?`<small>${E(conditionText(row))}</small>`:''}</div>${waiver?`<p class="card-waiver">${E(conditionText(waiver)||tr('ফি মওকুফের শর্ত মূল সূত্রে দেখুন','See source for fee waiver terms'))}</p>`:''}<div class="card-fact-grid">${grid.map(cell).join('')}</div><footer class="card-tile-footer"><small>${dateText(displayDate)} ${row?.stale||card.stale?`<span class="catalog-stale">${tr('পুরনো তথ্য','Old data')}</span>`:''}</small><button type="button" data-offer="${E(card.offer_id)}">${tr('সব বিবরণ ›','All details ›')}</button>${row?sourceButton(row,bank):''}</footer>${bank.alternatives.length?`<details><summary>${tr(`আরও ${digits(bank.alternatives.length)}টি সংস্করণ`,`${bank.alternatives.length} more versions`)}</summary>${bank.alternatives.map(v=>{sources.push(v);return `<article class="card-variant"><strong>${E(v.card_printed_name||productText(v))}</strong><p>${E(cardValue(v))}</p><button type="button" data-offer="${E(v.offer_id)}">${tr('সব বিবরণ ›','All details ›')}</button></article>`;}).join('')}</details>`:''}</article>`;
     }).join('');
     $('comparison-rows').querySelectorAll('[data-offer]').forEach(button=>button.onclick=()=>openOffer(button.dataset.offer));wireSources($('comparison-rows'),sources);
-    const fresh=comparison.rows.filter(bank=>bank.offer?.value_num!=null&&!bank.offer.stale);
-    if(primary==='annual_fee'&&fresh.length>1){const a=fresh[0],b=fresh.at(-1);$('service-savings').textContent=tr(`${productText(a.card)} কার্ড: ${bankName(a)}-এর বার্ষিক ফি ${bankName(b)}-এর চেয়ে বছরে ${number(b.offer.value_num-a.offer.value_num)} টাকা কম।`,`${productText(a.card)}: ${bankName(a)} has an annual fee BDT ${number(b.offer.value_num-a.offer.value_num)} lower than ${bankName(b)}.`);}else $('service-savings').textContent='';
+
   }
   function renderCardOffer(){
     const root=$('services-catalog'),data=offerDetail,card=data.offers.find(r=>r.attribute==='annual_fee')||data.offers[0];serviceHeader();
@@ -313,12 +313,26 @@
     const cards=rows.filter(r=>r.product_type==='card'&&r.attribute==='annual_fee'&&r.variant!=='excluded');const seen=new Set();
     return [...new Set(cards.map(r=>r.network))].sort().map(network=>`<h4>${E(currentLang==='bn'?cards.find(r=>r.network===network).card_display_bn.split(' ')[0]:network)}</h4>`+cards.filter(r=>r.network===network&&!seen.has(r.card_key)).map(row=>{seen.add(row.card_key);return `<button class="catalog-detail-row" type="button" data-bank-offer="${E(row.offer_id)}">${E(productText(row))}${row.card_printed_name?' · '+E(row.card_printed_name):''} · ${E(cardValue(row))}/${tr('বছর','year')} ›</button>`;}).join('')).join('')||empty();
   }
+  function comparisonListenLabel(){return choice.product_type==='card'?tr('পুরো কার্ডের সারাংশ শুনুন','Listen to full card overview'):tr('শুনুন','Listen');}
+  function renderCardExplanation(){
+    const data=comparison.explanation,root=$('card-explanation');if(!data||!root)return;root.dataset.attribute=data.attribute;
+    const sources=comparison.rows.flatMap(bank=>Object.values(bank.facts||{}).filter(Boolean));
+    root.innerHTML=`<h3 id="card-explanation-title">${E(currentLang==='bn'?data.title_bn:data.title_en)}</h3>${data.sections.map(section=>`<section class="card-explanation-section" data-explanation-section="${E(section.id)}"><h4>${E(currentLang==='bn'?section.heading_bn:section.heading_en)}</h4>${section.paragraphs.map(paragraph=>`<div class="card-explanation-paragraph"><p>${E(currentLang==='bn'?paragraph.text_bn:paragraph.text_en)}</p>${(paragraph.fact_ids||[]).map(id=>sources.find(fact=>fact.offer_id===id)).filter(Boolean).map(fact=>`<button class="catalog-source" type="button" data-source="${E(fact.offer_id)}" aria-label="${E(cardLabel(fact.attribute)+' · '+(comparison.rows.find(bank=>bank.id===fact.institution_id)?bankName(comparison.rows.find(bank=>bank.id===fact.institution_id)):''))}">${E(cardLabel(fact.attribute))} · ${tr('সূত্র ›','Source ›')}</button>`).join(' ')}</div>`).join('')}</section>`).join('')}`;
+    wireSources(root,sources);
+  }
+  function renderAudioTranscript(){
+    const root=$('comparison-narration');if(!root)return;
+    const text=currentLang==='bn'?comparison.readout?.text:'';
+    const sentences=text?.match(/[^।]+(?:।|$)/g)||[];const paragraphs=[];
+    for(let i=0;i<sentences.length;i+=3)paragraphs.push(sentences.slice(i,i+3).join(' ').trim());
+    root.innerHTML=paragraphs.map(text=>`<p>${E(text)}</p>`).join('')||`<p>${tr('এই ভাষায় সংরক্ষিত অডিওলিপি নেই। নির্বাচিত বিষয়ের লেখাটি উপরে পড়ুন।','No saved transcript in this language. Read the selected-cost article above.')}</p>`;
+  }
   function listenComparison(){
     if(suppressReadoutClick){suppressReadoutClick=false;return;}
     stopAudio();const request=playbackRequest;
     const data=currentLang==='bn'?comparison.readout:null;
     const text=$('comparison-narration'),message=$('comparison-audio-error');
-    text.hidden=false;text.textContent=data?.text||tr('এই তুলনার সংরক্ষিত বর্ণনা নেই। নিচের তথ্য পড়ুন।','Saved English narration is not available. Read the comparison below.');
+    text.hidden=false;if(choice.product_type==='card'){$('comparison-audio-transcript').open=true;renderAudioTranscript();}else text.textContent=data?.text||tr('এই তুলনার সংরক্ষিত বর্ণনা নেই। নিচের তথ্য পড়ুন।','Saved English narration is not available. Read the comparison below.');
     const failed=()=>{message.hidden=false;message.textContent=tr('এখন শোনানো যাচ্ছে না, লেখাটি পড়ুন','Audio is unavailable now. Please read the text.');};
     message.hidden=true;
     const approved=Object.values(serviceManifest.clips||{}).find(item=>item.reviewed===true&&'/static/audio/services/'+item.file+'?v='+item.audio_sha256?.slice(0,16)===data?.audio_url&&item.text===data?.text);
@@ -328,7 +342,7 @@
   }
   window.IlmaCatalog={
     enter(tab){if(tab==='detail')currentBankId?showReport():showBankList();else if(tab==='services')enterServices();},
-    reportReady,openComparison,openBankServices,toggleWatch,
+    reportReady,openComparison,openBankServices,toggleWatch,listenLabel:comparisonListenLabel,
     relocalize(){if(currentTab==='detail'){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}
       if(currentTab==='services'){if(servicePage==='home')renderServicesHome();else if(servicePage==='compare')renderComparison();else if(servicePage==='offer')renderOffer();else if(bankOffers)renderBankServices();}}
   };

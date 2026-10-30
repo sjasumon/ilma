@@ -95,6 +95,8 @@ def compare_cards(db,network,tier,primary='annual_fee',basis='conventional'):
     result['unit_note_en']='Taka amounts first; percentage charges are separate and not directly comparable.' if primary=='cash_advance_fee' else ''
     from ilma_api.service_clips import readout
     result['readout']=readout(result)
+    from ilma_api.card_explanation import build as explain_card
+    result['explanation']=explain_card(result)
     return result
 
 

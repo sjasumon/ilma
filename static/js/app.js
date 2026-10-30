@@ -819,7 +819,7 @@ function stopAudio() {
   const labels = { "lbl-listen-rpt": T[currentLang].detail.listenReport, "lbl-listen-srv": T[currentLang].services.listenBtn, "lbl-listen-news": T[currentLang].news.listenNews };
   Object.entries(labels).forEach(([id, text]) => document.getElementById(id).textContent = text);
   const compareListen=document.getElementById('compare-listen');
-  if(compareListen)compareListen.textContent=currentLang==='bn'?'শুনুন':'Listen';
+  if(compareListen)compareListen.textContent=window.IlmaCatalog?.listenLabel?.()||(currentLang==='bn'?'শুনুন':'Listen');
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
@@ -831,7 +831,7 @@ function playVoiceAudio(url, request = playbackRequest, manual = false, onError 
   if (label) document.getElementById(label).textContent = currentLang === "bn" ? "থামুন" : "Stop";
   const compareListen=document.getElementById('compare-listen');
   if(currentTab==='services'&&compareListen)compareListen.textContent=currentLang==='bn'?'থামুন':'Stop';
-  player.play?.().catch(() => { stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
+  player.play?.().catch(() => { if(request!==playbackRequest)return; stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
   return true;
 }
 

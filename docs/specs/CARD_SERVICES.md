@@ -35,3 +35,9 @@ Automated checks cover grouping, plain conditions, selected-fact ordering, fresh
 The earlier release passed regression and browser checks. Revised wording checks cover cash units, fee ties, non-repeated late fees and one-versus-two free-card conditions. Earlier MP3 decode checks are not acceptance of the revised narration or native listening quality.
 
 Revised wording regression: 479 Python tests and 27 subtests passed, along with all seven documented frontend suites. Paid generation was limited to the seven explicitly authorized revised clips; no runtime provider generation was introduced.
+
+## Selected-cost reader
+
+The card comparison now uses one native dropdown for the five cost options. The automatic cheapest-versus-most-expensive bank callout is removed. A selected-cost article is visible immediately, without pressing Listen. It has separate meaning, coverage, bank-by-bank, old-data and missing-data sections, with short bank names, localized amounts/dates and individually labelled source buttons. The article changes with `compare_by` in both Bangla and English. Cash explanations retain higher-of percentage/currency conditions and known ATM context. Different source dates for annual-fee waiver or renewal conditions are explicit.
+
+The saved recordings still cover the full card overview. Their button, explanatory note and transcript disclosure say this explicitly. The full audio transcript is divided into short paragraphs. Selecting another cost stops playback and preserves keyboard focus on the new dropdown. No replacement recordings or paid provider calls are required.

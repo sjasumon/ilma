@@ -1209,3 +1209,16 @@ button, input, select, textarea { font-family: inherit; }
 .card-tile .catalog-status { font-size:calc(var(--fs)*.85); }
 
 html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,small,label,h1,h2,h3) { line-height:1.5; }
+
+.card-compare-heading { display:flex; align-items:center; gap:8px; }
+.card-compare-controls select { width:100%; min-height:48px; border:1px solid var(--on-stage-2); border-radius:12px; background:var(--stage); color:var(--on-stage); padding:8px 12px; font:inherit; margin:6px 0 14px; }
+.card-explanation { margin:18px 0; padding:14px 0; border-block:1px solid var(--line); }
+.card-explanation h3 { font-size:calc(var(--fs)*1.4); margin:0 0 16px; }
+.card-explanation h4 { font-size:calc(var(--fs)*1.15); margin:16px 0 6px; color:var(--gold); }
+.card-explanation-paragraph { margin:10px 0 16px; }
+.card-explanation-paragraph p, #comparison-narration p { margin:0 0 12px; line-height:1.6; overflow-wrap:anywhere; }
+#comparison-audio-transcript { margin:10px 0 24px; }
+#comparison-audio-transcript summary { min-height:48px; padding:10px 0; cursor:pointer; }
+.audio-overview-note { font-size:calc(var(--fs)*.85); }
+
+.comparison-sort-note { font-size:calc(var(--fs)*.85); color:var(--on-stage-2); }
