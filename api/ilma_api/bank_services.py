@@ -202,7 +202,8 @@ def make_router(get_db):
     @router.get('/v1/institutions/{id}/ratings')
     def ratings(id:int,db:Session=Depends(get_db)):
         institution(db,id)
-        return [dict(fact_id=r.fact_id,agency=r.agency,long_term=r.long_term,short_term=r.short_term,outlook=r.outlook,
+        from ilma_api.bank_screen import rating_meaning
+        return [dict(**rating_meaning(r.agency,r.long_term),fact_id=r.fact_id,agency=r.agency,long_term=r.long_term,short_term=r.short_term,outlook=r.outlook,
             rated_on=r.rated_on,valid_to=r.valid_to,expired=bool(r.valid_to and r.valid_to<date.today()),
             **source_view(r.source,r.quote,r.checked_by)) for r in db.query(Rating).filter_by(institution_id=id).order_by(Rating.rated_on.desc())]
 

@@ -607,6 +607,10 @@ def readout_result(kind, institution_id, language, db, prompt=None, agent_state=
 
 async def readout(kind,institution_id,language,db,prompt=None,agent_state=None):
     result=await db_call(db,lambda owned:readout_result(kind,institution_id,language,owned,prompt,agent_state))
+    if kind=='report_card':
+        card=await db_call(db,lambda owned:get_institution_report_card(owned,institution_id))
+        saved=(card or {}).get('readout',{'text':'','audio_url':None})
+        return {**saved,'audio_urls':[saved['audio_url']] if saved['audio_url'] else []}
     from ilma_api.audio_cache import register_speech
     ticket=await register_speech([result.get('speech_text',result.get('text',''))],language,short=kind in {'agent_question','insurance','ivr'})
     return {'audio_url':ticket['audio_url'] if ticket else None,'audio_urls':ticket['audio_urls'] if ticket else [],'text':result.get('text','')}

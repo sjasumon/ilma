@@ -1,0 +1,13 @@
+# Bank tab presentation
+
+Bank and services screens are separate modules, with a stable facade and shared request/formatting helpers. The bank changes live on `screen/bank-tab-v2`; the preceding behavior-preserving split is on `feature/voice-agent`. No financial risk threshold or imported source value changes.
+
+The bank list uses low/medium/high/not-rated risk labels, alphabetical search and whole-row targets. The report separates English name, sourced founding year and audited-year chips. Founding chips open the original quotation. Eight founding years are loaded; EBL, City and Dutch-Bangla are omitted. Award display requires a low-risk code, awarder confirmation, a non-paid flag and a source URL; the award input is currently empty, so no award is invented.
+
+The not-rated panel is neutral grey, has no question mark or scale dot, and shows only sourced reasons. South Bangla has one CRISL reason. Existing rules produce three sourced reasons for EBL/NBL and two for Islami Bank; empty filler reasons are not invented. Source labels are localized while source sheets retain original titles and quotations. The deposit-protection summary opens the existing qualified legal text and official source.
+
+Section rows use actual counts and hide empty sections. Services precede history; notices, announcements and reports are grouped under More information. Watch stores the same anonymous identifier as before, without promotional promises. Financial sections show losses as positive magnitudes under a Loss heading and include neutral year-to-year arrows. Agency-specific rating meanings retain the deposit-guarantee disclaimer. Announcement types/filter groups come from the versioned mapping; original titles remain visible. Reports are grouped by year. History distinguishes news reports from official records, uses one context line and a three-year older-event chip.
+
+Bank report playback uses saved bank MP3s only and calls play synchronously in the click handler. The runtime report readout never invokes a provider. Until reviewed bank clips exist, the visible transcript and an explicit audio-unavailable fallback appear. Saved clips bind their approved text/audio hashes to a frozen source fingerprint; changed records invalidate playback. Card recordings remain separate and unchanged.
+
+The eleven proposed report paragraphs are in [BANK_AUDIO_DRY_RUN.md](BANK_AUDIO_DRY_RUN.md). They are text-review drafts, not permission to spend ElevenLabs credits. No bank-report synthesis or native phone/listening acceptance is claimed. A paid offline run requires approval of the exact drafts and uses `scripts/build_bank_clips.py` with three-account fallback and a 120-second offline timeout.

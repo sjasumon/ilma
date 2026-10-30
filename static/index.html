@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-worker-version="885f57897d024d22" lang="bn">
+<html data-worker-version="b9e2ea248f460c56" lang="bn">
 <head>
   <script id="text-size-bootstrap">try{var s=Number(localStorage.getItem('ilma.textSize'));document.documentElement.style.setProperty('--fs',([14,16,19,22].includes(s)?s:14)+'px')}catch(e){}</script>
   <meta charset="utf-8">
@@ -22,7 +22,7 @@
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/fonts/fonts.css?v=sha256-7e786499b46bb84c">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-f374d0903e7d9600">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-52073a11e3e3dc53">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -198,12 +198,13 @@
       </div>
     </section>
 
+    <dialog id="bank-insurance-dialog" class="settings-dialog" aria-labelledby="bank-insurance-title"><h2 id="bank-insurance-title">আমানত সুরক্ষা</h2><p id="bank-insurance-full"></p><a id="bank-insurance-source" target="_blank" rel="noopener noreferrer">আইনের সূত্র ↗</a><button id="bank-insurance-close" type="button">বন্ধ করুন</button></dialog>
     <!-- Bank list, plan-A report and sourced details -->
     <section id="tab-detail" class="tab-content" aria-label="ব্যাংক বিবরণী">
       <div id="bank-list-view"></div>
       <div id="bank-report-view" hidden>      <div class="bank-report-header">
         <button id="bank-list-back" class="catalog-back" type="button">← ব্যাংক</button>
-        <button id="bank-voice-btn" class="pill" type="button">প্রশ্ন বলুন</button>
+        <button hidden id="bank-voice-btn" class="pill" type="button">প্রশ্ন বলুন</button>
         <p id="bank-heard" hidden></p>
         <label for="bank-select" class="sr-only">ব্যাংক নির্বাচন করুন</label>
         <select hidden id="bank-select" class="input-select" aria-label="ব্যাংক নির্বাচন করুন">
@@ -212,16 +213,17 @@
 
         <div style="margin-top: 4px;">
           <h1 id="card-bank-name" tabindex="-1" style="font-family: var(--display); font-size: calc(var(--fs) * 1.5); color: var(--on-stage); margin: 0 0 4px;">ইস্টার্ন ব্যাংক পিএলসি</h1>
-          <p id="card-bank-meta" style="font-size: calc(var(--fs) * 1); color: var(--on-stage-2); margin: 0 0 10px;">বাণিজ্যিক ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: অক্টোবর ২০২৬</p>
+          <p id="card-bank-meta" style="font-size: calc(var(--fs) * .85); color: var(--on-stage-2); margin: 0 0 10px;">বাণিজ্যিক ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: অক্টোবর ২০২৬</p>
+          <div id="bank-profile-chips"></div><div id="bank-award"></div>
         </div>
       </div>
 
       <!-- Teal Status Panel on --stage-lo (#0F2624) -->
       <p id="bank-report-error" class="catalog-empty" role="alert" hidden></p>
       <div class="status-panel-lo" id="card-status-panel" role="region" aria-label="ব্যাংকের স্বাস্থ্য অবস্থা">
-        <div class="status-mark" id="card-status-mark" aria-hidden="true">✓</div>
-        <div class="status-word strong" id="card-status-word">ভালো অবস্থা</div>
-        <p class="status-meaning" id="card-status-meaning">আইনি মূলধন পর্যাপ্ত ও খেলাপি ঋণ স্বাভাবিক সীমার মধ্যে রয়েছে।</p>
+        <h2 id="bank-risk-heading">ঝুঁকি</h2><div class="status-mark" id="card-status-mark" aria-hidden="true">✓</div>
+        <div class="status-word strong" id="card-status-word">ঝুঁকি কম</div>
+        <p id="bank-risk-basis" class="catalog-note">প্রকাশিত তথ্য অনুযায়ী</p><p class="status-meaning" id="card-status-meaning">আইনি মূলধন পর্যাপ্ত ও খেলাপি ঋণ স্বাভাবিক সীমার মধ্যে রয়েছে।</p>
 
         <!-- 3-step scale with sliding marker -->
         <div class="scale-wrapper" aria-hidden="true">
@@ -233,8 +235,8 @@
           <div class="scale-marker pos-strong" id="scale-marker"></div>
         </div>
         <div class="scale-labels" aria-hidden="true">
-          <span id="scale-label-strong">ভালো অবস্থা</span>
-          <span id="scale-label-watch">সতর্ক থাকুন</span>
+          <span id="scale-label-strong">ঝুঁকি কম</span>
+          <span id="scale-label-watch">ঝুঁকি মাঝারি</span>
           <span id="scale-label-high">ঝুঁকি বেশি</span>
         </div>
       </div>
@@ -246,7 +248,7 @@
 
         <div class="insurance-banner" id="card-insurance-line"></div>
 
-        <div style="margin: 20px 0 28px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <div class="bank-report-actions">
           <button id="btn-listen-report" class="btn-primary-listen" aria-label="রিপোর্ট কার্ড পড়ে শুনুন">
             🔊 <span id="lbl-listen-rpt">শুনুন</span>
           </button>
@@ -255,7 +257,7 @@
           </button>
         </div>
 
-        <p id="bank-not-checked" class="catalog-note"></p><div id="bank-detail-links"></div><h2 hidden id="card-checks-heading"></h2>
+        <p id="bank-report-transcript" class="catalog-note" hidden></p><p id="bank-report-audio-error" role="status" hidden></p><p id="bank-not-checked" class="catalog-note"></p><div id="bank-detail-links"></div><h2 hidden id="card-checks-heading"></h2>
         <div hidden class="checks-list" id="checks-list" role="region" aria-label="৭টি স্বাস্থ্য পরীক্ষার ফলাফল"></div>
 
         <div style="margin-top: 24px; padding: 14px; background: var(--ivory-2); border-radius: 12px; font-size: calc(var(--fs) * 1); color: var(--ink-2);" id="card-disclaimer">
@@ -409,9 +411,9 @@
   <script src="/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23"></script>
   <script src="/static/js/ivr.js?v=sha256-2929c97da156ab49"></script>
   <script src="/static/js/voice-agent.js?v=sha256-d20001d6aede81d8"></script>
-  <script src="/static/js/app.js?v=sha256-77f98f876df903f4"></script>
+  <script src="/static/js/app.js?v=sha256-e5bdbf30fc04727b"></script>
   <script src="/static/js/catalog-common.js?v=sha256-0b2e5985c81e8b3e"></script>
-  <script src="/static/js/bank-ui.js?v=sha256-fb21a5eca07916fd"></script>
+  <script src="/static/js/bank-ui.js?v=sha256-1437e203abb522c1"></script>
   <script src="/static/js/services-ui.js?v=sha256-2619a49713ed625b"></script>
   <script src="/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd"></script>
 </body>

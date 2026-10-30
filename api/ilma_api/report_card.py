@@ -208,7 +208,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
     from ilma_api.incidents import records
     from ilma_api.extra_data import items
     incident_count=len(records(db,inst.id))+len(items(db,'compliance',inst.id))
-    return {
+    result = {
         "institution": inst_dict,
         "status": {
             "code": eval_res.code,
@@ -235,3 +235,6 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         "release_id": release.release_id if release else None,
         "disclaimer_key": "VS-08"
     }
+
+    from ilma_api.bank_screen import enrich
+    return enrich(db,result)

@@ -111,7 +111,7 @@ const T = {
     detail: {
       whyHeading: "Why this status? (Top 3 reasons)",
       checksHeading: "7 Key Health Checks",
-      listenReport: "Listen",
+      listenReport: "Listen to report",
       watchReport: "Watch Bank",
       sourceBtn: "Source ›",
       disclaimer: "This is factual information, not financial advice. Verify terms directly with the bank."
@@ -823,7 +823,7 @@ function stopAudio() {
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || /^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/card-[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/bank\/bn\/[a-z0-9-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -1081,7 +1081,7 @@ async function loadReportCard(bankId) {
   document.getElementById("card-bank-name").textContent = bankId ? (currentLang === "bn" ? "একটু অপেক্ষা করুন…" : "Loading…") : (currentLang === "bn" ? "ব্যাংক বেছে নিন" : "Choose a bank");
   document.getElementById("card-bank-meta").textContent = "";
   document.getElementById("card-status-word").textContent = "";
-  document.getElementById("card-status-mark").textContent = "?";
+  document.getElementById("card-status-mark").textContent = "";
   document.getElementById("card-status-meaning").textContent = "";
   document.getElementById("scale-marker").className = "scale-marker hidden";
   ["reasons-list", "checks-list", "card-insurance-line"].forEach(id => document.getElementById(id).replaceChildren());
@@ -1116,7 +1116,7 @@ function showReportError(message) {
   if (message) document.getElementById("card-bank-name").textContent = currentLang === "bn" ? "তথ্য পাওয়া যায়নি" : "Report unavailable";
 }
 
-const STATUS_WORDS = { strong: ["ভালো অবস্থা", "Strong"], watch: ["সতর্ক থাকুন", "Watch"], high: ["ঝুঁকি বেশি", "High risk"] };
+const STATUS_WORDS = { strong: ["ঝুঁকি কম", "Low risk"], watch: ["ঝুঁকি মাঝারি", "Medium risk"], high: ["ঝুঁকি বেশি", "High risk"] };
 // Short names for the rules behind a card, so the summary repeats its actual reasons.
 const REASON_PHRASES = {
   H1: ["নিয়ন্ত্রক পদক্ষেপ", "regulatory action"], H2: ["টাকা তোলায় সীমা", "withdrawal limits"],
@@ -1141,7 +1141,7 @@ function escapeHTML(value) {
 function renderReportCard() {
   if (!reportCardData) return;
   const data = reportCardData;
-  const noData = { code: "no_data", label_bn: "তথ্য কম", label_en: "Not enough data" };
+  const noData = { code: "no_data", label_bn: "মূল্যায়ন করা হয়নি", label_en: "Not rated" };
   const status = data.status || noData;
   const isBn = currentLang === "bn";
 
@@ -1156,8 +1156,8 @@ function renderReportCard() {
   const wordEl = document.getElementById("card-status-word");
   const meaningEl = document.getElementById("card-status-meaning");
 
-  const marks = { strong: "✓", watch: "⚠", high: "✕", no_data: "?" };
-  markEl.textContent = marks[statusCode] || "?";
+  const marks = { strong: "✓", watch: "⚠", high: "✕", no_data: "" };
+  markEl.textContent = marks[statusCode] ?? "";
   wordEl.textContent = isBn ? status.label_bn : status.label_en;
   wordEl.className = `status-word ${statusCode}`;
 
@@ -1168,7 +1168,7 @@ function renderReportCard() {
   } else if (statusCode === "high") {
     meaningEl.textContent = reasonSummary(data.reasons, isBn) || (isBn ? "ঝুঁকির সংকেত পাওয়া গেছে; কারণগুলো নিচে দেখুন।" : "Risk signals were found; see the reasons below.");
   } else {
-    meaningEl.textContent = isBn ? "নিরীক্ষিত আর্থিক তথ্য এখনও পর্যাপ্ত নয়।" : "Audited financial reports are not yet fully available.";
+    meaningEl.textContent = isBn ? "এই ব্যাংকের ঝুঁকি এখনো মূল্যায়ন করা হয়নি। নিচে প্রকাশিত রেটিং দেখুন।" : "This bank’s risk has not been rated. See its published rating below.";
   }
 
   const marker = document.getElementById("scale-marker");
@@ -1269,6 +1269,7 @@ function closeProofModal() {
 }
 
 function speakReportCard() {
+  if(window.IlmaBank?.listenReport)return window.IlmaBank.listenReport();
   if (ivr?.active && currentBankId) return playGuidedSpeech("report_card", null, currentBankId);
   if (currentBankId) return requestReadout("report_card", currentBankId);
 }

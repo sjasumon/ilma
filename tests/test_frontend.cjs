@@ -21,7 +21,8 @@ vm.runInContext(fs.readFileSync('static/js/app.js', 'utf8'), context);
 function run(code) { return vm.runInContext(code, context); }
 run('updateLocalizedText()');
 run('reportCardData = {institution: {name_bn: "নমুনা", name_en: "Sample", coverage: "licence_only"}, status: null, message_en: "No financial data"}; currentLang = "en"; renderReportCard()');
-assert.equal(element('card-status-word').textContent, 'Not enough data');
+assert.equal(element('card-status-word').textContent, 'Not rated');
+assert.equal(element('card-status-mark').textContent, '');
 assert.equal(element('card-insurance-line').textContent, 'No financial data');
 assert.equal(run('escapeHTML(\'<img src=x onerror="bad()">\')'), '&lt;img src=x onerror=&quot;bad()&quot;&gt;');
 run('openProofModal("Source", "<script>bad()</script>", "javascript:bad()", 1, "2026")');

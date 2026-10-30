@@ -413,3 +413,9 @@ The 30 October approved 31-script batch saved six files, then stopped on `bn:car
 The user subsequently approved 120 seconds per key for offline approved-card generation. The builder defaults to 120 seconds; runtime ticket/pipeline speech retains 25 seconds per key. Buffered offline requests use the streaming endpoint for prompt delivery without exposing partial clips. Always preserve completed files when resuming.
 
 The completed resume now contains all 31 approved cost-specific card recordings (12,884 characters verbatim). All text and audio hashes match, each MP3 decodes, and the release manifest has `batch_complete: true` with zero remaining. Earlier completed files were retained without regeneration. Physical-device/native listening acceptance remains separate from these technical checks.
+
+## Bank-tab preview acceptance
+
+The bank module is separate from services. Deploy `screen/bank-tab-v2` to preview for review; do not merge into the services branch or production before phone acceptance. Check EBL, NBL and South Bangla, hidden empty sections, loss formatting, source sheets, insurance details, announcement filters and history. Capture bank list, three report cards, EBL announcements and NBL history at Small and Extra large. Test rotation, keyboard resize, desktop and 200% text. Existing 31 card recordings must still pass exact-text/hash and actual-playback checks.
+
+Bank reports make no runtime TTS call. Text review is required before offline generation. `scripts/build_bank_clips.py --approved-json /private/path/review.json --output /private/path/staging` is a dry run; add `--generate --env-file /private/path/.env` only after approval. The JSON carries eleven bank slugs, exact text and `source_sha256` values; keep it private until approved. Decode and hash-check generated files before publishing to `static/audio/bank/`. Source fingerprint mismatch must suppress playback.

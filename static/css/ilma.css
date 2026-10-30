@@ -1222,3 +1222,24 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 .audio-overview-note { font-size:calc(var(--fs)*.85); }
 
 .comparison-sort-note { font-size:calc(var(--fs)*.85); color:var(--on-stage-2); }
+
+/* Bank report hierarchy; inherits the shared text-size setting. */
+#bank-profile-chips {display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0;}
+.bank-meta-chip {font-size:calc(var(--fs)*.85);border:1px solid var(--line);border-radius:1rem;padding:.2rem .7rem;}
+#bank-risk-heading {font-size:calc(var(--fs)*1.15);margin:0 0 .5rem;}
+#bank-report-view .bank-not-rated {background:var(--unknown-tint);color:var(--unknown);border:1px solid var(--unknown);}
+#bank-report-view .bank-not-rated .status-word, #bank-report-view .bank-not-rated .catalog-note, #bank-report-view .bank-not-rated .status-meaning, #bank-report-view .bank-not-rated .scale-labels {color:var(--unknown);}
+#bank-report-view .bank-not-rated .status-mark:empty {display:none;}
+#bank-report-view .bank-report-actions > button {flex:1;min-width:0;min-height:48px;}
+#bank-list-view .catalog-bank-row {min-height:56px;}
+.bank-more summary {min-height:48px;padding:1rem;cursor:pointer;}
+#bank-insurance-dialog {max-width:min(90vw,36rem);}
+#bank-report-transcript {white-space:pre-line;line-height:1.5;}
+.bank-trend {font-size:calc(var(--fs)*.85);}
+
+.bank-report-actions {display:flex;gap:.75rem;margin:1.25rem 0;align-items:stretch;}
+.bank-publication-filters {display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;}
+.bank-publication-filters button {min-height:48px;}
+
+#bank-profile-chips button {min-height:48px;color:var(--on-stage);background:var(--stage-lo);}
+#card-status-panel[data-risk="high"] {border:1px solid var(--risk-on-stage);}

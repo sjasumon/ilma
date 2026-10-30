@@ -11,11 +11,13 @@ from ilma_api import settings
 def router(get_db):
     api=APIRouter()
     @api.get('/v1/institutions/{bank_id}/publications/{kind}')
-    def publications(bank_id:int,kind:str,page:int=Query(1,ge=1),db=Depends(get_db)):
+    def publications(bank_id:int,kind:str,page:int=Query(1,ge=1),topic:str|None=None,db=Depends(get_db)):
         if not db.get(Institution,bank_id):raise HTTPException(404,'Bank not found')
         if kind not in {'announcements','reports','bb-notices'}:raise HTTPException(404,'Publication type not found')
         rows=items(db,{'announcements':'announcement','reports':'report','bb-notices':'bank_notice'}[kind],bank_id)
-        return dict(items=[view(r) for r in rows[(page-1)*20:page*20]],total=len(rows),page=page)
+        from ilma_api.bank_screen import publication_label
+        if topic:rows=[r for r in rows if publication_label(r)['filter_group']==topic]
+        return dict(items=[{**view(r),**publication_label(r)} for r in rows[(page-1)*20:page*20]],total=len(rows),page=page)
     @api.get('/v1/extra-news')
     def news(request:Request,db=Depends(get_db)):
         device=request.headers.get('x-ilma-device','')

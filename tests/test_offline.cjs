@@ -55,6 +55,10 @@ async function request(path, method='GET') {
   offline=false;context.fetch=async()=>new Response('part',{status:206,headers:{'Content-Range':'bytes 3-6/9'}});
   media=await request('/static/audio/services/bn/card-visa-classic.mp3?v=bbbbbbbbbbbbbbbb');assert.equal(media.status,206);
   assert.equal(await store('ilma-service-audio-v1').match(origin+'/static/audio/services/bn/card-visa-classic.mp3?v=bbbbbbbbbbbbbbbb'),undefined);
+  context.fetch=async()=>new Response('bank',{status:206,headers:{'Content-Type':'audio/mpeg','Content-Range':'bytes 0-3/4'}});
+  media=await request('/static/audio/bank/bn/synthetic.mp3?v=cccccccccccccccc');assert.equal(media.status,206);
+  await Promise.all(background);background=[];context.fetch=async()=>{throw Error('offline')};
+  media=await request('/static/audio/bank/bn/synthetic.mp3?v=cccccccccccccccc');assert.equal(media.status,200);assert.equal(await media.text(),'bank');
   context.fetch=originalFetch;
   console.log('Saved audio cache passed: 206 streaming, complete background caching, offline playback and incomplete ranges excluded');
   console.log('Offline cache passed: public index retained, report cap, stale marker, no uploads/private endpoints cached');
