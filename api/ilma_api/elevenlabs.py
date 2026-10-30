@@ -41,15 +41,15 @@ async def deadline(seconds):
         if expired:raise TimeoutError() from None
         raise
     finally:timer.cancel()
-async def chunks(client,text,*,stream=True,voice_settings=None,used=None):
+async def chunks(client,text,*,stream=True,voice_settings=None,used=None,endpoint_stream=False,timeout_seconds=25):
     failures=[]
     for name,key,voice in accounts():
         token=identity(key,voice)
         if _failed.get(token,0)>time.monotonic():failures.append((name,'cooldown'));continue
         sent=False
         try:
-            async with deadline(25):
-                async with client.stream('POST','https://api.elevenlabs.io/v1/text-to-speech/'+voice+('/stream' if stream else ''),headers={'xi-api-key':key,'Accept':'audio/mpeg'},json={'text':text,'model_id':settings.ELEVENLABS_MODEL,**({'voice_settings':voice_settings} if voice_settings else {})},timeout=httpx.Timeout(25,connect=5)) as response:
+            async with deadline(timeout_seconds):
+                async with client.stream('POST','https://api.elevenlabs.io/v1/text-to-speech/'+voice+('/stream' if stream or endpoint_stream else ''),headers={'xi-api-key':key,'Accept':'audio/mpeg'},json={'text':text,'model_id':settings.ELEVENLABS_MODEL,**({'voice_settings':voice_settings} if voice_settings else {})},timeout=httpx.Timeout(timeout_seconds,connect=5)) as response:
                     if response.status_code!=200:
                         await response.aread();why,code=reason(response)
                         failures.append((name,why))
@@ -78,6 +78,6 @@ async def chunks(client,text,*,stream=True,voice_settings=None,used=None):
         except httpx.HTTPError:
             raise SpeechFailure(failures+[(name,'transport_error')]) from None
     raise SpeechFailure(failures)
-async def synthesize(client,text,*,voice_settings=None):
-    used={};data=b''.join([part async for part in chunks(client,text,stream=False,voice_settings=voice_settings,used=used)])
+async def synthesize(client,text,*,voice_settings=None,timeout_seconds=25):
+    used={};data=b''.join([part async for part in chunks(client,text,stream=False,voice_settings=voice_settings,used=used,endpoint_stream=True,timeout_seconds=timeout_seconds)])
     return data,used

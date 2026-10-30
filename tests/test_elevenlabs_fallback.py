@@ -94,3 +94,13 @@ def test_cooldown_expires_after_fifteen_minutes(monkeypatch):
             clock[0]=1901
             assert (await el.synthesize(c,'test'))[1]['key_name_used']=='primary'
     asyncio.run(run())
+
+def test_batch_timeout_override_leaves_runtime_default_unchanged(monkeypatch):
+    from unittest.mock import patch
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r:httpx.Response(200,content=b'audio'))) as c:
+            with patch.object(el,'deadline',wraps=el.deadline) as bounded:
+                await el.synthesize(c,'offline',timeout_seconds=120)
+                await el.synthesize(c,'runtime')
+            assert [call.args[0] for call in bounded.call_args_list]==[120,25]
+    asyncio.run(run())
