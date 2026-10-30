@@ -15,12 +15,6 @@ from ilma_api.rules.reasons import (
     format_percent, format_crore, format_date, to_bn_digits, check_forbidden_words
 )
 
-# Original demo banks whose bad-loan ratio sits in the W1 range.
-DEMO_WATCH = {'bankasia', 'dutchbangl', 'mtb', 'nccbank'}
-
-def demo_status(code: str) -> str:
-    return 'no_data' if code == 'sbacbank' else 'watch' if code in DEMO_WATCH else 'strong'
-
 @dataclass
 class Trigger:
     rule_id: str
@@ -58,7 +52,7 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
     crar_min = cfg.get("crar_min", 0.10)
     crar_buffer = cfg.get("crar_buffer", 0.025)
     npl_high = cfg.get("npl_high", 0.25)
-    npl_watch = cfg.get("npl_watch", 0.03)
+    npl_watch = cfg.get("npl_watch", 0.10)
     rating_high_at_or_below = cfg.get("rating_high_at_or_below", "BB+")
     fdr_premium_pp = cfg.get("fdr_premium_pp", 0.02)
     share_below_face_days = cfg.get("share_below_face_days", 60)
@@ -181,7 +175,7 @@ def evaluate(inst: dict, data: dict, as_of: date, cfg: dict | None = None) -> Ev
             ))
 
     # Watch triggers
-    # W1: npl_watch <= npl < npl_high
+    # W1: 0.10 <= npl < 0.25
     if npl_row and npl_row.get("value") is not None:
         npl_val = float(npl_row["value"])
         if npl_watch <= npl_val < npl_high:

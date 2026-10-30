@@ -50,9 +50,8 @@ def test_sourced_high_cards_and_service_baseline(engine):
         assert db.query(BankIncident).count()==19
         assert not db.query(BankIncident).filter(BankIncident.incident_id.contains('CITYBANK_EMBEZZLE_2026')).first()
         assert not db.query(BankIncident).filter_by(status_effect=True).first()
-        from ilma_api.rules.status import demo_status
         for slug in ('bankasia','bracbank','citybank','dutchbangl','ebl','mtb','nccbank','primebank'):
-            assert get_institution_report_card(db,slug)['status']['code']==demo_status(slug)
+            assert get_institution_report_card(db,slug)['status']['code']=='strong'
         assert get_institution_report_card(db,'sbacbank')['status']['code']=='no_data'
 
 

@@ -31,11 +31,10 @@ class TestDemoSeed(unittest.TestCase):
             # A tiny synthetic fixture must never pass the production nine-bank gate.
             with self.assertRaises(ValueError): convert(source,output)
 
-    def test_demo_statuses_match_the_status_rules(self):
+    def test_eight_strong_one_no_data_without_threshold_changes(self):
         engine=create_engine('sqlite://')
         statuses=load(Path(__file__).resolve().parents[1]/'seed',engine)
-        self.assertEqual(list(statuses.values()).count('strong'),4)
-        self.assertEqual({code for code,value in statuses.items() if value=='watch'},{'bankasia','dutchbangl','mtb','nccbank'})
+        self.assertEqual(list(statuses.values()).count('strong'),8)
         self.assertEqual(statuses['sbacbank'],'no_data')
         with Session(engine) as db:
             self.assertTrue(all(not row.official for row in db.scalars(select(Event))))

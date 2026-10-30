@@ -7,7 +7,7 @@ from ilma_api import settings
 from ilma_api.database_tasks import call
 from ilma_api.human_memory import load,redact_user,save,token
 from ilma_api.human_resolver import resolve
-from ilma_api.human_tokens import build_registry,fill,TOKEN,FactToken,card_text,material,BANNED,PROTECTION_WORDS,PRODUCTS as PRODUCT_LABEL,number as number_text,product as product_name,term as term_text,rating_words,low_npl
+from ilma_api.human_tokens import build_registry,fill,TOKEN,FactToken,card_text,material,BANNED,PROTECTION_WORDS,PRODUCTS as PRODUCT_LABEL,number as number_text,product as product_name,term as term_text,rating_words
 from ilma_api.human_stream import generate
 from ilma_api.human_facts import fact_pack,service_facts,comparison_facts,term_facts,card_waiver
 from ilma_api.human_contract import STATE,LABELS,ALLOWED
@@ -293,7 +293,7 @@ def fit_overview(lines,question,c,registry,facts,key):
         name=registry.get('bank:'+str(c.institution_id));named=bool(name) and sentence.startswith(name.text)
         if f.get('kind')=='status' and good:return (polish(name.text+'ের ',{},True)+'অবস্থা ভালো।' if bn else name.text+' is in good condition.') if named else sentence
         if f.get('kind')=='figure' and v.get('metric')=='crar' and v['value']*100>=v.get('minimum_percent',12.5):return 'নিজের মূলধন ন্যূনতম চাহিদার ওপরে আছে।' if bn else 'Its own capital exceeds the minimum.'
-        if f.get('kind')=='figure' and v.get('metric')=='npl_ratio' and low_npl(v['value']):return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে।' if bn else 'Only a small share of lending has repayment problems.'
+        if f.get('kind')=='figure' and v.get('metric')=='npl_ratio' and v['value']<=.03:return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে।' if bn else 'Only a small share of lending has repayment problems.'
         if f.get('kind')=='peer' and v.get('metric')=='rating':return (f"রেটিং সংস্থা ব্যাংকটিকে {rating_words(v['grade'])} দিয়েছে।" if bn else f"Its credit rating is {v['grade']}.")
         return sentence
     shortened=[];said=set()

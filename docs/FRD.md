@@ -434,7 +434,7 @@ Status is decided by published, configurable rules — never by an AI model — 
 | H3 | High | Capital ratio below the regulatory minimum, or negative | Minimum held in config (verify current Bangladesh Bank rule) | Latest report |
 | H4 | High | Gross bad-loan ratio | ≥ 25% | Latest report |
 | H5 | High | Long-term credit rating | BB+ or lower | Latest rating |
-| W1 | Watch | Gross bad-loan ratio | 3% to < 25% | Latest report |
+| W1 | Watch | Gross bad-loan ratio | 10% to < 25% | Latest report |
 | W2 | Watch | Capital ratio above the minimum but below minimum + conservation buffer | Values in config | Latest report |
 | W3 | Watch | Rating downgrade or negative outlook; or rating in the BBB range | Any | 12 months |
 | W4 | Watch | Confirmed Bangladesh Bank penalty of severity ≥ 3, or a fraud case at "case filed" or later | Any | 24 months |

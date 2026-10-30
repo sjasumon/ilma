@@ -2,7 +2,6 @@
 from dataclasses import dataclass
 from decimal import Decimal
 import re
-from ilma_api.rules.status import threshold_config
 from ilma_api.voice_numbers import pronounce
 
 TOKEN=re.compile(r'⟨([^⟨⟩]+)⟩')
@@ -13,7 +12,6 @@ CONNECTORS=set('আর এছাড়া পাশাপাশি তবে ব
 PRODUCTS={'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'savings':('সঞ্চয়ী হিসাব','savings account'),'card':('কার্ড','card'),'home_loan':('গৃহঋণ','home loan'),'auto_loan':('গাড়ির ঋণ','car loan'),'personal_loan':('ব্যক্তিগত ঋণ','personal loan')}
 FIELDS={'founded_year':('প্রতিষ্ঠা','Established'),'branches':('শাখা','Branches'),'sub_branches':('উপশাখা','Sub-branches'),'atms':('এটিএম','ATMs'),'agent_outlets':('এজেন্ট আউটলেট','Agent outlets'),'customers':('গ্রাহক','Customers'),'known_for':('পরিচিতি','Known for')}
 
-def low_npl(value):return value<threshold_config()['npl_watch']
 def number(value):return format(Decimal(str(value)).normalize(),'f')
 def unit_label(unit,bn):
     return {'pct_year':('%','%'),'bdt':(' টাকা',' taka'),'usd':(' মার্কিন ডলার',' US dollars'),'count':('টি',' items'),'days':(' দিন',' days'),'months':(' মাস',' months')}.get(unit,('',''))[0 if bn else 1]
@@ -114,7 +112,7 @@ def fact_clause(f,language,meaning=False):
         if value>=minimum:return 'নিজের মূলধন ন্যূনতম চাহিদার ওপরে আছে, তাই ক্ষতি সামলানোর বাড়তি জায়গা আছে' if bn else 'its own capital exceeds the minimum, giving it extra capacity to absorb losses'
         return 'নিজের মূলধন ন্যূনতম চাহিদার নিচে আছে, যা চিন্তার বিষয়' if bn else 'its own capital is below the minimum, which is concerning'
     if metric=='npl_ratio' and meaning:
-        if low_npl(v['value']):return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ' if bn else 'only a small share of lending has repayment problems, a positive sign'
+        if v['value']<=.03:return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ' if bn else 'only a small share of lending has repayment problems, a positive sign'
         if v['value']>=.15:return 'ঋণের বড় একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা বড় চিন্তার বিষয়' if bn else 'repayment problems affect a large part of its lending, a serious concern'
         return 'ঋণের একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা নজরে রাখা দরকার' if bn else 'repayment problems affect part of its lending and deserve attention'
     if kind=='figure' and metric=='crar':return f'মূলধনের অনুপাত {number(Decimal(str(v["value"]))*100)}%, ন্যূনতম চাহিদা {number(v.get("minimum_percent",12.5))}%' if bn else f'The capital ratio is {number(Decimal(str(v["value"]))*100)}%, against a minimum of {number(v.get("minimum_percent",12.5))}%'

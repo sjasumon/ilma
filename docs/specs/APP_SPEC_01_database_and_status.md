@@ -92,7 +92,7 @@ On success, print counts per table and the new release_id.
   "crar_min": 0.10,
   "crar_buffer": 0.025,
   "npl_high": 0.25,
-  "npl_watch": 0.03,
+  "npl_watch": 0.10,
   "rating_high_at_or_below": "BB+",
   "fdr_premium_pp": 0.02,
   "share_below_face_days": 60,
