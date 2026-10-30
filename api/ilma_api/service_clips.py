@@ -139,11 +139,13 @@ def manifest(directory=None):
     return data if isinstance(data,dict) and isinstance(data.get('clips'),dict) else {'version':1,'clips':{}}
 
 def readout(result,language='bn',directory=None):
-    attribute=result['choice'].get('attribute')
-    text=selected_narration(result,language) if attribute else narration(result,language)
-    directory=Path(directory or DIRECTORY)
-    if not text:return {'audio_url':None,'text':text}
+    attribute=result['choice'].get('attribute');directory=Path(directory or DIRECTORY)
     item=manifest(directory)['clips'].get(key(result['choice']['network'],result['choice']['tier'],attribute))
+    if item and item.get('approved_exact_text') is True:
+        text=item.get('text','')
+    else:text=selected_narration(result,language) if attribute else narration(result,language)
+    if language!='bn' or not text:return {'audio_url':None,'text':''}
+    # Approved verbatim scripts are never passed through pronunciation rewriting.
     # A changed data set or unreviewed/tampered file must not play stale speech.
     if item and item.get('reviewed') is True and item.get('reviewer') and item.get('reviewed_at') and item.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest() and re.fullmatch(r'bn/card-[a-z0-9-]+\.mp3',item.get('file','')):
         path=directory/item['file']

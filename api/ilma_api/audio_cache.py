@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse,StreamingResponse
 from ilma_api import settings
 from ilma_api.http_clients import shared
 from ilma_api.voice_numbers import pronounce
+from ilma_api import elevenlabs
 
 class AudioJob:
     def __init__(self):
@@ -37,7 +38,7 @@ class AudioStore:
     def __init__(self,directory=None,client=None):
         self.directory=Path(directory or settings.TTS_CACHE_DIR);self.client=client;self.jobs={};self.tasks=set();self.gate=asyncio.Semaphore(2)
     def key(self,text,language,short=False,policy='meaning-first-v2'):
-        identity=['meaning-first-v2',settings.ELEVENLABS_VOICE_ID,settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)]
+        identity=['meaning-first-v2',[voice for _,_,voice in elevenlabs.accounts()],settings.ELEVENLABS_MODEL,settings.TTS_SPEED,language,pronounce(text,language)]
         if short:identity.append(policy)
         return hashlib.sha256(json.dumps(identity,ensure_ascii=False).encode()).hexdigest()
     def folders(self):
@@ -71,7 +72,7 @@ class AudioStore:
         try:return json.loads((self.directory/(key+'.negative')).read_text()).get('until',0)>time.time()
         except (OSError,ValueError,TypeError):return False
     async def register(self,texts,language,short=False):
-        if not settings.ELEVENLABS_API_KEY or not re.fullmatch(r'[A-Za-z0-9_-]+',settings.ELEVENLABS_VOICE_ID):return None
+        if not elevenlabs.accounts():return None
         await asyncio.to_thread(self.folders)
         urls=[]
         for text in texts[:3]:
@@ -107,7 +108,7 @@ class AudioStore:
         task=asyncio.create_task(self.pump(key,text,language,job,short));self.tasks.add(task);task.add_done_callback(self.tasks.discard)
         return job
     async def follow(self,key,job,short=False):
-        offset=0;deadline=time.monotonic()+45;path=self.directory/(key+'.mp3');partial=self.directory/(key+'.stream')
+        offset=0;deadline=time.monotonic()+80;path=self.directory/(key+'.mp3');partial=self.directory/(key+'.stream')
         def read():
             try:
                 if partial.stat().st_mtime_ns<(self.directory/(key+'.lock')).stat().st_mtime_ns:return b''
@@ -129,7 +130,7 @@ class AudioStore:
     async def pump(self,key,text,language,job,short=False):
         lock=None;partial_fd=None;path=self.directory/(key+'.mp3')
         try:
-            deadline=time.monotonic()+45
+            deadline=time.monotonic()+80
             while lock is None:
                 if await asyncio.to_thread(self.valid_cache,key,short):
                     job.cache='shared-hit';await job.append(await asyncio.to_thread(path.read_bytes));await job.finish();return
@@ -159,24 +160,20 @@ class AudioStore:
                                     except (ValueError,OSError,asyncio.TimeoutError):continue
                                     if not 0<measured<=30000:continue
                                     yield data;return
-                        async with client.stream('POST','https://api.elevenlabs.io/v1/text-to-speech/'+settings.ELEVENLABS_VOICE_ID+'/stream',headers={'xi-api-key':settings.ELEVENLABS_API_KEY,'Accept':'audio/mpeg'},json={'text':pronounce(text,language),'model_id':settings.ELEVENLABS_MODEL,'voice_settings':{'speed':settings.TTS_SPEED}},timeout=httpx.Timeout(25,connect=5)) as response:
-                            if response.status_code!=200:
-                                if response.status_code in {400,403,422}:
-                                    await asyncio.to_thread(self.atomic,self.directory/(key+'.negative'),json.dumps({'until':time.time()+300}).encode())
-                                raise ValueError('Speech provider unavailable')
-                            length=0
-                            async for chunk in response.aiter_bytes():
-                                length+=len(chunk)
-                                if length>2*1024*1024:raise ValueError('Speech exceeds limit')
-                                if chunk:yield chunk
-                            if not length:raise ValueError('Speech empty')
+                        try:
+                            async for chunk in elevenlabs.chunks(client,pronounce(text,language),voice_settings={'speed':settings.TTS_SPEED}):
+                                yield chunk
+                        except elevenlabs.SpeechFailure as error:
+                            if any(reason.split('/')[0] in {'http_400','http_422'} for _,reason in error.failures):
+                                await asyncio.to_thread(self.atomic,self.directory/(key+'.negative'),json.dumps({'until':time.time()+300}).encode())
+                            raise
                     async def download():
                         from ilma_api.agent_audio import trim_long_pauses
                         chunks=trim_long_pauses(raw_chunks()) if short else raw_chunks()
                         async for chunk in chunks:
                             await asyncio.to_thread(os.write,partial_fd,chunk)
                             await job.append(chunk)
-                    await asyncio.wait_for(download(),25)
+                    await asyncio.wait_for(download(),76)
                 finally:
                     if owned:await client.aclose()
             data=b''.join(job.chunks)
@@ -198,7 +195,7 @@ class AudioStore:
             self.jobs.pop(key,None)
     async def wait(self,ticket):
         descriptors=[await asyncio.to_thread(self.ticket,url.rsplit('/',1)[-1][:-4]) for url in ticket['audio_urls']]
-        deadline=time.monotonic()+30
+        deadline=time.monotonic()+80
         while time.monotonic()<deadline:
             ready=True
             for item in descriptors:

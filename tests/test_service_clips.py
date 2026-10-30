@@ -79,3 +79,14 @@ def test_selected_cost_audio_never_reuses_overview_or_another_cost(tmp_path):
     data['choice']['attribute']='annual_fee'
     assert readout(data,directory=tmp_path)['audio_url'] is None
     assert readout(data,directory=tmp_path)['text']!=text
+
+def test_approved_script_playback_preserves_verbatim_text(tmp_path):
+    text='অনুমোদিত ১২.৫% — ১,০০০ টাকা।'
+    data=example();data['choice']['attribute']='annual_fee'
+    # Approved scripts bypass the deterministic draft generator entirely.
+    file='bn/card-visa-gold-annual-fee.mp3';p=tmp_path/file;p.parent.mkdir();p.write_bytes(b'synthetic-audio')
+    item={'approved_exact_text':True,'file':file,'text':text,'text_sha256':hashlib.sha256(text.encode()).hexdigest(),'audio_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'reviewed':True,'reviewer':'synthetic','reviewed_at':'synthetic'}
+    (tmp_path/'manifest.json').write_text(json.dumps({'version':1,'clips':{key('Visa','Gold','annual_fee'):item}}))
+    with patch('ilma_api.service_clips.selected_narration',return_value='draft'):
+        result=readout(data,directory=tmp_path)
+    assert result['text']==text and result['audio_url']

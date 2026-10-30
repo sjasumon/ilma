@@ -138,16 +138,12 @@ class TestVoiceProviders(unittest.IsolatedAsyncioTestCase):
         import httpx
         from ilma_api import settings
         from ilma_api.voice_pipeline import speech
-        real_wait = __import__('asyncio').wait_for
-        timeouts = []
-        async def bounded(awaitable, timeout):
-            timeouts.append(timeout)
-            return await real_wait(awaitable, timeout)
-        with patch.object(settings, 'ELEVENLABS_API_KEY', 'test-only'), patch.object(settings, 'ELEVENLABS_VOICE_ID', 'testvoice'), patch('ilma_api.voice_pipeline.asyncio.wait_for', new=bounded):
+        from ilma_api.elevenlabs import deadline
+        with patch.object(settings, 'ELEVENLABS_API_KEY', 'test-only'), patch.object(settings, 'ELEVENLABS_VOICE_ID', 'testvoice'), patch('ilma_api.elevenlabs.deadline', wraps=deadline) as bounded:
             async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(200, content=b'mp3'))) as client:
                 result = await speech('ইলমা', 'bn', client)
         self.assertTrue(result.startswith('data:audio/mpeg;base64,'))
-        self.assertEqual(timeouts, [settings.SPEECH_TIMEOUT_SECONDS])
+        bounded.assert_called_once_with(25)
 
     async def test_unexpected_failure_becomes_sanitized_stream_error(self):
         from ilma_api.voice_pipeline import run_pipeline

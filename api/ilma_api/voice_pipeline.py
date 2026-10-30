@@ -220,28 +220,18 @@ from ilma_api.voice_numbers import pronounce
 
 
 async def speech(text, language, client=None):
-    if not settings.ELEVENLABS_API_KEY or not settings.ELEVENLABS_VOICE_ID: return None
-    if not re.fullmatch(r'[a-zA-Z0-9_-]+', settings.ELEVENLABS_VOICE_ID): return None
-    async def send(http):
-        return await http.post('https://api.elevenlabs.io/v1/text-to-speech/' + settings.ELEVENLABS_VOICE_ID,
-            headers={'xi-api-key': settings.ELEVENLABS_API_KEY, 'Accept': 'audio/mpeg'},
-            json={'text': pronounce(text[:1600], language), 'model_id': settings.ELEVENLABS_MODEL})
+    from ilma_api import elevenlabs
+    if not elevenlabs.accounts():return None
     if client is None:
         from ilma_api.http_clients import shared
         client=shared()
     try:
         if client is None:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(settings.SPEECH_TIMEOUT_SECONDS, connect=5), follow_redirects=False) as http:
-                response = await asyncio.wait_for(send(http), settings.SPEECH_TIMEOUT_SECONDS)
-        else: response = await asyncio.wait_for(send(client), settings.SPEECH_TIMEOUT_SECONDS)
-        if response.status_code != 200 or len(response.content) > 2 * 1024 * 1024:
-            import logging
-            logging.getLogger(__name__).warning('voice_speech_failed status=%s', response.status_code)
-            return None
-        return 'data:audio/mpeg;base64,' + base64.b64encode(response.content).decode()
-    except (httpx.HTTPError, asyncio.TimeoutError) as error:
-        import logging
-        logging.getLogger(__name__).warning('voice_speech_failed type=%s', type(error).__name__)
+            async with httpx.AsyncClient(follow_redirects=False) as http:
+                data,_=await elevenlabs.synthesize(http,pronounce(text[:1600],language))
+        else:data,_=await elevenlabs.synthesize(client,pronounce(text[:1600],language))
+        return 'data:audio/mpeg;base64,'+base64.b64encode(data).decode()
+    except elevenlabs.SpeechFailure:
         return None
 
 
