@@ -456,3 +456,11 @@ Before each authorized generation, reopen the referenced network sources and sto
 ## Reviewed deposit audio
 
 The 14 reviewed deposit clips share the services manifest with the 31 card clips. Merge entries when activating; never replace the card batch. Keep approved input files and generation bindings outside the published tree. Run `scripts/build_approved_deposit_clips.py` with explicit approved JSON, bindings, private environment file and private output directory. Offline requests allow 120 seconds; runtime speech limits are unchanged. Verify all text/audio/source hashes, MP3 decoding, default-example playback and edited-amount suppression before deploying preview. No database migration or write is required.
+
+## Approved loan examples and exact asset paths
+
+Use `scripts/build_approved_loan_clips.py --approved-json /private/approved.json --bindings /private/current-loans.json --env-file /private/.env --output /private/staging --generate` only with reviewed input. Source bindings are a mapping from the four loan product types to current comparison responses. The offline request deadline is read from the approved package; runtime deadlines stay unchanged. Retain unchanged recordings and their source/synthesis provenance, verify every exact text and file hash, and merge all four entries into the shared services manifest without replacing cards or deposits. Keep the input, bindings and staging private. Do not deploy a partial batch.
+
+Approved bank, loan and deposit manifest entries preserve their supplied `static/audio/...` paths. Runtime lookup also accepts older relative manifest paths for compatibility, validates the collection-specific filename and verifies MP3 integrity. Before preview release, test that altered amount/years/tenor stops and suppresses fixed-example playback, changed source facts block the clip, and manual playback starts synchronously with the approved transcript visible. No schema migration or shared data reload is required.
+
+For the reviewed four-loan batch, the owner explicitly authorized `--request-timeout 120` after the initial 25-second per-account run stopped. This is an offline override only. Preserve the primary/secondary/tertiary order, failure statuses and cooldown; do not change runtime deadlines or rerun completed unchanged recordings.

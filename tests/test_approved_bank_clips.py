@@ -16,7 +16,7 @@ def inputs(tmp_path,brac_award=False):
 
 def test_exact_text_hashes_filename_and_permitted_omission(tmp_path):
     a,b,d,c=inputs(tmp_path);items=BUILDER.plan(a,b)
-    assert len(items)==11 and items[0]['file']=='bn/sample_0.mp3'
+    assert len(items)==11 and items[0]['file']=='static/audio/bank/bn/sample_0.mp3'
     assert items[0]['text']==d['clips'][0]['text']
     assert items[1]['text']=='পরীক্ষার পাঠ।' and items[1]['conditional_brac_award_omitted']
     assert all(i['source_sha256']=='a'*64 for i in items)

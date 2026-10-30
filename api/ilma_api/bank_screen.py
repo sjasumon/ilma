@@ -77,7 +77,7 @@ def enrich(db,card):
         clip=clips.get(key) or next((c for c in clips.values() if c.get('bank_slug')==key),{})
     except (OSError,ValueError):pass
     if clip.get('approved_exact_text') and clip.get('source_sha256')==source_sha and clip.get('text_sha256')==hashlib.sha256(clip.get('text','').encode()).hexdigest():text=clip['text']
-    url=None;filename=clip.get('file','')
+    url=None;filename=clip.get('file','').removeprefix('static/audio/bank/')
     if clip.get('reviewed') and (not clip.get('approved_exact_text') or clip.get('source_sha256')==source_sha) and re.fullmatch(r'bn/[a-z0-9_-]+\.mp3',filename) and clip.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest():
         path=ROOT/'static/audio/bank'/filename
         if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==clip.get('audio_sha256'):url='/static/audio/bank/'+filename+'?v='+clip['audio_sha256'][:16]

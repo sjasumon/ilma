@@ -17,17 +17,21 @@ async def generate(items,directory,client,request_timeout=25):
     path=directory/'manifest.json'
     data=json.loads(path.read_text()) if path.exists() else {'version':1,'clips':{}}
     data.update(expected_clips=len(items),batch_complete=False)
+    def persist():
+        remaining=sum(i['key'] not in data['clips'] for i in items)
+        data.update(remaining_clips=remaining,batch_complete=remaining==0)
+        temp=path.with_suffix('.tmp');temp.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n');temp.replace(path)
     if len(elevenlabs.accounts())!=3:raise ValueError('Configure all three numbered key/voice pairs before generation')
     for item in items:
         old=data['clips'].get(item['key'],{});target=directory/item['file']
         if old.get('text_sha256')==item['text_sha256'] and target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest()==old.get('audio_sha256'):
-            print(item['key'],'unchanged',flush=True);continue
+            # Preserve the original source approval and synthesis provenance on reuse.
+            old.update(key=item['key'],file=item['file'])
+            persist();print(item['key'],'unchanged',flush=True);continue
         audio,used=await elevenlabs.synthesize(client,item['text'],voice_settings={'stability':.5,'similarity_boost':.75},timeout_seconds=request_timeout)
         target.parent.mkdir(exist_ok=True,parents=True);temp=target.with_suffix('.tmp');temp.write_bytes(audio);temp.replace(target)
         data['clips'][item['key']]={**item,**used,'audio_sha256':hashlib.sha256(audio).hexdigest(),'reviewed':True,'reviewer':'approved-text-and-file-integrity','reviewed_at':datetime.now(timezone.utc).isoformat(),'activation_authorized_by':'sjasumon','native_listening_reviewed':False,'request_timeout_seconds':request_timeout}
-        remaining=sum(i['key'] not in data['clips'] for i in items)
-        data.update(remaining_clips=remaining,batch_complete=remaining==0)
-        temp=path.with_suffix('.tmp');temp.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n');temp.replace(path)
+        persist()
         print(item['key'],used['key_name_used'],'saved',flush=True)
     return data
 if __name__=='__main__':

@@ -18,8 +18,8 @@ def plan(path,bindings):
         if expected!=clip['risk_code']:raise ValueError('Approved risk differs from current sourced report')
         key=clip['key']
         if not re.fullmatch(r'bank:bn:[a-z0-9_]+',key):raise ValueError('Invalid approved bank key')
-        file='bn/'+key.removeprefix('bank:bn:')+'.mp3'
-        if clip['file']!='static/audio/bank/'+file:raise ValueError('Approved filename mismatch')
+        file='static/audio/bank/bn/'+key.removeprefix('bank:bn:')+'.mp3'
+        if clip['file']!=file:raise ValueError('Approved filename mismatch')
         omitted=False
         if slug=='bracbank' and not (card.get('award') and card['award']['awarder_confirmed']=='true' and str(card['award']['year'])=='2024'):
             if text.count(OMISSION)!=1:raise ValueError('Conditional BRAC sentence not found exactly once')

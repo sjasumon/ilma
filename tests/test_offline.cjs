@@ -59,7 +59,7 @@ async function request(path, method='GET') {
   media=await request('/static/audio/bank/bn/synthetic.mp3?v=cccccccccccccccc');assert.equal(media.status,206);
   await Promise.all(background);background=[];context.fetch=async()=>{throw Error('offline')};
   media=await request('/static/audio/bank/bn/synthetic.mp3?v=cccccccccccccccc');assert.equal(media.status,200);assert.equal(await media.text(),'bank');
-  for (const path of ['/static/audio/services/bn/deposit_fdr-12-all.mp3?v=dddddddddddddddd','/static/audio/bank/bn/synthetic_bank.mp3?v=eeeeeeeeeeeeeeee']) {
+  for (const path of ['/static/audio/services/bn/loan_home.mp3?v=ffffffffffffffff','/static/audio/services/bn/deposit_fdr-12-all.mp3?v=dddddddddddddddd','/static/audio/bank/bn/synthetic_bank.mp3?v=eeeeeeeeeeeeeeee']) {
     context.fetch=async()=>new Response('saved',{headers:{'Content-Type':'audio/mpeg'}});
     assert.equal((await request(path)).status,200);
     await Promise.all(background);background=[];

@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+require('./test_loan_audio.cjs');
 const elements = new Map();
 function element(id) {
   if (!elements.has(id)) elements.set(id, {

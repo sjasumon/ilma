@@ -12,8 +12,8 @@ def plan(path,bindings):
         k=clip['key'];slug=k.removeprefix('deposit:bn:');text=clip['text']
         if not k.startswith('deposit:bn:') or slug not in expected:raise ValueError('Unknown deposit clip key')
         if len(text)!=clip['chars'] or hashlib.sha256(text.encode()).hexdigest()!=clip['text_sha256']:raise ValueError('Approved deposit text changed')
-        file='bn/deposit_'+slug+'.mp3'
-        if clip['file']!='static/audio/services/'+file:raise ValueError('Approved deposit filename changed')
+        file='static/audio/services/bn/deposit_'+slug+'.mp3'
+        if clip['file']!=file:raise ValueError('Approved deposit filename changed')
         read=snapshot['readouts'][slug]
         if not re.fullmatch(r'[a-f0-9]{64}',read['source_sha256']):raise ValueError('Missing source binding')
         if not read['references'] or any(not r['offer']['source_url'].startswith('https://') for r in read['references']):raise ValueError('Narration reference source missing')

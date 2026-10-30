@@ -97,3 +97,9 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 # Approved final deposit recordings.
 !/static/audio/services/bn/deposit_*.mp3
+
+# Owner-approved fixed-default loan recordings.
+!/static/audio/services/bn/loan_home.mp3
+!/static/audio/services/bn/loan_auto.mp3
+!/static/audio/services/bn/loan_personal.mp3
+!/static/audio/services/bn/loan_fdr.mp3

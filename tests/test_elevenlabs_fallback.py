@@ -72,6 +72,7 @@ def test_batch_preserves_finished_clips_and_skips_unchanged(tmp_path):
             await m.generate([item],tmp_path,c);await m.generate([item],tmp_path,c)
         assert len(calls)==1
         manifest=json.loads((tmp_path/'manifest.json').read_text());assert manifest['clips'][item['key']]['key_name_used']=='primary'
+        assert manifest['batch_complete'] and manifest['remaining_clips']==0
     asyncio.run(run())
 
 @pytest.mark.parametrize('code',sorted(el.CODES))

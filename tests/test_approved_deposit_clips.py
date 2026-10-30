@@ -13,7 +13,7 @@ def inputs(tmp_path):
 def test_plan_retains_all_fourteen_exact_texts_and_requested_filenames(tmp_path):
     a,b,d,r=inputs(tmp_path);items=builder.plan(a,b)
     assert len(items)==14 and all(i['text']==d['clips'][n]['text'] for n,i in enumerate(items))
-    assert items[0]['file']=='bn/deposit_fdr-1-all.mp3' and items[0]['key']=='deposit:bn:fdr-1-all'
+    assert items[0]['file']=='static/audio/services/bn/deposit_fdr-1-all.mp3' and items[0]['key']=='deposit:bn:fdr-1-all'
 @pytest.mark.parametrize('field,value',[('text','পরিবর্তিত পাঠ।'),('file','static/audio/services/bn/../../x.mp3'),('text_sha256','b'*64)])
 def test_edited_approved_content_or_path_is_rejected(tmp_path,field,value):
     a,b,d,r=inputs(tmp_path);d['clips'][0][field]=value;a.write_text(json.dumps(d))

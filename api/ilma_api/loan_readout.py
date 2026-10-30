@@ -4,6 +4,7 @@ from pathlib import Path
 from ilma_api.loan_catalog import DEFAULTS,LABELS,emi,fee_amount
 from ilma_api.service_clips import SHORT,LOC,join_bn
 ROOT=Path(__file__).resolve().parents[2]
+CLIP_KEYS={'home_loan':'loan:bn:home','auto_loan':'loan:bn:auto','personal_loan':'loan:bn:personal','loan_against_fdr':'loan:bn:fdr'}
 def facts(result):
     kind=result['choice']['product_type'];amount,years=DEFAULTS[kind];values=[]
     for b in result['rows']:
@@ -54,11 +55,12 @@ def narration(pack):
     return pronounce(' '.join(parts),'bn')
 def readout(result):
     pack=facts(result);source=hashlib.sha256(json.dumps({'rows':result['rows'],'defaults':result['defaults']},sort_keys=True,default=str,ensure_ascii=False).encode()).hexdigest();text=narration(pack);kind=pack['product_type'];item={};url=None
-    try:item=json.loads((ROOT/'static/audio/loans/manifest.json').read_text()).get('clips',{}).get(kind,{})
+    try:item=json.loads((ROOT/'static/audio/services/manifest.json').read_text()).get('clips',{}).get(CLIP_KEYS[kind],{})
     except (OSError,ValueError):pass
     if item.get('approved_exact_text') and item.get('source_sha256')==source and hashlib.sha256(item.get('text','').encode()).hexdigest()==item.get('text_sha256'):
-        text=item['text'];file=item.get('file','')
-        if item.get('reviewed') and re.fullmatch(r'bn/[a-z0-9-]+\.mp3',file):
-            path=ROOT/'static/audio/loans'/file
-            if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):url='/static/audio/loans/'+file+'?v='+item['audio_sha256'][:16]
+        text=item['text'];file=item.get('file','').removeprefix('static/audio/services/')
+        expected='bn/loan_'+CLIP_KEYS[kind].removeprefix('loan:bn:')+'.mp3'
+        if item.get('reviewed') and file==expected and item.get('example_amount')==pack['amount'] and item.get('example_years')==pack['years']:
+            path=ROOT/'static/audio/services'/file
+            if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):url='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16]
     return dict(text=text,audio_url=url,source_sha256=source,example_amount=pack['amount'],example_years=pack['years'])

@@ -47,7 +47,7 @@ def readouts(result):
         pack=facts(result,p,m,a);k=pack['key'];text=narration(pack);item=clips.get('deposit:bn:'+k,clips.get(k,{}));url=None
         if not text:continue
         if item.get('approved_exact_text') and item.get('source_sha256')==source and hashlib.sha256(item.get('text','').encode()).hexdigest()==item.get('text_sha256'):
-            text=item['text'];file=item.get('file','')
+            text=item['text'];file=item.get('file','').removeprefix('static/audio/services/')
             if item.get('reviewed') and re.fullmatch(r'bn/deposit_[a-z0-9-]+\.mp3',file):
                 path=ROOT/'static/audio/services'/file
                 if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):url='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16];text=item['text']
