@@ -63,3 +63,11 @@ assert.ok(!appSrc.includes('color: #555') && !appSrc.includes('color: #666'), 'n
 console.log('Unified Home theme regressions passed');
 
 // Header/dock geometry and content scrolling are checked by check_app_frame.py.
+const bootstrap = html.match(/<script id="text-size-bootstrap">([\s\S]*?)<\/script>/)[1];
+for (const [saved, expected] of [[null,'14px'],['14','14px'],['16','16px'],['19','19px'],['22','22px'],['8','14px']]) {
+  let applied;
+  require('node:vm').runInNewContext(bootstrap, {localStorage:{getItem:()=>saved}, document:{documentElement:{style:{setProperty:(key,value)=>{assert.equal(key,'--fs');applied=value;}}}}});
+  assert.equal(applied,expected);
+}
+assert.doesNotThrow(()=>require('node:vm').runInNewContext(bootstrap,{localStorage:{getItem:()=>{throw Error('blocked');}}}));
+console.log('Text size bootstrap passed: supported values, default, invalid storage and blocked storage');

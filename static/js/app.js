@@ -292,6 +292,12 @@ function toggleLanguage() {
 
 function updateSettingsText() {
   const bn = currentLang === "bn";
+  document.getElementById("text-size-label").textContent = bn ? "লেখার আকার" : "Text size";
+  document.getElementById("text-size-preview").textContent = bn ? "ইস্টার্ন ব্যাংক · বার্ষিক ফি ৩,০০০ টাকা" : "Eastern Bank · Annual fee BDT 3,000";
+  document.querySelectorAll("[data-text-size]").forEach((button,i) => {
+    button.textContent = (bn ? ["ছোট","মাঝারি","বড়","খুব বড়"] : ["Small","Medium","Large","Extra large"])[i];
+    button.setAttribute("aria-pressed", String(Number(button.dataset.textSize) === parseInt(document.documentElement.style.getPropertyValue("--fs") || "14")));
+  });
   const labels = {
     "settings-voiceonly-label": bn ? "শুধু কথায়" : "Voice only",
     "settings-screenreader-label": bn ? "স্ক্রিন রিডার ব্যবহার করছি" : "I use a screen reader",
@@ -1574,6 +1580,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   fetch("/v1/voice/config").then(response => response.ok ? response.json() : null).then(config => { if (config) voiceConfig = config; }).catch(() => {});
 
+  document.querySelectorAll("[data-text-size]").forEach(button => button.addEventListener("click", () => {
+    const size = Number(button.dataset.textSize);
+    if (![14,16,19,22].includes(size)) return;
+    document.documentElement.style.setProperty("--fs", size + "px");
+    try { localStorage.setItem("ilma.textSize", String(size)); } catch (_) {}
+    updateSettingsText();
+  }));
   const settingsDialog = document.getElementById("settings-dialog");
   let voiceOnlyBeforeSettings = appSettings.voiceonly;
   document.getElementById("settings-btn").addEventListener("click", () => {

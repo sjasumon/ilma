@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="bn">
 <head>
+  <script id="text-size-bootstrap">try{var s=Number(localStorage.getItem('ilma.textSize'));document.documentElement.style.setProperty('--fs',([14,16,19,22].includes(s)?s:14)+'px')}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>ILMA · Your trusted savings companion</title>
@@ -136,7 +137,7 @@
         <!-- Feature 4: Insurance Split Explainer -->
         <div class="calc-card">
           <h2 class="sheet-title" id="srv-ins-heading">আমানত সুরক্ষা হিসাব (Insurance Explainer)</h2>
-          <p style="font-size: 15px; color: var(--ink-2); margin-top: 0;" id="srv-ins-desc">
+          <p style="font-size: calc(var(--fs) * 1); color: var(--ink-2); margin-top: 0;" id="srv-ins-desc">
             “Tk 2 lakh of your Tk 5 lakh is covered” — কোনো অ্যাকাউন্ট বা ব্যক্তিগত তথ্য ছাড়াই হিসাব করুন।
           </p>
 
@@ -163,7 +164,7 @@
         <!-- Feature 5: Real Return Calculator -->
         <div class="calc-card">
           <h2 class="sheet-title" id="srv-ret-heading">এফডিআর ও প্রকৃত মুনাফা ক্যালকুলেটর (Real Return)</h2>
-          <p style="font-size: 15px; color: var(--ink-2); margin-top: 0;" id="srv-ret-desc">
+          <p style="font-size: calc(var(--fs) * 1); color: var(--ink-2); margin-top: 0;" id="srv-ret-desc">
             উৎস কর (AIT) ও বর্তমান মুদ্রাস্ফীতি (৯.৮%) সমন্বয়ের পর আপনার কত টাকা লাভ থাকবে?
           </p>
 
@@ -191,7 +192,7 @@
           </div>
         </div>
 
-        <div style="margin-top: 20px; font-size: 14px; color: var(--ink-2);">
+        <div style="margin-top: 20px; font-size: calc(var(--fs) * 1); color: var(--ink-2);">
           🔒 <span class="pin-note">পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না</span>
         </div>
       </div>
@@ -210,8 +211,8 @@
         </select>
 
         <div style="margin-top: 4px;">
-          <h1 id="card-bank-name" tabindex="-1" style="font-family: var(--display); font-size: 29px; color: var(--on-stage); margin: 0 0 4px;">ইস্টার্ন ব্যাংক পিএলসি</h1>
-          <p id="card-bank-meta" style="font-size: 14px; color: var(--on-stage-2); margin: 0 0 10px;">বাণিজ্যিক ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: অক্টোবর ২০২৬</p>
+          <h1 id="card-bank-name" tabindex="-1" style="font-family: var(--display); font-size: calc(var(--fs) * 1.5); color: var(--on-stage); margin: 0 0 4px;">ইস্টার্ন ব্যাংক পিএলসি</h1>
+          <p id="card-bank-meta" style="font-size: calc(var(--fs) * 1); color: var(--on-stage-2); margin: 0 0 10px;">বাণিজ্যিক ব্যাংক · লাইসেন্সপ্রাপ্ত · পূর্ণ বিবরণী · তথ্য তারিখ: অক্টোবর ২০২৬</p>
         </div>
       </div>
 
@@ -257,10 +258,10 @@
         <p id="bank-not-checked" class="catalog-note"></p><div id="bank-detail-links"></div><h2 hidden id="card-checks-heading"></h2>
         <div hidden class="checks-list" id="checks-list" role="region" aria-label="৭টি স্বাস্থ্য পরীক্ষার ফলাফল"></div>
 
-        <div style="margin-top: 24px; padding: 14px; background: var(--ivory-2); border-radius: 12px; font-size: 14px; color: var(--ink-2);" id="card-disclaimer">
+        <div style="margin-top: 24px; padding: 14px; background: var(--ivory-2); border-radius: 12px; font-size: calc(var(--fs) * 1); color: var(--ink-2);" id="card-disclaimer">
           এটি তথ্য, পরামর্শ নয়। টাকা রাখার আগে ব্যাংকে হার ও নিয়ম নিশ্চিত হয়ে নিন।
         </div>
-        <div style="margin-top: 10px; font-size: 13px; color: var(--ink-2);">
+        <div style="margin-top: 10px; font-size: calc(var(--fs) * .85); color: var(--ink-2);">
           🔒 <span class="pin-note">পিন, ওটিপি বা অ্যাকাউন্ট নম্বর কখনো চাই না</span>
         </div>
       </div>
@@ -322,6 +323,13 @@
         <option value="bn">বাংলা (BN)</option>
         <option value="en">English (EN)</option>
       </select>
+      <fieldset class="text-size-options"><legend id="text-size-label">লেখার আকার</legend>
+        <button type="button" data-text-size="14" aria-pressed="true">ছোট</button>
+        <button type="button" data-text-size="16" aria-pressed="false">মাঝারি</button>
+        <button type="button" data-text-size="19" aria-pressed="false">বড়</button>
+        <button type="button" data-text-size="22" aria-pressed="false">খুব বড়</button>
+      </fieldset>
+      <p id="text-size-preview">ইস্টার্ন ব্যাংক · বার্ষিক ফি ৩,০০০ টাকা</p>
       <label class="settings-option"><input id="settings-motion" type="checkbox" checked><span id="settings-motion-label">অ্যানিমেশন দেখান</span></label>
       <label class="settings-option"><input id="settings-voiceonly" type="checkbox"><span id="settings-voiceonly-label">শুধু কথায়</span></label>
       <label class="settings-option"><input id="settings-screenreader" type="checkbox"><span id="settings-screenreader-label">স্ক্রিন রিডার ব্যবহার করছি</span></label>

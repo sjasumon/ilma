@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import re
+from pathlib import Path
 
 HEADERS = {
     b'strict-transport-security': b'max-age=31536000',
@@ -13,6 +14,13 @@ HEADERS = {
         b"connect-src 'self'; worker-src 'self'; object-src 'none'; "
         b"base-uri 'none'; form-action 'self'; frame-ancestors 'none'"),
 }
+
+
+# Permit only the exact pre-paint text-size initializer; never unsafe-inline scripts.
+_bootstrap = re.search(rb'<script id="text-size-bootstrap">(.*?)</script>', (Path(__file__).resolve().parents[2]/'static/index.html').read_bytes(), re.S)
+if _bootstrap:
+    _hash = b"'sha256-" + base64.b64encode(hashlib.sha256(_bootstrap[1]).digest()) + b"'"
+    HEADERS[b'content-security-policy'] = HEADERS[b'content-security-policy'].replace(b"script-src 'self'", b"script-src 'self' " + _hash)
 
 
 class SecurityHeadersMiddleware:
