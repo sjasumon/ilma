@@ -7,9 +7,11 @@ ROOT=Path(__file__).resolve().parents[2]
 DIRECTORY=ROOT/'static/audio/services'
 SHORT={'ebl':'ইস্টার্ন ব্যাংক','bracbank':'ব্র্যাক ব্যাংক','citybank':'সিটি ব্যাংক','dutchbangl':'ডাচ্ বাংলা','bankasia':'ব্যাংক এশিয়া','nccbank':'এনসিসি','primebank':'প্রাইম','mtb':'এমটিবি','sbacbank':'সাউথবাংলা'}
 
-def key(network,tier):
+ATTRIBUTES=('annual_fee','interest_rate','late_fee','cash_advance_fee','foreign_currency_markup')
+
+def key(network,tier,attribute=None):
     def slug(value):return re.sub('[^a-z0-9]+','-',value.casefold()).strip('-')
-    return 'bn:card-'+slug(network)+'-'+slug(tier)
+    return 'bn:card-'+slug(network)+'-'+slug(tier)+('-'+slug(attribute) if attribute else '')
 
 def join_bn(items):
     items=list(items)
@@ -105,6 +107,31 @@ def narration(result,language='bn'):
     parts.append('এটি প্রকাশিত খরচের তুলনা, ব্যাংকের র‌্যাঙ্কিং নয়। প্রতিটি সংখ্যার সূত্র স্ক্রিনে আছে।')
     return pronounce(' '.join(parts),'bn')
 
+def selected_narration(result,language='bn'):
+    """Read the chosen cost only, including every fresh bank and its conditions."""
+    if language!='bn' or result['choice']['product_type']!='card':return ''
+    from ilma_api.card_explanation import build
+    article=build(result)
+    parts=[article['title_bn'].replace(' · ',' কার্ডের ')+'।']
+    for section in article['sections']:
+        # Never read stale prices as current comparison facts.
+        if section['id']=='stale':
+            parts.append(f"{len(section['paragraphs'])}টি ব্যাংকের এই খরচের তথ্য পুরনো, তাই বর্তমান তুলনায় রাখা হয়নি।")
+        elif section['id']=='coverage':
+            attribute=result['choice']['attribute']
+            fresh=[b for b in result['rows'] if b.get('facts',{}).get(attribute) and not b['facts'][attribute]['stale']]
+            parts.append(f'এই খরচের পুরনো নয় এমন প্রকাশিত তথ্য আছে {len(fresh)}টি ব্যাংকের। প্রতিটি ব্যাংকের অঙ্ক, শর্ত ও তারিখ বলছি।')
+            facts=[b['facts'][attribute] for b in fresh]
+            if attribute!='cash_advance_fee' and facts and all(f.get('value_num') is not None for f in facts) and len({f['unit'] for f in facts})==1:
+                unit='টাকা' if facts[0]['unit']=='bdt' else '%' if facts[0]['unit']=='pct_year' or '%' in facts[0]['value_text'] else ''
+                if unit:
+                    numbers=[float(f['value_num']) for f in facts];lo=min(numbers);hi=max(numbers)
+                    parts.append(('প্রকাশিত অঙ্ক একই, '+format(lo,'g') if lo==hi else 'প্রকাশিত অঙ্ক '+format(lo,'g')+' থেকে '+format(hi,'g'))+' '+unit+'।')
+            strong=sum(b['status']['code']=='strong' for b in fresh)
+            parts.append(f'এই তালিকার {strong}টি ব্যাংকের আর্থিক অবস্থার শ্রেণি ভালো। এটি কার্ডের মানের রায় নয়।')
+        else:parts.extend(p['text_bn'] for p in section['paragraphs'])
+    return '\n\n'.join(pronounce(part,'bn') for part in parts)
+
 def manifest(directory=None):
     directory=Path(directory or DIRECTORY)
     try:data=json.loads((directory/'manifest.json').read_text())
@@ -112,9 +139,11 @@ def manifest(directory=None):
     return data if isinstance(data,dict) and isinstance(data.get('clips'),dict) else {'version':1,'clips':{}}
 
 def readout(result,language='bn',directory=None):
-    text=narration(result,language);directory=Path(directory or DIRECTORY)
+    attribute=result['choice'].get('attribute')
+    text=selected_narration(result,language) if attribute else narration(result,language)
+    directory=Path(directory or DIRECTORY)
     if not text:return {'audio_url':None,'text':text}
-    item=manifest(directory)['clips'].get(key(result['choice']['network'],result['choice']['tier']))
+    item=manifest(directory)['clips'].get(key(result['choice']['network'],result['choice']['tier'],attribute))
     # A changed data set or unreviewed/tampered file must not play stale speech.
     if item and item.get('reviewed') is True and item.get('reviewer') and item.get('reviewed_at') and item.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest() and re.fullmatch(r'bn/card-[a-z0-9-]+\.mp3',item.get('file','')):
         path=directory/item['file']

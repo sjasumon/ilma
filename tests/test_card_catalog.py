@@ -75,11 +75,12 @@ def test_selected_article_changes_with_cost_and_retains_sources(cards):
     stale=next(s for s in late['explanation']['sections'] if s['id']=='stale')
     assert '৫০ টাকা' in stale['paragraphs'][0]['text_bn']
 
-def test_selecting_cost_does_not_change_saved_full_overview(cards):
-    from ilma_api.service_clips import narration
+def test_selecting_cost_changes_spoken_text_and_article(cards):
+    from ilma_api.service_clips import selected_narration
     annual=compare(cards,'card',network='Visa',tier='Gold')
     late=compare(cards,'card',network='Visa',tier='Gold',compare_by='late_fee')
-    assert narration(annual)==narration(late)
+    assert selected_narration(annual)!=selected_narration(late)
+    assert annual['readout']['text']!=late['readout']['text']
     assert annual['explanation']!=late['explanation']
 
 @pytest.mark.parametrize('attribute',['annual_fee','interest_rate','late_fee','cash_advance_fee','foreign_currency_markup'])

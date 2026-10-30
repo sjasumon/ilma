@@ -12,14 +12,18 @@ from sqlalchemy.orm import Session
 from ilma_api.csv_loader import load
 from ilma_api.bank_services import compare
 from ilma_api.db import ServiceOffer
-from ilma_api.service_clips import key,narration,manifest,DIRECTORY
+from ilma_api.service_clips import key,narration,selected_narration,ATTRIBUTES,manifest,DIRECTORY
 
 def plan(db):
     choices=db.query(ServiceOffer.network,ServiceOffer.tier).filter_by(product_type='card',hidden=False).distinct().all();output=[]
     for network,tier in sorted(choices,key=lambda r:(r[0] or '',r[1] or '')):
         if not network or not tier:continue
-        result=compare(db,'card',network=network,tier=tier);text=narration(result)
-        if text:output.append({'key':key(network,tier),'text':text,'text_sha256':hashlib.sha256(text.encode()).hexdigest(),'data_version':hashlib.sha256(json.dumps({k:v for k,v in result.items() if k!='readout'},default=str,sort_keys=True,ensure_ascii=False).encode()).hexdigest(),'file':'bn/'+key(network,tier).split(':',1)[1]+'.mp3'})
+        for attribute in ATTRIBUTES:
+            result=compare(db,'card',network=network,tier=tier,compare_by=attribute)
+            fresh=[b for b in result['rows'] if b.get('facts',{}).get(attribute) and not b['facts'][attribute]['stale']]
+            if len(fresh)<2:continue
+            text=selected_narration(result);clip_key=key(network,tier,attribute)
+            output.append({'key':clip_key,'attribute':attribute,'text':text,'text_sha256':hashlib.sha256(text.encode()).hexdigest(),'data_version':hashlib.sha256(json.dumps({k:v for k,v in result.items() if k!='readout'},default=str,sort_keys=True,ensure_ascii=False).encode()).hexdigest(),'file':'bn/'+clip_key.split(':',1)[1]+'.mp3'})
     return output
 
 async def generate(items,directory,client,voice_id,api_key,model):

@@ -61,3 +61,21 @@ def test_equal_annual_fees_are_not_described_as_a_higher_next_price():
     text=narration(data)
     assert 'সবগুলোর প্রকাশিত বার্ষিক ফি একই' in text
     assert 'এরপর' not in text
+
+def test_selected_cost_audio_never_reuses_overview_or_another_cost(tmp_path):
+    from ilma_api.service_clips import selected_narration
+    data=example();data['choice']['attribute']='late_fee'
+    for bank in data['rows']:
+        bank['name_en']='Synthetic Bank';bank['state']='published';bank['card']={'synthetic':True}
+        for fact in bank['facts'].values():fact.update(offer_id='annual-'+bank['slug'],doc_date='2026-10-01',condition_bn='',condition_en='')
+        bank['facts']['late_fee']={**bank['facts']['annual_fee'],'offer_id':'late-'+bank['slug'],'value_num':450,'value_text':'450'}
+    text=selected_narration(data)
+    assert 'চারশো পঞ্চাশ টাকা' in text and 'এক হাজার একশো টাকা' not in text
+    assert '\n\n' in text and 'ডাচ্ বাংলা' not in text
+    file='bn/card-visa-gold-late-fee.mp3';path=tmp_path/file;path.parent.mkdir();path.write_bytes(b'synthetic-cost-audio')
+    item={'file':file,'text':text,'text_sha256':hashlib.sha256(text.encode()).hexdigest(),'audio_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'reviewed':True,'reviewer':'synthetic-review','reviewed_at':'synthetic-date'}
+    (tmp_path/'manifest.json').write_text(json.dumps({'version':1,'clips':{key('Visa','Gold','late_fee'):item}}))
+    assert readout(data,directory=tmp_path)['audio_url'].split('?')[0].endswith('late-fee.mp3')
+    data['choice']['attribute']='annual_fee'
+    assert readout(data,directory=tmp_path)['audio_url'] is None
+    assert readout(data,directory=tmp_path)['text']!=text
