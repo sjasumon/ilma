@@ -99,6 +99,8 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
             for field in ['source_url', 'page', 'quote', 'doc_date', 'value']:
                 if not row[field]: raise ValueError(f"Service {row['id']}: missing {field}")
             product_type = classify(row)
+            deposit_scheme=row['category']=='deposit' and bool(re.search(r'millionaire|double benefit|lakhopati|kotipoti',row['product'],re.I))
+            if deposit_scheme:product_type='fdr' if 'double benefit' in row['product'].lower() else 'dps'
             reason = next((rule['reason'] for rule in hidden_rules if rule['bank'] == row['bank']
                 and rule['category'] == row['category'] and rule['product_type'] in ('*', product_type)
                 and rule['tier'] in ('*', row['tier'])
@@ -135,7 +137,7 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
                 attribute=row['attribute'], value_num=number, value_text=row['value'], unit='pct_once' if row['category']=='loan' and row['attribute'] in {'processing_fee','early_settlement_fee','partial_payment_fee'} else row['unit'],
                 condition=row['condition'], basis=row['basis'], doc_date=row['doc_date'], stale=stale,
                 source_url=row['source_url'], page=int(row['page']), quote=row['quote'],
-                column_header=row['column_header'], variant=variants[row['id']], hidden=bool(reason), hidden_reason=reason,
+                column_header=row['column_header'], variant='scheme' if deposit_scheme else variants[row['id']], hidden=bool(reason), hidden_reason=reason,
                 checked_by='agent-'+services_version, checked_on=exported))
         result['service_offer'] = offers
         (output / 'service_validation.json').write_text(json.dumps(issues, indent=2), encoding='utf-8')

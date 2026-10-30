@@ -92,7 +92,7 @@ def load(directory, engine):
                     if not row.get(field): fail('missing ' + field)
                 if row.get('value_num') is not None and row['value_num'] not in quote_numbers(row['quote']) and not (
                     row['value_num']==0 and row['value_text'].casefold()=='free' and re.search(r'\bfree\b',row['quote'],re.I)): fail('number absent from quote')
-                if row.get('variant','main') not in {'main','variant','excluded'}: fail('invalid card variant')
+                if row.get('variant','main') not in ({'main','variant','excluded','scheme'} if row['category']=='deposit' else {'main','variant','excluded'}): fail('invalid service variant')
                 if row.get('value_num') is not None and row['value_num'] < 0: fail('negative service value')
     if errors: raise ValueError('\n'.join(errors))
     prepare_schema(engine)

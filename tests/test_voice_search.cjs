@@ -202,7 +202,7 @@ function voiceApp(options = {}) {
 
   const services = voiceApp();
   services.context.fetch = async () => ({ ok: true, json: async () => [] });
-  for(const name of ['catalog-common','bank-ui','loan-ui','services-ui','bank-services-ui']) services.run(fs.readFileSync('static/js/'+name+'.js','utf8'));
+  for(const name of ['catalog-common','bank-ui','deposit-ui','loan-ui','services-ui','bank-services-ui']) services.run(fs.readFileSync('static/js/'+name+'.js','utf8'));
   await services.context.window.IlmaCatalog.enter('services');
   services.context.fetch = async () => response([
     ['transcript', { text: 'আমানত বীমা কত?', language: 'bn' }],

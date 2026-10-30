@@ -239,12 +239,23 @@ def make_router(get_db):
             networks=sorted({r.network for r in rows if r.category==category and r.network}),
             tiers=sorted({r.tier for r in rows if r.category==category and r.tier}),
             choices=sorted({(r.network or '',r.tier or '') for r in rows if r.category==category}),
-            attributes=sorted({r.attribute for r in rows if r.category==category})) for category in ['deposit','card','loan','account_fee']]
+            audiences=['all','women','senior','student_child','nrb'] if category=='deposit' else [],attributes=sorted({r.attribute for r in rows if r.category==category})) for category in ['deposit','card','loan','account_fee']]
+
+    @router.get('/v1/services/deposits')
+    def deposit_catalog(request:Request,product_type:str='fdr',audience:str='all',basis:str='conventional',db:Session=Depends(get_db)):
+        from ilma_api.deposit_catalog import catalog,AUDIENCES,TYPES
+        if set(request.query_params)-{'product_type','audience','basis'}:raise HTTPException(422,'Amounts and terms stay on the device')
+        if product_type not in TYPES or audience not in AUDIENCES or basis not in {'conventional','islamic'}:raise HTTPException(422,'Unknown deposit choice')
+        return catalog(db,product_type,audience,basis=basis)
 
     @router.get('/v1/services/compare')
     def comparison(request:Request,product_type:str='fdr',tenor_months:int|None=Query(None,ge=1,le=600),network:str|None=None,
-                   tier:str|None=None,attribute:str|None=None,basis:str='conventional',compare_by:str|None=None,db:Session=Depends(get_db)):
-        if set(request.query_params)-{'product_type','tenor_months','network','tier','attribute','basis','compare_by'}:raise HTTPException(422,'Unsupported query fields; calculator amounts stay on the device')
+                   tier:str|None=None,attribute:str|None=None,basis:str='conventional',compare_by:str|None=None,audience:str|None=None,db:Session=Depends(get_db)):
+        if set(request.query_params)-{'product_type','tenor_months','network','tier','attribute','basis','compare_by','audience'}:raise HTTPException(422,'Unsupported query fields; calculator amounts stay on the device')
+        if audience is not None:
+            from ilma_api.deposit_catalog import catalog,AUDIENCES,TYPES
+            if audience not in AUDIENCES or product_type not in TYPES or basis not in {'conventional','islamic'}:raise HTTPException(422,'Unknown deposit choice')
+            return catalog(db,product_type,audience,tenor_months,basis)
         if product_type not in {'fdr','dps','savings','card','home_loan','auto_loan','personal_loan','loan_against_fdr','account_fee'}: raise HTTPException(422,'Unknown product type')
         if basis not in {'conventional','islamic'}:raise HTTPException(422,'Unknown basis')
         if product_type in {'fdr','dps'} and tenor_months is None:raise HTTPException(422,'Select one tenor')
@@ -262,7 +273,8 @@ def make_router(get_db):
         special={}
         for row in loan_rows:
             if not row.hidden and fresh(row) and scopes(row,bank.slug)==['none']:special.setdefault(row.product,offer_view(row))
-        return dict(institution=bank_view(db,bank),offers=[offer_view(row) for row in rows],loan_products=loans,special_loans=list(special.values()))
+        from ilma_api.deposit_catalog import rates as deposit_rates
+        return dict(deposit_rates=deposit_rates(db,bank),institution=bank_view(db,bank),offers=[offer_view(row) for row in rows],loan_products=loans,special_loans=list(special.values()))
 
     @router.get('/v1/services/offers/{offer_id}')
     def offer(offer_id:str,db:Session=Depends(get_db)):
@@ -270,6 +282,13 @@ def make_router(get_db):
         proxy=offer_id.startswith('loan-mid-')
         row=db.get(ServiceOffer,offer_id.removeprefix('loan-mid-'))
         if not row or (row.hidden and not (proxy and recoverable(row))):raise HTTPException(404,'Offer not available')
+        if row.category=='deposit':
+            from ilma_api.deposit_catalog import rates,kind,family,audience
+            available=rates(db,row.institution);items=[r for r in available if r['family']==family(row.product)]
+            if not items:raise HTTPException(404,'Offer not available')
+            from ilma_api.deposit_catalog import catalog
+            insurance=catalog(db,kind(row),audience(row,row.institution.slug))['insurance']
+            return dict(insurance=insurance,institution=bank_view(db,row.institution),product=row.product,offers=items,deposit_type=kind(row),audience=audience(row,row.institution.slug))
         if row.product_type in TYPES:
             sources=db.query(ServiceOffer).filter_by(institution_id=row.institution_id,category='loan',basis=row.basis).all()
             detail=loan_group(db,row.institution,sources,row.product_type,detail_product=row.product,allow_stale=row.stale)
@@ -343,20 +362,26 @@ def voice_service_result(question,intent,context,db,language):
         elif re.search(r'renewal|নবায়ন',text):choice['attribute']='renewal_fee'
         choice['network']='Mastercard' if 'mastercard' in text or 'মাস্টারকার্ড' in text else 'Amex' if 'amex' in text or 'আমেক্স' in text else 'Visa'
         choice['tier']=next((tier for pattern,tier in [(r'signature|সিগনেচার','Signature'),(r'platinum|প্লাটিনাম','Platinum'),(r'world|ওয়ার্ল্ড','World'),(r'infinite|ইনফিনিট','Infinite'),(r'classic|ক্লাসিক','Classic')] if re.search(pattern,text)),(intent.card_tier or 'Gold').title())
-    result=compare(db,**choice)
+    if product in {'fdr','dps','savings'}:
+        from ilma_api.deposit_catalog import catalog
+        who=next((key for pattern,key in [(r'women|নারী|মহিলা','women'),(r'senior|প্রবীণ','senior'),(r'student|child|শিক্ষার্থী|শিশু','student_child'),(r'nrb|probashi|প্রবাসী','nrb')] if re.search(pattern,text)),'all')
+        choice['audience']=who
+        result=catalog(db,product,who,choice.get('tenor_months'),choice['basis'])
+        result['rows'].sort(key=lambda b:-((b.get('offer') or {}).get('value_num') or 0))
+    else:result=compare(db,**choice)
     rows=[bank for bank in result['rows'] if bank.get('offer')]
     if intent.institution_ids:rows=[bank for bank in rows if bank['id'] in intent.institution_ids]
     sources=[];lines=[]
     for bank in rows[:3]:
         row=bank['offer']
         display_value=format_number(row['value_num'],bn=language=='bn') if row['value_num'] is not None else row['value_text']
-        warning=(' · ব্যাংকের অবস্থা যাচাই হয়নি' if language=='bn' else ' · Bank condition is unverified') if bank['status']['code']=='no_data' else ''
+        warning=((' · মূল্যায়ন করা হয়নি' if product in {'fdr','dps','savings'} else ' · ব্যাংকের অবস্থা যাচাই হয়নি') if language=='bn' else ' · Bank condition is unverified') if bank['status']['code']=='no_data' else ''
         lines.append(f"{bank['name_bn' if language=='bn' else 'name_en']}: {display_value}{'%' if row['unit']=='pct_year' else (' টাকা' if language=='bn' else ' BDT') if row['unit']=='bdt' else ''} ({format_date(row['doc_date'],bn=language=='bn')})"+(' · '+('পুরনো তথ্য' if language=='bn' else 'old data') if row['stale'] else '')+warning)
         sources.append(dict(fact_id=row['offer_id'],source_url=row['source_url'],source_title=row['product'],source_title_bn=bank['name_bn'],source_title_en=bank['name_en']+' · '+row['product'],page=row['page'],quote=row['quote']))
     from ilma_api.answer_wording import compose
     items=[{'fact_id':bank['offer']['offer_id'],'institution_id':bank['id']} for bank in rows[:2]]
     speech_text=compose(db,items,{'language':language,'institution_id':items[0]['institution_id'] if items else None},'','service_compare' if len(items)>1 else 'service_detail').speech
-    warnings=[(('এই ব্যাংকের আর্থিক অবস্থা যাচাই হয়নি।' if language=='bn' else 'This bank’s financial condition is unverified.')) for bank in rows[:3] if bank['status']['code']=='no_data']
+    warnings=[((('এই ব্যাংক এখনো মূল্যায়ন করা হয়নি।' if product in {'fdr','dps','savings'} else 'এই ব্যাংকের আর্থিক অবস্থা যাচাই হয়নি।') if language=='bn' else 'This bank is not rated.')) for bank in rows[:3] if bank['status']['code']=='no_data']
     return dict(type='service_answer',text=speech_text,speech_text=speech_text,card_text='; '.join(lines),bank_warnings=warnings,
                 comparison=choice,sources=sources,calculator_amount=intent.amount_bdt,
                 calculator_term=intent.period_months if product.endswith('_loan') else None)

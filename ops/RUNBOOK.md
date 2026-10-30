@@ -428,3 +428,11 @@ Loan examples use the same preview branch as the bank review. Do not reseed the 
 `scripts/build_loan_clips.py --approved-json /private/path/loan-review.json --output /private/path/staging` prints four exact scripts and their character total without calling a provider. Add `--generate --env-file /private/path/.env` only after text and credit approval. The offline request limit is 120 seconds per numbered account in the shared ordered fallback. Keep private draft files outside the repository. Validate text/source/audio hashes and decoded MP3s before publishing reviewed files under `static/audio/loans/bn/`; never mark unheard clips as listening-reviewed. A changed source fingerprint suppresses playback.
 
 Check all four types, amount and term edits without requests or storage, fee-cap changes, source sheets and min/max bounds. Loan audio is not complete until the four reviewed recordings are activated and physical-device playback passes. Preserve the existing 31 card clips and pending bank-report review.
+
+## Deposit preview
+
+Keep database writes out of the preview rollout. Audience and scheme corrections are applied on read; the versioned seed carries only five scheme classification changes. Existing City visibility is respected without overriding hidden rows or reloading the database.
+
+Review fourteen fixed-default scripts outside Git. `scripts/build_deposit_clips.py --approved-json /private/path/deposit-review.json --output /private/path/staging` is dry-run only. Add `--generate --env-file /private/path/.env` only after text and credit approval. It preserves exact text and uses the shared numbered-account order with the 120-second offline deadline. Decode and hash-check files before publishing to `static/audio/deposits/bn/`; retain honest listening-review status. Do not generate pending bank or loan recordings as part of this batch.
+
+Check FDR 12 months at 1 lakh, then 50,000 and 60 lakh; test DPS 3 years, secondary target schemes, senior FDR and NCC tenor detail. Verify savings at 30,000, NCC's low slab and SBAC's unprinted gap. Amount, term, audience and sorting edits must trigger zero requests or persistence. Verify conditional protection and the warning above its sourced limit. Existing card, loan and bank regressions must still pass.
