@@ -60,7 +60,7 @@ async def chunks(client,text,*,stream=True,voice_settings=None,used=None,endpoin
                         audio=await response.aread()
                         if not audio or len(audio)>2*1024*1024:raise SpeechFailure([(name,'invalid_audio')])
                         if used is not None:used.update(key_name_used=name,voice_id=voice)
-                        yield audio;return
+                        sent=True;yield audio;return
                     length=0
                     async for chunk in response.aiter_bytes():
                         if not chunk:continue
@@ -76,7 +76,9 @@ async def chunks(client,text,*,stream=True,voice_settings=None,used=None,endpoin
             # Never concatenate another account's recording after audible bytes.
             if sent:raise SpeechFailure(failures) from None
         except httpx.HTTPError:
-            raise SpeechFailure(failures+[(name,'transport_error')]) from None
+            failures.append((name,'transport_error'));_failed[token]=time.monotonic()+900
+            log.warning('speech_account_failed account=%s reason=transport_error',name)
+            if sent:raise SpeechFailure(failures) from None
     raise SpeechFailure(failures)
 async def synthesize(client,text,*,voice_settings=None,timeout_seconds=25):
     used={};data=b''.join([part async for part in chunks(client,text,stream=False,voice_settings=voice_settings,used=used,endpoint_stream=True,timeout_seconds=timeout_seconds)])

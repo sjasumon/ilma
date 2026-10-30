@@ -1001,8 +1001,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .catalog-offer-row > strong, .catalog-offer-row > small { display:block; }
 .catalog-offer-row > small { color:var(--ink-2); font:calc(var(--fs) * 1)/1.6 var(--latin); }
 .scr.report-open :focus-visible { outline-color:var(--cyan) !important; }
-@media(min-width:351px) {
-  .catalog-bank-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+@media(min-width:421px) {
   .catalog-bank-row > .catalog-status { max-width:120px; white-space:normal; }
 }
 .catalog-answer { width:calc(100% - 40px); margin:12px 20px; padding:16px; border-radius:16px; background:var(--ivory-2); }
@@ -1260,3 +1259,10 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 .account-toggle{display:flex;align-items:center;gap:12px;min-height:48px}.account-toggle input{width:24px;height:24px;accent-color:var(--gold)}.account-net{color:var(--on-stage);overflow-wrap:anywhere}#account-rows .card-bank-heading{flex-wrap:wrap}#account-rows .card-tile{min-width:0}
 
 #bank-profile-facts{margin:12px 0;color:var(--on-stage)}#bank-profile-facts h2{font-size:1em;color:var(--gold);margin:8px 0}#bank-profile-facts p{margin:8px 0;overflow-wrap:anywhere}#bank-profile-facts small{display:block;color:var(--on-stage-2);font-size:.85em}
+
+/* Keep editable controls above Safari's focus-zoom threshold, retaining large text. */
+input, textarea, select, .calc-field, .input-select,
+.catalog-search input, .catalog-selectors select, .card-compare-controls select,
+#voice-feedback input, #agent-text-input, #loan-amount, #deposit-amount, #account-balance {
+  font-size: max(16px, var(--fs));
+}

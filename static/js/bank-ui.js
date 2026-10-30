@@ -33,7 +33,8 @@
       <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div></div>
       <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr(`${digits(banks.length)}টি ব্যাংকের প্রকাশিত তথ্য`,`Published information for ${banks.length} banks`)}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
     function rows(){const query=$('bank-list-search').value.trim().toLowerCase();
-      $('bank-list-rows').innerHTML=banks.filter(b=>`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query)).sort((a,b)=>a.name_bn.localeCompare(b.name_bn,'bn')).map(bank=>
+      const name=currentLang==='en'?'name_en':'name_bn';
+      $('bank-list-rows').innerHTML=banks.filter(b=>`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query)).sort((a,b)=>a[name].localeCompare(b[name],currentLang==='en'?'en':'bn')).map(bank=>
         `<button class="catalog-bank-row" type="button" data-bank="${bank.id}"><span>${bankNames(bank)}</span>${statusChip(bank)}</button>`).join('')||empty();
       root.querySelectorAll('[data-bank]').forEach(button=>button.onclick=()=>openBank(Number(button.dataset.bank)));
     }

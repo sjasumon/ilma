@@ -49,9 +49,10 @@ def test_timeout_and_exhaustion_are_sanitized():
         assert len(calls)==3 and 'secret' not in str(e.value)
         assert all(reason=='timeout' for _,reason in e.value.failures)
     asyncio.run(run())
-def test_no_fallback_after_partial_stream():
+@pytest.mark.parametrize('failure',[httpx.ReadTimeout,httpx.ReadError,httpx.RemoteProtocolError])
+def test_no_fallback_after_partial_stream(failure):
     class Broken(httpx.AsyncByteStream):
-        async def __aiter__(self):yield b'first';raise httpx.ReadTimeout('synthetic')
+        async def __aiter__(self):yield b'first';raise failure('synthetic')
     async def run():
         calls=[]
         def fake(r):calls.append(r);return httpx.Response(200,stream=Broken())
@@ -60,6 +61,50 @@ def test_no_fallback_after_partial_stream():
             with pytest.raises(el.SpeechFailure):
                 async for part in el.chunks(c,'test'):parts.append(part)
         assert parts==[b'first'] and len(calls)==1
+    asyncio.run(run())
+
+@pytest.mark.parametrize('failure',[httpx.ConnectError,httpx.ReadError,httpx.RemoteProtocolError])
+def test_transport_errors_try_remaining_accounts_and_cool_down(failure):
+    async def run():
+        calls=[]
+        def fake(request):
+            calls.append(request.headers['xi-api-key'])
+            if calls[-1]!='synthetic-key-3':raise failure('private provider detail',request=request)
+            return httpx.Response(200,content=b'synthetic-audio')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(fake)) as client:
+            audio,used=await el.synthesize(client,'test')
+            assert audio==b'synthetic-audio' and used['key_name_used']=='tertiary'
+            await el.synthesize(client,'test')
+        assert calls==['synthetic-key-1','synthetic-key-2','synthetic-key-3','synthetic-key-3']
+    asyncio.run(run())
+
+def test_transport_exhaustion_is_sanitized():
+    async def run():
+        calls=[]
+        def fake(request):
+            calls.append(request)
+            raise httpx.ConnectError('private provider detail',request=request)
+        async with httpx.AsyncClient(transport=httpx.MockTransport(fake)) as client:
+            with pytest.raises(el.SpeechFailure) as result:await el.synthesize(client,'test')
+        assert len(calls)==3 and result.value.failures==[(name,'transport_error') for name in ['primary','secondary','tertiary']]
+        assert 'private provider detail' not in str(result.value)
+    asyncio.run(run())
+
+def test_no_fallback_after_buffered_audio_was_yielded():
+    from contextlib import asynccontextmanager
+    class Client:
+        calls=0
+        @asynccontextmanager
+        async def stream(self,*args,**kwargs):
+            self.calls+=1
+            response=httpx.Response(200,content=b'first')
+            try:yield response
+            finally:raise httpx.ReadError('private cleanup error')
+    async def run():
+        client=Client();parts=[]
+        with pytest.raises(el.SpeechFailure):
+            async for part in el.chunks(client,'test',stream=False):parts.append(part)
+        assert client.calls==1 and parts==[b'first']
     asyncio.run(run())
 def test_batch_preserves_finished_clips_and_skips_unchanged(tmp_path):
     spec=importlib.util.spec_from_file_location('approved_builder',Path('scripts/build_approved_card_clips.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
