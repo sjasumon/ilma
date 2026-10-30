@@ -27,7 +27,7 @@ async def generate(items,directory,client,voice_id,api_key,model):
     for item in items:
         old=data['clips'].get(item['key'],{})
         if old.get('text_sha256')==item['text_sha256'] and old.get('voice_id')==voice_id and (directory/old.get('file','missing')).is_file():continue
-        response=await client.post('https://api.elevenlabs.io/v1/text-to-speech/'+voice_id,headers={'xi-api-key':api_key},json={'text':item['text'],'model_id':model,'voice_settings':{'stability':.5,'similarity_boost':.75}},params={'output_format':'mp3_44100_128'},timeout=60)
+        response=await client.post('https://api.elevenlabs.io/v1/text-to-speech/'+voice_id,headers={'xi-api-key':api_key},json={'text':item['text'],'model_id':model,'voice_settings':{'stability':.5,'similarity_boost':.75}},params={'output_format':'mp3_44100_128'},timeout=120)
         response.raise_for_status();audio=response.content
         if not audio:raise ValueError('Empty provider audio')
         path=directory/item['file'];path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(audio)
@@ -51,11 +51,15 @@ def publish_reviewed(items,source,destination=DIRECTORY):
     return len(approved)
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--dry-run',action='store_true');parser.add_argument('--generate',action='store_true');parser.add_argument('--publish-reviewed',action='store_true');parser.add_argument('--env-file',type=Path);parser.add_argument('--output',type=Path,default=Path('/tmp/ilma-service-audio-review'));parser.add_argument('--seed',type=Path,default=Path(__file__).resolve().parents[1]/'seed');parser.add_argument('--json-output',type=Path)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--dry-run',action='store_true');parser.add_argument('--generate',action='store_true');parser.add_argument('--publish-reviewed',action='store_true');parser.add_argument('--env-file',type=Path);parser.add_argument('--key',action='append');parser.add_argument('--max-characters',type=int,default=750);parser.add_argument('--output',type=Path,default=Path('/tmp/ilma-service-audio-review'));parser.add_argument('--seed',type=Path,default=Path(__file__).resolve().parents[1]/'seed');parser.add_argument('--json-output',type=Path)
     args=parser.parse_args()
     if sum([args.dry_run,args.generate,args.publish_reviewed])!=1:parser.error('Select exactly one action: --dry-run, --generate or --publish-reviewed')
     engine=create_engine('sqlite://');load(args.seed,engine)
     with Session(engine) as db:items=plan(db)
+    if args.key:
+        selected=set(args.key)
+        if selected-{item['key'] for item in items}:parser.error('Unknown clip key')
+        items=[item for item in items if item['key'] in selected]
     for item in items:print(item['key'],len(item['text']),'characters\n'+item['text']+'\n')
     print('TOTAL:',len(items),'clips;',sum(len(i['text']) for i in items),'characters')
     if args.json_output:args.json_output.write_text(json.dumps(items,ensure_ascii=False,indent=2)+'\n')
@@ -64,7 +68,8 @@ if __name__=='__main__':
         if args.env_file:
             from dotenv import load_dotenv
             load_dotenv(args.env_file,override=True)
-        if any(not 500<=len(item['text'])<=750 for item in items):parser.error('Review narration lengths before spending credits')
+        if not 500<=args.max_characters<=10000:parser.error('Invalid reviewed character limit')
+        if any(not 500<=len(item['text'])<=args.max_characters for item in items):parser.error('Review narration lengths and explicitly set --max-characters before spending credits')
         from ilma_api import settings
         if args.env_file:
             import importlib

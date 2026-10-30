@@ -28,7 +28,6 @@ BN=str.maketrans('0123456789','০১২৩৪৫৬৭৮৯')
 def condition(row,renewal=False,language='bn'):
     attribute=field(row,'attribute');value=field(row,'value_text') or field(row,'value')
     text=re.sub(r'\bstale\s*;?','',field(row,'condition'),flags=re.I).strip()+' '+value
-    if attribute=='supplementary_card_fee' and value.casefold() in {'free','0'}:return 'প্রথম অতিরিক্ত কার্ড বিনামূল্যে' if language=='bn' else 'First supplementary card free'
     if attribute=='fee_waiver_rule' and field(row,'unit')=='count':text+=' waived if '+value+' transactions'
     for rule in RULES:
         if rule['attribute'] and rule['attribute']!=attribute:continue
@@ -42,6 +41,7 @@ def condition(row,renewal=False,language='bn'):
             values={'x':pct[1],'y':money[1].replace(',','')}
         rendered=rule['bn' if language=='bn' else 'en'].format(**values)
         return rendered.translate(BN) if language=='bn' else rendered
+    if attribute=='supplementary_card_fee' and value.casefold() in {'free','0'}:return 'প্রথম অতিরিক্ত কার্ড বিনামূল্যে' if language=='bn' else 'First supplementary card free'
     return ''
 
 def numeric(row):

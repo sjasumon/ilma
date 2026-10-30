@@ -53,3 +53,7 @@ def test_percentage_cash_fee_is_not_compared_as_a_taka_amount(cards):
     result=compare(cards,'card',network='Visa',tier='Gold',compare_by='cash_advance_fee')
     assert [r['id'] for r in result['rows']][:2]==[2,1]
     assert 'সরাসরি তুলনীয় নয়' in result['unit_note_bn']
+
+@pytest.mark.parametrize('wording',['1st & 2nd card free','first 2 cards free','first two supplementary cards free'])
+def test_two_free_cards_is_not_overridden_by_generic_free_value(wording):
+    assert condition({'attribute':'supplementary_card_fee','value_text':'Free','condition':wording})=='প্রথম দুটি অতিরিক্ত কার্ড বিনামূল্যে'

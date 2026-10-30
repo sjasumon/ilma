@@ -377,13 +377,13 @@ PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --dry
 After credit authorization, generation uses the explicitly selected private environment and writes drafts outside the checkout:
 
 ```sh
-PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --generate --env-file /home/ubuntu/shared/all_projects/preview.sumon.me/.env --output /tmp/ilma-service-audio-review
+PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --generate --max-characters 1500 --env-file /home/ubuntu/shared/all_projects/preview.sumon.me/.env --output /tmp/ilma-service-audio-review-v2
 ```
 
 There is one provider call per changed text/voice. No generator runs in CI. Review the actual clips, record truthful `reviewed`, `reviewer` and `reviewed_at` fields in the private manifest, then publish only unchanged reviewed audio:
 
 ```sh
-PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --publish-reviewed --output /tmp/ilma-service-audio-review
+PYTHONPATH=api /home/ubuntu/venv/bin/python scripts/build_service_clips.py --publish-reviewed --output /tmp/ilma-service-audio-review-v2
 ```
 
 Review the exact staged manifest/audio list, run the documented suites and policy/secrets checks, and push normally. Deploy to preview first. Keep production unchanged until Sumon's phone acceptance. Confirm the visible text, immediate Listen/Stop behavior and the no-audio fallback; a generated file alone is not listening acceptance.
@@ -393,3 +393,5 @@ Before frontend release checks, run `python3 ops/version_assets.py`. Asset URLs 
 Saved service audio URLs also include the audio hash, so replacing a clip after a data update cannot reuse an old Cloudflare audio cache entry. Keep the manifest hash and runtime URL checks together.
 
 The worker registration URL is versioned by worker bytes too. The services UI reads the audio manifest through `/v1/services/audio-manifest` with `Cache-Control: no-store`, so an old empty manifest cannot block newly reviewed clips.
+
+Narration revisions must be dry-run reviewed again. For the complete-sentence revision, use a separate private output folder so earlier audio remains available for comparison. After approval of the revised credit total, a single-sample command can use `--key bn:card-visa-gold --max-characters 1500 --output /tmp/ilma-service-audio-review-v2`; omit `--key` only if all seven revised clips were authorized. Never infer approval of new paid generation from approval of an earlier text version.

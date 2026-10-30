@@ -92,7 +92,8 @@ class TestServicesSeed(unittest.TestCase):
         self.assertIn('ভিসা গোল্ড',spoken)
         self.assertNotIn('ডাচ্ বাংলা',spoken)
         self.assertNotIn('সেরা',spoken)
-        self.assertTrue(500<=len(spoken)<=750)
+        self.assertIn('নগদ তোলার ফি দুই শতাংশ অথবা একশো পঞ্চাশ টাকা, যেটি বেশি।',spoken)
+        self.assertNotIn('একশো পঞ্চাশ শতাংশ',spoken)
 
     def test_audio_manifest_is_not_cached_by_the_cdn(self):
         response=self.client.get('/v1/services/audio-manifest')

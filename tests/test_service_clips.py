@@ -39,3 +39,25 @@ def test_generator_calls_fake_provider_once_and_skips_unchanged_text(tmp_path):
             await module.generate([item],tmp_path,client,'synthetic-voice','synthetic-key','synthetic-model')
     asyncio.run(run());assert len(calls)==1
     manifest=json.loads((tmp_path/'manifest.json').read_text());assert manifest['clips'][item['key']]['reviewed'] is False
+
+def test_cash_percentage_and_taka_floor_are_spoken_as_distinct_units():
+    data=example()
+    data['rows'][0]['facts']['cash_advance_fee']={'value_num':180,'value_text':'180','unit':'bdt','condition':'2.5% or BDT 180 whichever is higher','quote':'Synthetic cash fee: 2.5% or BDT 180 whichever is higher','stale':False}
+    data['rows'][1]['facts']['cash_advance_fee']={'value_num':3,'value_text':'3%','unit':'text','condition':'cash advance fee 3%','quote':'Synthetic cash fee 3%','stale':False}
+    text=narration(data)
+    assert 'আড়াই শতাংশ অথবা একশো আশি টাকা, যেটি বেশি' in text
+    assert 'এনসিসির নগদ তোলার ফি তিন শতাংশ।' in text
+    assert 'একশো আশি শতাংশ' not in text
+    assert 'সময়মতো পুরো বিল দিলে সুদ নেই' not in text
+
+def test_only_one_late_fee_is_not_repeated_as_both_extremes():
+    data=example();data['rows'][0]['facts']['late_fee']={'value_num':450,'value_text':'450','unit':'bdt','condition':'','quote':'Synthetic 450','stale':False}
+    text=narration(data)
+    assert 'বিলম্ব ফির যে তথ্য আছে, তাতে ব্র্যাক ব্যাংকের ফি চারশো পঞ্চাশ টাকা।' in text
+    assert 'আর ব্র্যাক ব্যাংকে' not in text
+
+def test_equal_annual_fees_are_not_described_as_a_higher_next_price():
+    data=example();data['rows'][1]['facts']['annual_fee']['value_num']=1100
+    text=narration(data)
+    assert 'সবগুলোর প্রকাশিত বার্ষিক ফি একই' in text
+    assert 'এরপর' not in text

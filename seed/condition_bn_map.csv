@@ -1,6 +1,6 @@
 id,pattern,attribute,bn,en
 higher,whichever is higher,,"{x}% অথবা {y} টাকা, যেটি বেশি","{x}% or BDT {y}, whichever is higher"
-two_free,1st\s*&\s*2nd\s*(?:supplementary\s*)?card\s*free,supplementary_card_fee,প্রথম দুটি অতিরিক্ত কার্ড বিনামূল্যে,First two supplementary cards free
+two_free,(?:1st\s*&\s*2nd|first\s+(?:2|two))\s*(?:supplementary\s*)?cards?\s*(?:are\s*)?free,supplementary_card_fee,প্রথম দুটি অতিরিক্ত কার্ড বিনামূল্যে,First two supplementary cards free
 first_free,(?:1st|first)\s+(?:supplementary\s+)?card\s+free,supplementary_card_fee,প্রথম অতিরিক্ত কার্ড বিনামূল্যে,First supplementary card free
 waiver,(?:waived if\s+(?:min\s+)?)?(?P<n>\d+)\s+transactions,fee_waiver_rule,বছরে {n}টি লেনদেন করলে বার্ষিক ফি মওকুফ,Annual fee waived with {n} transactions a year
 points,Reward Points redemption,fee_waiver_rule,রিওয়ার্ড পয়েন্ট দিয়ে ফি মওকুফ করা যায়,Fee waiver through reward points
