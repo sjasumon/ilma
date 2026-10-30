@@ -1,4 +1,6 @@
-# Selected-cost card audio transcripts — review draft
+# Selected-cost card audio transcripts — rejected draft
+
+**Rejected by the user. Do not generate these 31 recordings. Superseded by [the seven-clip V3 review draft](CARD_AUDIO_DRY_RUN_V3.md).**
 
 These are the exact proposed Bangla inputs to offline speech generation. No recordings have been generated for this draft. Generation and preview activation await text review. Each paragraph below is spoken; headings and character counts are review labels only.
 
