@@ -90,7 +90,7 @@ def interim_line(d,bn):
     profit,change,npl=(d.get('interim_'+k) for k in ('net_profit','profit_change','npl'))
     if not (profit and change and npl):return None
     end=date.fromisoformat(profit['values']['as_of']);v=lambda f:f['values']['value']
-    text=f"{end.year} সালের প্রথম {end.month} মাসে সমন্বিত নিট মুনাফা {v(change)}% বেড়ে {v(profit)} কোটি টাকা, খেলাপি ঋণের হার {v(npl)}%।" if bn else f"For the first {end.month} months of {end.year}, consolidated net profit rose {v(change)}% to {v(profit)} crore taka, and bad loans were {v(npl)}%."
+    text=f"{end.year} সালের প্রথম {end.month} মাসে সমন্বিত নিট মুনাফা {v(change)}% বেড়ে {int(v(profit)):,} কোটি টাকা, খেলাপি ঋণের হার {v(npl)}%।" if bn else f"For the first {end.month} months of {end.year}, consolidated net profit rose {v(change)}% to {int(v(profit)):,} crore taka, and bad loans were {v(npl)}%."
     return (text,[profit['fact_id'],change['fact_id'],npl['fact_id']])
 
 def prepare(db,text,c,banks,forced=None,resolved=None):
@@ -738,7 +738,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         memory['introduced_banks']=[*memory.get('introduced_banks',[]),c.institution_id][-20:]
     if intent in {'bank_overview','bank_condition'}:
         interim=interim_line(details(facts,c.institution_id),bn)
-        if interim:lines=[lines[0],interim,*lines[1:]]
+        if interim:
+            # The dated result is the news here, so it replaces a founding-year opening and follows the status.
+            lines=[row for row in lines if not any(facts.get(i,{}).get('kind')=='profile' for i in row[1])]
+            lines=[lines[0],interim,*lines[1:]]
         lines=fit_overview(lines,question,c,registry,facts,id)
     # Never narrate old protection, raw incident headlines or unbounded paragraphs.
     if not r.direct_protection:lines=[(s,ids) for s,ids in lines if not PROTECTION_WORDS.search(s)]
@@ -774,7 +777,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 lines[i]=(sentence,ids)
     if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])
     if intent=='service_detail':lines=date_once(lines)
-    chosen,pending=paginate(lines,question,c.language,split=intent=='service_detail')
+    chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures'})
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))
     a=controls(intent,c,' '.join(s for s,_ in chosen),question,buttons).model_copy(update={'used_fact_ids':used,'sentence_fact_ids':[ids for _,ids in chosen]})

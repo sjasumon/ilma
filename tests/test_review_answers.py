@@ -206,7 +206,7 @@ def detail(field,value,as_of='2026-09-30'):
 def test_interim_results_always_name_their_period():
     from ilma_api.human_turn import interim_line
     d={x['values']['field']:x for x in (detail('interim_net_profit','2121'),detail('interim_profit_change','38'),detail('interim_npl','2.03'))}
-    assert interim_line(d,True)[0]=='2026 সালের প্রথম 9 মাসে সমন্বিত নিট মুনাফা 38% বেড়ে 2121 কোটি টাকা, খেলাপি ঋণের হার 2.03%।'
+    assert interim_line(d,True)[0]=='2026 সালের প্রথম 9 মাসে সমন্বিত নিট মুনাফা 38% বেড়ে 2,121 কোটি টাকা, খেলাপি ঋণের হার 2.03%।'
     assert 'first 9 months of 2026' in interim_line(d,False)[0]
     del d['interim_npl'];assert interim_line(d,True) is None
 
