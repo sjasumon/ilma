@@ -99,6 +99,7 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
             for field in ['source_url', 'page', 'quote', 'doc_date', 'value']:
                 if not row[field]: raise ValueError(f"Service {row['id']}: missing {field}")
             product_type = classify(row)
+            account_debit=row['category']=='account_fee' and bool(re.search(r'debit|prepaid',row['product'],re.I))
             deposit_scheme=row['category']=='deposit' and bool(re.search(r'millionaire|double benefit|lakhopati|kotipoti',row['product'],re.I))
             if deposit_scheme:product_type='fdr' if 'double benefit' in row['product'].lower() else 'dps'
             reason = next((rule['reason'] for rule in hidden_rules if rule['bank'] == row['bank']
@@ -137,7 +138,7 @@ def convert(directory, output, services=False, *, bank_codes=None, services_vers
                 attribute=row['attribute'], value_num=number, value_text=row['value'], unit='pct_once' if row['category']=='loan' and row['attribute'] in {'processing_fee','early_settlement_fee','partial_payment_fee'} else row['unit'],
                 condition=row['condition'], basis=row['basis'], doc_date=row['doc_date'], stale=stale,
                 source_url=row['source_url'], page=int(row['page']), quote=row['quote'],
-                column_header=row['column_header'], variant='scheme' if deposit_scheme else variants[row['id']], hidden=bool(reason), hidden_reason=reason,
+                column_header=row['column_header'], variant=('excluded' if re.search(r'prepaid',row['product'],re.I) else 'main' if re.fullmatch(r'VISA Debit Card|EBL Classic Debit Card|Nexus-EMV Debit Card \(Local\)',row['product'],re.I) else 'variant') if account_debit else 'scheme' if deposit_scheme else variants[row['id']], hidden=bool(reason), hidden_reason=reason,
                 checked_by='agent-'+services_version, checked_on=exported))
         result['service_offer'] = offers
         (output / 'service_validation.json').write_text(json.dumps(issues, indent=2), encoding='utf-8')

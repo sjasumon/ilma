@@ -241,6 +241,13 @@ def make_router(get_db):
             choices=sorted({(r.network or '',r.tier or '') for r in rows if r.category==category}),
             audiences=['all','women','senior','student_child','nrb'] if category=='deposit' else [],attributes=sorted({r.attribute for r in rows if r.category==category})) for category in ['deposit','card','loan','account_fee']]
 
+    @router.get('/v1/services/accounts')
+    def account_catalog(request:Request,item:str='savings',audience:str='all',product_type:Literal['account_fee']='account_fee',db:Session=Depends(get_db)):
+        from ilma_api.account_catalog import catalog,ITEMS,AUDIENCES
+        if set(request.query_params)-{'item','audience','product_type'}:raise HTTPException(422,'Balances stay on the device')
+        if item not in ITEMS or audience not in AUDIENCES:raise HTTPException(422,'Unknown account choice')
+        return catalog(db,item,audience)
+
     @router.get('/v1/services/deposits')
     def deposit_catalog(request:Request,product_type:str='fdr',audience:str='all',basis:str='conventional',db:Session=Depends(get_db)):
         from ilma_api.deposit_catalog import catalog,AUDIENCES,TYPES
@@ -250,8 +257,12 @@ def make_router(get_db):
 
     @router.get('/v1/services/compare')
     def comparison(request:Request,product_type:str='fdr',tenor_months:int|None=Query(None,ge=1,le=600),network:str|None=None,
-                   tier:str|None=None,attribute:str|None=None,basis:str='conventional',compare_by:str|None=None,audience:str|None=None,db:Session=Depends(get_db)):
-        if set(request.query_params)-{'product_type','tenor_months','network','tier','attribute','basis','compare_by','audience'}:raise HTTPException(422,'Unsupported query fields; calculator amounts stay on the device')
+                   tier:str|None=None,attribute:str|None=None,basis:str='conventional',compare_by:str|None=None,audience:str|None=None,item:str|None=None,db:Session=Depends(get_db)):
+        if set(request.query_params)-{'product_type','tenor_months','network','tier','attribute','basis','compare_by','audience','item'}:raise HTTPException(422,'Unsupported query fields; calculator amounts stay on the device')
+        if item is not None:
+            from ilma_api.account_catalog import catalog,ITEMS,AUDIENCES
+            if product_type!='account_fee' or item not in ITEMS or (audience or 'all') not in AUDIENCES:raise HTTPException(422,'Unknown account choice')
+            return catalog(db,item,audience or 'all')
         if audience is not None:
             from ilma_api.deposit_catalog import catalog,AUDIENCES,TYPES
             if audience not in AUDIENCES or product_type not in TYPES or basis not in {'conventional','islamic'}:raise HTTPException(422,'Unknown deposit choice')
@@ -274,14 +285,24 @@ def make_router(get_db):
         for row in loan_rows:
             if not row.hidden and fresh(row) and scopes(row,bank.slug)==['none']:special.setdefault(row.product,offer_view(row))
         from ilma_api.deposit_catalog import rates as deposit_rates
-        return dict(deposit_rates=deposit_rates(db,bank),institution=bank_view(db,bank),offers=[offer_view(row) for row in rows],loan_products=loans,special_loans=list(special.values()))
+        from ilma_api.account_catalog import banks as account_banks
+        account=next((b for b in account_banks(db) if b['id']==id),None)
+        return dict(account_catalog=account,deposit_rates=deposit_rates(db,bank),institution=bank_view(db,bank),offers=[offer_view(row) for row in rows],loan_products=loans,special_loans=list(special.values()))
 
     @router.get('/v1/services/offers/{offer_id}')
     def offer(offer_id:str,db:Session=Depends(get_db)):
         from ilma_api.loan_catalog import TYPES,recoverable,group as loan_group,view as loan_view,scopes
+        from ilma_api.loan_catalog import fresh as fresh_account
         proxy=offer_id.startswith('loan-mid-')
         row=db.get(ServiceOffer,offer_id.removeprefix('loan-mid-'))
         if not row or (row.hidden and not (proxy and recoverable(row))):raise HTTPException(404,'Offer not available')
+        if row.category=='account_fee':
+            from ilma_api.account_catalog import catalog,fee_view
+            result=catalog(db);bank=next((b for b in result['banks'] if b['id']==row.institution_id),None)
+            if bank is None or not fresh_account(row):raise HTTPException(404,'Offer not available')
+            selected=next((f for f in bank['all_fees'] if f['offer_id']==row.offer_id),None)
+            if selected is None:raise HTTPException(404,'Offer not available')
+            return dict(account_detail=True,selected=selected,bank=bank,readouts=result['readouts'])
         if row.category=='deposit':
             from ilma_api.deposit_catalog import rates,kind,family,audience
             available=rates(db,row.institution);items=[r for r in available if r['family']==family(row.product)]
@@ -362,6 +383,21 @@ def voice_service_result(question,intent,context,db,language):
         elif re.search(r'renewal|নবায়ন',text):choice['attribute']='renewal_fee'
         choice['network']='Mastercard' if 'mastercard' in text or 'মাস্টারকার্ড' in text else 'Amex' if 'amex' in text or 'আমেক্স' in text else 'Visa'
         choice['tier']=next((tier for pattern,tier in [(r'signature|সিগনেচার','Signature'),(r'platinum|প্লাটিনাম','Platinum'),(r'world|ওয়ার্ল্ড','World'),(r'infinite|ইনফিনিট','Infinite'),(r'classic|ক্লাসিক','Classic')] if re.search(pattern,text)),(intent.card_tier or 'Gold').title())
+    if product=='account_fee':
+        from ilma_api.account_catalog import catalog
+        item='debit' if account_attribute=='annual_fee' else 'other' if account_attribute and account_attribute!='maintenance_fee_half_yearly' else 'savings'
+        who=next((key for pattern,key in [(r'women|নারী|মহিলা','women'),(r'senior|প্রবীণ','senior'),(r'student|child|শিক্ষার্থী|শিশু','student_child'),(r'nrb|প্রবাসী','nrb')] if re.search(pattern,text)),'all')
+        account=catalog(db,item,who);read=account['readouts'].get(item+'-'+(who if item=='savings' else 'all').replace('_','-'),{})
+        speech=read.get('text','') if language=='bn' else 'Published account rates and fees are shown with their sources. The fixed example uses a BDT 100,000 balance; net is shown only when all selected costs are known.'
+        sources=[]
+        from ilma_api.account_catalog import calculate
+        for bank in account['banks']:
+            example=calculate(bank,100000,True,True,who)
+            evidence=[example['rate'],example['maintenance'],example['debit'],example['sms']] if item=='savings' else [bank['debit_main'],bank['debit_replacement'],*bank['debit_variants']] if item=='debit' else bank['other']
+            for row in [r for r in evidence if r]:
+                sources.append(dict(fact_id=row['offer_id'],source_url=row['source_url'],source_title=row['product'],source_title_bn=bank['name_bn'],source_title_en=bank['name_en']+' · '+row['product'],page=row['page'],quote=row['quote']))
+        choice.update(item=item,audience=who)
+        return dict(type='service_answer',text=speech,speech_text=speech,card_text=speech,bank_warnings=[],comparison=choice,sources=sources,calculator_amount=intent.amount_bdt,calculator_term=None)
     if product in {'fdr','dps','savings'}:
         from ilma_api.deposit_catalog import catalog
         who=next((key for pattern,key in [(r'women|নারী|মহিলা','women'),(r'senior|প্রবীণ','senior'),(r'student|child|শিক্ষার্থী|শিশু','student_child'),(r'nrb|probashi|প্রবাসী','nrb')] if re.search(pattern,text)),'all')

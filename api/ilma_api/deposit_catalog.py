@@ -49,6 +49,7 @@ def view(row,slug):
     from ilma_api.bank_services import offer_view
     result=offer_view(row);p=kind(row);result.update(product_type=p,audience=audience(row,slug),variant='scheme' if scheme(row) else row.variant,family=family(row.product),tenor_list_months=term_list(row),**slabs(row.condition if p!='dps' else 'any amount'))
     result['value_num']=percentage(row)
+    result['rate_is_maximum']=bool(re.search(r'(?:up\s*to|maximum)\s*\d+(?:\.\d+)?\s*%',row.condition+' '+row.quote,re.I))
     result['display_priority']=0 if (p=='savings' and re.search(r'^(?:Savings (?:Bank Deposit )?Account|General Savings Account|Regular Savings Account|Regular/TARA Savings Products|Prime Savings Account|Savings Account \(General\))$',row.product,re.I)) else 1 if p=='savings' else 0
     if p=='dps':result.update(min_monthly_installment=None,installment_multiple=None)
     return result

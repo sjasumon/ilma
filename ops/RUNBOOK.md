@@ -436,3 +436,10 @@ Keep database writes out of the preview rollout. Audience and scheme corrections
 Review fourteen fixed-default scripts outside Git. `scripts/build_deposit_clips.py --approved-json /private/path/deposit-review.json --output /private/path/staging` is dry-run only. Add `--generate --env-file /private/path/.env` only after text and credit approval. It preserves exact text and uses the shared numbered-account order with the 120-second offline deadline. Decode and hash-check files before publishing to `static/audio/deposits/bn/`; retain honest listening-review status. Do not generate pending bank or loan recordings as part of this batch.
 
 Check FDR 12 months at 1 lakh, then 50,000 and 60 lakh; test DPS 3 years, secondary target schemes, senior FDR and NCC tenor detail. Verify savings at 30,000, NCC's low slab and SBAC's unprinted gap. Amount, term, audience and sorting edits must trigger zero requests or persistence. Verify conditional protection and the warning above its sourced limit. Existing card, loan and bank regressions must still pass.
+
+
+## Account preview
+
+Deploy the account changes on the existing preview branch without a shared database reload. Keep NCC's stale fees and EBL's unreadable facts excluded; preserve EBL debit VAT as unspecified. Verify BRAC at 1 lakh: SMS off/card on gives −650; both off gives +40; default SMS on suppresses the net. Check 5,000 and 15 lakh without requests or storage. Savings from deposits must route to this same account view.
+
+`scripts/build_account_clips.py --approved-json /private/path/account-review.json --output /private/path/staging` is dry-run only. Seven exact scripts require text and credit approval before `--generate --env-file /private/path/.env`. The shared numbered-account fallback uses 120 seconds per key offline. Decode and hash-check before publishing reviewed files under `static/audio/accounts/bn/`; keep listening acceptance honest. Refresh private deposit draft fingerprints after the NCC audience classification change and verify their text facts remain unchanged; do not generate pending bank, loan or deposit clips as part of account work.

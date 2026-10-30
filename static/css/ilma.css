@@ -1256,3 +1256,5 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 .loan-chips button {max-width:100%;overflow-wrap:anywhere;}
 
 .deposit-table-wrap{max-width:100%;overflow-x:auto}.deposit-rate-table{width:100%;border-collapse:collapse;font-size:.9em}.deposit-rate-table th,.deposit-rate-table td{text-align:start;vertical-align:top;padding:8px;border:1px solid var(--line);overflow-wrap:anywhere}.deposit-variants section{padding:12px 0;border-top:1px solid var(--line)}#deposit-rows .card-bank-heading{flex-wrap:wrap}#deposit-rows .card-tile{min-width:0}#deposit-earnings{overflow-wrap:anywhere}.deposit-rate-table button{white-space:normal}
+
+.account-toggle{display:flex;align-items:center;gap:12px;min-height:48px}.account-toggle input{width:24px;height:24px;accent-color:var(--gold)}.account-net{color:var(--on-stage);overflow-wrap:anywhere}#account-rows .card-bank-heading{flex-wrap:wrap}#account-rows .card-tile{min-width:0}
