@@ -183,7 +183,7 @@ def build_registry(packs,comparison,language,insurance=False):
             name=f.get('bank_name_bn' if bn else 'bank_name_en')
             if name:registry[key]=FactToken(re.sub(r'\s*(?:PLC\.?|পিএলসি)$','',name,flags=re.I),(),f['institution_id'],'bank')
     for fid,f in facts.items():
-        if f['kind']=='insurance' and not insurance:continue
+        if f['kind']=='insurance' and not insurance or f['kind']=='profile_detail':continue
         if f['kind']=='peer' and not material(f):continue
         meaning=f['kind'] in {'status','figure'} and f.get('values',{}).get('metric') in {None,'crar','npl_ratio'}
         registry['f:'+fid]=FactToken(fact_clause(f,language,meaning), (fid,), f.get('institution_id'),f['kind'])

@@ -193,6 +193,14 @@ def service_facts(db,id,product=None,tenor=None,basis=None,network=None,tier=Non
     return highlights[:12]
 
 
+PROFILE_FIELDS={'founded_year','branches','sub_branches','atms','agent_outlets','customers','known_for'}
+MANUAL_TITLE='Collected by hand by Sumon, 30 Oct 2026'
+
+def manual_notes(db,id,product):
+    """Schemes and rate ranges Sumon collected without row-level rates. They stay out of rate lists."""
+    rows=db.query(ServiceOffer).filter_by(institution_id=id,product_type=product,checked_by='manual_sumon',hidden=False).filter(ServiceOffer.attribute.in_(('scheme','rate_range')),ServiceOffer.doc_date<=date.today()).order_by(ServiceOffer.offer_id).all()
+    return [item(r.offer_id,id,'service_note',r.value_text,r.product,dict(source_url='',source_title=MANUAL_TITLE,page=r.page,quote=r.quote,published_at=str(r.doc_date),condition=r.condition),attribute=r.attribute,value_text=r.value_text,product=r.product,**terms(r)) for r in rows]
+
 def card_waiver(db,id,network,tier):
     """The published yearly-transaction waiver of the main card with this network and tier."""
     rows=db.query(ServiceOffer).filter_by(institution_id=id,hidden=False,product_type='card',tier=tier)
@@ -306,10 +314,10 @@ def build_fact_pack(db,id,product=None,tenor=None,basis=None,network=None,tier=N
     if change:facts.append(change)
     if inspect(db.get_bind()).has_table('bank_profile'):
         for row in db.query(BankProfile).filter_by(bank_id=id).filter(BankProfile.as_of<=date.today()).order_by(BankProfile.as_of.desc()):
-            if not row.quote or not row.source_url:continue
-            facts.append(item(row.fact_id,id,'profile',f'{row.field}: {row.value} ({row.as_of})',f'{row.field}: {row.value} ({row.as_of})',dict(source_url=row.source_url,source_title=bank.name_en+' Annual Report 2025',page=row.page,quote=row.quote),field=row.field,value=row.value,as_of=str(row.as_of)))
-    fields={'founded_year','branches','sub_branches','atms','agent_outlets','customers','known_for'}
-    missing=sorted(fields-{f['values']['field'] for f in facts if f['kind']=='profile'})
+            manual=row.page=='manual_sumon'
+            if not row.quote or not row.source_url and not manual:continue
+            facts.append(item(row.fact_id,id,'profile' if row.field in PROFILE_FIELDS else 'profile_detail',f'{row.field}: {row.value} ({row.as_of})',f'{row.field}: {row.value} ({row.as_of})',dict(source_url=row.source_url,source_title=MANUAL_TITLE if manual else bank.name_en+' Annual Report 2025',page=row.page,quote=row.quote),field=row.field,value=row.value,as_of=str(row.as_of)))
+    missing=sorted(PROFILE_FIELDS-{f['values']['field'] for f in facts if f['kind']=='profile'})
     if missing:
         key=hashlib.sha256('|'.join(missing).encode()).hexdigest()[:10]
         facts.append(item('coverage:profile:'+str(id)+':'+key,id,'coverage','আমাদের উদ্ধৃতিসহ প্রোফাইল সংগ্রহে কিছু ক্ষেত্রের তথ্য এখনো নেই','Some profile fields have no quotation in our imported collection',dict(kind='computed',source_title='Quoted-profile coverage',source_url='https://github.com/sjasumon/ilma/blob/feature/voice-agent/seed/bank_profile.csv',quote='Coverage of imported quotations, not a statement that the bank report omits these fields'),missing_fields=missing))

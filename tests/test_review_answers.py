@@ -199,3 +199,39 @@ def test_compare_rows_carry_the_bank_status(status,bn,en):
     row=rate('a','Plain',12,7,status=status);row.update(bank_name_bn='টেস্ট',bank_name_en='Test')
     assert bn in build_registry([],[row],'bn')[0]['row:0.offer'].text
     assert en in build_registry([],[row],'en')[0]['row:0.offer'].text
+
+def detail(field,value,as_of='2026-09-30'):
+    return dict(fact_id='d:'+field,institution_id=1,kind='profile_detail',values={'field':field,'value':value,'as_of':as_of})
+
+def test_interim_results_always_name_their_period():
+    from ilma_api.human_turn import interim_line
+    d={x['values']['field']:x for x in (detail('interim_net_profit','2121'),detail('interim_profit_change','38'),detail('interim_npl','2.03'))}
+    assert interim_line(d,True)[0]=='2026 সালের প্রথম 9 মাসে সমন্বিত নিট মুনাফা 38% বেড়ে 2121 কোটি টাকা, খেলাপি ঋণের হার 2.03%।'
+    assert 'first 9 months of 2026' in interim_line(d,False)[0]
+    del d['interim_npl'];assert interim_line(d,True) is None
+
+def test_founding_date_and_founder_come_from_the_stored_row():
+    from ilma_api.human_turn import founding_tokens
+    d={x['values']['field']:x for x in (detail('founded_date','2001-07-04'),detail('founder_bn','পরীক্ষা নাম'),detail('founder','Test Name'))}
+    assert 'প্রতিষ্ঠিত হয়' in founding_tokens(d,1,True)['asked:founded'].text
+    assert founding_tokens(d,1,False)['asked:founder'].text=='Its founder is Test Name'
+    assert founding_tokens({},1,True)=={}
+
+def test_schemes_without_rates_say_the_rates_are_missing():
+    from ilma_api.human_turn import note_tokens
+    note=lambda name,bn,**v:dict(fact_id=name,values={'attribute':'scheme','product':name,'value_text':bn,**v})
+    tokens=note_tokens([note('Plus Scheme','প্লাস স্কিম',tenor_options=[36,60]),note('Child Scheme','শিশু স্কিম')],'dps',1,False)
+    assert tokens['note:product'].text=='DPS schemes: Plus Scheme for 3 or 5 years, Child Scheme'
+    assert tokens['note:norate'].text=='We do not have their rates'
+
+def test_a_stored_rate_range_is_said_as_a_range():
+    from ilma_api.human_turn import note_tokens
+    tokens=note_tokens([dict(fact_id='r',values={'attribute':'rate_range','value_text':'7.75-9.75'})],'fdr',1,True)
+    assert tokens['note:product'].text=='এফডিআরের সুদ মেয়াদের ওপর ভিত্তি করে 7.75% থেকে 9.75%' and 'note:norate' not in tokens
+
+def test_manual_profile_rows_need_wording_but_no_link():
+    from ilma_api.profile_loader import validate
+    row=dict(fact_id='x',bank_slug='t',field='founder',value='Name',as_of='2001-07-04',source_url='',page='manual_sumon',quote='Wording')
+    assert validate(row)==row
+    with pytest.raises(ValueError):validate({**row,'quote':''})
+    with pytest.raises(ValueError):validate({**row,'page':'PDF 1'})

@@ -29,12 +29,12 @@ class TestServicesSeed(unittest.TestCase):
     def tearDownClass(cls):
         app.dependency_overrides.clear();cls.client.close();cls.engine.dispose()
 
-    def test_606_sourced_offers_and_literal_numeric_evidence(self):
+    def test_610_sourced_offers_and_literal_numeric_evidence(self):
         with Session(self.engine) as db:
             rows=db.scalars(select(ServiceOffer)).all()
-            self.assertEqual(len(rows),606)
+            self.assertEqual(len(rows),610)
             for row in rows:
-                self.assertTrue(row.source_url and row.page and row.quote)
+                self.assertTrue(row.quote and (row.checked_by=='manual_sumon' or row.source_url and row.page))
                 if row.value_num is not None:
                     if row.value_text.casefold()=='free':
                         self.assertEqual(row.value_num,0);self.assertIn('free',row.quote.casefold())
@@ -58,7 +58,7 @@ class TestServicesSeed(unittest.TestCase):
 
     def test_fdr_twelve_months_is_like_for_like(self):
         rows={r['slug']:r for r in self.client.get('/v1/services/compare?product_type=fdr&tenor_months=12').json()['rows']}
-        self.assertEqual(rows['citybank']['state'],'checking')
+        self.assertEqual(rows['citybank']['state'],'published')
         self.assertEqual(rows['dutchbangl']['state'],'not_published')
         self.assertEqual(rows['ebl']['offer']['value_num'],6.5)
         self.assertEqual(rows['ebl']['offer']['product'],'Fixed Deposit 12 Months')
@@ -137,7 +137,7 @@ class TestServicesSeed(unittest.TestCase):
 
     def test_import_is_idempotent(self):
         self.assertEqual(load(self.directory,self.engine),self.statuses)
-        with Session(self.engine) as db:self.assertEqual(db.scalar(select(func.count()).select_from(ServiceOffer)),606)
+        with Session(self.engine) as db:self.assertEqual(db.scalar(select(func.count()).select_from(ServiceOffer)),610)
 
     def test_duplicate_fact_rejects_whole_import(self):
         import tempfile,shutil,csv
@@ -149,7 +149,7 @@ class TestServicesSeed(unittest.TestCase):
                 reader=csv.DictReader(source);rows=list(reader);columns=reader.fieldnames
             with (folder/'fact.csv').open('a',encoding='utf-8',newline='') as output:csv.DictWriter(output,fieldnames=columns).writerow(rows[0])
             with self.assertRaisesRegex(ValueError,'duplicate'):load(folder,self.engine)
-        with Session(self.engine) as db:self.assertEqual(db.scalar(select(func.count()).select_from(ServiceOffer)),606)
+        with Session(self.engine) as db:self.assertEqual(db.scalar(select(func.count()).select_from(ServiceOffer)),610)
 
     def test_import_cannot_target_an_unrelated_mysql_database(self):
         from ilma_api.csv_loader import prepare_schema
