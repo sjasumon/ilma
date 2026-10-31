@@ -96,3 +96,44 @@ def test_new_catalog_does_not_reuse_old_risk_in_same_session(db):
     db.get(Fact, 'synthetic-1-crar').value = .05
     db.flush()
     assert next(b for b in catalog(db)['banks'] if b['id']==1)['status']['code']=='high'
+
+
+@pytest.mark.parametrize('operation', ['banks', 'deposits', 'loans', 'cards', 'generic'])
+def test_catalog_status_batch_budget_and_full_report_parity(db, operation):
+    from ilma_api.bank_services import compare as generic, compare_cards
+    from ilma_api.deposit_catalog import catalog as deposits
+    from ilma_api.loan_catalog import compare as loans
+    from ilma_api.main import search_institutions
+    for bank in demo_banks(db):
+        for kind, category, attribute, value, unit in [
+            ('home_loan', 'loan', 'interest_rate', 10, 'pct_year'),
+            ('card', 'card', 'annual_fee', 500, 'bdt')]:
+            db.add(ServiceOffer(offer_id=f'synthetic-{bank.id}-{kind}', institution_id=bank.id,
+                category=category, product='Synthetic '+kind, product_type=kind,
+                network='Visa' if kind=='card' else None, tier='Gold' if kind=='card' else None,
+                attribute=attribute, value_text=str(value), value_num=value, unit=unit,
+                condition='', basis='conventional', doc_date=date.today(), stale=False,
+                source_url='https://example.example/costs', page=1, quote=f'Synthetic {value}.',
+                column_header='', variant='main', hidden=False, hidden_reason='',
+                checked_by='synthetic', checked_on=date.today()))
+    db.commit()
+    run = dict(banks=lambda:search_institutions(q=None, db=db, list_mode='demo'),
+        deposits=lambda:deposits(db), loans=lambda:loans(db, 'home_loan'),
+        cards=lambda:compare_cards(db, 'Visa', 'Gold'),
+        generic=lambda:generic(db, 'fdr', tenor_months=12))[operation]
+    statements = []
+    def count(*args):
+        statements.append(1)
+    event.listen(db.bind, 'before_cursor_execute', count)
+    try:
+        optimized = run()
+    finally:
+        event.remove(db.bind, 'before_cursor_execute', count)
+    assert len(statements) <= 40
+    def full_view(session, bank, **kwargs):
+        card = get_institution_report_card(session, bank.id)
+        return dict(id=bank.id, slug=bank.slug, name_bn=bank.name_bn, name_en=bank.name_en,
+            status=card['status'], aliases=[row.alias for row in bank.aliases])
+    with patch('ilma_api.bank_services.bank_view', side_effect=full_view):
+        legacy = run()
+    assert optimized == legacy

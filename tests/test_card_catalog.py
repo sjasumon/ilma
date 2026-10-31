@@ -26,7 +26,7 @@ def test_plain_conditions(text,expected):
 @pytest.fixture
 def cards(monkeypatch):
     engine=create_engine('sqlite://');Base.metadata.create_all(engine)
-    monkeypatch.setattr('ilma_api.bank_services.bank_view',lambda db,bank:dict(id=bank.id,slug=bank.slug,name_bn=bank.name_bn,name_en=bank.name_en,status={'code':'strong'}))
+    monkeypatch.setattr('ilma_api.bank_services.bank_view',lambda db,bank,**kwargs:dict(id=bank.id,slug=bank.slug,name_bn=bank.name_bn,name_en=bank.name_en,status={'code':'strong'}))
     with Session(engine) as db:
         for id,slug,fee,late,old in [(1,'bracbank',2100,350,False),(2,'nccbank',1900,450,False),(3,'dutchbangl',100,50,True)]:
             db.add(Institution(id=id,slug=slug,name_bn='পরীক্ষা '+str(id),name_en='Synthetic '+str(id),type='bank',islamic=False,licensed=True,listed=True,coverage='full'))

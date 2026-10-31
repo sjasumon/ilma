@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from typing import Literal
 from sqlalchemy.orm import Session
 from ilma_api.db import Institution, Fact, Rating, Event, ServiceOffer, InsuranceRule, AppWatchItem
-from ilma_api.report_card import get_institution_report_card
+from ilma_api.report_card import get_institution_report_card, status_inputs
 
 DEMO_CODES = {row['code'].lower() for row in csv.DictReader((Path(__file__).resolve().parents[2]/'seed/bank_names.csv').open(encoding='utf-8'))}
 
@@ -70,7 +70,8 @@ def compare_cards(db,network,tier,primary='annual_fee',basis='conventional'):
     if network:all_rows=[r for r in all_rows if r.network==network]
     if tier:all_rows=[r for r in all_rows if r.tier==tier]
     output=[]
-    for bank in demo_banks(db):
+    banks=demo_banks(db);inputs=status_inputs(db,banks)
+    for bank in banks:
         groups={}
         for row in all_rows:
             if row.institution_id==bank.id and not row.hidden and row.variant!='excluded':groups.setdefault(card_key(row),[]).append(row)
@@ -81,7 +82,7 @@ def compare_cards(db,network,tier,primary='annual_fee',basis='conventional'):
             chosen=facts.get(primary)
             candidates.append({'key':key,'annual':annual,'chosen':chosen,'facts':facts})
         candidates.sort(key=lambda c:(c['annual']['card_printed_name']!='',c['annual']['stale'],c['annual']['card_key']))
-        item=bank_view(db,bank)
+        item=bank_view(db,bank,inputs=inputs)
         if candidates:
             selected=candidates[0];offer=selected['chosen']
             item.update(state='published',offer=offer,facts=selected['facts'],card=selected['annual'],renewal_offer=selected['facts'].get('renewal_fee'),range_max=None,alternatives=[{**c['annual'],'facts':c['facts']} for c in candidates[1:]])
@@ -118,13 +119,14 @@ def compare(db, product_type='fdr', tenor_months=None, network=None, tier=None,
     from ilma_api.service_terms import matches_term
     all_rows = [row for row in query.all() if matches_term(row,tenor_months)]
     rows=[]
-    for bank in demo_banks(db):
+    banks=demo_banks(db);inputs=status_inputs(db,banks)
+    for bank in banks:
         candidates=[r for r in all_rows if r.institution_id==bank.id and r.attribute==primary]
         if not candidates and product_type.endswith('_loan'):
             candidates=[r for r in all_rows if r.institution_id==bank.id and r.attribute=='interest_rate']
         visible=[r for r in candidates if not r.hidden and (product_type!='card' or
             r.variant=='main' and r.value_num is not None and (primary not in {'annual_fee','renewal_fee'} or r.unit=='bdt'))]
-        item=bank_view(db,bank)
+        item=bank_view(db,bank,inputs=inputs)
         if visible:
             # Match a plain/general product before premium/targeted variants.
             # Keep all slabs available; do not silently pick the highest rate.

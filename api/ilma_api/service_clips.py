@@ -1,6 +1,7 @@
 """Deterministic comparison narration and reviewed, saved clips; no runtime TTS."""
 import hashlib,json,re
 from pathlib import Path
+from ilma_api.audio_integrity import verified_audio
 from ilma_api.voice_numbers import pronounce
 from ilma_api.card_catalog import numeric,NETWORKS,TIERS
 ROOT=Path(__file__).resolve().parents[2]
@@ -149,6 +150,6 @@ def readout(result,language='bn',directory=None):
     # A changed data set or unreviewed/tampered file must not play stale speech.
     if item and item.get('reviewed') is True and item.get('reviewer') and item.get('reviewed_at') and item.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest() and re.fullmatch(r'bn/card-[a-z0-9-]+\.mp3',item.get('file','')):
         path=directory/item['file']
-        if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):
+        if verified_audio(path,item.get('audio_sha256')):
             return {'audio_url':'/static/audio/services/'+item['file']+'?v='+item['audio_sha256'][:16],'text':text}
     return {'audio_url':None,'text':text}

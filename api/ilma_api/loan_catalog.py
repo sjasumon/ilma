@@ -76,7 +76,7 @@ def scopes(row,slug):
 def recoverable(row):
     return bool(row.category=='loan' and row.hidden and 'numeric value is not printed' in row.hidden_reason and 'quote_unreadable' not in row.condition and mid_rate(row))
 
-def group(db,bank,rows,product_type,*,detail_product=None,allow_stale=False):
+def group(db,bank,rows,product_type,*,detail_product=None,allow_stale=False,inputs=None):
     eligible=[r for r in rows if r.institution_id==bank.id and (not r.hidden or recoverable(r)) and (allow_stale or fresh(r))]
     rates=[r for r in eligible if r.product_type==product_type and r.attribute in {'interest_rate','rate_min','rate_max'} and (not detail_product or r.product==detail_product)]
     rates.sort(key=lambda r:(-r.doc_date.toordinal(),r.product,r.offer_id))
@@ -94,7 +94,7 @@ def group(db,bank,rows,product_type,*,detail_product=None,allow_stale=False):
     rate=chosen.get('interest_rate');low=chosen.get('rate_min');high=chosen.get('rate_max')
     if not any([rate,low,high]):return None
     from ilma_api.bank_services import bank_view
-    result=bank_view(db,bank);code=result['status']['code'];result['status']={**result['status'],'label_bn':RISK[code][0],'label_en':RISK[code][1]}
+    result=bank_view(db,bank,inputs=inputs);code=result['status']['code'];result['status']={**result['status'],'label_bn':RISK[code][0],'label_en':RISK[code][1]}
     fees=[view(r) for r in eligible if not r.hidden and r.attribute in FEES and (product_type in scopes(r,bank.slug) or not scopes(r,bank.slug) and r.product==product) and percentage(r) is not None]
     result.update(product_type=product_type,product=product,rate=rate,rate_min=low,rate_max=high,fees=fees,offer=rate or low or high,alternatives=[],state='published',stale=bool((rate or low or high)['stale']),margin_min=(rate or {}).get('margin_min'),margin_max=(rate or {}).get('margin_max'),fdr_12m_rate=None)
     if product_type=='loan_against_fdr':
@@ -110,8 +110,10 @@ def group(db,bank,rows,product_type,*,detail_product=None,allow_stale=False):
 def compare(db,product_type,basis='conventional'):
     from ilma_api.bank_services import demo_banks
     rows=db.query(ServiceOffer).filter_by(category='loan',basis=basis).all();out=[]
-    for bank in demo_banks(db):
-        item=group(db,bank,rows,product_type)
+    from ilma_api.report_card import status_inputs
+    banks=demo_banks(db);inputs=status_inputs(db,banks)
+    for bank in banks:
+        item=group(db,bank,rows,product_type,inputs=inputs)
         if item:out.append(item)
     out.sort(key=lambda b:(b['rate'] is None or b['rate']['value_num'] is None,(b['rate'] or {}).get('value_num') or 0,b['name_bn']))
     result=dict(choice=dict(product_type=product_type,basis=basis),rows=out,sort='lower_cost_first',insurance=None,defaults=dict(amount=DEFAULTS[product_type][0],years=DEFAULTS[product_type][1]))

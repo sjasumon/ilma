@@ -128,7 +128,10 @@ def search_institutions(
 ):
     if list_mode == 'demo':
         from ilma_api.bank_services import demo_banks, bank_view
-        return [bank_view(db, bank) for bank in demo_banks(db,include_incident_banks=True)]
+        from ilma_api.report_card import status_inputs
+        banks = demo_banks(db,include_incident_banks=True)
+        inputs = status_inputs(db,banks)
+        return [bank_view(db, bank,inputs=inputs) for bank in banks]
     if not q:
         insts = db.query(Institution).limit(5).all()
         return [
