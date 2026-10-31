@@ -389,3 +389,27 @@ def test_a_stored_range_is_compared_instead_of_no_data():
     from ilma_api.human_turn import note_tokens
     token=note_tokens([dict(fact_id='r',values={'attribute':'rate_range','value_text':'7.75-9.75'})],'fdr',1,True)['note:product']
     assert token.text=='এফডিআরের সুদ মেয়াদের ওপর ভিত্তি করে 7.75% থেকে 9.75%'
+
+
+def test_lead_in_comes_first_and_a_tag_in_the_answer_is_removed():
+    from ilma_api.audio_cache import with_lead_in,LEAD_IN
+    tag=b'ID3\x04\x00\x00\x00\x00\x00\x05abcde'
+    async def chunks():
+        yield tag[:6];yield tag[6:]+b'SPEECH';yield b'MORE'
+    async def collect():return b''.join([c async for c in with_lead_in(chunks())])
+    assert asyncio.run(collect())==LEAD_IN.read_bytes()+b'SPEECHMORE'
+
+def test_lead_in_is_short_silent_mp3_frames():
+    from ilma_api.audio_cache import LEAD_IN
+    data=LEAD_IN.read_bytes()
+    assert data[:2]==b'\xff\xfb' and len(data)<10000
+
+
+def test_the_audio_route_passes_the_lead_in_request_through():
+    from ilma_api import audio_cache
+    seen={}
+    class Store:
+        async def response(self,token,lead=False):seen.update(token=token,lead=lead);return 'ok'
+    with patch.object(audio_cache,'get_store',return_value=Store()):
+        assert asyncio.run(audio_cache.audio_response('a',True))=='ok'
+    assert seen=={'token':'a','lead':True}

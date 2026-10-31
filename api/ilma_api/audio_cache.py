@@ -18,6 +18,29 @@ from ilma_api.http_clients import shared
 from ilma_api.voice_numbers import pronounce
 from ilma_api import elevenlabs
 
+LEAD_IN=Path(__file__).with_name('lead_in.mp3')
+
+async def file_chunks(path):
+    data=await asyncio.to_thread(Path(path).read_bytes)
+    for start in range(0,len(data),65536):yield data[start:start+65536]
+
+
+async def with_lead_in(chunks):
+    """Silence first for iPhones; cached answers stay as they are. A tag mid-stream would stop players."""
+    yield await asyncio.to_thread(LEAD_IN.read_bytes)
+    held=b'';started=False
+    async for chunk in chunks:
+        if started:
+            yield chunk;continue
+        held+=chunk
+        if len(held)<10:continue
+        size=10+((held[6]&127)<<21|(held[7]&127)<<14|(held[8]&127)<<7|held[9]&127) if held[:3]==b'ID3' else 0
+        if len(held)<size:continue
+        started=True
+        if held[size:]:yield held[size:]
+    if not started and held:yield held
+
+
 class AudioJob:
     def __init__(self):
         self.chunks=[];self.condition=asyncio.Condition();self.ready=asyncio.Event();self.done=asyncio.Event();self.failed=False;self.cache='miss'
@@ -217,16 +240,18 @@ class AudioStore:
             if job and job.done.is_set() and job.failed:return True
             if job is None and await asyncio.to_thread((self.directory/(key+'.error')).is_file):return True
         return False
-    async def response(self,token):
+    async def response(self,token,lead=False):
         item=await asyncio.to_thread(self.ticket,token)
         if item is None:raise HTTPException(404,'Audio ticket expired or unavailable')
         path=self.directory/(item['key']+'.mp3')
         headers={'Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no','X-ILMA-Cache':'hit'}
-        if await asyncio.to_thread(self.valid_cache,item['key'],item.get('short',False)):return FileResponse(path,media_type='audio/mpeg',headers=headers)
+        if await asyncio.to_thread(self.valid_cache,item['key'],item.get('short',False)):
+            if lead:return StreamingResponse(with_lead_in(file_chunks(path)),media_type='audio/mpeg',headers=headers)
+            return FileResponse(path,media_type='audio/mpeg',headers=headers)
         job=await self.job(item['key'],item['text'],item['language'],item.get('short',False));await job.ready.wait()
         if job.failed and not job.chunks:raise HTTPException(503,'Speech unavailable')
         headers['X-ILMA-Cache']=job.cache
-        return StreamingResponse(job.stream(),media_type='audio/mpeg',headers=headers)
+        return StreamingResponse(with_lead_in(job.stream()) if lead else job.stream(),media_type='audio/mpeg',headers=headers)
     async def status(self,token):
         item=await asyncio.to_thread(self.ticket,token)
         if item is None:raise HTTPException(404,'Audio ticket expired or unavailable')
@@ -255,4 +280,4 @@ def get_store():
 async def register_speech(texts,language,short=False):
     try:return await get_store().register(texts,language,short)
     except (OSError,HTTPException):return None
-async def audio_response(token):return await get_store().response(token)
+async def audio_response(token,lead=False):return await get_store().response(token,lead)

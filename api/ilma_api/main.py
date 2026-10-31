@@ -311,9 +311,9 @@ def get_banking_news(db: Session = Depends(get_db)):
 
 
 @app.get('/v1/audio/{token}.mp3',include_in_schema=False)
-async def voice_audio(token:str):
+async def voice_audio(token:str,lead:int=0):
     from ilma_api.audio_cache import audio_response
-    return await audio_response(token)
+    return await audio_response(token,lead==1)
 
 @app.get('/v1/audio/{token}/status',include_in_schema=False)
 async def voice_audio_status(token:str,response:Response):
