@@ -209,7 +209,8 @@ async function requestReadout(kind, institutionId = null) {
   } catch { document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "পড়ে শোনানোর সেবা এখন চালু নেই।" : "Spoken playback is not available."; }
 }
 
-function switchTab(tabName, keepVoiceStream = false) {
+function switchTab(tabName, keepVoiceStream = false, restoringRoute = false) {
+  window.IlmaNavigation?.visit(tabName==="detail"?(currentBankId?{screen:"report",bank:currentBankId}:{screen:"banks"}):{screen:tabName});
   if (agentConversation && currentTab !== tabName) resetAgentConversation();
   currentTab = tabName;
   document.querySelector(".scr").classList.toggle("home-open", tabName === "home");
@@ -239,10 +240,10 @@ function switchTab(tabName, keepVoiceStream = false) {
     }
   }
 
-  if (tabName === "detail") {
+  if (tabName === "detail" && !restoringRoute) {
     if (window.IlmaCatalog) window.IlmaCatalog.enter(tabName);
     else loadReportCard(currentBankId);
-  } else if (tabName === "services") {
+  } else if (tabName === "services" && !restoringRoute) {
     window.IlmaCatalog?.enter(tabName);
   } else if (tabName === "news") {
     loadNews();

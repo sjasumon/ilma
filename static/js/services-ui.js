@@ -5,6 +5,7 @@
   let serviceManifest={clips:{}};
   function loadServiceManifest(){return fetch('/v1/services/audio-manifest',{cache:'no-store'}).then(response=>response.ok?response.json():{clips:{}}).then(data=>{serviceManifest=data;}).catch(()=>{});}
   async function enterServices(){
+    window.IlmaNavigation?.visit({screen:"services"});
     void loadServiceManifest(); $('main-content').scrollTop=0;$('service-voice-answer').hidden=true;++state.epoch;servicePage='home';bankFilter=null;renderServicesHome();if(!categories.length)try{categories=await json('/v1/services/categories');}catch{}}
   function serviceHeader(){ $('srv-title').textContent=tr('ব্যাংক সেবা','Bank services');$('srv-subtitle').textContent=tr('একই সেবা, কোথায় খরচ কম?','Same service, where does it cost less?'); }
   function renderServicesHome(){
@@ -21,9 +22,10 @@
     const choices=missing?[selected,...values]:values;
     return choices.map(value=>`<option value="${E(value)}" ${String(value)===String(selected)?'selected':''}>${E(formatter(value))}${missing&&String(value)===String(selected)?' · '+tr('প্রকাশিত পছন্দ নেই','no published option'):''}</option>`).join('');
   }
-  async function openComparison(next,calculator={}){ stopAudio(); $('main-content').scrollTop=0;
+  async function openComparison(next,calculator={}){ stopAudio();
     if(currentTab!=='services')switchTab('services');
     choice=next.product_type==='account_fee'||next.product_type==='savings'?{product_type:'account_fee',item:next.item||(next.attribute==='annual_fee'?'debit':next.attribute&&next.attribute!=='maintenance_fee_half_yearly'?'other':'savings'),audience:next.audience||'all'}:['fdr','dps','savings'].includes(next.product_type)?{product_type:next.product_type,audience:next.audience||'all',basis:next.basis||'conventional'}:window.IlmaLoans?.types.includes(next.product_type)?{product_type:next.product_type,basis:next.basis||'conventional'}:{...next,basis:next.basis||'conventional'};bankFilter=null;servicePage='compare';
+    window.IlmaNavigation?.visit({screen:'compare',...choice});$('main-content').scrollTop=0;
     calculatorPrefill={...calculator,term:calculator.term??next.tenor_months};$('service-voice-answer').hidden=!calculator.fromVoice;
     const request=++state.epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{if(!categories.length)categories=await json('/v1/services/categories');
@@ -84,11 +86,11 @@
       $('service-savings').textContent=tr(`${bankName(a)}-এর ফি ${bankName(b)}-এর চেয়ে বছরে ${number(b.offer.value_num-a.offer.value_num)} টাকা কম।`,`${bankName(a)} costs BDT ${number(b.offer.value_num-a.offer.value_num)} less per year than ${bankName(b)}.`);
     }else $('service-savings').textContent='';
   }
-  async function openOffer(id){ $('main-content').scrollTop=0;
+  async function openOffer(id){ window.IlmaNavigation?.visit({screen:'offer',id}); $('main-content').scrollTop=0;
     $('service-voice-answer').hidden=true;const request=++state.epoch,root=$('services-catalog');servicePage='offer';root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{const data=await json('/v1/services/offers/'+encodeURIComponent(id));if(request!==state.epoch)return;offerDetail=data;renderOffer();}catch(e){if(request===state.epoch)error(root,e);}
   }
-  async function openAccountBank(id,selected=null){stopAudio();const request=++state.epoch;try{const data=await json('/v1/services/accounts');if(request!==state.epoch)return;const bank=data.banks.find(b=>b.id===id);if(bank)window.IlmaAccounts.detail({bank,selected,readouts:data.readouts},{back:()=>bankFilter?openBankServices(bankFilter):openComparison({product_type:'account_fee',item:'savings'}),compare:openComparison,detail:openAccountBank});}catch(e){if(request===state.epoch)error($('services-catalog'),e);}}
+  async function openAccountBank(id,selected=null){window.IlmaNavigation?.visit({screen:'account-bank',bank:id,id:selected?.offer_id});stopAudio();const request=++state.epoch;try{const data=await json('/v1/services/accounts');if(request!==state.epoch)return;const bank=data.banks.find(b=>b.id===id);if(bank&&selected?.offer_id)selected=[...bank.interest_slabs,...bank.all_fees].find(r=>r.offer_id===selected.offer_id)||null;if(bank)window.IlmaAccounts.detail({bank,selected,readouts:data.readouts},{back:()=>bankFilter?openBankServices(bankFilter):openComparison({product_type:'account_fee',item:'savings'}),compare:openComparison,detail:openAccountBank});}catch(e){if(request===state.epoch)error($('services-catalog'),e);}}
   function renderOffer(){
     if(offerDetail.account_detail)return window.IlmaAccounts.detail(offerDetail,{back:()=>bankFilter?openBankServices(bankFilter):openComparison({product_type:'account_fee',item:'savings'}),compare:openComparison,detail:openAccountBank});
     if(offerDetail.deposit_type==='savings')return openAccountBank(offerDetail.institution.id,offerDetail.offers[0]);
@@ -99,7 +101,7 @@
     root.innerHTML=`${back('offer-back',tr('ফিরুন','Back'))}<h2>${E(bankName(data.institution))}</h2>${statusChip(data.institution)}<h3>${E(productText(data.offers[0]||{product:data.product}))}</h3>${data.offers[0]?.variant==='excluded'?`<p class="catalog-note">${tr('সীমিত বা বিশেষ কার্ড — সাধারণ গ্রাহকের তুলনায় অন্তর্ভুক্ত নয়।','Restricted or special card — excluded from retail comparisons.')}</p>`:''}${data.offers.map(row=>`<article class="catalog-card"><h3>${E(label(row.attribute))}</h3><p class="catalog-value">${valueText(row)}</p><p>${E(conditionText(row))}</p><p>${dateText(row.doc_date)} ${row.stale?tr('· পুরনো তথ্য','· Old data'):''}</p>${sourceButton(row)}</article>`).join('')}<p class="catalog-note">${tr('ব্যাংকের প্রকাশিত তালিকা থেকে। আবেদন করার আগে ব্যাংকের সাথে নিশ্চিত হোন।','From the bank’s published schedule. Confirm with the bank before applying.')}</p><button class="catalog-action" id="offer-bank-report" type="button">${tr('এই ব্যাংকের অবস্থা দেখুন','See this bank’s condition')}</button>`;
     wireSources(root,data.offers);$('offer-bank-report').onclick=()=>openBank(data.institution.id);$('offer-back').onclick=()=>bankFilter?openBankServices(bankFilter):openComparison(choice);
   }
-  async function openBankServices(id){ $('main-content').scrollTop=0;if(currentTab!=='services')switchTab('services');bankFilter=id;servicePage='bank';const request=++state.epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
+  async function openBankServices(id){ window.IlmaNavigation?.visit({screen:'bank-services',bank:id}); $('main-content').scrollTop=0;if(currentTab!=='services')switchTab('services');bankFilter=id;servicePage='bank';const request=++state.epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{const data=await json(`/v1/institutions/${id}/services`);if(request!==state.epoch)return;bankOffers=data;renderBankServices();}catch(e){if(request===state.epoch)error(root,e);}
   }
   function renderBankServices(){const data=bankOffers,root=$('services-catalog'),groups=new Map();data.offers.forEach(r=>{if(!groups.has(r.group_key))groups.set(r.group_key,r);});
@@ -171,5 +173,5 @@
     // No fetch or await here: play() must run during the original tap gesture.
     try{if(!playVoiceAudio(data.audio_url,request,true,failed))failed();}catch{failed();}
   }
-  window.IlmaServices={enter:enterServices,openComparison,openBankServices,listenLabel:comparisonListenLabel,productType:()=>choice.product_type,relocalize(){if(servicePage==='home')renderServicesHome();else if(servicePage==='compare')renderComparison();else if(servicePage==='offer')renderOffer();else if(bankOffers)renderBankServices();}};
+  window.IlmaServices={restore(route){const {screen,bank,id,...next}=route;if(screen==='compare')return openComparison(next);if(screen==='offer')return openOffer(id);if(screen==='bank-services')return openBankServices(Number(bank));if(screen==='account-bank')return openAccountBank(Number(bank),id?{offer_id:id}:null);return enterServices();},enter:enterServices,openComparison,openBankServices,listenLabel:comparisonListenLabel,productType:()=>choice.product_type,relocalize(){if(servicePage==='home')renderServicesHome();else if(servicePage==='compare')renderComparison();else if(servicePage==='offer')renderOffer();else if(bankOffers)renderBankServices();}};
 })();

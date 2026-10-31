@@ -1,7 +1,7 @@
 /* Bank list, report and sourced section screens. */
 (()=>{
   const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,bankNames,productText,conditionText,offerStatus,back,json,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
-  let banks=[],bankPage='list',detailKind='health';
+  let banks=[],bankPage='list',detailKind='health',search='';
   const openBankServices=(...args)=>window.IlmaServices.openBankServices(...args);
   const empty=text=>text?`<p class="catalog-empty" role="status">${E(text)}</p>`:'';
   const riskWords={strong:['ঝুঁকি কম','Low risk'],watch:['ঝুঁকি মাঝারি','Medium risk'],high:['ঝুঁকি বেশি','High risk'],no_data:['মূল্যায়ন করা হয়নি','Not rated']};
@@ -21,6 +21,7 @@
     $('bank-detail-view').hidden=true;
   }
   async function showBankList() {
+    window.IlmaNavigation?.visit({screen:"banks"});
     ++reportRequest; reportCardData=null;bankPage='list'; currentBankId=null; reportView(false); $('bank-list-view').hidden=false;
     const root=$('bank-list-view'), request=++state.epoch;
     root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
@@ -32,7 +33,8 @@
     root.innerHTML=`<div class="screen-header"><h1>${tr('ব্যাংক','Banks')}</h1><p>${tr('কোন ব্যাংকের ঝুঁকি জানতে চান?','Which bank do you want to check?')}</p>
       <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div></div>
       <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr(`${digits(banks.length)}টি ব্যাংকের প্রকাশিত তথ্য`,`Published information for ${banks.length} banks`)}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
-    function rows(){const query=$('bank-list-search').value.trim().toLowerCase();
+    $('bank-list-search').value=search;
+    function rows(){search=$('bank-list-search').value;const query=search.trim().toLowerCase();
       const name=currentLang==='en'?'name_en':'name_bn';
       $('bank-list-rows').innerHTML=banks.filter(b=>`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query)).sort((a,b)=>a[name].localeCompare(b[name],currentLang==='en'?'en':'bn')).map(bank=>
         `<button class="catalog-bank-row" type="button" data-bank="${bank.id}"><span>${bankNames(bank)}</span>${statusChip(bank)}</button>`).join('')||empty();
@@ -43,7 +45,7 @@
       'উৎসের তথ্য প্রকল্পের আগে সংগ্রহ করা হয়েছিল। প্রতিটি সংখ্যার উদ্ধৃতি ও মূল নথির সংযোগ দেখুন। সংবাদমাধ্যমের খবর ও সরকারি নথি আলাদাভাবে চিহ্নিত করা হয়।',
       'Source collection predates this project. See each quotation and original document. News reports and official documents are labelled separately.'),'',null,null);
   }
-  function showReport() { ++state.epoch; bankPage='report';reportView(true);$('btn-watch-bank').setAttribute('aria-pressed','false');$('btn-watch-bank').disabled=true;loadReportCard(currentBankId); }
+  function showReport() { window.IlmaNavigation?.visit({screen:'report',bank:currentBankId}); ++state.epoch; bankPage='report';reportView(true);$('btn-watch-bank').setAttribute('aria-pressed','false');$('btn-watch-bank').disabled=true;$('bank-list-back').onclick=showBankList;return loadReportCard(currentBankId); }
   function reportReady(data) {
     const bn=currentLang==='bn', bank=data.institution;
     $('bank-list-back').textContent='← '+tr('ব্যাংক','Banks');$('bank-list-back').onclick=showBankList;
@@ -86,6 +88,7 @@
     }catch{$('sr-announcer').textContent=tr('নজরে রাখার পরিবর্তন সংরক্ষণ করা যায়নি।','Could not save the watch change.');}finally{button.disabled=false;}
   }
   async function showBankDetail(kind) {
+    window.IlmaNavigation?.visit({screen:"bank-section",bank:currentBankId,kind});
     $('main-content').scrollTop=0;
     bankPage='detail';detailKind=kind;const root=$('bank-detail-view'), request=++state.epoch;
     $('bank-list-view').hidden=true;$('bank-report-view').hidden=true;root.hidden=false;
@@ -150,5 +153,5 @@
     $('incident-filter').onchange=render;render();
   }
 
-  window.IlmaBank={reportReady,toggleWatch,listenReport,enter(){currentBankId?showReport():showBankList();},relocalize(){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}};
+  window.IlmaBank={async restore(route){if(route.screen==='banks')return showBankList();await showReport();if(route.screen==='bank-section')return showBankDetail(route.kind);},reportReady,toggleWatch,listenReport,enter(){currentBankId?showReport():showBankList();},relocalize(){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}};
 })();

@@ -17,6 +17,32 @@ def dialogs(page):
         page.locator('.dock [data-tab=services]').click()
 
 
+def navigation(page):
+    page.locator('.dock [data-tab=detail]').click()
+    search=page.locator('#bank-list-search');search.wait_for();search.fill('eastern')
+    row=page.locator('[data-bank]').first;row.click()
+    page.locator('#bank-profile-chips').get_by_text('১৯৯২',exact=False).wait_for()
+    report_url=page.url
+    assert 'screen=report' in report_url
+    page.go_back();search.wait_for();assert search.input_value()=='eastern'
+    page.go_forward();page.locator('#bank-report-view').wait_for()
+    page.locator('#bank-list-back').click();search.wait_for();assert search.input_value()=='eastern'
+    page.locator('.dock [data-tab=services]').click();page.locator('[data-category=loan]').click()
+    page.locator('#loan-amount').wait_for();page.locator('#loan-amount').fill('1234567')
+    assert '1234567' not in page.url
+    assert '1234567' not in page.evaluate('JSON.stringify(history.state)')
+    page.go_back();page.locator('[data-category=loan]').wait_for()
+    page.go_forward();page.locator('#loan-amount').wait_for()
+    assert page.locator('#loan-amount').input_value().replace(',','') in ('1234567','১২৩৪৫৬৭')
+    page.locator('.dock [data-tab=services]').click();page.locator('[data-category=account_fee]').click()
+    page.locator('[data-account-audience=women]').click()
+    page.locator('[data-account-detail]').first.click()
+    page.locator('#account-detail-back').click()
+    page.locator('[data-account-audience=women][aria-pressed=true]').wait_for()
+    page.goto(report_url);page.locator('#bank-report-view').wait_for()
+    page.locator('#bank-profile-chips').get_by_text('১৯৯২',exact=False).wait_for()
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default='http://127.0.0.1:8027');parser.add_argument('--engine',choices=['chromium','webkit','all'],default='all');parser.add_argument('--check',default='dialogs');args=parser.parse_args()
     with sync_playwright() as p:
