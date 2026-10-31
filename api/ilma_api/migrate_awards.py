@@ -37,7 +37,6 @@ def with_manual(tables):
 
 
 def load(db,tables):
-    tables=with_manual(tables)
     slugs={i.slug:i.id for i in db.query(Institution).filter(Institution.slug.in_(BANKS.values())).all()}
     added={'awarder':0,'bank_award':0,'bank_award_source':0};skipped=[]
     for row in tables['awarders.csv']:
@@ -78,7 +77,7 @@ def migrate(source):
     if engine.dialect.name!='mysql' or engine.url.database!='ilma':raise ValueError('Award migration requires the ilma MySQL database.')
     for model in (Awarder,BankAward,BankAwardSource):model.__table__.create(engine,checkfirst=True)
     with SessionLocal() as db:
-        added,skipped=load(db,read(source));db.commit()
+        added,skipped=load(db,with_manual(read(source)));db.commit()
     print(f'Awards ready in ilma; added {added}; skipped (bank or awarder not registered) {skipped}. Existing tables unchanged.')
 
 
