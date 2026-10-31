@@ -4,8 +4,9 @@ Usage: python -m ilma_api.migrate_awards /private/path/ilma_awards_input_v7.2.zi
 The pack stays outside the repository. Existing tables and rows are never changed;
 a row whose key already exists is left as it is.
 """
-import csv,hashlib,io,sys,zipfile
+import csv,hashlib,io,json,sys,zipfile
 from datetime import date
+from pathlib import Path
 from ilma_api.db import Awarder,BankAward,BankAwardSource,Institution
 
 PACK='awards_v7.2'
@@ -13,7 +14,9 @@ BANKS={'EBL':'ebl','BRACBANK':'bracbank','CITYBANK':'citybank','MTB':'mtb','NCCB
  'DUTCHBANGL':'dutchbangl','BANKASIA':'bankasia','SBACBANK':'sbacbank','NBL':'nbl','ISLAMIBANK':'islamibank'}
 # Review corrections for v7.2 (29 Oct 2026). The 12th ICSB award is for CG
 # excellence 2024 (its page URL and title say 2024), not 2025.
-CORRECTIONS={'awd_ebl_icsb_2025_1969':{'award_year':'2024'}}
+CORRECTIONS={'awd_ebl_icsb_2025_1969':{'award_year':'2024'},'awd_islamibank_icmab_2021_8750':{'hide_in_app':'1'}}
+# Awards added after the pack, from Sumon's ICSB screenshots and the IFC 2026 winners list.
+MANUAL=Path(__file__).resolve().parents[2]/'seed/manual_awards.json'
 
 
 def read(source):
@@ -28,7 +31,13 @@ def day(value):
     return date.fromisoformat(value) if value else None
 
 
+def with_manual(tables):
+    rows=json.loads(MANUAL.read_text(encoding='utf-8'))
+    return {**tables,'awards.csv':[*tables['awards.csv'],*rows],'award_sources.csv':[*tables['award_sources.csv'],*[{**row['source'],'award_id':row['award_id']} for row in rows]]}
+
+
 def load(db,tables):
+    tables=with_manual(tables)
     slugs={i.slug:i.id for i in db.query(Institution).filter(Institution.slug.in_(BANKS.values())).all()}
     added={'awarder':0,'bank_award':0,'bank_award_source':0};skipped=[]
     for row in tables['awarders.csv']:
@@ -43,7 +52,11 @@ def load(db,tables):
         # A row whose bank or awarder is not in the pack's registers is not loaded.
         if institution is None or db.get(Awarder,row['awarder_id']) is None:skipped.append(row['award_id']);continue
         loaded.add(row['award_id'])
-        if db.get(BankAward,row['award_id']):continue
+        existing=db.get(BankAward,row['award_id'])
+        if existing:
+            # A correction may hide a row that an earlier load already added.
+            if row['hide_in_app']=='1':existing.hide_in_app=True
+            continue
         db.add(BankAward(award_id=row['award_id'],institution_id=institution,awarder_id=row['awarder_id'],award_name_en=row['award_name_en'],award_name_bn=row['award_name_bn'],
             short_name_bn=row['short_name_bn'],category=row['category'],award_year=int(row['award_year']) if row['award_year'].strip() else None,announced_on=day(row['announced_on']),result=row['result'],
             medal=row['medal'],scope=row['scope'],confirmation=row['confirmation'],paid_flag=row['paid_flag'],hide_in_app=row['hide_in_app']=='1',source_pack=PACK));added['bank_award']+=1

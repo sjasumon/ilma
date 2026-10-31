@@ -82,3 +82,18 @@ def test_award_with_an_unregistered_awarder_is_skipped(db,tmp_path):
         writer=csv.DictWriter(handle,list(rows[0]));writer.writeheader();writer.writerows(rows)
     added,skipped=load(db,read(tmp_path))
     assert skipped==['a-orphan'] and db.get(BankAward,'a-orphan') is None
+
+
+def test_manual_awards_are_awarder_confirmed_and_exclude_the_unapproved_ones():
+    import json
+    from ilma_api.migrate_awards import MANUAL
+    rows=json.loads(MANUAL.read_text(encoding='utf-8'))
+    assert {r['award_id'] for r in rows}=={'awd_bracbank_icsb_2024_1969','awd_bracbank_icsb_2023_1741','awd_bankasia_ifc_2026_0001','awd_citybank_ifc_2026_0002'}
+    assert all(r['confirmation']=='awarder_confirmed' and r['source']['quote'] for r in rows)
+    assert not any('PRIME' in r['bank_code'] or 'WSBI' in r['award_name_en'] for r in rows)
+
+def test_ifc_award_is_said_with_its_short_name_and_purpose():
+    from types import SimpleNamespace
+    from ilma_api.awards import phrase
+    award=SimpleNamespace(award_year=2026,medal='',award_name_bn='আইএফসি: দক্ষিণ এশিয়ার সেরা জিটিএফপি ইস্যুয়িং ব্যাংক',short_name_bn='')
+    assert phrase(award,SimpleNamespace(awarder_id='ifc',name_bn='আন্তর্জাতিক অর্থ কর্পোরেশন'),'bn','ব্যাংক এশিয়া')=='ব্যাংক এশিয়াকে ২০২৬ সালে আইএফসি দক্ষিণ এশিয়ার সেরা জিটিএফপি ইস্যুয়িং ব্যাংক বলেছে, বাণিজ্য অর্থায়নের জন্য।'

@@ -10,6 +10,7 @@ VERIFIED=('awarder_confirmed','independent_report')
 DIGITS=str.maketrans('0123456789','০১২৩৪৫৬৭৮৯')
 
 
+SPOKEN_AWARDER={'ifc':'আইএফসি'}
 IFC_PURPOSE=(', বাণিজ্য অর্থায়নের জন্য',' for trade finance')
 def rows(db,bank_id,confirmations=VERIFIED):
     query=db.query(BankAward,Awarder).join(Awarder,Awarder.awarder_id==BankAward.awarder_id).filter(
@@ -41,7 +42,7 @@ def phrase(award,awarder,language,subject=None):
     bn=language=='bn';year=str(award.award_year)
     medal=MEDALS.get(award.medal)
     if bn:
-        when=f"{year.translate(DIGITS)} সালে {awarder.name_bn}";name=title(award.award_name_bn)
+        when=f"{year.translate(DIGITS)} সালে {SPOKEN_AWARDER.get(getattr(awarder,'awarder_id',''),awarder.name_bn)}";name=title(award.award_name_bn)
         # A word-for-word translation reads badly aloud; the pack's short name does not.
         if 'অসামান্য' in name and award.short_name_bn:name=award.short_name_bn
         start=f"{subject}কে {when}" if subject else f"{when} একে"
