@@ -41,7 +41,7 @@
   }
   const offerStatus = bank => bank.status?.code==='no_data'?`<p class="catalog-unverified" role="note">${tr('ব্যাংকের অবস্থা যাচাই হয়নি — বেশি হার মানেই ঝুঁকি কম নয়।','Bank condition is unverified — a higher rate does not mean lower risk.')}</p>`:statusChip(bank);
   const empty = text => `<p class="catalog-empty" role="status">${E(text||tr('এই তথ্য আমাদের কাছে নেই।','We do not have this information.'))}</p>`;
-  const back = (id,text) => `<button type="button" class="catalog-back" id="${id}">← ${E(text)}</button>`;
+  const back = (id,text) => `<button type="button" class="catalog-back" id="${id}"><span class="back-arrow" aria-hidden="true">←</span><span>${E(text)}</span></button>`;
   async function json(url) {
     const response=await fetch(url);
     if(!response.ok) throw Error(tr('তথ্য লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load data. Please try again.'));
