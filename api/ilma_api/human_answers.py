@@ -60,7 +60,7 @@ def overview_lines(name,whose,status,facts,bank,bn,intro=None,award=False,interi
             text=high_loans(loans,False).rstrip('.')
             lines.append(((text+' and '+capital_clause(capital,False)+'.') if capital else text+'.',ids(loans,capital)))
         elif capital:lines.append(('Its '+capital_clause(capital,False)[4:]+'.',ids(capital)))
-        if profit and profit['values']['value']<0:
+        if not bn and profit and profit['values']['value']<0:
             lines.append(((f"সে বছর নিট লোকসান প্রায় {crore(profit['values']['value'])} কোটি টাকা।" if bn else f"Its net loss that year was about Tk {crore(profit['values']['value'])} crore."),ids(profit)))
         return lines
     named=bool(intro)
@@ -112,8 +112,9 @@ def profit_tokens(db,found,facts,bank,bn):
     if old is None or old.period_end.year!=year-1 or old.value<=0 or loss:return tokens
     change=(value/Decimal(str(old.value))-1)*100;up=change>=0;size=abs(change)
     word=(f'প্রায় {rounded(size)}%' if size>=50 else 'কিছুটা' if size<10 else 'বেশ') if bn else (f'about {rounded(size)}%' if size>=50 else 'slightly' if size<10 else 'well')
-    tail=f"{year-1} সালে এটি ছিল প্রায় {crore(old.value)} কোটি টাকা, তাই মুনাফা {word} {'বেড়েছে' if up else 'কমেছে'}" if bn else f"In {year-1} it was about Tk {crore(old.value)} crore, so profit is {word} {'up' if up else 'down'}"
-    tokens['asked:change']=FactToken(tail,(old.fact_id,),bank,'figure')
+    if not bn:
+        tokens['asked:figure']=FactToken(f"{head}, {'up' if up else 'down'} {word} from about Tk {crore(old.value)} crore in {year-1}",(found['fact_id'],old.fact_id),bank,'figure')
+    else:tokens['asked:change']=FactToken(f"{year-1} সালে এটি ছিল প্রায় {crore(old.value)} কোটি টাকা, তাই মুনাফা {word} {'বেড়েছে' if up else 'কমেছে'}",(old.fact_id,),bank,'figure')
     facts[old.fact_id]=dict(fact_id=old.fact_id,institution_id=bank,kind='figure_previous',text_bn='',text_en='',values={},source=dict(source_url=old.source.url,source_title=old.source.title,quote=old.quote))
     return tokens
 
@@ -133,19 +134,32 @@ def metric_gap(metric,bank,bn):
     return {'asked:figure':FactToken(f'{label[0]} আমাদের কাছে নেই' if bn else f'{label[1]} is not in our collection',(),bank,'figure'),
      'asked:guess':FactToken('আমরা অনুমান করে কিছু বলি না' if bn else 'We do not guess',(),bank,'gap')}
 
+PLAIN={'v62-PRIMEBANK_EMBEZZLE_2014':('ইসলামী ব্যাংকিং শাখায় পাসওয়ার্ড অপব্যবহার করে ভুয়া ঋণ তৈরির অভিযোগ ওঠে','password misuse and fake loans at an Islamic banking branch'),
+ 'v62-CITYBANK_CYBER_2016':('একটি এটিএম বুথে স্কিমিং ডিভাইস বসিয়ে জালিয়াতির ঘটনা ঘটে','a skimming device fitted at an ATM booth'),
+ 'v62-NBL_AUDIT_2025':('২০২৬ সালের জুনে নিরীক্ষক বিপুল প্রভিশন ঘাটতির কথা জানান','in June 2026 the auditor reported a large provision shortfall'),
+ 'v62-NBL_AUDIT_2024':('২০২৫ সালে নিরীক্ষক শ্রেণিকৃত ঋণে প্রভিশন ঘাটতির কথা জানান','in 2025 the auditor reported a provision shortfall on classified loans'),
+ 'v62-NBL_BOARD_2024':('২০২৪ সালে বাংলাদেশ ব্যাংক পরিচালনা পর্ষদ ভেঙে দেয়','in 2024 Bangladesh Bank dissolved the board'),
+ 'v62-NBL_LIQUIDITY_2026':('২০২৬ সালের অক্টোবরে জরুরি তারল্য সহায়তার খবর আসে','in October 2026 emergency liquidity support was reported'),
+ 'v62-NBL_PENALTY_2022':('২০২২ সালে ক্রেডিট কার্ডের ঋণ তথ্য গোপনের জন্য জরিমানা হয়','in 2022 it was fined over undisclosed credit card loan data')}
+
 def history_lines(name,whose,items,bn):
-    """Newest reports first, each with its own year and stored headline."""
-    items=sorted(items,key=lambda f:f['values']['first_reported_on'],reverse=True)[:3]
-    ids=[f['fact_id'] for f in items];title=lambda f:f['text_bn' if bn else 'text_en'].rstrip('।.')
+    """Newest report of each kind, in plain words where they exist, else the stored headline."""
+    items=sorted(items,key=lambda f:f['values']['first_reported_on'],reverse=True);seen=set();picked=[]
+    for f in items:
+        kind=f['fact_id'].rsplit('_',1)[0]
+        if kind not in seen:seen.add(kind);picked.append(f)
+    items=picked[:3]
+    ids=[f['fact_id'] for f in items];plain=lambda f:PLAIN.get(f['fact_id'],(None,None))[0 if bn else 1]
+    title=lambda f:plain(f) or f['text_bn' if bn else 'text_en'].rstrip('।.')
     year=lambda f:f['values']['event_date'][:4]
     unconfirmed=sum(not f['values'].get('official') for f in items)
     if len(items)==1:
         f=items[0]
-        lines=[(f'{name} নিয়ে {year(f)} সালের একটি খবর আছে: {title(f)}।' if bn else f'{name} has one news report from {year(f)}: {title(f)}.',ids)]
+        lines=[(f'{name} নিয়ে {year(f)} সালের একটি খবর আছে। {title(f)}।' if bn else f'{name} has one news report from {year(f)}, about {title(f)}.',ids)]
         if unconfirmed:lines.append(('খবরটি সরকারিভাবে নিশ্চিত নয়।' if bn else 'The report is not officially confirmed.',[]))
         return lines
-    body=', '.join(f'{year(f)} সালে {title(f)}' if bn else f'in {year(f)}, {title(f)}' for f in items)
-    lines=[(f'{whose}একাধিক ঘটনা আছে: {body}।' if bn else f'{name} has several reports: {body}.',ids)]
+    body=', '.join(title(f) if plain(f) else (f'{year(f)} সালে {title(f)}' if bn else f'in {year(f)}, {title(f)}') for f in items)
+    lines=[(f'{whose}একাধিক ঘটনা আছে। {body}।' if bn else f'{name} has several reports: {body}.',ids)]
     if unconfirmed:lines.append(('এর কিছু খবর সরকারিভাবে নিশ্চিত নয়।' if bn else 'Some of these reports are not officially confirmed.',[]))
     return lines
 
@@ -189,22 +203,46 @@ def slab(condition,bn):
 
 GENERAL=re.compile(r'regular|general|^savings|^prime savings|savings bank|high earning',re.I)
 def savings_lines(rows,whose,bn,label,general_only=False):
-    """Each account once: a slab pair reads as a range, a general account also names its slabs."""
+    """Each account once: a slab pair reads as a range or its slabs, equal rates share a sentence."""
     grouped={}
     for f in rows:grouped.setdefault(f['values']['product'],[]).append(f)
-    order=sorted(grouped,key=lambda p:not GENERAL.search(p));out=[]
+    order=sorted(grouped,key=lambda p:not GENERAL.search(p));out=[];same={}
     if general_only and GENERAL.search(order[0]):order=order[:1]
     for product in order:
-        items=grouped[product];values=sorted({f['values']['rate'] for f in items});ids=[f['fact_id'] for f in items];shown=label(items[0]['values'])
-        if len(values)==1:text=f'{shown}ে সুদ {number(values[0])}%' if bn else f'{shown} pays {number(values[0])}%'
-        else:
-            text=f'{shown}ে সুদ জমার পরিমাণভেদে {number(values[0])}% থেকে {number(values[-1])}%' if bn else f'{shown} pays {number(values[0])}% to {number(values[-1])}% by balance'
-            slabs=[(slab(f['source'].get('condition'),bn),f['values']['rate']) for f in sorted(items,key=lambda f:f['values']['rate'])]
-            if all(s for s,_ in slabs):text+=', '+', '.join(f'{s} {number(r)}%' if bn else f'{number(r)}% at {s}' for s,r in slabs)
+        items=grouped[product];values=sorted({f['values']['rate'] for f in items});ids=[f['fact_id'] for f in items]
+        shown=label(items[0]['values'])
+        if not bn and re.search(r'regular|general',product,re.I):shown='regular savings'
+        if len(values)==1:
+            if out and GENERAL.search(order[0]) and product!=order[0]:same.setdefault(values[0],[]).append((shown,ids));continue
+            out.append(((f'{shown}ে সুদ {number(values[0])}%' if bn else f'{shown} pays {number(values[0])}%'),ids));continue
+        slabs=[(slab(f['source'].get('condition'),bn),f['values']['rate']) for f in sorted(items,key=lambda f:f['values']['rate'])]
+        wording=[]
+        if all(s for s,_ in slabs):wording=[f'{s} {number(r)}%' if bn else (f'{number(r)}% from {s} taka' if ' to ' in s else f'{number(r)}% at {s}') for s,r in slabs]
+        # Slabs that meet ("under 1 crore", "1 crore or more") already give the whole range.
+        joined=len(slabs)==2 and bool(re.match(r'<',(items[0]['source'].get('condition') or '').split(';')[-1].strip()+' '+(items[1]['source'].get('condition') or '').split(';')[-1].strip()))
+        if joined and bn and wording:
+            first=wording[0].replace(' জমায় ',' জমায় সুদ ',1);text=f"{shown}ে {first}, আর {wording[1]}"
+        elif bn:text=f"{shown}ে সুদ জমার পরিমাণভেদে {number(values[0])}% থেকে {number(values[-1])}%"+('। '+', '.join(wording) if wording else '')
+        else:text=f"{shown} rate runs from {number(values[0])}% to {number(values[-1])}% by balance"+(': '+', and '.join(wording) if wording else '')
         out.append((text,ids))
+    for rate,items in same.items():
+        names=[n for n,_ in items];ids=[i for _,x in items for i in x]
+        joined=(', '.join(names[:-1])+' আর '+names[-1]) if bn and len(names)>1 else ', '.join(names)
+        out.append(((f'{joined}ে {number(rate)}%' if bn else f'{joined} pay {number(rate)}%'),ids))
     sentences=[]
     for index,(text,ids) in enumerate(out):sentences.append(((whose+text if not index else text)+('।' if bn else '.'),ids))
+    floor={re.search(r'Tk\.?\s*([\d,]+)\s*&\s*above',f['source'].get('condition') or '') and re.search(r'Tk\.?\s*([\d,]+)',f['source']['condition'])[1] for f in rows}
+    if len(rows)>1 and len(floor)==1 and None not in floor:
+        amount=next(iter(floor)).replace(',','');shown=f'{int(amount)//1000} হাজার' if bn and int(amount)%1000==0 else f'{int(amount):,}'
+        sentences.append(((f'দুটিতেই {shown} টাকা বা তার বেশি জমা থাকলে এই হার।' if bn else f'Both need a balance of Tk {shown} or more.'),[rows[0]['fact_id']]))
     return sentences
+
+def scheme_name(v,bn):
+    """A product as people say it: the bank's own prefix and the code letters come off."""
+    from ilma_api.human_tokens import product
+    name=product(v,bn)
+    if bn:return name
+    return re.sub(r'\s*\(\w+\)$','',re.sub(r'^(?:NCC|MTB|EBL|Prime)\s+','',name)).replace('Deposit Scheme','Scheme')
 
 def month_rates(rows):
     rates={}
@@ -220,14 +258,25 @@ def compare_tokens(first,second,label,whose,status,bn):
     word=label[0 if bn else 1]
     for index,m in enumerate(terms):
         when=spoken_months(m,bn);x,y=number(rate_a[m][0]),number(rate_b[m][0]);ids=(rate_a[m][1],rate_b[m][1])
-        if bn:text=f'{a} {when}ের {word}ে {x}% দেয়, {b} দেয় {y}%' if not index else f'{when}ে {a} {x}%, {b} {y}%'
+        short=lambda n:n.removesuffix(' ব্যাংক')
+        if bn:text=f'{a} {when}ের {word}ে {x}% দেয়, {b} দেয় {y}%' if not index else f'{when}ে {short(a)} {x}%, {short(b)} {y}%'
         else:text=f'For a {when.replace(" years","-year").replace(" year","-year").replace(" months","-month").replace(" month","-month")} {word}, {a} pays {x}% and {b} pays {y}%' if not index else f'For {when}, {a} pays {x}% and {b} pays {y}%'
         tokens[f'cmp:{index}']=FactToken(text,ids,None,'row')
     if not terms:
         for index,(name,rows) in enumerate((first,second)):
-            from ilma_api.human_tokens import product
-            parts=[f"{product(f['values'],True)}ে {term(f['values'],True)}ে সুদ {number(f['values']['rate'])}%" if bn else f"{number(f['values']['rate'])}% on {product(f['values'],False)} for {term(f['values'],False)}" for f in sorted(rows,key=lambda f:-f['values']['rate'])[:3]]
-            tokens[f'cmp:{index}']=FactToken((whose(name)+', '.join(parts)) if bn else f"{name} pays "+', '.join(parts),tuple(f['fact_id'] for f in rows[:3]),None,'row')
+            ordered=sorted(rows,key=lambda f:-f['values']['rate'])[:3];ids=tuple(f['fact_id'] for f in ordered)
+            if len(ordered)==2 and len({(f['values']['rate'],term(f['values'],bn)) for f in ordered})==1:
+                v=ordered[0]['values']
+                tokens[f'cmp:{index}']=FactToken(f"{whose(name)}দুটি {word}ে {term(v,True)}ে {number(v['rate'])}%" if bn else f"{whose(name)}two {word} schemes pay {number(v['rate'])}% for {term(v,False)}",ids,None,'row');continue
+            parts=[f"{scheme_name(f['values'],True)}ে {term(f['values'],True)}ে সুদ {number(f['values']['rate'])}%" if bn else f"{scheme_name(f['values'],False)} pays {number(f['values']['rate'])}% for {term(f['values'],False)}" for f in ordered]
+            if not bn:parts=[whose(name)+parts[0],*['its '+p for p in parts[1:]]]
+            tokens[f'cmp:{index}']=FactToken((whose(name)+', '.join(parts)) if bn else ', and '.join(parts),ids,None,'row')
+    if terms:
+        for name,rows in (first,second):
+            used=[f for f in rows if f['fact_id'] in {r[m][1] for r in (rate_a,rate_b) for m in terms if m in r}]
+            floors={(re.search(r'below (\d+) Lac',f['source'].get('condition') or '') or [None,None])[1] for f in used}
+            if len(floors)==1 and None not in floors:
+                limit=next(iter(floors));tokens['cmp:limit']=FactToken(f'{whose(name)}হার {limit} লাখ টাকার কম জমার জন্য' if bn else f"{name}'s rates are for deposits under {limit} lakh taka",(),None,'gap')
     notes=[(n,s) for n,s in zip((a,b),status) if s in {'watch','high'}]
     for index,(name,code) in enumerate(notes):
         tokens[f'cmp:n{index}']=FactToken(({'watch':f'তবে {name}ে কিছু সতর্কতার লক্ষণ আছে','high':f'তবে {whose(name)}ঝুঁকি বেশি'}[code]) if bn else {'watch':f'{name} has some warning signs','high':f'{name} is high risk'}[code],(),None,'gap')

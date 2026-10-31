@@ -135,7 +135,7 @@ def fact_clause(f,language,meaning=False):
         lakh=number(Decimal(str(v['limit']))/100000)
         amount=lakh+' লাখ' if bn and v['limit']%100000==0 else number(v['limit'])
         figure=f"Tk {lakh} lakh ({int(v['limit']):,})" if v['limit']%100000==0 else f"Tk {int(v['limit']):,}"
-        return f'একই ব্যাংকের সব হিসাব মিলিয়ে আইন অনুযায়ী জনপ্রতি সর্বোচ্চ {amount} টাকা পর্যন্ত সুরক্ষা আছে, কিছু শর্তের ওপর এটি নির্ভর করে, সেগুলো কার্ডে আছে' if bn else f'The limit is {figure} per depositor per bank, combining accounts; conditions apply and are explained on the card'
+        return f'একই ব্যাংকের সব হিসাব মিলিয়ে আইন অনুযায়ী জনপ্রতি সর্বোচ্চ {amount} টাকা পর্যন্ত সুরক্ষা আছে, কিছু শর্ত প্রযোজ্য' if bn else f'The limit is {figure} per depositor per bank, combining accounts; conditions apply and are explained on the card'
     if kind=='profile':
         if v['field']=='founded_year':return f"প্রতিষ্ঠিত হয় {v['value']} সালে" if bn else f"was established in {v['value']}"
         from datetime import date

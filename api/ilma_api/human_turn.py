@@ -198,7 +198,7 @@ def bank_status(facts,bank_id):
             return f.get('status',{}).get('code') or f.get('values',{}).get('status','no_data')
     return 'no_data'
 
-def introduction(db,c,registry,facts):
+def introduction(db,c,registry,facts,dated=False):
     """First answer about a strong bank: name, founding year if quoted, and one confirmed award."""
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     if not name or bank_status(facts,c.institution_id)!='strong':return [],{}
@@ -206,7 +206,8 @@ def introduction(db,c,registry,facts):
     from ilma_api.awards import intro_award,phrase,fact,DISCLAIMER
     try:found=intro_award(db,c.institution_id)
     except Exception:found=None  # The awards tables may not be loaded yet.
-    if found:
+    # A dated result is the news in that answer, so the founding year opens it.
+    if found and not dated:
         award,awarder,sources=found;item=fact(award,awarder,sources,c.language)
         return [(phrase(award,awarder,c.language,name.text),[item['fact_id']]),(('তবে ' if bn else '')+DISCLAIMER[0 if bn else 1],[])],{item['fact_id']:item}
     if not founded:return [],{}
@@ -215,24 +216,26 @@ def introduction(db,c,registry,facts):
     return [(text,[founded['fact_id']])],{}
 
 def award_answer(db,c,registry,facts):
-    from ilma_api.awards import rows,phrase,fact,HIGH_RISK,DISCLAIMER
+    from ilma_api.awards import rows,phrase,fact,HIGH_RISK,DISCLAIMER,leading_first,medal_line
     from ilma_api.report_card import get_institution_report_card
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     label=name.text if name else ''
     # Awards the awarder itself confirms come first; news reports only fill an empty list.
-    try:found=(rows(db,c.institution_id,('awarder_confirmed',)) or rows(db,c.institution_id))[:3]
+    try:found=leading_first(rows(db,c.institution_id,('awarder_confirmed',)) or rows(db,c.institution_id))[:3]
     except Exception:found=[]
     lines=[];items=[]
     for index,(award,awarder,sources) in enumerate(found):
         item=fact(award,awarder,sources,c.language);items.append(item)
         lines.append((phrase(award,awarder,c.language,label if index==0 else None),[item['fact_id']]))
+    merged=medal_line(found,label,bn)
+    if merged:lines=[(merged,[f for _,ids in lines for f in ids])]
     if not lines:lines.append((polish(label+'ের ',{},True)+'যাচাই করা কোনো পুরস্কারের তথ্য আমাদের কাছে নেই।' if bn else f"We have no verified award information for {label}.",[]))
     status=((get_institution_report_card(db,c.institution_id) or {}).get('status') or {}).get('code')
     if status=='high' and found:lines.append((HIGH_RISK[0 if bn else 1],[]))
     elif found:
         lines.append((('তবে ' if bn else '')+DISCLAIMER[0 if bn else 1],[]))
         loans=answers.figure(facts,c.institution_id,'npl_ratio')
-        if loans and loans['values']['value']>=answers.LOW_LOANS:lines.append(((f"ব্যাংকটির খেলাপি ঋণ {answers.percent(loans['values']['value'])}%, {loans['values']['period_end'][:4]} সালের হিসাবে।" if bn else f"Its bad loans are {answers.percent(loans['values']['value'])}%, as of {loans['values']['period_end'][:4]}."),[loans['fact_id']]))
+        if loans and loans['values']['value']>=answers.LOW_LOANS:lines.append(((f"ব্যাংকটির খেলাপি ঋণ {answers.percent(loans['values']['value'])}%।" if bn else f"Its bad loans are {answers.percent(loans['values']['value'])}%."),[loans['fact_id']]))
     return lines,items
 
 RATE_LINE=re.compile(r'^(?P<head>.*?)(?P<product>(?<!\S)(?!থেকে)\S+ে) (?P<term>(?:[০-৯\d., ]+ (?:থেকে|বা) )?[০-৯\d.]+ (?:বছর|মাস)) মেয়াদে (?P<label>সুদ|আনুমানিক মুনাফা) (?P<rate>[০-৯\d.]+%)।$')
@@ -258,6 +261,7 @@ def merge_rates(lines,facts,banks=()):
         output.append((sentence,list(ids),{**found.groupdict(),'terms':[found['term']]} if found else None))
     return [(s,ids) for s,ids,_ in output]
 
+COUNTS={2:('দু','two'),3:('তিন','three'),4:('চার','four')}
 ASKS_FIGURE=re.compile(r'সুদ|হার|রেট|মুনাফা|ফি(?=[\s,।?]|$)|কত|\bkoto\b|rates?\b|interest|profit|\bfees?\b|charges?\b',re.I)
 ASKS_OPINION=re.compile(r'ভালো|ভাল(?=[\s,।?]|$)|লাভজনক|\bgood\b|\bworth\b|\bbetter\b|suitable|\boption\b',re.I)
 def service_lines(text,lines,c,r,registry,facts):
@@ -265,6 +269,8 @@ def service_lines(text,lines,c,r,registry,facts):
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     rows=[facts[i] for _,ids in lines for i in ids if facts.get(i,{}).get('kind')=='service']
     if not name or not rows:return lines
+    # An opinion question gets the terms people compare, not the one-month rate.
+    if ASKS_OPINION.search(text) and r.product=='fdr' and any((f['values'].get('selected_tenor') or 0)>=3 for f in rows):rows=[f for f in rows if (f['values'].get('selected_tenor') or 12)>=3]
     if r.product=='savings':return answers.savings_lines(rows,polish(name.text+'ের ',{},True) if bn else name.text+"'s ",bn,lambda v:product_name(v,bn),r.follow)
     terms=[row for row in lines if row[1] and all(facts.get(i,{}).get('kind')=='term' for i in row[1])]
     lines=[row for row in lines if row not in terms]
@@ -272,13 +278,20 @@ def service_lines(text,lines,c,r,registry,facts):
     v=rows[0]['values'];card=r.product=='card';label=PRODUCT_LABEL.get(r.product,('সেবা','service'))
     deposit=r.product in {'fdr','dps'}
     amounts=sorted({f['values']['rate'] for f in rows if f['values'].get('rate') is not None})
-    lead=[];frame=[];late='meta:late' in registry
+    lead=[];frame=[];closing=[];late='meta:late' in registry
     opinion=bool(ASKS_OPINION.search(text))
     if not opinion and deposit and not r.tenor and not r.follow and not ASKS_FIGURE.search(text):
         word=next((facts[i] for row in terms for i in row[1]),None) or next((f for f in facts.values() if f.get('kind')=='term' and f['fact_id'].split(':',1)[-1].casefold() in {label[1].casefold(),label[0]}),None)
         if word:
             meaning=word['text_bn' if bn else 'text_en'].rstrip('।.')
-            lead.append(((f'{label[0]} মানে {meaning}।' if bn else f'{label[1]} means {meaning[:1].lower()+meaning[1:]}.'),[word['fact_id']]))
+            many=len({product_name(f['values'],bn) for f in rows})
+            if many>1:
+                # Several schemes: say how many, then what the word means after the rates.
+                short=re.sub(r'জমানোর স্কিম$','জমানো',meaning) if bn else re.sub(r'^A scheme for ','',meaning)
+                counted=COUNTS.get(many,str(many))
+                lead.append((f'{whose}{counted[0]}টি {label[0]} আছে।' if bn else f"{name.text} has {counted[1]} {label[1]} schemes.",[]))
+                closing=[((f'{label[0]} মানে {short}।' if bn else f'{label[1]} means {short[:1].lower()+short[1:]}.'),[word['fact_id']])]
+            else:lead.append(((f'{label[0]} মানে {meaning}।' if bn else f'{label[1]} means {meaning[:1].lower()+meaning[1:]}.'),[word['fact_id']]))
     if not lead and not opinion and not late and not r.follow and not r.tenor and len(rows)>1 and len(amounts)>1 and (deposit or card):
         schemes=len({product_name(f['values'],bn) for f in rows})>1
         profit=v.get('basis')=='islamic'
@@ -290,54 +303,78 @@ def service_lines(text,lines,c,r,registry,facts):
     others=[row for row in lines if not any(facts.get(i,{}).get('kind')=='service' for i in row[1])]
     if card and len(rows)>1:lines=[fee_list(rows,whose,bn,late),*others]
     elif deposit and len(rows)>1 and len(amounts)==1 and not r.tenor and not any(f['values'].get('dated') for f in rows):lines=[one_rate(rows,whose,bn),*others]
-    elif deposit and len(rows)>1 and not r.tenor and not any(f['values'].get('dated') for f in rows):lines=[*grouped_rates(rows,name.text,whose,bn,r.product),*others]
+    elif deposit and len(rows)>1 and not r.tenor and not any(f['values'].get('dated') for f in rows):lines=[*grouped_rates(rows,name.text,whose,bn,r.product,bool(lead) and not terms_first(lead)),*others]
     if len(rows)>1 and r.tenor:lines=standard_named(lines,facts,bn)
     conditions=[re.search(r'(\d+)% VAT',f['source'].get('condition') or '') for f in rows]
-    if card and all(conditions):lines=[*lines,(f'এই ফির সঙ্গে {conditions[0][1]}% ভ্যাট যোগ হতে পারে।' if bn else f'{conditions[0][1]}% VAT may apply.',[rows[0]['fact_id']])]
+    if card and all(conditions):lines=[*lines,(f'এর সঙ্গে {conditions[0][1]}% ভ্যাট যোগ হতে পারে।' if bn else f'{conditions[0][1]}% VAT may apply.',[rows[0]['fact_id']])]
     # The framing sentence says no more than the list, so the list keeps the room.
     said=' '.join(s for s,_ in [*lead,*frame,*(merge_rates(lines,facts,[name.text]) if bn else lines)])
     if len(pronounce(said+' '+next_steps('service_detail',c,0)[0],c.language).split())>LIST_WORDS:frame=[]
     if frame and card and len(rows)>1:
         head=lines[0][0];cut=head.index(': ')+2
         lines=[((head[cut:] if bn else 'They are '+head[cut:]),lines[0][1]),*lines[1:]]
-    tail=[(('ভালো না খারাপ, সেই সিদ্ধান্ত আপনার।' if bn else 'Whether it is good or not is your decision.'),[])] if opinion else []
-    return lead+frame+lines+tail
+    tail=[(('ভালো না খারাপ, সেই সিদ্ধান্ত আপনার। চাইলে অন্য ব্যাংকের হারের সাথে মিলিয়ে দেখতে পারেন।' if bn else "Whether it is good or not is your decision. You can compare it with other banks' rates if you like."),[])] if opinion else []
+    return lead+frame+lines+closing+tail
 
-def grouped_rates(rows,name,whose,bn,kind):
-    """One sentence per product, with its terms read in order."""
+def terms_first(lead):
+    return ' মানে ' in lead[0][0] or ' means ' in lead[0][0]
+
+def grouped_rates(rows,name,whose,bn,kind,lead=False):
+    """One sentence per product with terms in order; two named schemes share a sentence."""
     labels={}
     for f in rows:
-        label=product_name(f['values'],bn)
+        label=answers.scheme_name(f['values'],bn)
         labels.setdefault('' if not bn and GENERIC.search(label) else label,[]).append(f)
     plain=PRODUCT_LABEL[kind][1];out=[]
+    if len(labels)==2 and all(len(v)==1 for v in labels.values()) and '' not in labels:
+        (a,x),(b,y)=labels.items();ids=[x[0]['fact_id'],y[0]['fact_id']];rate=lambda f:answers.rate_list([f],bn)
+        if bn:
+            said=re.sub(r'(\S+%)$',r'সুদ \1',rate(x[0]))
+            return [(f"{'' if lead else whose}{a}ে {said}, আর {b}ে {rate(y[0])}।",ids)]
+        one=lambda l,f:f"{'The ' if lead else whose if l==a else 'its '}{l} pays {rate(f)}"
+        return [(f'{one(a,x[0])}, and {"the " if lead else ""}{one(b,y[0]).removeprefix("The ")}.',ids)]
     for index,(label,items) in enumerate(labels.items()):
         ids=[f['fact_id'] for f in items];said=answers.rate_list(items,bn)
         if bn:text=f'{whose if not index else ""}{label}ে {said}।'
         else:
-            generic=GENERIC.search(label) or not label
+            generic=not label
             text=f"{name if not index else 'It'} pays {said} on {('an '+plain) if generic and plain=='FDR' else ('a '+plain) if generic else 'its '+label}."
         out.append((text,ids))
     return out
 
 def fee_list(rows,whose,bn,late=False):
-    """Card fees as one list, so a bank's main cards fit one spoken answer."""
+    """Card fees as one list. Late fees group equal amounts by tier, annual fees name each card."""
+    if late:
+        fees={}
+        for f in rows:fees.setdefault(number_text(f['values']['rate']),[]).append(f['values'].get('tier') or '')
+        tier=lambda t:pronounce_tier(t,bn)
+        if bn:
+            parts=[(' আর '.join(tier(t) for t in tiers))+f'ে {fee} টাকা' for fee,tiers in fees.items()]
+            text=f"{whose}ক্রেডিট কার্ডে লেট পেমেন্ট ফি "+', '.join(parts)
+        else:
+            parts=[f"{fee} taka on "+' and '.join(tiers) for fee,tiers in fees.items()]
+            text=f"{whose}late payment charge is "+(', '.join(parts[:-1])+', and '+parts[-1] if len(parts)>1 else parts[0])
+        return (text+('।' if bn else '.'),[f['fact_id'] for f in rows])
     names=[product_name(f['values'],True).removesuffix(' কার্ড') if bn else ' '.join(dict.fromkeys(x for x in (f['values'].get('network'),f['values'].get('tier')) if x)) for f in rows]
     unit='টাকা' if bn else 'taka'
-    text=(f"{whose}ক্রেডিট কার্ডে {'লেট পেমেন্ট ফি' if late else 'বার্ষিক ফি'}: " if bn else f"{whose}{'late payment fees' if late else 'annual card fees'}: ")+', '.join(f"{name} {number_text(f['values']['rate'])} {unit}" for name,f in zip(names,rows))
-    dates=sorted({f['values']['doc_date'] for f in rows})
-    if all(f['values'].get('dated') for f in rows):
-        when=[format_date(date.fromisoformat(d),bn) for d in dates[-2:]]
-        text+=f", {' ও '.join(when)}-এর তালিকা অনুযায়ী" if bn else f", schedule dated {' and '.join(when)}"
+    text=(f"{whose}ক্রেডিট কার্ডে বার্ষিক ফি: " if bn else f"{whose}annual card fees: ")+', '.join(f"{name} {number_text(f['values']['rate'])} {unit}" for name,f in zip(names,rows))
     return (text+('।' if bn else '.'),[f['fact_id'] for f in rows])
+
+def pronounce_tier(tier,bn):
+    return product_name({'product_type':'card','tier':tier,'product':''},True).removesuffix(' কার্ড') if bn else tier
 
 def one_rate(rows,whose,bn):
     """Several products at one rate read as one sentence with the rate once."""
-    rate=number_text(rows[0]['values']['rate'])
+    rate=number_text(rows[0]['values']['rate']);ids=[f['fact_id'] for f in rows]
+    terms={term_text(f['values'],bn) for f in rows}
+    if bn and len(rows)==2 and len(terms)==1:
+        names=[product_name(f['values'],True) for f in rows]
+        return (f"{whose}{names[0]} আর {names[1]}, দুটিতেই {next(iter(terms))}ে সুদ {rate}%। আমাদের কাছে এই দুটি ডিপিএসের তথ্যই আছে।",ids)
     if bn:
         parts=[f"{product_name(f['values'],True)}ে {term_text(f['values'],True)}" for f in rows]
-        return (f"{whose}{', '.join(parts)} মেয়াদে সুদ {rate}%।",[f['fact_id'] for f in rows])
+        return (f"{whose}{', '.join(parts)} মেয়াদে সুদ {rate}%।",ids)
     parts=[f"{product_name(f['values'],False)} for {term_text(f['values'],False)}" for f in rows]
-    return (f"{whose[:-3] if whose.endswith(chr(39)+'s ') else whose} pays {rate}% on its {', '.join(parts)}.",[f['fact_id'] for f in rows])
+    return (f"{whose[:-3] if whose.endswith(chr(39)+'s ') else whose} pays {rate}% on its {', '.join(parts)}.",ids)
 
 def standard_named(lines,facts,bn):
     """Beside a named product, an unnamed row at the same term is the bank's standard one."""
@@ -576,6 +613,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         # Awards are answered by code from sourced rows; the model never names them.
         lines,award_facts=await call(db,lambda owned:award_answer(owned,c,registry,facts))
         question,buttons=next_steps('bank_awards',c,id)
+        if any(facts.get(i,{}).get('kind')=='figure' for _,ids in lines for i in ids):question=''
         a=controls('bank_awards',c,' '.join(t for t,_ in lines),question,buttons).model_copy(update={'used_fact_ids':[f for _,ids in lines for f in ids],'sentence_fact_ids':[ids for _,ids in lines]})
         result=render(a,c,[*award_facts,*[f for f in facts.values() if any(f['fact_id'] in ids for _,ids in lines)]],trace,'code')
         return await finish(result,safe,id,memory,db,started)
@@ -732,12 +770,11 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         status=bank_status(facts,c.institution_id);intro=[]
         # The opening is for general questions; "মূলধন কেমন?" answers the metric directly.
         if not r.requested_metric and c.institution_id not in memory.get('introduced_banks',[]):
-            intro,extra=await call(db,lambda owned:introduction(owned,c,registry,facts))
+            intro,extra=await call(db,lambda owned:introduction(owned,c,registry,facts,bool(interim_line(details(facts,c.institution_id),bn))))
             facts.update(extra)
             memory['introduced_banks']=[*memory.get('introduced_banks',[]),c.institution_id][-20:]
         award=any(facts.get(i,{}).get('kind')=='award' for _,ids in intro for i in ids)
         interim=interim_line(details(facts,c.institution_id),bn)
-        if interim and not award:intro=[]
         lines=answers.overview_lines(name,whose,status,facts,c.institution_id,bn,intro,award,interim)
         if status=='no_data' and re.search(r'নিরাপদ|\bsafe\b',safe,re.I):
             lines=[((f'{name} নিরাপদ কি না তা বলতে পারছি না, কারণ এর অবস্থা যাচাই করার মতো নিরীক্ষিত তথ্য আমাদের কাছে নেই।' if bn else f'{name}: I cannot say whether it is safe, because we have no audited information to assess its condition.'),[])]
@@ -750,7 +787,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     # Never narrate old protection, raw incident headlines or unbounded paragraphs.
     if not r.direct_protection:lines=[(s,ids) for s,ids in lines if not PROTECTION_WORDS.search(s)]
     lines=[(polish(re.sub(r'([।.?])\1+',r'\1',s),registry,bn),ids) for s,ids in lines]
-    if intent=='service_detail':lines=service_lines(safe,lines,c,r,registry,facts)
+    if intent=='service_detail':
+        lines=service_lines(safe,lines,c,r,registry,facts)
+        if ASKS_OPINION.search(safe) and r.product in {'fdr','dps'}:question='শুনবেন?' if bn else 'Shall I?'
     if intent=='services_list' and registry.get('bank:'+str(c.institution_id)):
         groups=group_line(details(facts,c.institution_id),registry['bank:'+str(c.institution_id)].text,bn)
         if groups:lines=[groups]

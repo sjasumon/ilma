@@ -88,7 +88,7 @@ def test_range_comes_from_the_stored_rows_never_a_wider_market_range():
 def test_opinion_question_declines_advice_and_still_gives_the_rates():
     rows=[rate('a','Plain',12,7),rate('b','Plain',36,7.5)];facts={r['fact_id']:r for r in rows}
     out=service_lines('City Bank DPS, is it a good option',[line(rows[0]),line(rows[1])],context('en'),SimpleNamespace(product='dps',tenor=None,follow=False),{'bank:1':FactToken('Test Bank',(),1,'bank')},facts)
-    assert out[-1][0]=='Whether it is good or not is your decision.' and 'good option' not in ' '.join(x for x,_ in out)
+    assert out[-1][0].startswith('Whether it is good or not is your decision.') and 'good option' not in ' '.join(x for x,_ in out)
 
 def test_one_rate_across_products_is_said_once_in_either_language():
     rows=[rate('a','EBL Confidence DPS',12,8),rate('b','EBL Child Future Plan DPS',36,8)];facts={r['fact_id']:r for r in rows}

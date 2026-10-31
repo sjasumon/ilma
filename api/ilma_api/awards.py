@@ -26,9 +26,15 @@ def rows(db,bank_id,confirmations=VERIFIED):
     return found
 
 
+LEADING=re.compile(r'best bank in [a-z]+$|বাংলাদেশের সেরা ব্যাংক',re.I)
+def leading_first(found):
+    """A best-bank-in-the-country award leads; category awards keep their newest-first order."""
+    return sorted(found,key=lambda r:not LEADING.search(title(r[0].award_name_en)))
+
+
 def intro_award(db,bank_id):
     """The one award an introduction may mention: awarder-confirmed and not likely paid."""
-    found=rows(db,bank_id,('awarder_confirmed',))
+    found=leading_first(rows(db,bank_id,('awarder_confirmed',)))
     return found[0] if found else None
 
 
@@ -36,6 +42,25 @@ def title(name):
     name=name.split(':',1)[-1]
     name=re.sub(r'\s*\([^)]*\)','',name)
     return re.sub(r'\s*(?:[0-9০-৯]{4})\s*$','',name).strip()
+
+
+def spoken_en(name):
+    """"Best X, South Asia" reads as a title; speech says it as a phrase."""
+    found=re.fullmatch(r'(.+?), (Trade Finance Mobilization), (South Asia)',name)
+    if found:return f'an {found[1]} in {found[3]} for {found[2]}'
+    return re.sub(r', (South Asia)$',r' in \1',name)
+
+
+def medal_line(found,label,bn):
+    """Medals from one awarder and category read as one sentence, newest first."""
+    awards=[r[0] for r in found]
+    if len(awards)<2 or not all(a.medal for a in awards) or len({(a.awarder_id,a.category.split(' - ')[-1]) for a in awards})!=1 or awards[0].awarder_id!='icsb':return None
+    category=awards[0].category.split(' - ')[-1]
+    if bn:
+        said=' আর '.join(f"{str(a.award_year).translate(DIGITS)} সালে {MEDALS[a.medal][0]}" for a in awards)
+        return f"{label} আইসিএসবি জাতীয় করপোরেট সুশাসন পুরস্কারে {title(awards[0].award_name_bn).split(' (')[0]} বিভাগে {said} পেয়েছে।"
+    said=' and '.join(f"{MEDALS[a.medal][1]} in {a.award_year}" for a in awards)
+    return f"{label} won {said} in the ICSB National Award for Corporate Governance Excellence, {category} category."
 
 
 def phrase(award,awarder,language,subject=None):
@@ -51,7 +76,7 @@ def phrase(award,awarder,language,subject=None):
         if 'সম্মাননা' in name:return f"{start} {name} দিয়েছে।"
         if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{start} {name} বলেছে{IFC_PURPOSE[0] if getattr(awarder,'awarder_id','')=='ifc' and 'বাণিজ্য' not in name else ''}।"
         return f"{start} {name} পুরস্কার দিয়েছে।"
-    name=title(award.award_name_en);giver=SPOKEN_AWARDER_EN.get(getattr(awarder,'awarder_id',''),awarder.name)
+    name=spoken_en(title(award.award_name_en));giver=SPOKEN_AWARDER_EN.get(getattr(awarder,'awarder_id',''),awarder.name)
     if subject:
         if medal:return f"{subject} won {medal[1]} in {giver}’s {name} category in {year}."
         if re.search(r'\bbank|institution',name,re.I):return f"{subject} was named {name} by {giver} in {year}."
