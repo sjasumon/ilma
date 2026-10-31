@@ -427,11 +427,24 @@ async def speech_readout(payload: ReadoutRequest, db: Session = Depends(get_db))
 @app.get('/v1/content/fixed')
 def fixed_voice_content():
     from ilma_api.voice_assets import load_approved
+    headers = {'Cache-Control': 'no-store'}
+    directory = STATIC_DIR / 'audio/fixed'
     try:
-        manifest = load_approved(STATIC_DIR / 'audio/fixed', allow_legacy=True)
-        return {'clips': {key: {'url': '/static/audio/fixed/' + item['file'], 'fallback_url': '/static/audio/fixed/' + item['fallback_file'], 'text': item['text']} for key, item in manifest['clips'].items()}}
-    except (ValueError, OSError, KeyError):
-        return JSONResponse(status_code=503,content={'clips': {},'error':{'code':'fixed_audio_unavailable'}})
+        if not directory.exists():
+            # Reviewed offline prompts are optional; absence is a capability,
+            # whereas an invalid supplied bundle must still fail closed.
+            return JSONResponse(headers=headers, content={
+                'available': False, 'reason': 'not_published', 'clips': {},
+                'message_bn': 'সংরক্ষিত নির্দেশনার অডিও এখন নেই। পর্দার লেখা ব্যবহার করুন। অনলাইন কণ্ঠসেবা আলাদাভাবে কাজ করতে পারে।',
+                'message_en': 'Saved prompt audio is not available. Use the on-screen text. Online speech may still be available.'})
+        manifest = load_approved(directory, allow_legacy=True)
+        return JSONResponse(headers=headers, content={'available': True, 'clips': {
+            key: {'url': '/static/audio/fixed/' + item['file'],
+                  'fallback_url': '/static/audio/fixed/' + item['fallback_file'],
+                  'text': item['text']} for key, item in manifest['clips'].items()}})
+    except (ValueError, OSError, KeyError, TypeError, AttributeError):
+        return JSONResponse(status_code=503, headers=headers, content={
+            'available': False, 'clips': {}, 'error': {'code': 'fixed_audio_unavailable'}})
 
 
 @app.get('/sw.js', include_in_schema=False)

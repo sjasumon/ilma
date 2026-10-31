@@ -43,6 +43,17 @@ def navigation(page):
     page.locator('#bank-profile-chips').get_by_text('১৯৯২',exact=False).wait_for()
 
 
+def fixed_audio(page):
+    response=page.request.get(page.url.split('#')[0]+'v1/content/fixed')
+    assert response.status==200
+    assert response.json()['available'] is False
+    assert response.json()['reason']=='not_published'
+    page.locator('#settings-btn').click()
+    page.locator('#settings-fixed-audio').wait_for()
+    assert 'অডিও' in page.locator('#settings-fixed-audio').inner_text()
+    page.locator('#settings-close').click()
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default='http://127.0.0.1:8027');parser.add_argument('--engine',choices=['chromium','webkit','all'],default='all');parser.add_argument('--check',default='dialogs');args=parser.parse_args()
     with sync_playwright() as p:

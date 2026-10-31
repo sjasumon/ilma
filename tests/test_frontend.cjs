@@ -79,3 +79,23 @@ console.log('Text size bootstrap passed: supported values, default, invalid stor
 
 const workerHash=require('node:crypto').createHash('sha256').update(fs.readFileSync('static/sw.js')).digest('hex').slice(0,16);
 assert.ok(html.includes('data-worker-version="'+workerHash+'"'),'Worker registration version must match worker bytes');
+
+// Optional fixed-prompt capability: distinguish missing clips from working live speech.
+(async () => {
+  context.fetch = async () => ({ok: true, json: async () => ({available: false, clips: {}})});
+  await run('loadFixedClips()');
+  assert.equal(element('settings-fixed-audio').hidden, false);
+  run('currentLang="en";updateFixedClipStatus()');
+  assert.match(element('settings-fixed-audio').textContent, /Saved prompt audio/);
+  assert.match(element('settings-fixed-audio').textContent, /Online speech may still/);
+  assert.equal(run('Object.keys(fixedClips).length'), 0);
+  context.fetch = async () => ({ok: true, json: async () => ({available: true, clips: {'en:hint': {url:'/static/audio/fixed/en-hint.opus',fallback_url:'/static/audio/fixed/en-hint.mp3',text:'Synthetic prompt'}}})});
+  await run('loadFixedClips()');
+  assert.equal(element('settings-fixed-audio').hidden, true);
+  assert.equal(run('fixedClips["en:hint"].text'), 'Synthetic prompt');
+  context.fetch = async () => ({ok: false});
+  await run('loadFixedClips()');
+  assert.equal(element('settings-fixed-audio').hidden, false);
+  assert.equal(run('Object.keys(fixedClips).length'), 0, 'Never retain stale clips after a validation failure');
+  console.log('Fixed prompt capability, localization and unavailable fallback passed');
+})().catch(error => {console.error(error);process.exitCode=1;});

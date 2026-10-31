@@ -162,6 +162,7 @@ let lastVoiceTranscript = "";
 let voiceFailures = 0;
 let playbackRequest = 0;
 let fixedClips = {};
+let fixedClipAvailability = "loading";
 let suppressReadoutClick = false;
 let anonymousDevice = "";
 try {
@@ -317,6 +318,7 @@ function updateSettingsText() {
   document.getElementById("settings-motion").checked = appSettings.motion;
   for (const key of ["swipe", "speak", "slow", "voiceonly", "screenreader"]) document.getElementById(`settings-${key}`).checked = appSettings[key];
   document.querySelector(".scr").classList.toggle("motion-disabled", !appSettings.motion);
+  updateFixedClipStatus();
 }
 
 function setupLanguageSwipe(target) {
@@ -840,6 +842,36 @@ function playVoiceAudio(url, request = playbackRequest, manual = false, onError 
   const accountListen=document.getElementById('account-listen');if(currentTab==='services'&&accountListen)accountListen.textContent=currentLang==='bn'?'থামুন':'Stop';
   player.play?.().catch(() => { if(request!==playbackRequest)return; stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
   return true;
+}
+
+function updateFixedClipStatus() {
+  const status = document.getElementById('settings-fixed-audio');
+  if (!status) return;
+  status.hidden = fixedClipAvailability !== 'unavailable';
+  status.textContent = currentLang === 'bn'
+    ? 'সংরক্ষিত নির্দেশনার অডিও এখন নেই। পর্দার লেখা ব্যবহার করুন। অনলাইন কণ্ঠসেবা আলাদাভাবে কাজ করতে পারে।'
+    : 'Saved prompt audio is not available. Use the on-screen text. Online speech may still be available.';
+}
+
+async function loadFixedClips() {
+  try {
+    const response = await fetch('/v1/content/fixed', {cache: 'no-store'});
+    if (!response.ok) throw Error('fixed_audio_unavailable');
+    const content = await response.json();
+    fixedClips = content.available === false ? {} : (content.clips || {});
+    fixedClipAvailability = Object.keys(fixedClips).length ? 'available' : 'unavailable';
+  } catch {
+    fixedClips = {};
+    fixedClipAvailability = 'unavailable';
+  }
+  updateFixedClipStatus();
+  if (fixedClipAvailability === 'available' && navigator.serviceWorker) {
+    try {
+      const worker = await navigator.serviceWorker.ready;
+      const urls = Object.values(fixedClips).flatMap(clip => [clip.url, clip.fallback_url]);
+      worker.active?.postMessage({type: 'cache-fixed-clips', urls});
+    } catch { /* Optional offline storage must not change playback availability. */ }
+  }
 }
 
 function playFixedClip(key) {
@@ -1467,15 +1499,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   window.addEventListener?.("offline", syncConnectivity);
   window.addEventListener?.("online", syncConnectivity);
-  fetch("/v1/content/fixed").then(response => response.ok ? response.json() : null).then(async content => {
-    if (!content) return;
-    fixedClips = content.clips || {};
-    if (navigator.serviceWorker) {
-      const worker = await navigator.serviceWorker.ready;
-      const urls = Object.values(fixedClips).flatMap(clip => [clip.url, clip.fallback_url]);
-      worker.active?.postMessage({ type: "cache-fixed-clips", urls });
-    }
-  }).catch(() => {});
+  void loadFixedClips();
   if (navigator.serviceWorker && window.isSecureContext !== false) navigator.serviceWorker.register("/sw.js?v=" + (document.documentElement.dataset?.workerVersion || "legacy")).catch(() => {});
   setupSpeech();
 
