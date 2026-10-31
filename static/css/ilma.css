@@ -1328,6 +1328,61 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 #news-search-clear:hover { color: var(--gold); }
 #extra-news-sections > section > h2 { font-size: calc(var(--fs) * 1.15); margin: 24px 0 12px; color: var(--gold); display: flex; align-items: center; gap: 8px; }
 
+/* News summary and per-card audio controls */
+.news-summary-box {
+  margin: 10px 0 12px;
+  padding: 10px 14px;
+  background: rgba(246, 240, 228, 0.05);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+}
+.news-summary-text {
+  margin: 0;
+  font-size: calc(var(--fs) * 0.92);
+  line-height: 1.55;
+  color: var(--on-stage);
+}
+.news-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.news-card-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 203, 85, 0.45);
+  background: rgba(246, 203, 85, 0.12);
+  color: var(--gold);
+  font-size: calc(var(--fs) * 0.88);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+  min-height: 38px;
+}
+.news-card-listen:hover {
+  background: rgba(246, 203, 85, 0.22);
+  border-color: var(--gold);
+}
+.news-card-listen.is-playing {
+  background: var(--gold);
+  color: #0D302C;
+  border-color: var(--gold);
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(246, 203, 85, 0.45);
+}
+#btn-listen-news.is-playing {
+  background: var(--gold);
+  color: #0D302C;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(246, 203, 85, 0.45);
+}
+
 /* Guidance message when category/audience has no specialized products */
 .deposit-empty-guidance { border: 1px dashed rgba(246, 203, 85, 0.45); background: rgba(246, 240, 228, 0.04); border-radius: 18px; padding: 20px; margin: 16px 0; color: var(--on-stage); }
 .deposit-empty-guidance .guidance-title { margin: 0 0 8px; font-weight: 700; font-size: calc(var(--fs) * 1.05); color: var(--gold); }
