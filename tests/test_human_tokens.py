@@ -184,12 +184,12 @@ def test_interrupted_bank_resolution_is_saved_without_user_words(db):
         async def model(*args,**kwargs):raise asyncio.CancelledError()
         with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)):
             with pytest.raises(asyncio.CancelledError):
-                await run('ই বি এল সম্পর্কে বলুন',VoiceContext(agent=True,ui_lang='bn',conversation=Conversation(institution_id=1)),BANKS,db,on_sentence=received)
+                await run('ই বি এল ব্যাংকের কথা',VoiceContext(agent=True,ui_lang='bn',conversation=Conversation(institution_id=1)),BANKS,db,on_sentence=received)
         context=messages[0]
         assert context['_event']=='resolved_context' and context['conversation']['institution_id']==2
         memory=db.get(AppConversation,verified_id(context['conversation']['conversation_token'])).memory
         assert memory['conversation']['institution_id']==2
-        assert 'সম্পর্কে বলুন' not in json.dumps(memory,ensure_ascii=False)
+        assert 'ব্যাংকের কথা' not in json.dumps(memory,ensure_ascii=False)
     asyncio.run(scenario())
 
 def test_variant_fingerprint_ignores_user_words_but_invalidates_changed_facts(db):
@@ -304,7 +304,7 @@ def test_english_bank_named_by_the_introduction_is_then_called_it(db):
         with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)),patch('ilma_api.human_turn.introduction',return_value=intro):
             return await run('How is it?',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
     speech=asyncio.run(scenario())['speech']
-    assert speech.startswith('BRAC Test Bank was named Synthetic Best Bank by Synthetic Magazine in 2025. It does not yet have enough information')
+    assert speech.startswith('BRAC Test Bank was named Synthetic Best Bank by Synthetic Magazine in 2025. We have no audited information')
 
 def test_after_an_award_sentence_names_the_bank_the_next_says_bankti(db):
     async def model(payload,trace,client,**kwargs):

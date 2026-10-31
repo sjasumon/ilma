@@ -6,8 +6,9 @@ from decimal import Decimal,ROUND_HALF_UP
 from ilma_api import settings
 from ilma_api.database_tasks import call
 from ilma_api.human_memory import load,redact_user,save,token
-from ilma_api.human_resolver import resolve
-from ilma_api.human_tokens import build_registry,fill,TOKEN,FactToken,card_text,material,BANNED,PROTECTION_WORDS,PRODUCTS as PRODUCT_LABEL,number as number_text,product as product_name,term as term_text,rating_words
+from ilma_api.human_resolver import resolve,is_banglish
+from ilma_api import human_answers as answers
+from ilma_api.human_tokens import build_registry,fill,TOKEN,FactToken,card_text,material,BANNED,PROTECTION_WORDS,PRODUCTS as PRODUCT_LABEL,number as number_text,product as product_name,term as term_text,GENERIC
 from ilma_api.human_stream import generate
 from ilma_api.human_facts import fact_pack,service_facts,comparison_facts,term_facts,card_waiver,manual_notes
 from ilma_api.human_contract import STATE,LABELS,ALLOWED
@@ -29,33 +30,15 @@ def next_steps(intent,c,key,more=False):
     return ('ব্যাংকের সেবাগুলো শুনবেন, না অন্য ব্যাংক দেখবেন?' if bn else 'Would you like services or another bank?'),['services','ask_bank']
 
 
-def rounded(value):
-    return format(Decimal(str(value)).quantize(Decimal('1'),rounding=ROUND_HALF_UP),'f')
-
-def profit_tokens(found,facts,bank,bn):
-    """A direct profit question: the year, spoken in whole crore, and the change from the previous year."""
-    v=found['values'];value=Decimal(str(v['value']));crore=abs(value)/10000000
-    amount=rounded(crore) if crore>=100 else format(crore.normalize(),'f');year=v['period_end'][:4];loss=value<0
-    text=f"নিট {'লোকসান' if loss else 'মুনাফা'} {year} সালে প্রায় {amount} কোটি টাকা" if bn else f"Net {'loss' if loss else 'profit'} in {year} was about {amount} crore taka"
-    tokens={'asked:figure':FactToken(text,(found['fact_id'],),bank,'figure')}
-    change=next((f for f in facts.values() if f['institution_id']==bank and f['kind']=='figure' and f['values'].get('metric')=='profit_change'),None)
-    if change and not loss:
-        amount=abs(Decimal(str(change['values']['value'])));up=change['values']['value']>=0
-        text=f"আগের বছরের তুলনায় মুনাফা প্রায় {rounded(amount)}% {'বেড়েছে' if up else 'কমেছে'}" if bn else f"That is about {rounded(amount)}% {'more' if up else 'less'} than the previous year"
-        tokens['asked:change']=FactToken(text,(change['fact_id'],),bank,'figure')
-    return tokens
-
 def details(facts,bank):
     return {f['values']['field']:f for f in facts.values() if f['kind']=='profile_detail' and f['institution_id']==bank}
 
-def npl_period_tokens(facts,bank,bn,asked):
-    """Two periods exist only when an interim figure is stored; each is then named."""
-    d=details(facts,bank);found=d.get('interim_npl')
+def interim_token(facts,bank,bn):
+    """A part-year bad-loan figure is said beside the annual one, with its own period."""
+    found=details(facts,bank).get('interim_npl')
     if not found:return {}
-    year=next(f['values']['period_end'][:4] for f in facts.values() if asked.fact_ids and f['fact_id']==asked.fact_ids[0])
     end=date.fromisoformat(found['values']['as_of'])
-    return {'asked:figure':FactToken(asked.text+(f', {year} সালের হিসাবে' if bn else f' for {year}'),asked.fact_ids,bank,'figure'),
-     'asked:interim':FactToken(f"{end.year} সালের প্রথম {end.month} মাসে হার {found['values']['value']}%" if bn else f"For the first {end.month} months of {end.year}, it is {found['values']['value']}%",(found['fact_id'],),bank,'figure')}
+    return {'asked:interim':FactToken(f"{end.year} সালের প্রথম {end.month} মাসে হার {found['values']['value']}%" if bn else f"For the first {end.month} months of {end.year}, it is {found['values']['value']}%",(found['fact_id'],),bank,'figure')}
 
 def founding_tokens(d,bank,bn):
     tokens={}
@@ -115,11 +98,16 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
     registry,facts=build_registry(packs,comparisons,c.language,r.direct_protection)
     if r.requested_metric and r.intent=='bank_figures':
         requested=next((f for f in facts.values() if f['institution_id']==r.bank_id and f['kind']=='figure' and f['values'].get('metric')==r.requested_metric),None)
-        if requested:
+        bn=c.language=='bn';status=bank_status(facts,r.bank_id)
+        if not requested:registry.update(answers.metric_gap(r.requested_metric,r.bank_id,bn))
+        elif r.requested_metric=='net_profit':registry.update(answers.profit_tokens(db,requested,facts,r.bank_id,bn))
+        elif r.requested_metric=='npl_ratio':
+            registry.update(answers.loan_tokens(db,requested,facts,r.bank_id,bn,status))
+            registry.update(interim_token(facts,r.bank_id,bn))
+        elif r.requested_metric=='rating':registry.update(answers.rating_tokens(requested,facts,r.bank_id,bn,status))
+        else:
             registry['asked:figure']=registry['value:'+requested['fact_id']]
-            if r.requested_metric=='net_profit':registry.update(profit_tokens(requested,facts,r.bank_id,c.language=='bn'))
-            elif 'f:'+requested['fact_id'] in registry:registry['asked:meaning']=registry['f:'+requested['fact_id']]
-    if r.requested_metric=='npl_ratio' and r.intent=='bank_figures' and 'asked:figure' in registry:registry.update(npl_period_tokens(facts,r.bank_id,c.language=='bn',registry['asked:figure']))
+            if 'f:'+requested['fact_id'] in registry:registry['asked:meaning']=registry['f:'+requested['fact_id']]
     if r.requested_field=='founded_year':registry.update(founding_tokens(details(facts,r.bank_id),r.bank_id,c.language=='bn'))
     if r.requested_field:
         profiles=[f for f in facts.values() if f['kind']=='profile' and f['institution_id']==r.bank_id]
@@ -139,7 +127,11 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
     if notes:
         facts.update((n['fact_id'],n) for n in notes)
         registry.update(note_tokens(notes,r.product,r.bank_id,c.language=='bn'))
-    if r.product and not offers and r.bank_id and not notes:
+    if r.product and not offers and r.bank_id and not notes and not any(f['kind']=='inventory' and f['institution_id']==r.bank_id for f in facts.values()):
+        label=PRODUCT_LABEL.get(r.product,('এই সেবা','this service'))
+        word=('মুনাফার হার','profit rate') if r.basis=='islamic' else ('সুদের হার','rate')
+        registry['gap:product']=FactToken(f'{label[0]}ের {word[0]} আমাদের কাছে এখনো নেই, তাই অনুমান করে কিছু বলছি না' if c.language=='bn' else f'{label[1]} {word[1]} is not in our collection yet, so I will not guess',(),r.bank_id,'gap')
+    elif r.product and not offers and r.bank_id and not notes:
         proof=next((f for f in facts.values() if f['kind']=='inventory' and f['institution_id']==r.bank_id),None)
         if proof:
             from ilma_api.human_tokens import PRODUCTS as LABEL
@@ -148,6 +140,15 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
             fid='coverage:product:'+str(r.bank_id)+':'+r.product
             facts[fid]={'fact_id':fid,'institution_id':r.bank_id,'kind':'coverage','text_bn':phrase if c.language=='bn' else 'এই সেবার তথ্য আমাদের সংগ্রহে নেই','text_en':phrase if c.language=='en' else 'This service is absent from the imported collection','values':{'product_type':r.product},'source':{**proof['source'],'quote':'Derived coverage of imported product rows, not a claim that the bank does not offer this service'}}
             registry['gap:product']=FactToken(phrase,(fid,),r.bank_id,'gap')
+    if r.intent=='service_detail' and r.product=='card' and r.fee=='late_fee':registry['meta:late']=FactToken('')
+    if r.intent=='compare' and not r.term_asked and not r.correction and r.product in {'fdr','dps'} and len(r.compare_bank_ids)==2:
+        pair=[]
+        for id in r.compare_bank_ids:
+            rows=service_facts(db,id,r.product,None,r.basis,include_all=True)
+            if rows and 'bank:'+str(id) in registry:pair.append((registry['bank:'+str(id)].text,rows))
+        if len(pair)==2:
+            whose=(lambda name:polish(name+'ের ',{},True)) if c.language=='bn' else (lambda name:name+"'s ")
+            registry.update(answers.compare_tokens(pair[0],pair[1],PRODUCT_LABEL[r.product],whose,[bank_status(facts,id) for id in r.compare_bank_ids],c.language=='bn'))
     if r.intent=='compare' and r.product:
         # Name each compared bank that lacks the product; the others keep their rows.
         from ilma_api.human_tokens import PRODUCTS as LABEL
@@ -186,7 +187,7 @@ def polish(sentence,registry,bn):
             if rest.startswith(name+' '):rest=rest[len(name)+1:]
             if rest.startswith('The '):return name+"'s "+rest[4:]
             if rest.startswith('published '):return name+"'s "+rest
-            if rest.startswith('Net '):return name+"'s n"+rest[1:]
+            if rest.startswith(('Net ','Bad ','Credit ')):return name+"'s "+rest[0].lower()+rest[1:]
             if rest[:1].isupper() and not EN_VERB.match(rest.lower()):return name+"'s "+rest
         return sentence
     return sentence
@@ -202,29 +203,24 @@ def introduction(db,c,registry,facts):
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     if not name or bank_status(facts,c.institution_id)!='strong':return [],{}
     founded=next((f for f in facts.values() if f.get('kind')=='profile' and f.get('institution_id')==c.institution_id and f['values'].get('field')=='founded_year'),None)
-    from ilma_api.awards import intro_award,phrase,fact
+    from ilma_api.awards import intro_award,phrase,fact,DISCLAIMER
     try:found=intro_award(db,c.institution_id)
     except Exception:found=None  # The awards tables may not be loaded yet.
-    if not founded and not found:return [],{}
-    ids=[founded['fact_id']] if founded else [];extra={}
     if found:
-        award,awarder,sources=found;item=fact(award,awarder,sources,c.language);ids.append(item['fact_id']);extra[item['fact_id']]=item
-    if not founded:return [(phrase(award,awarder,c.language,name.text),ids)],extra
+        award,awarder,sources=found;item=fact(award,awarder,sources,c.language)
+        return [(phrase(award,awarder,c.language,name.text),[item['fact_id']]),(('তবে ' if bn else '')+DISCLAIMER[0 if bn else 1],[])],{item['fact_id']:item}
+    if not founded:return [],{}
     year=str(founded['values']['value'])
-    if bn:
-        text=f"{name.text} যাত্রা শুরু করে {year.translate(str.maketrans('0123456789','০১২৩৪৫৬৭৮৯'))} সালে"
-        text+=f", আর {phrase(award,awarder,'bn')}" if found else '।'
-    else:
-        text=f"{name.text} was established in {year}"
-        text+=', and '+phrase(award,awarder,'en')[0].lower()+phrase(award,awarder,'en')[1:] if found else '.'
-    return [(text,ids)],extra
+    text=f"{name.text} যাত্রা শুরু করে {year.translate(str.maketrans('0123456789','০১২৩৪৫৬৭৮৯'))} সালে।" if bn else f"{name.text} was established in {year}."
+    return [(text,[founded['fact_id']])],{}
 
-def award_answer(db,c,registry):
-    from ilma_api.awards import rows,phrase,fact,HIGH_RISK
+def award_answer(db,c,registry,facts):
+    from ilma_api.awards import rows,phrase,fact,HIGH_RISK,DISCLAIMER
     from ilma_api.report_card import get_institution_report_card
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     label=name.text if name else ''
-    try:found=rows(db,c.institution_id)[:3]
+    # Awards the awarder itself confirms come first; news reports only fill an empty list.
+    try:found=(rows(db,c.institution_id,('awarder_confirmed',)) or rows(db,c.institution_id))[:3]
     except Exception:found=[]
     lines=[];items=[]
     for index,(award,awarder,sources) in enumerate(found):
@@ -233,6 +229,10 @@ def award_answer(db,c,registry):
     if not lines:lines.append((polish(label+'ের ',{},True)+'যাচাই করা কোনো পুরস্কারের তথ্য আমাদের কাছে নেই।' if bn else f"We have no verified award information for {label}.",[]))
     status=((get_institution_report_card(db,c.institution_id) or {}).get('status') or {}).get('code')
     if status=='high' and found:lines.append((HIGH_RISK[0 if bn else 1],[]))
+    elif found:
+        lines.append((('তবে ' if bn else '')+DISCLAIMER[0 if bn else 1],[]))
+        loans=answers.figure(facts,c.institution_id,'npl_ratio')
+        if loans and loans['values']['value']>=answers.LOW_LOANS:lines.append(((f"ব্যাংকটির খেলাপি ঋণ {answers.percent(loans['values']['value'])}%, {loans['values']['period_end'][:4]} সালের হিসাবে।" if bn else f"Its bad loans are {answers.percent(loans['values']['value'])}%, as of {loans['values']['period_end'][:4]}."),[loans['fact_id']]))
     return lines,items
 
 RATE_LINE=re.compile(r'^(?P<head>.*?)(?P<product>(?<!\S)(?!থেকে)\S+ে) (?P<term>(?:[০-৯\d., ]+ (?:থেকে|বা) )?[০-৯\d.]+ (?:বছর|মাস)) মেয়াদে (?P<label>সুদ|আনুমানিক মুনাফা) (?P<rate>[০-৯\d.]+%)।$')
@@ -258,28 +258,28 @@ def merge_rates(lines,facts,banks=()):
         output.append((sentence,list(ids),{**found.groupdict(),'terms':[found['term']]} if found else None))
     return [(s,ids) for s,ids,_ in output]
 
-ASKS_FIGURE=re.compile(r'সুদ|হার|মুনাফা|ফি(?=[\s,।?]|$)|কত|rates?\b|interest|profit|\bfees?\b|charges?\b',re.I)
+ASKS_FIGURE=re.compile(r'সুদ|হার|রেট|মুনাফা|ফি(?=[\s,।?]|$)|কত|\bkoto\b|rates?\b|interest|profit|\bfees?\b|charges?\b',re.I)
 ASKS_OPINION=re.compile(r'ভালো|ভাল(?=[\s,।?]|$)|লাভজনক|\bgood\b|\bworth\b|\bbetter\b|suitable|\boption\b',re.I)
 def service_lines(text,lines,c,r,registry,facts):
     """Open a product answer as asked: what it is, how its rates vary, or that the choice is the user's."""
     bn=c.language=='bn';name=registry.get('bank:'+str(c.institution_id))
     rows=[facts[i] for _,ids in lines for i in ids if facts.get(i,{}).get('kind')=='service']
     if not name or not rows:return lines
+    if r.product=='savings':return answers.savings_lines(rows,polish(name.text+'ের ',{},True) if bn else name.text+"'s ",bn,lambda v:product_name(v,bn),r.follow)
     terms=[row for row in lines if row[1] and all(facts.get(i,{}).get('kind')=='term' for i in row[1])]
     lines=[row for row in lines if row not in terms]
     whose=polish(name.text+'ের ',{},True) if bn else name.text+"'s "
     v=rows[0]['values'];card=r.product=='card';label=PRODUCT_LABEL.get(r.product,('সেবা','service'))
     deposit=r.product in {'fdr','dps'}
     amounts=sorted({f['values']['rate'] for f in rows if f['values'].get('rate') is not None})
-    lead=[];frame=[]
-    if ASKS_OPINION.search(text):
-        lead.append((('এটি ভালো কি না সেটা আপনার সিদ্ধান্ত, আমি পরামর্শ দিই না।' if bn else 'That decision is yours; I do not give advice.'),[]))
-    elif deposit and not r.tenor and not ASKS_FIGURE.search(text):
+    lead=[];frame=[];late='meta:late' in registry
+    opinion=bool(ASKS_OPINION.search(text))
+    if not opinion and deposit and not r.tenor and not r.follow and not ASKS_FIGURE.search(text):
         word=next((facts[i] for row in terms for i in row[1]),None) or next((f for f in facts.values() if f.get('kind')=='term' and f['fact_id'].split(':',1)[-1].casefold() in {label[1].casefold(),label[0]}),None)
         if word:
             meaning=word['text_bn' if bn else 'text_en'].rstrip('।.')
             lead.append(((f'{label[0]} মানে {meaning}।' if bn else f'{label[1]} means {meaning[:1].lower()+meaning[1:]}.'),[word['fact_id']]))
-    if not lead and not r.tenor and len(rows)>1 and len(amounts)>1 and (deposit or card):
+    if not lead and not opinion and not late and not r.follow and not r.tenor and len(rows)>1 and len(amounts)>1 and (deposit or card):
         schemes=len({product_name(f['values'],bn) for f in rows})>1
         profit=v.get('basis')=='islamic'
         if card:frame=[(f'{whose}কার্ডের বার্ষিক ফি কার্ডের ধরন অনুযায়ী আলাদা।' if bn else f'{whose}annual fees vary by card.',[])]
@@ -288,8 +288,9 @@ def service_lines(text,lines,c,r,registry,facts):
             frame=[(f"{whose}{label[0]}ের {'আনুমানিক মুনাফা' if profit else 'সুদ'} মেয়াদ ও স্কিমভেদে {low}% থেকে {high}%।" if bn else f"{whose}{label[1]} {'profit rates' if profit else 'rates'} run from {low}% to {high}% by scheme and term.",[f['fact_id'] for f in rows])]
         else:frame=[(f"{whose}{label[0]}ের {'আনুমানিক মুনাফা' if profit else 'সুদ'} মেয়াদের ওপর নির্ভর করে।" if bn else f"{whose}{label[1]} {'profit rates' if profit else 'rates'} depend on the term.",[])]
     others=[row for row in lines if not any(facts.get(i,{}).get('kind')=='service' for i in row[1])]
-    if card and len(rows)>1:lines=[fee_list(rows,whose,bn),*others]
+    if card and len(rows)>1:lines=[fee_list(rows,whose,bn,late),*others]
     elif deposit and len(rows)>1 and len(amounts)==1 and not r.tenor and not any(f['values'].get('dated') for f in rows):lines=[one_rate(rows,whose,bn),*others]
+    elif deposit and len(rows)>1 and not r.tenor and not any(f['values'].get('dated') for f in rows):lines=[*grouped_rates(rows,name.text,whose,bn,r.product),*others]
     if len(rows)>1 and r.tenor:lines=standard_named(lines,facts,bn)
     conditions=[re.search(r'(\d+)% VAT',f['source'].get('condition') or '') for f in rows]
     if card and all(conditions):lines=[*lines,(f'এই ফির সঙ্গে {conditions[0][1]}% ভ্যাট যোগ হতে পারে।' if bn else f'{conditions[0][1]}% VAT may apply.',[rows[0]['fact_id']])]
@@ -299,13 +300,30 @@ def service_lines(text,lines,c,r,registry,facts):
     if frame and card and len(rows)>1:
         head=lines[0][0];cut=head.index(': ')+2
         lines=[((head[cut:] if bn else 'They are '+head[cut:]),lines[0][1]),*lines[1:]]
-    return lead+frame+lines
+    tail=[(('ভালো না খারাপ, সেই সিদ্ধান্ত আপনার।' if bn else 'Whether it is good or not is your decision.'),[])] if opinion else []
+    return lead+frame+lines+tail
 
-def fee_list(rows,whose,bn):
+def grouped_rates(rows,name,whose,bn,kind):
+    """One sentence per product, with its terms read in order."""
+    labels={}
+    for f in rows:
+        label=product_name(f['values'],bn)
+        labels.setdefault('' if not bn and GENERIC.search(label) else label,[]).append(f)
+    plain=PRODUCT_LABEL[kind][1];out=[]
+    for index,(label,items) in enumerate(labels.items()):
+        ids=[f['fact_id'] for f in items];said=answers.rate_list(items,bn)
+        if bn:text=f'{whose if not index else ""}{label}ে {said}।'
+        else:
+            generic=GENERIC.search(label) or not label
+            text=f"{name if not index else 'It'} pays {said} on {('an '+plain) if generic and plain=='FDR' else ('a '+plain) if generic else 'its '+label}."
+        out.append((text,ids))
+    return out
+
+def fee_list(rows,whose,bn,late=False):
     """Card fees as one list, so a bank's main cards fit one spoken answer."""
     names=[product_name(f['values'],True).removesuffix(' কার্ড') if bn else ' '.join(dict.fromkeys(x for x in (f['values'].get('network'),f['values'].get('tier')) if x)) for f in rows]
     unit='টাকা' if bn else 'taka'
-    text=(f'{whose}কার্ডের বার্ষিক ফি: ' if bn else f'{whose}annual card fees: ')+', '.join(f"{name} {number_text(f['values']['rate'])} {unit}" for name,f in zip(names,rows))
+    text=(f"{whose}ক্রেডিট কার্ডে {'লেট পেমেন্ট ফি' if late else 'বার্ষিক ফি'}: " if bn else f"{whose}{'late payment fees' if late else 'annual card fees'}: ")+', '.join(f"{name} {number_text(f['values']['rate'])} {unit}" for name,f in zip(names,rows))
     dates=sorted({f['values']['doc_date'] for f in rows})
     if all(f['values'].get('dated') for f in rows):
         when=[format_date(date.fromisoformat(d),bn) for d in dates[-2:]]
@@ -335,36 +353,6 @@ def date_once(lines):
         if found[index] and later and later[1]==found[index][1]:sentence=pattern.sub('',sentence)
         output.append((sentence,ids))
     return output
-
-def fit_overview(lines,question,c,registry,facts,key):
-    """Keep status, capital and loan quality in one answer: short clauses, then drop extras."""
-    bn=c.language=='bn';fits=lambda rows:len(pronounce(' '.join(s for s,_ in rows)+' '+question,c.language).split())<=45
-    if fits(lines):return lines
-    def short(sentence,ids):
-        found=[facts.get(i,{}) for i in ids]
-        if len(found)!=1:return sentence
-        f=found[0];v=f.get('values',{});good=bank_status(facts,c.institution_id)=='strong'
-        name=registry.get('bank:'+str(c.institution_id));named=bool(name) and sentence.startswith(name.text)
-        if f.get('kind')=='status' and good:return (polish(name.text+'ের ',{},True)+'অবস্থা ভালো।' if bn else name.text+' is in good condition.') if named else sentence
-        if f.get('kind')=='figure' and v.get('metric')=='crar' and v['value']*100>=v.get('minimum_percent',12.5):return 'নিজের মূলধন ন্যূনতম চাহিদার ওপরে আছে।' if bn else 'Its own capital exceeds the minimum.'
-        if f.get('kind')=='figure' and v.get('metric')=='npl_ratio' and v['value']<=.03:return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে।' if bn else 'Only a small share of lending has repayment problems.'
-        if f.get('kind')=='peer' and v.get('metric')=='rating':return (f"রেটিং সংস্থা ব্যাংকটিকে {rating_words(v['grade'])} দিয়েছে।" if bn else f"Its credit rating is {v['grade']}.")
-        return sentence
-    shortened=[];said=set()
-    for s,ids in lines:
-        # The model may word one fact twice; the short form would then repeat exactly.
-        if ids and set(ids)<=said:continue
-        said.update(ids);shortened.append((short(s,ids),ids))
-    lines=shortened
-    required=set(recommended(c.last_intent,c,registry,facts,key));keep={i for name in required for i in registry[name].fact_ids}
-    # A dated result takes the place of the plain capital sentence when room is short.
-    interim={i for _,ids in lines for i in ids if facts.get(i,{}).get('kind')=='profile_detail'}
-    if interim:keep={i for i in keep if facts[i].get('values',{}).get('metric')!='crar'}|interim
-    index=len(lines)-1
-    while index>0 and not fits(lines):
-        if not set(lines[index][1])&keep:lines.pop(index)
-        index-=1
-    return lines
 
 def matches(v,months):
     return months in v['tenor_options'] if v.get('tenor_options') else v.get('tenor_min_months') is not None and v['tenor_min_months']<=months<=v['tenor_max_months']
@@ -398,7 +386,7 @@ def recommended(intent,c,registry,facts,key):
     if intent=='bank_profile' and 'asked:founded' in registry:return ['asked:founded']+(['asked:founder'] if 'asked:founder' in registry else [])
     if intent=='bank_profile':return ['gap:profile'] if 'gap:profile' in registry else available([f for f in current if f['kind']=='profile'])[:3]
     if intent in {'bank_figures','bank_reasons'}:
-        if intent=='bank_figures' and 'asked:figure' in registry:return [name for name in ('asked:figure','asked:interim','asked:meaning','asked:change') if name in registry]
+        if intent=='bank_figures' and 'asked:figure' in registry:return [name for name in ('asked:figure','asked:previous','asked:interim','asked:by','asked:risk','asked:capital','asked:meaning','asked:change','asked:guess') if name in registry]
         values=[f for f in current if f['kind']=='figure' and f['fact_id'] not in c.spoken_fact_ids]
         if intent=='bank_figures':return ['value:'+f['fact_id'] for f in values][:3]
         return available(values)[:3]
@@ -409,13 +397,14 @@ def recommended(intent,c,registry,facts,key):
         matching=[f for f in offers if c.tenor is None or matches(f['values'],c.tenor)]
         selected=matching or offers
         if c.product=='card':
-            selected=[f for f in selected if f['values']['attribute']=='annual_fee' and (not c.network or f['values']['network']==c.network) and (not c.tier or f['values']['tier']==c.tier)]
+            selected=[f for f in selected if f['values']['attribute']==('late_fee' if 'meta:late' in registry else 'annual_fee') and (not c.network or f['values']['network']==c.network) and (not c.tier or f['values']['tier']==c.tier)]
             # Staff, co-brand and flexi variants stay on the card list, not in the answer.
             selected=[f for f in selected if f['values'].get('variant')=='main'] or selected
             return available(selected)[:6]+(['note:waiver'] if 'note:waiver' in registry else [])
-        if c.product in {'fdr','dps'}:selected=sorted(selected,key=deposit_order)
+        if c.product in {'fdr','dps','savings'}:selected=sorted(selected,key=deposit_order)
         return (['gap:term'] if 'gap:term' in registry else [])+available(selected)[:8]
     if intent=='compare':
+        if 'cmp:0' in registry:return [name for name in registry if name.startswith('cmp:')]
         if 'gap:term' in registry:return ['gap:term']+recommended('service_detail',c,registry,facts,key)[1:3]
         return ['row:'+str(i)+'.offer' for i in range(4) if 'row:'+str(i)+'.offer' in registry]+[name for name in registry if name.startswith('gap:compare:')]
     if intent=='insurance':return available([f for f in current or list(facts.values()) if f['kind']=='insurance'])[:1]
@@ -517,6 +506,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     initial=context.conversation or Conversation(institution_id=context.bank_id,language=context.ui_lang)
     id,memory=await call(db,lambda owned:load(owned,initial.conversation_token))
     c=Conversation.model_validate(memory.get('conversation') or initial.model_dump()).model_copy(update={'language':context.ui_lang})
+    if is_banglish(text):c=c.model_copy(update={'language':'bn'})
     if memory.get('protocol')!=2:
         memory={k:v for k,v in memory.items() if k not in {'last_result','pending_reply','pending_facts','last_next'}}
         memory['last_turns']=[]
@@ -524,6 +514,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     safe=redact_user(text);selected=exact_choice(safe,c,memory,choice)
     if memory.get('pending_reply') and re.fullmatch(r'হ্যাঁ|জি|yes|yeah',safe.strip(' .!?।'),re.I):selected='more'
     if selected=='yes' and memory.get('pending_reply'):selected='more'
+    # "হ্যাঁ" answers a "did you mean" question with the bank it offered first.
+    if memory.get('clarify_candidates') and not selected and re.fullmatch(r'হ্যাঁ|জি|yes|yeah|ok',safe.strip(' .!?।'),re.I):selected='bank_1'
     if selected=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
     if selected=='more' and memory.get('pending_reply'):
         from ilma_api.human_checker import sentences
@@ -560,6 +552,11 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     r,c,packs,comparisons,registry,facts=await call(db,lambda owned:prepare(owned,safe,c,banks,forced,resolved))
     trace.append(dict(stage='FACTS',model='database',ms=round((time.monotonic()-facts_started)*1000),status='ok'))
     if r.intent=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
+    blocked=None if selected else answers.refusal(text,c.language=='bn',any(b['confidence']>=.9 for b in r.candidates))
+    if blocked:
+        memory.pop('clarify_candidates',None)
+        result=render(controls('out_of_scope',c,blocked[0],blocked[1],['ask_bank','end'] if blocked[1] else []),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
     from ilma_api.other_banks import find_other_bank
     unknown=find_other_bank(safe)
     if unknown:
@@ -577,10 +574,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         return await finish(result,safe,id,memory,db,started)
     if r.intent=='bank_awards' and not selected:
         # Awards are answered by code from sourced rows; the model never names them.
-        lines,award_facts=await call(db,lambda owned:award_answer(owned,c,registry))
+        lines,award_facts=await call(db,lambda owned:award_answer(owned,c,registry,facts))
         question,buttons=next_steps('bank_awards',c,id)
         a=controls('bank_awards',c,' '.join(t for t,_ in lines),question,buttons).model_copy(update={'used_fact_ids':[f for _,ids in lines for f in ids],'sentence_fact_ids':[ids for _,ids in lines]})
-        result=render(a,c,award_facts,trace,'code')
+        result=render(a,c,[*award_facts,*[f for f in facts.values() if any(f['fact_id'] in ids for _,ids in lines)]],trace,'code')
         return await finish(result,safe,id,memory,db,started)
     # Persist code-resolved context before a paid wait, so interrupting a new
     # bank request cannot restore the previous bank on the next question.
@@ -594,7 +591,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     model=None;fallback_reason=None;repaired=[]
     # Every sentence of these answers is a stored value, so code writes them: each
     # rephrasing of a question then gets the same facts in the same order.
-    code_owned=bool(r.product) and (forced or r.intent)=='service_detail' or (forced or r.intent)=='bank_figures' and 'asked:figure' in registry or (forced or r.intent)=='bank_profile' and 'asked:founded' in registry
+    code_owned=bool(r.product) and (forced or r.intent)=='service_detail' or (forced or r.intent)=='bank_figures' and 'asked:figure' in registry or (forced or r.intent)=='bank_profile' and 'asked:founded' in registry or (forced or r.intent) in {'bank_overview','bank_condition'} and not r.requested_metric or (forced or r.intent)=='bank_history' and any(f['kind']=='history' and f['institution_id']==c.institution_id for f in facts.values()) or (forced or r.intent)=='compare' and 'cmp:0' in registry
+    # Written by code or by the model, an answered question counts the same.
+    if not selected and code_owned:await call(db,lambda owned:consume_question(owned,watch_identity or device_hash or 'human-anonymous'))
     if not selected and not code_owned:
         payload,decode=packet(r,c,memory,registry,facts,id)
         if r.intent in {'bank_overview','bank_condition'} and not r.correction:
@@ -656,7 +655,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     c=c.model_copy(update={'last_intent':intent})
     bn=c.language=='bn';question,buttons=next_steps(intent,c,id);lines=[]
     controls_map={
-      'advice_request':('কোন ব্যাংকে টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদ পাশাপাশি বোঝাতে পারি।','That decision is yours; I do not give advice. I can explain bank conditions and rates side by side.'),
+      'advice_request':('কোথায় টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি বিনিয়োগের পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদের হার পাশাপাশি বুঝিয়ে দিতে পারি।','That decision is yours; I do not give investment advice. I can explain bank conditions and rates side by side.'),
       'best_bank':('কোন ব্যাংক বেছে নেবেন তা আপনার সিদ্ধান্ত। আমি প্রকাশিত তথ্য পাশাপাশি বুঝিয়ে বলতে পারি।','Choosing a bank is your decision. I can explain the published information side by side.'),
       'out_of_scope':('আমি ব্যাংকের তথ্য নিয়ে সাহায্য করতে পারি।','I can help with bank information.'),
       'unclear':('প্রশ্নটা একটু অন্যভাবে বলবেন?' if model and not model.error else 'এখন উত্তর সাজাতে সমস্যা হচ্ছে।','Could you ask that another way?' if model and not model.error else 'I am having trouble preparing that answer right now.'),
@@ -728,21 +727,26 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     # A coverage note answers only a question that asked for that detail.
     if intent in {'bank_overview','bank_condition','bank_reasons','bank_figures','bank_history'} and len(lines)>1:
         lines=[(s,ids) for s,ids in lines if not (ids and all(facts.get(fid,{}).get('kind')=='coverage' for fid in ids))] or lines
-    # The opening is for general questions; "মূলধন কেমন?" answers the metric directly.
-    if intent in {'bank_overview','bank_condition'} and not r.requested_metric and c.institution_id and c.institution_id not in memory.get('introduced_banks',[]):
-        intro,extra=await call(db,lambda owned:introduction(owned,c,registry,facts))
-        if intro:
-            founded={fid for _,ids in intro for fid in ids}
-            lines=intro+[(s,ids) for s,ids in lines if not set(ids)&founded]
+    if intent in {'bank_overview','bank_condition'} and c.institution_id and registry.get('bank:'+str(c.institution_id)):
+        name=registry['bank:'+str(c.institution_id)].text;whose=polish(name+'ের ',{},True) if bn else name+"'s "
+        status=bank_status(facts,c.institution_id);intro=[]
+        # The opening is for general questions; "মূলধন কেমন?" answers the metric directly.
+        if not r.requested_metric and c.institution_id not in memory.get('introduced_banks',[]):
+            intro,extra=await call(db,lambda owned:introduction(owned,c,registry,facts))
             facts.update(extra)
-        memory['introduced_banks']=[*memory.get('introduced_banks',[]),c.institution_id][-20:]
-    if intent in {'bank_overview','bank_condition'}:
+            memory['introduced_banks']=[*memory.get('introduced_banks',[]),c.institution_id][-20:]
+        award=any(facts.get(i,{}).get('kind')=='award' for _,ids in intro for i in ids)
         interim=interim_line(details(facts,c.institution_id),bn)
-        if interim:
-            # The dated result is the news here, so it replaces a founding-year opening and follows the status.
-            lines=[row for row in lines if not any(facts.get(i,{}).get('kind')=='profile' for i in row[1])]
-            lines=[lines[0],interim,*lines[1:]]
-        lines=fit_overview(lines,question,c,registry,facts,id)
+        if interim and not award:intro=[]
+        lines=answers.overview_lines(name,whose,status,facts,c.institution_id,bn,intro,award,interim)
+        if status=='no_data' and re.search(r'নিরাপদ|\bsafe\b',safe,re.I):
+            lines=[((f'{name} নিরাপদ কি না তা বলতে পারছি না, কারণ এর অবস্থা যাচাই করার মতো নিরীক্ষিত তথ্য আমাদের কাছে নেই।' if bn else f'{name}: I cannot say whether it is safe, because we have no audited information to assess its condition.'),[])]
+    if intent=='bank_history' and code_owned:
+        name=registry['bank:'+str(c.institution_id)].text
+        lines=answers.history_lines(name,polish(name+'ের ',{},True) if bn else name+"'s ",[f for f in facts.values() if f['kind']=='history' and f['institution_id']==c.institution_id],bn)
+    if intent=='insurance' and bank_status(facts,c.institution_id)=='high':
+        loans=answers.figure(facts,c.institution_id,'npl_ratio')
+        if loans:lines.append(((f"মনে রাখবেন, এই ব্যাংকের ঝুঁকি বেশি। খেলাপি ঋণ {answers.percent(loans['values']['value'])}%, {answers.on(loans['values']['period_end'],True)}-এর হিসাবে।" if bn else f"Remember, this bank is high risk. Bad loans were {answers.percent(loans['values']['value'])}% as of {answers.on(loans['values']['period_end'],False)}."),[loans['fact_id']]))
     # Never narrate old protection, raw incident headlines or unbounded paragraphs.
     if not r.direct_protection:lines=[(s,ids) for s,ids in lines if not PROTECTION_WORDS.search(s)]
     lines=[(polish(re.sub(r'([।.?])\1+',r'\1',s),registry,bn),ids) for s,ids in lines]
@@ -777,7 +781,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 lines[i]=(sentence,ids)
     if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])
     if intent=='service_detail':lines=date_once(lines)
-    chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures'})
+    chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))
     a=controls(intent,c,' '.join(s for s,_ in chosen),question,buttons).model_copy(update={'used_fact_ids':used,'sentence_fact_ids':[ids for _,ids in chosen]})

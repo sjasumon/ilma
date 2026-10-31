@@ -154,9 +154,16 @@ def additional_peer_context(db,peers):
     return result
 
 
+def stored_rate(row):
+    """Some sheets store a rate only as text such as "8.00%"."""
+    if row.value_num is not None:return float(row.value_num)
+    found=re.fullmatch(r'\s*(\d+(?:\.\d+)?)\s*%\s*',row.value_text or '') if row.unit=='pct_year' else None
+    return float(found[1]) if found else None
+
+
 def offer_item(row,bank,asked_term=None):
     info=terms(row);selected=nearest_term(row,asked_term);age=(date.today()-row.doc_date).days
-    number=float(row.value_num) if row.value_num is not None else None
+    number=stored_rate(row)
     en=f'{bank.name_en}: {row.product}; {number if number is not None else row.value_text} {row.unit}; {row.condition}; schedule {row.doc_date}'
     bn=f'{bank.name_bn}: {row.product}; {format_number(number,True) if number is not None else row.value_text} {row.unit}; {row.condition}; হারতালিকা {format_date(row.doc_date,True)}'
     entry=item(row.offer_id,bank.id,'service',bn,en,dict(source_url=row.source_url,source_title=row.product,page=row.page,quote=row.quote,published_at=str(row.doc_date),condition=row.condition),product=row.product,product_type=row.product_type,rate=number,unit=row.unit,basis=row.basis,tenor_months=row.tenor_months,selected_tenor=selected,variant=row.variant,asked_tenor=asked_term,nearest=asked_term is not None and not matches_term(row,asked_term),network=row.network,tier=row.tier,stale=bool(row.stale or age>365),dated=age>90,doc_date=str(row.doc_date),**info)
@@ -175,7 +182,7 @@ def service_facts(db,id,product=None,tenor=None,basis=None,network=None,tier=Non
         if network:query=query.filter_by(network=network)
         if tier:query=query.filter_by(tier=tier)
     rows=query.order_by(ServiceOffer.product_type,ServiceOffer.doc_date.desc(),ServiceOffer.product,ServiceOffer.offer_id).all()
-    rows=[r for r in rows if r.value_num is not None and r.attribute in {'rate','interest_rate','annual_fee','rate_min','sms_alert_fee','maintenance_fee_half_yearly'}]
+    rows=[r for r in rows if stored_rate(r) is not None and r.attribute in {'rate','interest_rate','annual_fee','late_fee','rate_min','rate_max','sms_alert_fee','maintenance_fee_half_yearly'}]
     if tenor is not None and product in {'fdr','dps'}:rows=[r for r in rows if matches_term(r,tenor)]
     if include_all:return [offer_item(r,bank,tenor) for r in rows]
     if product:return [offer_item(r,bank,tenor) for r in rows[:18]]

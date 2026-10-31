@@ -87,7 +87,7 @@ def test_quota_precedes_model(db):
         model=AsyncMock()
         with patch('ilma_api.human_turn.generate',model),patch('ilma_api.voice_pipeline.consume_question',side_effect=RuntimeError('quota')):
             with pytest.raises(RuntimeError,match='quota'):
-                await run('Any past events?',VoiceContext(agent=True,ui_lang='en'),BANKS,db)
+                await run('Any past events?',VoiceContext(agent=True,ui_lang='en',conversation=Conversation(institution_id=1,language='en')),BANKS,db)
         model.assert_not_awaited()
     asyncio.run(scenario())
 

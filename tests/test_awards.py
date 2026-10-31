@@ -47,16 +47,16 @@ def test_repeated_source_rows_are_stored_once(db):
 
 def test_strong_bank_introduction_names_founding_year_and_most_recent_confirmed_award(db):
     lines,extra=introduction(db,Conversation(institution_id=1,language='bn'),registry(1,'পরীক্ষা ইস্টার্ন'),facts(1,'strong','1992'))
-    assert [s for s,_ in lines]==['পরীক্ষা ইস্টার্ন যাত্রা শুরু করে ১৯৯২ সালে, আর ২০২৫ সালে পরীক্ষা ম্যাগাজিন একে টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।']
-    assert lines[0][1]==['profile:1','award:a-new']
+    assert lines[0][0].startswith('পরীক্ষা ইস্টার্নকে ২০২৫ সালে') and lines[1][0]=='তবে পুরস্কার ব্যাংকের নিরাপত্তার প্রমাণ নয়।'
+    assert lines[0][1]==['award:a-new']
     assert list(extra)==['award:a-new'] and 'নিরাপত্তার প্রমাণ নয়' in extra['award:a-new']['text_bn']
     assert not any(word in s for s,_ in lines for word in ('তাই','নিরাপদ'))
 
 def test_introduction_names_the_bank_in_the_award_when_no_founding_year(db):
     lines,_=introduction(db,Conversation(institution_id=1,language='en'),registry(1,'Synthetic Eastern'),facts(1,'strong'))
-    assert [s for s,_ in lines]==['Synthetic Eastern was named Best Bank in Testland by Synthetic Magazine in 2025.']
+    assert lines[0][0]=='Synthetic Eastern was named Best Bank in Testland by Synthetic Magazine in 2025.' and lines[1][0]=='An award is not proof that a bank is safe.'
     bn,_=introduction(db,Conversation(institution_id=1,language='bn'),registry(1,'পরীক্ষা ইস্টার্ন'),facts(1,'strong'))
-    assert [s for s,_ in bn]==['পরীক্ষা ইস্টার্নকে ২০২৫ সালে পরীক্ষা ম্যাগাজিন টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।']
+    assert bn[0][0]=='পরীক্ষা ইস্টার্নকে ২০২৫ সালে পরীক্ষা ম্যাগাজিন টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।'
 
 @pytest.mark.parametrize('status',['high','no_data','watch'])
 def test_no_introduction_award_unless_the_bank_is_strong(db,status):
@@ -64,11 +64,11 @@ def test_no_introduction_award_unless_the_bank_is_strong(db,status):
 
 def test_direct_award_question_lists_verified_awards_and_warns_for_high_risk(db,monkeypatch):
     monkeypatch.setattr('ilma_api.report_card.get_institution_report_card',lambda session,id:{'status':{'code':'high' if id==2 else 'strong'}})
-    lines,items=award_answer(db,Conversation(institution_id=1,language='bn'),registry(1,'পরীক্ষা ইস্টার্ন'))
-    assert [s for s,_ in lines]==['পরীক্ষা ইস্টার্নকে ২০২৫ সালে পরীক্ষা ম্যাগাজিন টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।','২০২৩ সালে পরীক্ষা ম্যাগাজিন একে টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।']
+    lines,items=award_answer(db,Conversation(institution_id=1,language='bn'),registry(1,'পরীক্ষা ইস্টার্ন'),{})
+    assert [s for s,_ in lines]==['পরীক্ষা ইস্টার্নকে ২০২৫ সালে পরীক্ষা ম্যাগাজিন টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।','২০২৩ সালে পরীক্ষা ম্যাগাজিন একে টেস্টল্যান্ডের সেরা ব্যাংক বলেছে।','তবে পুরস্কার ব্যাংকের নিরাপত্তার প্রমাণ নয়।']
     assert items[0]['text_bn'].startswith('স্বীকৃতি: পরীক্ষা পুরস্কার: টেস্টল্যান্ডের সেরা ব্যাংক — ')
     assert [i['fact_id'] for i in items]==['award:a-new','award:a-old']
-    risky,_=award_answer(db,Conversation(institution_id=2,language='bn'),registry(2,'পরীক্ষা ইসলামী'))
+    risky,_=award_answer(db,Conversation(institution_id=2,language='bn'),registry(2,'পরীক্ষা ইসলামী'),{})
     assert risky[-1][0].startswith('তবে পুরস্কার ব্যাংকের এখনকার অবস্থা বোঝায় না।')
 
 def test_award_question_resolves_to_awards_intent():

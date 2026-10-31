@@ -10,6 +10,7 @@ VERIFIED=('awarder_confirmed','independent_report')
 DIGITS=str.maketrans('0123456789','০১২৩৪৫৬৭৮৯')
 
 
+IFC_PURPOSE=(', বাণিজ্য অর্থায়নের জন্য',' for trade finance')
 def rows(db,bank_id,confirmations=VERIFIED):
     query=db.query(BankAward,Awarder).join(Awarder,Awarder.awarder_id==BankAward.awarder_id).filter(
         BankAward.institution_id==bank_id,BankAward.award_year.isnot(None),BankAward.hide_in_app.is_(False),BankAward.paid_flag!='likely_paid',BankAward.confirmation.in_(confirmations))
@@ -46,7 +47,7 @@ def phrase(award,awarder,language,subject=None):
         start=f"{subject}কে {when}" if subject else f"{when} একে"
         if medal:return f"{start} {name} বিভাগে {medal[0]}পদক দিয়েছে।"
         if 'সম্মাননা' in name:return f"{start} {name} দিয়েছে।"
-        if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{start} {name} বলেছে।"
+        if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{start} {name} বলেছে{IFC_PURPOSE[0] if getattr(awarder,'awarder_id','')=='ifc' and 'বাণিজ্য' not in name else ''}।"
         return f"{start} {name} পুরস্কার দিয়েছে।"
     name=title(award.award_name_en)
     if subject:

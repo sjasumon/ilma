@@ -35,7 +35,7 @@ def product(v,bn):
     name=re.sub(r'\s+PLC\.?','',v.get('product',''),flags=re.I)
     # An English answer drops the Bangla half of a two-language product title.
     if not bn:return re.sub(r'\s+Account$','',re.sub(r'\s*[–—-]?\s*[\u0980-\u09ff]+','',name)).strip()
-    for pattern,label in [('Monthly Benefit Plus','প্রবীণদের মান্থলি বেনিফিট প্লাস এফডিআর'),('আঁচল','আঁচল ডিপিএস'),('DPS+','ডিপিএস প্লাস'),('Insurance Backed','ইন্স্যুরেন্স ব্যাকড ডিপিএস'),('General DPS','সাধারণ ডিপিএস'),('Women Confidence','নারীদের কনফিডেন্স ডিপিএস'),('Child Future','শিশুদের ফিউচার প্ল্যান ডিপিএস'),('Confidence','কনফিডেন্স ডিপিএস'),('Kotipoti','কোটিপতি ডিপিএস'),('Lakhopati','লাখপতি স্কিম'),('Monthly Savings Scheme','মাসিক সঞ্চয় স্কিম'),('Extra Value','এক্সট্রা ভ্যালু এফডিআর')]:
+    for pattern,label in [('Junior Flexi','জুনিয়র ফ্লেক্সি ডিপিএস'),('MTB Millionaire','মিলিয়নেয়ার প্ল্যান'),('NCC Double Benefit','ডাবল বেনিফিট স্কিম'),('NCC Millionaire','মিলিয়নেয়ার স্কিম'),('Porijon','প্রাইম পরিজন সেভিংস অ্যাকাউন্ট'),('Prime Savings','প্রাইম সেভিংস অ্যাকাউন্ট'),('High Earning','হাই আর্নিং অ্যাকাউন্ট'),('50 Plus','ফিফটি প্লাস সেভিংস'),('Women’s Savings','নারীদের সেভিংস'),('Campus','স্টুডেন্টদের ক্যাম্পাস অ্যাকাউন্ট'),('Regular/TARA','সাধারণ সঞ্চয়ী হিসাব'),('General Savings','সাধারণ সঞ্চয়ী হিসাব'),('Regular Savings','সাধারণ সঞ্চয়ী হিসাব'),('Senior','প্রবীণদের সঞ্চয়ী হিসাব'),('Future Star','ফিউচার স্টার সেভিংস'),('TARA Homemakers','তারা হোমমেকার্স সেভিংস'),('Probashi','প্রবাসী সেভিংস'),('MTB Inspire','এমটিবি ইন্সপায়ার'),('NCC NXT','এনসিসি এনএক্সটি সেভিংস'),('Golden','গোল্ডেন সেভিংস'),('Monthly Benefit Plus','প্রবীণদের মান্থলি বেনিফিট প্লাস এফডিআর'),('আঁচল','আঁচল ডিপিএস'),('DPS+','ডিপিএস প্লাস'),('Insurance Backed','ইন্স্যুরেন্স ব্যাকড ডিপিএস'),('General DPS','সাধারণ ডিপিএস'),('Women Confidence','নারীদের কনফিডেন্স ডিপিএস'),('Child Future','শিশুদের ফিউচার প্ল্যান ডিপিএস'),('Confidence','কনফিডেন্স ডিপিএস'),('Kotipoti','কোটিপতি ডিপিএস'),('Lakhopati','লাখপতি স্কিম'),('Monthly Savings Scheme','মাসিক সঞ্চয় স্কিম'),('Extra Value','এক্সট্রা ভ্যালু এফডিআর')]:
         if pattern.casefold() in name.casefold():return label
     if v.get('product_type')=='card':return pronounce(' '.join(TIERS.get(x,x) for x in dict.fromkeys((v.get('network'),v.get('tier'),'কার্ড')) if x),'bn')
     return PRODUCTS.get(v.get('product_type'),('এই সেবা',name))[0]
@@ -78,7 +78,7 @@ def rating_words(grade):
     found=re.fullmatch(r'([A-D])(\1{0,2})([+-]?)',grade or '')
     if not found:return grade
     count=1+len(found[2]);letter={'A':'এ','B':'বি','C':'সি','D':'ডি'}[found[1]]
-    return ' '.join(x for x in (('','ডাবল','ট্রিপল')[count-1],letter,{'+':'প্লাস','-':'মাইনাস','':''}[found[3]]) if x)
+    return ' '.join(x for x in (('' if found[3] else 'সিঙ্গেল','ডাবল','ট্রিপল')[count-1],letter,{'+':'প্লাস','-':'মাইনাস','':''}[found[3]]) if x)
 
 
 GENERIC=re.compile(r'\d|\bmonths?\b|\byears?\b|^fixed deposit|^retail|^term deposit',re.I)
@@ -113,8 +113,9 @@ def fact_clause(f,language,meaning=False):
         return 'নিজের মূলধন ন্যূনতম চাহিদার নিচে আছে, যা চিন্তার বিষয়' if bn else 'its own capital is below the minimum, which is concerning'
     if metric=='npl_ratio' and meaning:
         if v['value']<=.03:return 'দেওয়া ঋণের খুব সামান্য অংশ নিয়ে পরিশোধের সমস্যা হচ্ছে, যা ভালো লক্ষণ' if bn else 'only a small share of lending has repayment problems, a positive sign'
-        if v['value']>=.15:return 'ঋণের বড় একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা বড় চিন্তার বিষয়' if bn else 'repayment problems affect a large part of its lending, a serious concern'
-        return 'ঋণের একটি অংশ ফেরত পেতে সমস্যা হচ্ছে, যা নজরে রাখা দরকার' if bn else 'repayment problems affect part of its lending and deserve attention'
+        # The figure and its year are stated, with no judgement phrase beside them.
+        year=str(v.get('period_end') or '')[:4];x=number(Decimal(str(v['value']))*100)
+        return (f'খেলাপি ঋণ {x}%'+(f', {year} সালের হিসাবে' if year else '')) if bn else (f'bad loans are {x}%'+(f', as of {year}' if year else ''))
     if kind=='figure' and metric=='crar':return f'মূলধনের অনুপাত {number(Decimal(str(v["value"]))*100)}%, ন্যূনতম চাহিদা {number(v.get("minimum_percent",12.5))}%' if bn else f'The capital ratio is {number(Decimal(str(v["value"]))*100)}%, against a minimum of {number(v.get("minimum_percent",12.5))}%'
     if kind=='figure' and metric=='npl_ratio':return f'মোট ঋণের {number(Decimal(str(v["value"]))*100)}% খেলাপি হয়েছে' if bn else f'The problem-loan share is {number(Decimal(str(v["value"]))*100)}% of total lending'
     if kind=='figure' and metric=='net_profit':
@@ -143,7 +144,7 @@ def fact_clause(f,language,meaning=False):
         return f'{when} অনুযায়ী {label} ছিল {v["value"]}' if bn else f'reported {v["value"]} {label.lower()} as of {when}'
     if kind=='service':
         if not unit_label(v['unit'],bn):return 'এই সেবার বিস্তারিত শর্ত কার্ডে আছে' if bn else 'The detailed terms of this service are on the card'
-        label=('বার্ষিক ফি' if v.get('attribute')=='annual_fee' else 'আনুমানিক মুনাফা' if v.get('basis')=='islamic' else 'সুদ') if bn else ('annual fee' if v.get('attribute')=='annual_fee' else 'provisional profit' if v.get('basis')=='islamic' else 'interest')
+        label=('বার্ষিক ফি' if v.get('attribute')=='annual_fee' else 'লেট পেমেন্ট ফি' if v.get('attribute')=='late_fee' else 'আনুমানিক মুনাফা' if v.get('basis')=='islamic' else 'সুদ') if bn else ('annual fee' if v.get('attribute')=='annual_fee' else 'late payment fee' if v.get('attribute')=='late_fee' else 'provisional profit' if v.get('basis')=='islamic' else 'interest')
         unit=unit_label(v['unit'],bn)
         when=term(v,bn,v.get('selected_tenor') if v.get('asked_tenor') else None)
         text=f'{product(v,bn)}ে '+(when+' মেয়াদে ' if when else '')+f'{label} {number(v["rate"])}{unit}' if bn else english_offer(v,when,label,number(v['rate'])+unit)
@@ -171,17 +172,24 @@ def fact_clause(f,language,meaning=False):
     return f.get('text_bn' if bn else 'text_en','').replace('মধ্যমান','তুলনাযোগ্য ব্যাংকের সাধারণ মান')
 
 
+SHORT_NAMES={'ন্যাশনাল ক্রেডিট অ্যান্ড কমার্স ব্যাংক':'এনসিসি ব্যাংক','National Credit and Commerce Bank':'NCC Bank','সাউথ বাংলা এগ্রিকালচার অ্যান্ড কমার্স ব্যাংক':'সাউথ বাংলা ব্যাংক','South Bangla Agriculture and Commerce Bank':'South Bangla Bank','ইসলামী ব্যাংক বাংলাদেশ':'ইসলামী ব্যাংক','Islami Bank Bangladesh':'Islami Bank','দ্য সিটি ব্যাংক':'সিটি ব্যাংক'}
+def spoken_name(name):
+    """Long registered names stay on cards; speech uses the name people say."""
+    name=re.sub(r'\s*(?:PLC\.?|পিএলসি)$','',name,flags=re.I)
+    return SHORT_NAMES.get(name,name)
+
+
 def build_registry(packs,comparison,language,insurance=False):
     bn=language=='bn';registry={};facts={f['fact_id']:f for p in packs for f in p['facts']}
     facts.update((f['fact_id'],f) for f in comparison)
     for p in packs:
         if p.get('bank'):
-            b=p['bank'];registry['bank:'+str(b['id'])]=FactToken(re.sub(r'\s*(?:PLC\.?|পিএলসি)$','',b['name_bn' if bn else 'name_en'],flags=re.I),(),b['id'],'bank')
+            b=p['bank'];registry['bank:'+str(b['id'])]=FactToken(spoken_name(b['name_bn' if bn else 'name_en']),(),b['id'],'bank')
     for f in comparison:
         key='bank:'+str(f['institution_id'])
         if key not in registry:
             name=f.get('bank_name_bn' if bn else 'bank_name_en')
-            if name:registry[key]=FactToken(re.sub(r'\s*(?:PLC\.?|পিএলসি)$','',name,flags=re.I),(),f['institution_id'],'bank')
+            if name:registry[key]=FactToken(spoken_name(name),(),f['institution_id'],'bank')
     for fid,f in facts.items():
         if f['kind']=='insurance' and not insurance or f['kind']=='profile_detail':continue
         if f['kind']=='peer' and not material(f):continue

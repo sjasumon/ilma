@@ -9,7 +9,7 @@ from ilma_api.voice_agent import Conversation
 from ilma_api.voice_text import VoiceContext
 from ilma_api.human_resolver import resolve
 from ilma_api.human_tokens import fact_clause,term,product
-from ilma_api.human_turn import deposit_order,date_once,fit_overview,paginate,profit_tokens,recommended,run,service_lines
+from ilma_api.human_turn import deposit_order,date_once,paginate,recommended,run,service_lines
 from ilma_api.human_tokens import FactToken
 from ilma_api.db import Fact,Source
 from ilma_api.human_facts import annual_profit_change
@@ -76,29 +76,29 @@ def line(row,text='একটি হার।'):
 
 def test_rate_question_opens_with_how_rates_vary():
     rows=[rate('a','Plain',12,7),rate('b','Plain',36,7.5)];facts={r['fact_id']:r for r in rows}
-    r=SimpleNamespace(product='dps',tenor=None)
+    r=SimpleNamespace(product='dps',tenor=None,follow=False)
     out=service_lines('ডিপিএসের সুদ কত',[line(rows[0]),line(rows[1])],context(),r,registry(),facts)
-    assert out[0][0]=='টেস্ট ব্যাংকের ডিপিএসের সুদ মেয়াদের ওপর নির্ভর করে।' and len(out)==3
+    assert out[0][0]=='টেস্ট ব্যাংকের ডিপিএসের সুদ মেয়াদের ওপর নির্ভর করে।' and len(out)==2
 
 def test_range_comes_from_the_stored_rows_never_a_wider_market_range():
     rows=[rate('a','General DPS',12,7.25),rate('b','Insurance Backed DPS',60,8)];facts={r['fact_id']:r for r in rows}
-    out=service_lines('ডিপিএসের সুদ কত',[line(rows[0]),line(rows[1])],context(),SimpleNamespace(product='dps',tenor=None),registry(),facts)
+    out=service_lines('ডিপিএসের সুদ কত',[line(rows[0]),line(rows[1])],context(),SimpleNamespace(product='dps',tenor=None,follow=False),registry(),facts)
     assert '7.25% থেকে 8%' in out[0][0]
 
 def test_opinion_question_declines_advice_and_still_gives_the_rates():
     rows=[rate('a','Plain',12,7),rate('b','Plain',36,7.5)];facts={r['fact_id']:r for r in rows}
-    out=service_lines('City Bank DPS, is it a good option',[line(rows[0]),line(rows[1])],context('en'),SimpleNamespace(product='dps',tenor=None),{'bank:1':FactToken('Test Bank',(),1,'bank')},facts)
-    assert out[0][0].startswith('That decision is yours') and len(out)>=3
+    out=service_lines('City Bank DPS, is it a good option',[line(rows[0]),line(rows[1])],context('en'),SimpleNamespace(product='dps',tenor=None,follow=False),{'bank:1':FactToken('Test Bank',(),1,'bank')},facts)
+    assert out[-1][0]=='Whether it is good or not is your decision.' and 'good option' not in ' '.join(x for x,_ in out)
 
 def test_one_rate_across_products_is_said_once_in_either_language():
     rows=[rate('a','EBL Confidence DPS',12,8),rate('b','EBL Child Future Plan DPS',36,8)];facts={r['fact_id']:r for r in rows}
-    out=service_lines('DPS rate',[line(rows[0]),line(rows[1])],context('en'),SimpleNamespace(product='dps',tenor=None),{'bank:1':FactToken('Test Bank',(),1,'bank')},facts)
+    out=service_lines('DPS rate',[line(rows[0]),line(rows[1])],context('en'),SimpleNamespace(product='dps',tenor=None,follow=False),{'bank:1':FactToken('Test Bank',(),1,'bank')},facts)
     assert out==[('Test Bank pays 8% on its EBL Confidence DPS for 1 year, EBL Child Future Plan DPS for 3 years.',['a','b'])]
 
 def test_vat_is_said_only_when_every_row_stores_it():
     fee=lambda id,condition,tier:rate(id,'Card',12,1500,kind='card',condition=condition,tier=tier,network='Visa',attribute='annual_fee')
     both=[fee('a','plus 15% VAT','Gold'),fee('b','plus 15% VAT','Classic')];one=[fee('a','plus 15% VAT','Gold'),fee('b','','Classic')]
-    answer=lambda rows:service_lines('কার্ডের ফি কত',[line(r) for r in rows],Conversation(institution_id=1,language='bn',product='card'),SimpleNamespace(product='card',tenor=None),registry(),{r['fact_id']:r for r in rows})
+    answer=lambda rows:service_lines('কার্ডের ফি কত',[line(r) for r in rows],Conversation(institution_id=1,language='bn',product='card'),SimpleNamespace(product='card',tenor=None,follow=False),registry(),{r['fact_id']:r for r in rows})
     assert 'ভ্যাট' in ' '.join(s for s,_ in answer(both)) and 'ভ্যাট' not in ' '.join(s for s,_ in answer(one))
 
 def test_a_shared_sheet_date_is_said_once():
@@ -110,10 +110,6 @@ def test_insurance_limit_wording_matches_in_both_languages():
     assert 'সর্বোচ্চ 2 লাখ টাকা পর্যন্ত' in fact_clause(f,'bn')
     assert 'Tk 2 lakh (200,000) per depositor' in fact_clause(f,'en')
 
-def test_a_very_large_bad_loan_share_is_not_called_a_part():
-    f=lambda value:dict(kind='figure',values={'metric':'npl_ratio','value':value})
-    assert 'বড় একটি অংশ' in fact_clause(f(.4966),'bn',True)
-    assert 'বড় একটি অংশ' not in fact_clause(f(.0838),'bn',True)
 
 def overview(status,*metrics):
     facts={'s':{'fact_id':'s','institution_id':1,'kind':'status','status':{'code':status},'values':{}}}
@@ -130,27 +126,12 @@ def test_a_weak_rating_does_not_replace_a_high_bad_loan_warning():
     tokens['f:p']=FactToken('x',('p',),1,'peer')
     assert 'f:n' in recommended('bank_overview',Conversation(institution_id=1,language='bn'),tokens,facts,'k')
 
-def test_award_opening_keeps_status_capital_and_loans_in_one_answer():
-    facts,tokens=overview('strong',('c','crar',.16),('n','npl_ratio',.02))
-    facts['a']={'fact_id':'a','institution_id':1,'kind':'award','values':{}}
-    long='ব্যাংকের অবস্থা অনেক শব্দে বলা হলো '*2
-    lines=[('টেস্ট ব্যাংককে ২০২৫ সালে একটি সংস্থা সেরা ব্যাংক বলেছে।',['a']),('টেস্ট ব্যাংকের '+long+'।',['s']),(long+'।',['c']),(long+'।',['n'])]
-    c=Conversation(institution_id=1,language='bn',last_intent='bank_overview')
-    out=fit_overview(lines,'আরও শুনবেন?',c,tokens,facts,'k')
-    assert [ids for _,ids in out]==[['a'],['s'],['c'],['n']]
-    assert 'ঋণের' in out[3][0] and paginate(out,'আরও শুনবেন?','bn')[1]==[]
 
 def test_a_rate_list_breaks_between_terms_only():
     text='ডিপিএসে '+', '.join(f'{n} বছরে সুদ ৭.২৫%' for n in range(1,12))+'।'
     head,tail=paginate([('সুদ মেয়াদের ওপর নির্ভর করে।',[]),(text,['a'])],'আরও শুনবেন?','bn',split=True)
     assert tail and head[1][0].endswith('%।') and tail[0][0].endswith('%।')
 
-def test_profit_answer_gives_year_and_change():
-    found={'fact_id':'p','values':{'value':9647700000.0,'period_end':'2025-12-31'}}
-    change={'fact_id':'c','institution_id':1,'kind':'figure','values':{'metric':'profit_change','value':103.76}}
-    tokens=profit_tokens(found,{'c':change},1,True)
-    assert tokens['asked:figure'].text=='নিট মুনাফা 2025 সালে প্রায় 965 কোটি টাকা'
-    assert tokens['asked:change'].text=='আগের বছরের তুলনায় মুনাফা প্রায় 104% বেড়েছে'
 
 def fact(db,id,year,value,quote,source):
     db.add(Fact(fact_id=id,institution_id=1,metric='net_profit',value=value,unit='bdt',period=str(year),period_end=date(year,12,31),source_id=source,quote=quote,basis='unknown',checked_by='agent',checked_on=date(2026,1,1)))
@@ -183,10 +164,10 @@ def test_bad_loan_share_sets_the_status_word(value,code):
     result=evaluate({'id':1,'slug':'t','type':'bank','coverage':'full'},{'facts':facts,'ratings':[{'fact_id':'r','agency':'CRISL','long_term':'AA','rated_on':date(2026,8,25),'outlook':'stable','source_info':{}}],'events':[],'rates':{},'median_12m_fdr':.08},as_of=date(2026,10,27))
     assert result.code==code
 
-def test_a_strong_bank_with_raised_bad_loans_keeps_the_warning():
-    f=dict(kind='figure',values={'metric':'npl_ratio','value':.0838})
-    assert 'নজরে রাখা দরকার' in fact_clause(f,'bn',True) and 'deserve attention' in fact_clause(f,'en',True)
-    assert 'সামান্য' not in fact_clause(f,'bn',True)
+def test_bad_loans_are_stated_as_a_figure_with_no_judgement_phrase():
+    f=dict(kind='figure',values={'metric':'npl_ratio','value':.0838,'period_end':'2025-12-31'})
+    assert fact_clause(f,'bn',True)=='খেলাপি ঋণ 8.38%, 2025 সালের হিসাবে'
+    assert fact_clause(f,'en',True)=='bad loans are 8.38%, as of 2025'
 
 def test_watch_wording_uses_the_status_word_in_both_languages():
     f=dict(kind='status',status={'code':'watch'},values={})
@@ -238,5 +219,101 @@ def test_manual_profile_rows_need_wording_but_no_link():
 
 def test_vat_is_worded_as_may_apply():
     rows=[rate(i,'Card',12,1500,kind='card',condition=condition,tier='Gold',network='Visa',attribute='annual_fee') for i,condition in (('a','plus 15% VAT'),('b','15% VAT may apply'))]
-    answer=lambda language:' '.join(s for s,_ in service_lines('card fee',[line(r) for r in rows],Conversation(institution_id=1,language=language,product='card'),SimpleNamespace(product='card',tenor=None),{'bank:1':FactToken('Test',(),1,'bank')},{r['fact_id']:r for r in rows}))
+    answer=lambda language:' '.join(s for s,_ in service_lines('card fee',[line(r) for r in rows],Conversation(institution_id=1,language=language,product='card'),SimpleNamespace(product='card',tenor=None,follow=False),{'bank:1':FactToken('Test',(),1,'bank')},{r['fact_id']:r for r in rows}))
     assert '15% ভ্যাট যোগ হতে পারে' in answer('bn') and '15% VAT may apply' in answer('en')
+
+
+from ilma_api import human_answers as answers
+from ilma_api.human_resolver import is_banglish
+
+BANK_ASIA=[*BANKS,dict(id=48,slug='sbacbank',name_bn='সাউথ বাংলা এগ্রিকালচার অ্যান্ড কমার্স ব্যাংক পিএলসি',name_en='South Bangla Agriculture and Commerce Bank PLC',aliases=[],type='bank',coverage='full'),dict(id=18,slug='dutchbangl',name_bn='ডাচ্-বাংলা ব্যাংক পিএলসি',name_en='Dutch-Bangla Bank PLC',aliases=[],type='bank',coverage='full')]
+
+@pytest.mark.parametrize('text',['সাউথ বাংলা ব্যাংকের অবস্থা কেমন?','Is South Bangla Bank safe?','এসবিএসি ব্যাংকের খেলাপি ঋণ কত?'])
+def test_south_bangla_is_never_dutch_bangla(text):
+    assert resolve(text,Conversation(),BANK_ASIA).bank_id==48
+
+def test_late_fee_is_its_own_fee():
+    assert resolve('ক্রেডিট কার্ডের লেট ফি কত',Conversation(institution_id=1),BANKS).fee=='late_fee'
+    assert resolve('credit card annual fee',Conversation(institution_id=1),BANKS).fee=='annual_fee'
+
+def test_follow_up_keeps_the_topic_at_a_new_bank():
+    r=resolve('And at Eastern Bank?',Conversation(institution_id=1,product='savings'),BANKS)
+    assert (r.bank_id,r.product,r.intent)==(2,'savings','service_detail')
+
+def test_deposit_profit_rate_is_not_the_banks_profit():
+    r=resolve('এফডিআরের মুনাফার হার কত',Conversation(institution_id=1),BANKS)
+    assert r.product=='fdr' and r.intent=='service_detail'
+
+def test_past_problem_words_route_to_history():
+    assert resolve('আগে কোনো ঝামেলা হয়েছে?',Conversation(institution_id=1),BANKS).intent=='bank_history'
+
+def test_rating_question_is_a_figure():
+    assert resolve('ক্রেডিট রেটিং কী?',Conversation(institution_id=1),BANKS).intent=='bank_figures'
+
+@pytest.mark.parametrize('text,expected',[('mtb er dps koto',True),('bank asia er savings rate koto',True),('What is the DPS at MTB?',False),('এমটিবি কেমন',False)])
+def test_banglish_is_recognised(text,expected):
+    assert is_banglish(text) is expected
+
+@pytest.mark.parametrize('text,word',[('আমার একাউন্ট নম্বর 12345678, ব্যালেন্স কত?','ব্যালেন্স'),('My PIN is 1234, can you check my balance?','পিন'),('Who won the cricket match yesterday?','খেলার')])
+def test_refusals_never_repeat_what_was_said(text,word):
+    body,_=answers.refusal(text,True)
+    assert word in body and '1234' not in body
+
+def test_an_ordinary_minimum_balance_question_is_not_refused():
+    assert answers.refusal('মিনিমাম ব্যালেন্স কত',True) is None
+
+def test_a_match_word_beside_a_named_bank_is_not_refused():
+    assert answers.refusal('does this match Prime Bank rates',False,True) is None
+
+def fig(metric,value,**extra):
+    return dict(fact_id=metric,institution_id=1,kind='figure',values={'metric':metric,'value':value,'period_end':'2025-12-31','minimum_percent':12.5,**extra})
+
+def status_fact(code):
+    return dict(fact_id='s',institution_id=1,kind='status',status={'code':code},values={})
+
+def facts_of(code,*rows):
+    return {f['fact_id']:f for f in (status_fact(code),*rows)}
+
+def test_strong_overview_states_capital_and_bad_loans():
+    facts=facts_of('strong',fig('crar',.1554),fig('npl_ratio',.0412))
+    text=' '.join(s for s,_ in answers.overview_lines('টেস্ট ব্যাংক','টেস্ট ব্যাংকের ','strong',facts,1,True))
+    assert text=='টেস্ট ব্যাংকের অবস্থা ভালো, কারণ মূলধনের অনুপাত 15.54%, ন্যূনতম চাহিদা 12.5%। তবে 2025 সালের হিসাবে খেলাপি ঋণ 4.12%।'
+
+def test_low_bad_loans_read_as_only():
+    facts=facts_of('strong',fig('crar',.18),fig('npl_ratio',.0273))
+    assert 'মাত্র 2.73%' in ' '.join(s for s,_ in answers.overview_lines('ট','টের ','strong',facts,1,True))
+
+def test_award_opening_keeps_the_disclaimer_and_bad_loan_figure():
+    facts=facts_of('strong',fig('crar',.15),fig('npl_ratio',.0838))
+    intro=[('টেস্ট ব্যাংককে 2026 সালে সেরা বলেছে।',['a']),('তবে পুরস্কার ব্যাংকের নিরাপত্তার প্রমাণ নয়।',[])]
+    lines=[s for s,_ in answers.overview_lines('ট','টের ','strong',facts,1,True,intro,True)]
+    assert lines[2]=='ব্যাংকটির খেলাপি ঋণ 8.38%, 2025 সালের হিসাবে।' and lines[3].startswith('ব্যাংকটির অবস্থা ভালো')
+
+def test_high_risk_bank_states_its_figures_plainly_with_the_date():
+    facts=facts_of('high',fig('crar',-.0548),fig('npl_ratio',.5969),fig('net_profit',-24298700000.0))
+    text=' '.join(s for s,_ in answers.overview_lines('National Bank','','high',facts,1,False))
+    assert text=='National Bank is high risk. As of 31 December 2025, bad loans were 59.69% and its capital ratio was negative, minus 5.48%, against a 12.5% minimum. Its net loss that year was about Tk 2,430 crore.'
+
+def test_no_data_bank_is_neither_good_nor_bad():
+    assert 'ভালো বা খারাপ কিছুই বলছি না' in answers.overview_lines('ট','টের ','no_data',facts_of('no_data'),1,True)[0][0]
+
+def test_equal_neighbouring_terms_share_one_rate():
+    rows=[rate('a','P',3,7),rate('b','P',12,7.75),rate('c','P',24,7.75),rate('d','P',36,7.75)]
+    for f in rows:f['values']['selected_tenor']=f['values']['tenor_min_months']
+    assert answers.rate_list(rows,False)=='7% for 3 months, and 7.75% for 1, 2 or 3 years'
+    assert answers.rate_list(rows,True)=='3 মাসে 7%, 1, 2 বা 3 বছরে 7.75%'
+
+def test_compare_uses_shared_terms_in_the_order_asked():
+    a=[rate('a1','P',12,7.75),rate('a2','P',3,7)];b=[rate('b1','N',12,8.25),rate('b2','N',3,8.25)]
+    tokens=answers.compare_tokens(('Prime',a),('NCC',b),('এফডিআর','FDR'),lambda n:n+"'s ",['strong','strong'],False)
+    assert tokens['cmp:0'].text=='For a 1-year FDR, Prime pays 7.75% and NCC pays 8.25%' and tokens['cmp:1'].text=='For 3 months, Prime pays 7% and NCC pays 8.25%'
+
+def test_compare_with_no_shared_term_lists_each_banks_products():
+    tokens=answers.compare_tokens(('Prime',[rate('a','Kotipoti DPS',60,9)]),('MTB',[rate('b','Flexi DPS',48,8)]),('ডিপিএস','DPS'),lambda n:n+"'s ",['strong','strong'],False)
+    assert '9%' in tokens['cmp:0'].text and '8%' in tokens['cmp:1'].text
+
+def test_savings_slabs_are_said_in_words():
+    assert answers.slab('< 1 Crore',True)=='1 কোটি টাকার কম জমায়'
+    assert answers.slab('1 Crore & above',False)=='1 crore or more'
+    assert answers.slab('1 Lac-<25 Lac',True)=='1 লাখ থেকে 25 লাখ টাকার কম জমায়'
+    assert answers.slab('any balance',True) is None
