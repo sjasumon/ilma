@@ -25,7 +25,7 @@ def next_steps(intent,c,key,more=False):
     if intent in {'bank_overview','bank_condition','services_list','advice_request','best_bank'}:
         return ('এফডিআর বা ডিপিএসের সুদ শুনবেন?' if bn else 'Would you like FDR or DPS rates?'),['fdr','dps']
     if intent=='bank_reasons':return ('আর্থিক হিসাব, না আগের ঘটনা শুনবেন?' if bn else 'Would you like financial figures or past events?'),['figures','history']
-    if intent=='service_detail':return ('অন্য ব্যাংকের সাথে মিলিয়ে দেখবেন, না অন্য সেবা শুনবেন?' if bn else 'Compare with other banks, or hear another service?'),['compare','services']
+    if intent=='service_detail':return ('আপনি কি অন্য ব্যাংকের সাথে মিলিয়ে দেখবেন, না অন্য সেবা শুনবেন?' if bn else 'Do you want to compare with other banks, or hear another service?'),['compare','services']
     if intent in {'unclear','out_of_scope'}:return ('আবার বলবেন, না অন্য ব্যাংক দেখবেন?' if bn else 'Ask again, or choose another bank?'),['listen','ask_bank']
     return ('ব্যাংকের সেবাগুলো শুনবেন, না অন্য ব্যাংক দেখবেন?' if bn else 'Would you like services or another bank?'),['services','ask_bank']
 
@@ -613,6 +613,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         # Awards are answered by code from sourced rows; the model never names them.
         lines,award_facts=await call(db,lambda owned:award_answer(owned,c,registry,facts))
         question,buttons=next_steps('bank_awards',c,id)
+        question=answers.closing('bank_awards',safe,bank_status(facts,c.institution_id),c.language=='bn') or question
         if any(facts.get(i,{}).get('kind')=='figure' for _,ids in lines for i in ids):question=''
         a=controls('bank_awards',c,' '.join(t for t,_ in lines),question,buttons).model_copy(update={'used_fact_ids':[f for _,ids in lines for f in ids],'sentence_fact_ids':[ids for _,ids in lines]})
         result=render(a,c,[*award_facts,*[f for f in facts.values() if any(f['fact_id'] in ids for _,ids in lines)]],trace,'code')
@@ -693,7 +694,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     c=c.model_copy(update={'last_intent':intent})
     bn=c.language=='bn';question,buttons=next_steps(intent,c,id);lines=[]
     controls_map={
-      'advice_request':('কোথায় টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি বিনিয়োগের পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদের হার পাশাপাশি বুঝিয়ে দিতে পারি।','That decision is yours; I do not give investment advice. I can explain bank conditions and rates side by side.'),
+      'advice_request':('কোথায় টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি বিনিয়োগের পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদের হার পাশাপাশি বুঝিয়ে দিতে পারি।' if re.search(r'বিনিয়োগ',safe) else 'কোন ব্যাংকে টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদ পাশাপাশি বোঝাতে পারি।','That decision is yours; I do not give investment advice. I can explain bank conditions and rates side by side.'),
       'best_bank':('কোন ব্যাংক বেছে নেবেন তা আপনার সিদ্ধান্ত। আমি প্রকাশিত তথ্য পাশাপাশি বুঝিয়ে বলতে পারি।','Choosing a bank is your decision. I can explain the published information side by side.'),
       'out_of_scope':('আমি ব্যাংকের তথ্য নিয়ে সাহায্য করতে পারি।','I can help with bank information.'),
       'unclear':('প্রশ্নটা একটু অন্যভাবে বলবেন?' if model and not model.error else 'এখন উত্তর সাজাতে সমস্যা হচ্ছে।','Could you ask that another way?' if model and not model.error else 'I am having trouble preparing that answer right now.'),
@@ -701,6 +702,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
       'stop':('পড়া থামালাম।','I have stopped speaking.')}
     if intent in controls_map:
         lines=[(controls_map[intent][0 if bn else 1],[])]
+        if intent=='advice_request' and bn and not re.search(r'বিনিয়োগ',safe):question=''
         if intent=='smalltalk' and re.search(r'ধন্যবাদ|thank',safe,re.I):question=''
         if intent=='stop':question=''
     else:
@@ -820,6 +822,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
                 lines[i]=(sentence,ids)
     if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])
     if intent=='service_detail':lines=date_once(lines)
+    award_open=any(facts.get(i,{}).get('kind')=='award' for _,ids in lines for i in ids)
+    question=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry,not c.institution_id) or question
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))

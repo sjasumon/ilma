@@ -11,8 +11,8 @@ from ilma_api.database_tasks import call
 from ilma_api.voice_numbers import pronounce,NUMBERS,SCALES
 
 # Never ask for an amount: the closing question offers detail, not a calculation.
-QUESTION='কোনটার বিস্তারিত শুনবেন?'
-QUESTIONS=(QUESTION,'কোন ব্যাংকের {word} বিস্তারিত শুনবেন?','কোনটার কথা আরও জানতে চান?')
+QUESTION='আপনি কোনটার বিস্তারিত শুনবেন?'
+QUESTIONS=(QUESTION,QUESTION,QUESTION)
 # Each product's comparison term; only DPS gets the monthly-saving illustration.
 PRODUCTS={'dps':{'word':'ডিপিএস','months':60},'fdr':{'word':'এফডিআর','months':12}}
 # Full spoken names (never "প্রাইম" or "এনসিসি" alone).
@@ -129,6 +129,24 @@ def template(data,variant=0):
     for row in data['flagged'][:2]:text+=' '+flagged_sentence(row,word)
     return text+' '+QUESTIONS[variant%3].format(word=word)
 
+def fixed_bn(data):
+    """The approved Bangla shape: a same-term flagged bank first, then the strong banks by rate."""
+    word=data.get('word','ডিপিএস');head=f"সুদের হিসাবে {data['years']} বছরের {word}ে"
+    same=[r for r in data['flagged'][:2] if r['matches_five_years']];later=[r for r in data['flagged'][:2] if not r['matches_five_years']]
+    def said(rate,rows):
+        names=[r['name_bn'] for r in rows]
+        joined=names[0] if len(names)==1 else ', '.join(names[:-1])+' আর '+names[-1]
+        return f"{joined} {rate}% দেয়" if len(rows)==1 else f"{joined} {rate}% করে দেয়"
+    parts=[said(rate,rows) for rate,rows in groups(data)];sentences=[]
+    for row in same:sentences.append(f"{row['name_bn']} {row['rate_percent']}% দেয়। {warning(row)}।")
+    for index in range(0,len(parts),2):sentences.append(', '.join(parts[index:index+2])+'।')
+    if same:
+        names=[r['name_bn'].split()[0] for _,rows in groups(data) for r in rows]
+        sentences.append((', '.join(names[:-1])+' আর '+names[-1] if len(names)>1 else names[0])+' ভালো অবস্থায় আছে।')
+    else:sentences.append('এই ব্যাংকগুলো ভালো অবস্থায় আছে।')
+    for row in later:sentences.append(flagged_sentence(row,word))
+    return head+' '+' '.join(sentences)+' '+QUESTION
+
 def template_en(data):
     """English answer for an English question: same code-selected facts, fixed wording."""
     word='DPS' if data.get('product','dps')=='dps' else 'FDR'
@@ -224,7 +242,7 @@ natural spoken Bangla, 40-55 words, using ONLY the supplied facts:
 - Keep each warning sentence's meaning for any bank marked with a warning.
 - Write every number as digits with % (for example 8.75%); code pronounces them.
 - No calculations, no money amounts, no dates, no advice, no other banks or facts.
-- End with one short question offering details, such as "কোনটার বিস্তারিত শুনবেন?"
+- End with one short question offering details, such as "আপনি কোনটার বিস্তারিত শুনবেন?"
 Return JSON {"answer": "..."}.'''
 
 async def compose(data,trace,client=None,variant=0):
@@ -277,13 +295,16 @@ async def run_question(text,context,banks,db,watch_identity=None,client=None,dev
     if language=='en':
         spoken,reason=template_en(data),None
         trace.append({'stage':'PLAN','model':'code','ms':0,'status':'ok','reason':'english_fact_template'})
-    else:spoken,reason=await compose(data,trace,client,variant=random.randrange(len(OPENINGS)))
+    else:
+        spoken,reason=fixed_bn(data),None
+        trace.append({'stage':'PLAN','model':'code','ms':0,'status':'ok','reason':'approved_bangla_template'})
     from ilma_api.rules.reasons import format_date
     facts=[]
     for row in data['top']+data['cutoff_ties']+data['flagged']:
         card=card_line(row,data)+' হারতালিকা '+format_date(date.fromisoformat(row['date']),bn=True)
         facts.append({'fact_id':product+'-compare:'+row['offer_id'],'institution_id':row['bank_id'],'kind':'service','text_bn':card,'text_en':row['product'],'values':{'rate_percent':row['rate_percent'],'tenor_months':data['months'] if row not in data['flagged'] else row['comparison_months'],'monthly_example_bdt':data['monthly_bdt'],'maturity_estimate_bdt':row.get('maturity_estimate_bdt'),'status':row['status'],'calculation':data['calculation']},'source':{'source_url':row['source_url'],'source_title':row['product'],'published_at':row['date'],'page':row['page'],'quote':row['quote']}})
     reply,question=split_question(spoken)
+    if re.search(r'[\u0980-\u09ff]',question):question=QUESTION
     answer=controls('compare',c,reply,question,['repeat','end']).model_copy(update={'used_fact_ids':[f['fact_id'] for f in facts]})
     result=render(answer,c,facts,trace,'template' if reason else 'code')
     result.update(comparison_product=product,dps_data_ready=True,dps_comparison_facts=spoken_facts(data),dps_comparison_data={key:data[key] for key in ['top','flagged','conditions','monthly_bdt','months','years','calculation','tie_break','cutoff_ties']},dps_model_fallback_reason=reason)
