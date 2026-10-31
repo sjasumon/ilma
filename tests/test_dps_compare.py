@@ -179,8 +179,8 @@ def test_fixed_bangla_answer_keeps_warnings_and_passes_the_checks():
     top=[row(1,'প্রথম ব্যাংক','8.25'),row(2,'দ্বিতীয় ব্যাংক','8'),row(3,'তৃতীয় ব্যাংক','8')]
     same=row(4,'চতুর্থ ব্যাংক','9.25','no_data',comparison_months=12,matches_five_years=True)
     other=row(4,'চতুর্থ ব্যাংক','10','no_data',comparison_months=12,matches_five_years=False)
-    first=dict(top=top,cutoff_ties=[],flagged=[same],inventory=top+[same],years=1,word='এফডিআর',product='fdr')
-    last=dict(first,flagged=[other],inventory=top+[other],years=5)
-    assert validate(fixed_bn(first),first) is None and validate(fixed_bn(last),last) is None
-    assert fixed_bn(first).index('চতুর্থ')<fixed_bn(first).index('প্রথম') and 'প্রথম, দ্বিতীয় আর তৃতীয় ভালো অবস্থায় আছে।' in fixed_bn(first)
-    assert fixed_bn(last).index('প্রথম')<fixed_bn(last).index('চতুর্থ') and 'এই ব্যাংকগুলো ভালো অবস্থায় আছে।' in fixed_bn(last)
+    for flagged in (same,other):
+        data=dict(top=top,cutoff_ties=[],flagged=[flagged],inventory=top+[flagged],years=1,word='এফডিআর',product='fdr')
+        text=fixed_bn(data)
+        assert validate(text,data) is None
+        assert text.index('এই ব্যাংকগুলো ভালো অবস্থায় আছে।')<text.index('চতুর্থ') and 'তবে ওই ব্যাংকের' in text

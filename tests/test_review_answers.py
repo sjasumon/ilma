@@ -377,9 +377,15 @@ def test_a_deposit_protection_term_with_no_bank_gets_the_term_closing():
     assert answers.closing('insurance','আমানত বীমা কী?',None,True,no_bank=True)==answers.ASK_ANY_BANK
     assert answers.closing('insurance','বীমা কত',None,True) is None
 
-def test_an_award_opening_alone_does_not_change_a_how_is_it_closing():
-    assert answers.closing('bank_overview','সিটি ব্যাংক কেমন আছে?','strong',True,True) is None
+def test_how_is_it_gets_the_more_about_this_bank_closing():
+    assert answers.closing('bank_overview','সিটি ব্যাংক কেমন আছে?','strong',True,True)==answers.MORE_ABOUT_BANK[0]
 
 
 def test_award_list_closing_survives_a_collapsed_repeated_word():
     assert answers.closing('bank_awards','ইস্টার্ন ব্যাংক কী পুরস্কার পেয়েছে?','strong',True)==answers.MORE_ABOUT_BANK[0]
+
+
+def test_a_stored_range_is_compared_instead_of_no_data():
+    from ilma_api.human_turn import note_tokens
+    token=note_tokens([dict(fact_id='r',values={'attribute':'rate_range','value_text':'7.75-9.75'})],'fdr',1,True)['note:product']
+    assert token.text=='এফডিআরের সুদ মেয়াদের ওপর ভিত্তি করে 7.75% থেকে 9.75%'

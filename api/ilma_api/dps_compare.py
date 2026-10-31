@@ -130,21 +130,17 @@ def template(data,variant=0):
     return text+' '+QUESTIONS[variant%3].format(word=word)
 
 def fixed_bn(data):
-    """The approved Bangla shape: a same-term flagged bank first, then the strong banks by rate."""
+    """The approved Bangla shape: strong banks by rate, then any flagged bank with its warning."""
     word=data.get('word','ডিপিএস');head=f"সুদের হিসাবে {data['years']} বছরের {word}ে"
-    same=[r for r in data['flagged'][:2] if r['matches_five_years']];later=[r for r in data['flagged'][:2] if not r['matches_five_years']]
     def said(rate,rows):
         names=[r['name_bn'] for r in rows]
         joined=names[0] if len(names)==1 else ', '.join(names[:-1])+' আর '+names[-1]
         return f"{joined} {rate}% দেয়" if len(rows)==1 else f"{joined} {rate}% করে দেয়"
     parts=[said(rate,rows) for rate,rows in groups(data)];sentences=[]
-    for row in same:sentences.append(f"{row['name_bn']} {row['rate_percent']}% দেয়। {warning(row)}।")
     for index in range(0,len(parts),2):sentences.append(', '.join(parts[index:index+2])+'।')
-    if same:
-        names=[r['name_bn'].split()[0] for _,rows in groups(data) for r in rows]
-        sentences.append((', '.join(names[:-1])+' আর '+names[-1] if len(names)>1 else names[0])+' ভালো অবস্থায় আছে।')
-    else:sentences.append('এই ব্যাংকগুলো ভালো অবস্থায় আছে।')
-    for row in later:sentences.append(flagged_sentence(row,word))
+    # The good-condition sentence comes before flagged banks, so it cannot cover them.
+    sentences.append('এই ব্যাংকগুলো ভালো অবস্থায় আছে।')
+    for row in data['flagged'][:2]:sentences.append(flagged_sentence(row,word))
     return head+' '+' '.join(sentences)+' '+QUESTION
 
 def template_en(data):

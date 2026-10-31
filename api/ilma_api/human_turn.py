@@ -157,6 +157,13 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
         for bank_id in ids:
             if bank_id in present or 'bank:'+str(bank_id) not in registry:continue
             phrase=f'{label[0]}ের প্রকাশিত তথ্য এখনো আমাদের কাছে নেই' if c.language=='bn' else f'published {label[1]} information is not yet in our collection'
+            ranges=[n for n in manual_notes(db,bank_id,r.product) if n['values']['attribute']=='rate_range']
+            if ranges:
+                # A stored range is said beside the other bank's rate, not "no data".
+                facts.update((n['fact_id'],n) for n in ranges)
+                registry['gap:compare:'+str(bank_id)]=note_tokens(ranges,r.product,bank_id,c.language=='bn')['note:product']
+                registry['meta:range']=FactToken('')
+                continue
             fid='coverage:compare:'+str(bank_id)+':'+r.product
             facts[fid]={'fact_id':fid,'institution_id':bank_id,'kind':'coverage','text_bn':phrase if c.language=='bn' else label[0]+'ের তথ্য আমাদের কাছে নেই','text_en':phrase if c.language=='en' else 'Published '+label[1]+' information is not in our collection','values':{'product_type':r.product},'source':{'source_title':'ILMA collection coverage','source_url':'','quote':''}}
             registry['gap:compare:'+str(bank_id)]=FactToken(phrase,(fid,),bank_id,'gap')
@@ -824,6 +831,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if intent=='service_detail':lines=date_once(lines)
     award_open=any(facts.get(i,{}).get('kind')=='award' for _,ids in lines for i in ids)
     question=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry,not c.institution_id) or question
+    if 'meta:range' in registry:question=''
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))

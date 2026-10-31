@@ -291,7 +291,7 @@ def closing(intent,text,status,bn,award=False,shared_terms=False,no_bank=False):
         if intent=='explain_term':return 'Would you like to hear other bank services or another bank?'
         return None
     if intent in {'bank_overview','bank_condition'}:
-        if 'সম্পর্কে' in text or status=='high':return MORE_ABOUT_BANK[0]
+        if 'সম্পর্কে' in text or 'কেমন আছে' in text or status=='high':return MORE_ABOUT_BANK[0]
         if award and 'অবস্থা' in text:return MORE_ABOUT_BANK[1]
         return None
     if intent=='explain_term' or intent=='insurance' and no_bank:return ASK_ANY_BANK
