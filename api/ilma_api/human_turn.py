@@ -823,7 +823,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])
     if intent=='service_detail':lines=date_once(lines)
     award_open=any(facts.get(i,{}).get('kind')=='award' for _,ids in lines for i in ids)
-    question=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry) or question
+    question=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry,not c.institution_id) or question
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))

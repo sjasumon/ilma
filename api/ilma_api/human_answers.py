@@ -285,16 +285,16 @@ def compare_tokens(first,second,label,whose,status,bn):
 
 MORE_ABOUT_BANK=('আপনার কি আরও জানার আছে এই ব্যাংক সম্পর্কে?','আপনি কি এই ব্যাংক সম্পর্কে আরও কিছু জানতে চাচ্ছেন?')
 ASK_ANY_BANK='আপনার কি কোন নির্দিষ্ট ব্যাংক এর সম্পর্কে জানার আছে?'
-def closing(intent,text,status,bn,award=False,shared_terms=False):
+def closing(intent,text,status,bn,award=False,shared_terms=False,no_bank=False):
     """The approved closing question for a turn, or None to keep the standard one."""
     if not bn:
         if intent=='explain_term':return 'Would you like to hear other bank services or another bank?'
         return None
     if intent in {'bank_overview','bank_condition'}:
         if 'সম্পর্কে' in text or status=='high':return MORE_ABOUT_BANK[0]
-        if award:return MORE_ABOUT_BANK[1]
+        if award and 'অবস্থা' in text:return MORE_ABOUT_BANK[1]
         return None
-    if intent=='explain_term':return ASK_ANY_BANK
-    if intent=='bank_awards' and 'কী কী' in text:return MORE_ABOUT_BANK[0]
+    if intent=='explain_term' or intent=='insurance' and no_bank:return ASK_ANY_BANK
+    if intent=='bank_awards' and re.search(r'কী\s+(?:কী\s+)?পুরস্কার',text):return MORE_ABOUT_BANK[0]
     if intent=='compare' and shared_terms:return 'আপনি ব্যাংকের সেবাগুলো শুনবেন, না অন্য ব্যাংক দেখবেন?'
     return None
