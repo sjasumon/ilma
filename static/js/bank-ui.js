@@ -1,6 +1,6 @@
 /* Bank list, report and sourced section screens. */
 (()=>{
-  const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,bankNames,productText,conditionText,offerStatus,back,json,offlineNote,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
+  const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,bankNames,productText,conditionText,offerStatus,back,json,offlineNote,focusHeading,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
   let banks=[],bankPage='list',detailKind='health',search='';
   const openBankServices=(...args)=>window.IlmaServices.openBankServices(...args);
   const empty=text=>text?`<p class="catalog-empty" role="status">${E(text)}</p>`:'';
@@ -25,7 +25,7 @@
     ++reportRequest; reportCardData=null;bankPage='list'; currentBankId=null; reportView(false); $('bank-list-view').hidden=false;
     const root=$('bank-list-view'), request=++state.epoch;
     root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
-    try { banks=await json('/v1/institutions?list=demo'); if(request!==state.epoch)return; renderBankList(); }
+    try { banks=await json('/v1/institutions?list=demo'); if(request!==state.epoch)return; renderBankList();focusHeading?.(root); }
     catch(e){if(request===state.epoch)error(root,e,showBankList);}
   }
   function renderBankList() {
@@ -94,7 +94,7 @@
     $('bank-list-view').hidden=true;$('bank-report-view').hidden=true;root.hidden=false;
     const titles={health:tr('আর্থিক অবস্থা','Financial health'),rating:tr('রেটিং','Rating'),news:tr('খবর','News'),history:tr('জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'),ask:tr('এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank')};
     root.innerHTML=`<div class="screen-header">${back('bank-detail-back',tr('রিপোর্ট কার্ড','Report card'))}<h1>${E(titles[kind])}</h1><p>${E(reportCardData?bankName(reportCardData.institution):'')}</p></div><div class="sheet" id="bank-detail-body">${empty(tr('একটু অপেক্ষা করুন…','Please wait…'))}</div>`;
-    $('bank-detail-back').onclick=showReport;const body=$('bank-detail-body');
+    focusHeading?.(root);$('bank-detail-back').onclick=showReport;const body=$('bank-detail-body');
     if(kind==='ask') {
       body.innerHTML=`<form id="bank-ask-form"><label for="bank-ask-text">${tr('আপনার প্রশ্ন','Your question')}</label><input class="calc-field" id="bank-ask-text" maxlength="1000" required><button class="catalog-action" type="submit">${tr('খুঁজুন','Ask')}</button></form><button class="catalog-action" id="bank-detail-mic" type="button">${tr('প্রশ্ন বলুন','Ask by voice')}</button><div class="catalog-suggestions">${[
         ['এই ব্যাংকের খেলাপি ঋণ কত?','What are this bank’s bad loans?'],['রেটিং কী?','What is the rating?'],['আমার টাকা কতটা সুরক্ষিত?','How much of my deposit is insured?']].map(([b,e])=>`<button class="catalog-detail-row" type="button" data-suggestion="${E(tr(b,e))}">${E(tr(b,e))}</button>`).join('')}</div>`;

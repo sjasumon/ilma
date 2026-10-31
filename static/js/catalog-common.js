@@ -60,6 +60,14 @@
       : tr('সংরক্ষণের সময় জানা নেই। ','Saved time is unavailable. ');
     return `<p class="catalog-note catalog-offline" role="status">${E(tr('সংরক্ষিত কপি — তথ্য পুরনো হতে পারে। ','Saved copy — data may be out of date. ')+saved+tr('মূল সূত্রের তারিখ দেখুন।','Check the source document dates.'))}</p>`;
   }
+  function focusHeading(root) {
+    const panel=root?.closest?.('.tab-content');
+    if(panel&&!panel.classList.contains('active'))return;
+    const heading=root?.querySelector?.('h1, h2');
+    if(!heading)return;
+    heading.setAttribute?.('tabindex','-1');
+    heading.focus?.({preventScroll:true});
+  }
   function sourceButton(source,bank=null) {
     const subject=currentLang==='bn'?(source.product?productText(source):({crar:'মূলধন অনুপাত',npl_ratio:'খেলাপি ঋণ',net_profit:'মুনাফা'})[source.metric]||'মূল নথি'):(source.product||source.source_title||source.metric||'');
     return `<button class="catalog-source" type="button" aria-label="${E(tr('সূত্র দেখুন: ','Show source: ')+(bank?bankName(bank)+' · ':'')+subject)}" data-source="${E(source.fact_id||source.offer_id||'')}">${tr('সূত্র ›','Source ›')}${source.checked?' ✓':''}</button>`;
@@ -78,7 +86,10 @@
     root.innerHTML=empty(tr('তথ্য আনা যায়নি। সংযোগ দেখুন, তারপর আবার চেষ্টা করুন।','Could not load this information. Check your connection, then try again.'))+`<button type="button" class="catalog-action" data-retry>${tr('আবার চেষ্টা করুন','Try again')}</button>`;
     const button=root.querySelector('[data-retry]');
     button.hidden=typeof retry!=='function';
+    const message=root.querySelector('.catalog-empty');
+    if(message){message.id=(root.id||'catalog')+'-error';button.setAttribute?.('aria-describedby',message.id);}
+    button.focus?.({preventScroll:true});
     button.onclick=()=>{button.disabled=true;return retry();};
   }
-  window.IlmaCatalogCommon={$,E,tr,digits,dateText,number,label,outlook,percent,bankName,statusChip,bankNames,productText,conditionText,offerStatus,empty,back,json,offlineNote,sourceButton,wireSources,voice,ask,error,state:{epoch:0}};
+  window.IlmaCatalogCommon={$,E,tr,digits,dateText,number,label,outlook,percent,bankName,statusChip,bankNames,productText,conditionText,offerStatus,empty,back,json,offlineNote,focusHeading,sourceButton,wireSources,voice,ask,error,state:{epoch:0}};
 })();

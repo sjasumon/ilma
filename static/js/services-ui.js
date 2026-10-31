@@ -1,12 +1,12 @@
 /* Service comparison, approved playback and fixed example calculators. */
 (()=>{
-  const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,statusChip,bankNames,productText,conditionText,offerStatus,empty,back,json,offlineNote,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
+  const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,statusChip,bankNames,productText,conditionText,offerStatus,empty,back,json,offlineNote,focusHeading,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
   let categories=[],servicePage='home',bankFilter=null,choice={product_type:'fdr',tenor_months:12,basis:'conventional'},comparison=null,bankOffers=null,offerDetail=null,calculatorPrefill={};
   let serviceManifest={clips:{}};
   function loadServiceManifest(){return fetch('/v1/services/audio-manifest',{cache:'no-store'}).then(response=>response.ok?response.json():{clips:{}}).then(data=>{serviceManifest=data;}).catch(()=>{});}
   async function enterServices(){
     window.IlmaNavigation?.visit({screen:"services"});
-    void loadServiceManifest(); $('main-content').scrollTop=0;$('service-voice-answer').hidden=true;++state.epoch;servicePage='home';bankFilter=null;renderServicesHome();if(!categories.length)try{categories=await json('/v1/services/categories');}catch{}}
+    void loadServiceManifest(); $('main-content').scrollTop=0;$('service-voice-answer').hidden=true;++state.epoch;servicePage='home';bankFilter=null;renderServicesHome();focusHeading?.($('tab-services'));if(!categories.length)try{categories=await json('/v1/services/categories');}catch{}}
   function serviceHeader(){ $('srv-title').textContent=tr('ব্যাংক সেবা','Bank services');$('srv-subtitle').textContent=tr('একই সেবা, কোথায় খরচ কম?','Same service, where does it cost less?'); }
   function renderServicesHome(){
     $('srv-title').textContent=tr('ব্যাংক সেবা','Bank services');$('srv-subtitle').textContent=tr('একই সেবা, কোথায় খরচ কম?','Same service, where does it cost less?');
@@ -31,7 +31,7 @@
     const request=++state.epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try{if(!categories.length)categories=await json('/v1/services/categories');
       const data=await json((choice.product_type==='account_fee'?'/v1/services/accounts?':['fdr','dps','savings'].includes(choice.product_type)?'/v1/services/deposits?':'/v1/services/compare?')+new URLSearchParams(Object.fromEntries(Object.entries(choice).filter(([,v])=>v!=null))));
-      if(request!==state.epoch)return;comparison=data;renderComparison();
+      if(request!==state.epoch)return;comparison=data;renderComparison();focusHeading?.(root);
     }catch(e){if(request===state.epoch)error(root,e,()=>openComparison(retryChoice,retryCalculator));}
   }
   function renderComparison(){
@@ -89,9 +89,9 @@
   }
   async function openOffer(id){ window.IlmaNavigation?.visit({screen:'offer',id}); $('main-content').scrollTop=0;
     $('service-voice-answer').hidden=true;const request=++state.epoch,root=$('services-catalog');servicePage='offer';root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
-    try{const data=await json('/v1/services/offers/'+encodeURIComponent(id));if(request!==state.epoch)return;offerDetail=data;renderOffer();}catch(e){if(request===state.epoch)error(root,e,()=>openOffer(id));}
+    try{const data=await json('/v1/services/offers/'+encodeURIComponent(id));if(request!==state.epoch)return;offerDetail=data;renderOffer();focusHeading?.(root);}catch(e){if(request===state.epoch)error(root,e,()=>openOffer(id));}
   }
-  async function openAccountBank(id,selected=null){window.IlmaNavigation?.visit({screen:'account-bank',bank:id,id:selected?.offer_id});stopAudio();const request=++state.epoch;try{const data=await json('/v1/services/accounts');if(request!==state.epoch)return;const bank=data.banks.find(b=>b.id===id);if(bank&&selected?.offer_id)selected=[...bank.interest_slabs,...bank.all_fees].find(r=>r.offer_id===selected.offer_id)||null;if(bank)window.IlmaAccounts.detail({bank,selected,readouts:data.readouts,_offline:data._offline,_cachedAt:data._cachedAt},{back:()=>bankFilter?openBankServices(bankFilter):openComparison({product_type:'account_fee',item:'savings'}),compare:openComparison,detail:openAccountBank});}catch(e){if(request===state.epoch)error($('services-catalog'),e,()=>openAccountBank(id,selected));}}
+  async function openAccountBank(id,selected=null){window.IlmaNavigation?.visit({screen:'account-bank',bank:id,id:selected?.offer_id});stopAudio();const request=++state.epoch;try{const data=await json('/v1/services/accounts');if(request!==state.epoch)return;const bank=data.banks.find(b=>b.id===id);if(bank&&selected?.offer_id)selected=[...bank.interest_slabs,...bank.all_fees].find(r=>r.offer_id===selected.offer_id)||null;if(bank)window.IlmaAccounts.detail({bank,selected,readouts:data.readouts,_offline:data._offline,_cachedAt:data._cachedAt},{back:()=>bankFilter?openBankServices(bankFilter):openComparison({product_type:'account_fee',item:'savings'}),compare:openComparison,detail:openAccountBank});focusHeading?.($('services-catalog'));}catch(e){if(request===state.epoch)error($('services-catalog'),e,()=>openAccountBank(id,selected));}}
   function renderOffer(){
     if(offerDetail.account_detail)return window.IlmaAccounts.detail(offerDetail,{back:()=>bankFilter?openBankServices(bankFilter):openComparison({product_type:'account_fee',item:'savings'}),compare:openComparison,detail:openAccountBank});
     if(offerDetail.deposit_type==='savings')return openAccountBank(offerDetail.institution.id,offerDetail.offers[0]);
@@ -103,7 +103,7 @@
     wireSources(root,data.offers);$('offer-bank-report').onclick=()=>openBank(data.institution.id);$('offer-back').onclick=()=>bankFilter?openBankServices(bankFilter):openComparison(choice);
   }
   async function openBankServices(id){ window.IlmaNavigation?.visit({screen:'bank-services',bank:id}); $('main-content').scrollTop=0;if(currentTab!=='services')switchTab('services');bankFilter=id;servicePage='bank';const request=++state.epoch,root=$('services-catalog');root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
-    try{const data=await json(`/v1/institutions/${id}/services`);if(request!==state.epoch)return;bankOffers=data;renderBankServices();}catch(e){if(request===state.epoch)error(root,e,()=>openBankServices(id));}
+    try{const data=await json(`/v1/institutions/${id}/services`);if(request!==state.epoch)return;bankOffers=data;renderBankServices();focusHeading?.(root);}catch(e){if(request===state.epoch)error(root,e,()=>openBankServices(id));}
   }
   function renderBankServices(){const data=bankOffers,root=$('services-catalog'),groups=new Map();data.offers.forEach(r=>{if(!groups.has(r.group_key))groups.set(r.group_key,r);});
     serviceHeader();

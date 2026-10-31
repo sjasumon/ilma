@@ -86,6 +86,18 @@ def readiness(page):
     page.locator('#mic-permission-later').click()
 
 
+def focus(page):
+    page.locator('.dock [data-tab=services]').click()
+    tile=page.locator('[data-category=loan]');tile.focus();tile.press('Enter')
+    page.locator('#loan-amount').wait_for()
+    assert page.evaluate("document.activeElement.tagName")=='H2'
+    page.locator('#loan-back').click();page.locator('[data-category=account_fee]').click()
+    page.locator('[data-account-audience=women]').click()
+    assert page.locator('[data-account-audience=women]').evaluate('e=>e===document.activeElement')
+    page.locator('[data-account-detail]').first.click();page.locator('#account-detail-back').wait_for()
+    assert page.evaluate("document.activeElement.tagName")=='H2'
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default='http://127.0.0.1:8027');parser.add_argument('--engine',choices=['chromium','webkit','all'],default='all');parser.add_argument('--check',default='dialogs');args=parser.parse_args()
     with sync_playwright() as p:
