@@ -1304,11 +1304,27 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 .deposit-bank-count { font-size: calc(var(--fs) * 0.85); color: var(--on-stage-2); background: rgba(246, 240, 228, 0.08); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
 
 /* Upgraded bank cards in deposit & account views */
-:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-tile { border: 1px solid rgba(246, 240, 228, 0.18); border-radius: 18px; background: rgba(246, 240, 228, 0.05); padding: 18px; margin-bottom: 16px; min-width: 0; transition: border-color .15s ease, background .15s ease; }
-:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-tile:hover { border-color: rgba(246, 203, 85, 0.45); background: rgba(246, 240, 228, 0.08); }
-:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-tile.catalog-offer-row { border-bottom: 1px solid rgba(246, 240, 228, 0.18); }
-:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-top-fact { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; background: rgba(246, 203, 85, 0.1); border: 1px solid rgba(246, 203, 85, 0.28); border-radius: 12px; padding: 10px 14px; margin: 10px 0 8px; }
-:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-top-fact strong.catalog-value { color: var(--gold); font-size: calc(var(--fs) * 1.35); font-weight: 700; display: inline; }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows, #news-feed, #extra-news-sections) .card-tile { border: 1px solid rgba(246, 240, 228, 0.18); border-radius: 18px; background: rgba(246, 240, 228, 0.05); padding: 18px; margin-bottom: 16px; min-width: 0; transition: border-color .15s ease, background .15s ease; }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows, #news-feed, #extra-news-sections) .card-tile:hover { border-color: rgba(246, 203, 85, 0.45); background: rgba(246, 240, 228, 0.08); }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows, #news-feed, #extra-news-sections) .card-tile.catalog-offer-row { border-bottom: 1px solid rgba(246, 240, 228, 0.18); }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows, #news-feed, #extra-news-sections) .card-top-fact { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; background: rgba(246, 203, 85, 0.1); border: 1px solid rgba(246, 203, 85, 0.28); border-radius: 12px; padding: 10px 14px; margin: 10px 0 8px; }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows, #news-feed, #extra-news-sections) .card-top-fact strong.catalog-value { color: var(--gold); font-size: calc(var(--fs) * 1.35); font-weight: 700; display: inline; }
+
+/* News badges & card hierarchy */
+#news-category-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+#news-category-tabs::-webkit-scrollbar { display: none; }
+#news-category-tabs .segmented-item { flex: 1 1 0; min-width: 0; white-space: nowrap; padding: 6px 4px; font-size: calc(var(--fs) * 0.84); gap: 3px; }
+.news-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: calc(var(--fs) * .82); font-weight: 700; line-height: 1.3; }
+.news-badge.circular { background: rgba(85, 239, 196, 0.12); border: 1px solid rgba(85, 239, 196, 0.45); color: var(--cyan); }
+.news-badge.warning { background: rgba(246, 203, 85, 0.14); border: 1px solid rgba(246, 203, 85, 0.5); color: var(--gold); }
+.news-badge.reported { background: rgba(246, 240, 228, 0.08); border: 1px solid rgba(246, 240, 228, 0.22); color: var(--on-stage-2); }
+.news-badge.official { background: rgba(85, 239, 196, 0.15); border: 1px solid rgba(85, 239, 196, 0.4); color: var(--cyan); }
+.news-badge.announcement { background: rgba(116, 185, 255, 0.15); border: 1px solid rgba(116, 185, 255, 0.4); color: #74b9ff; }
+.news-date { font-size: calc(var(--fs) * .82); color: var(--on-stage-2); }
+.news-count { font-size: 0.82em; opacity: 0.85; font-weight: 400; }
+#news-search-clear { background: none; border: none; color: var(--on-stage-2); font-size: calc(var(--fs) * 1.2); padding: 0 10px; cursor: pointer; }
+#news-search-clear:hover { color: var(--gold); }
+#extra-news-sections > section > h2 { font-size: calc(var(--fs) * 1.15); margin: 24px 0 12px; color: var(--gold); display: flex; align-items: center; gap: 8px; }
 
 /* Guidance message when category/audience has no specialized products */
 .deposit-empty-guidance { border: 1px dashed rgba(246, 203, 85, 0.45); background: rgba(246, 240, 228, 0.04); border-radius: 18px; padding: 20px; margin: 16px 0; color: var(--on-stage); }

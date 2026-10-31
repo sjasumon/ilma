@@ -1377,57 +1377,307 @@ function calculateRealReturn() {
   `;
 }
 
+const newsState = {
+  items: [],
+  extra: null,
+  category: 'all',
+  bank: 'all',
+  query: '',
+  wired: false
+};
+
+function formatNewsDate(dateStr, isBn) {
+  if (!dateStr) return '';
+  try {
+    return new Intl.DateTimeFormat(isBn ? 'bn-BD' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr + 'T00:00:00'));
+  } catch {
+    return dateStr;
+  }
+}
+
+function newsBankKey(item) {
+  const text = (item.title || item.title_bn || item.title_en || '') + ' ' + (item.bank_name_en || '') + ' ' + (item.bank_name_bn || '');
+  if (/BRAC/i.test(text) || item.institution_id === 11) return 'brac';
+  if (/City\s*Bank/i.test(text) || item.institution_id === 14) return 'city';
+  if (/EBL|Eastern\s*Bank/i.test(text) || item.institution_id === 19) return 'ebl';
+  if (/Bangladesh\s*Bank|BRPD|PSD|Central\s*Bank/i.test(text) || item.topic === 'bb_notice' || item.topic === 'new_rule') return 'bb';
+  return 'other';
+}
+
 function publicationHTML(row,label) {
   const bn=currentLang==='bn';
-  const when=row.date?new Intl.DateTimeFormat(bn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(row.date+'T00:00:00')):row.year?(bn?toBnDigits(row.year):String(row.year)):'';
-  return `<article class="catalog-card publication-card"><p class="catalog-note">${escapeHTML([bn?row.bank_name_bn:row.bank_name_en,label].filter(Boolean).join(' · '))}</p><h2 lang="${/[\u0980-\u09ff]/.test(row.title)?'bn':'en'}">${escapeHTML(row.title)}</h2>${bn&&!/[\u0980-\u09ff]/.test(row.title)?'<p class="catalog-note" lang="bn">মূল শিরোনাম ইংরেজিতে</p>':''}<p>${escapeHTML(when)}</p>${/^https?:\/\//.test(row.source_url)?`<a class="catalog-source" aria-label="${escapeHTML((bn?'উৎস খুলুন: ':'Open source: ')+row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind==='index'?(bn?'মূল উৎসের সূচি খুলুন ↗':'Open source index ↗'):(bn?'উৎস খুলুন ↗':'Open source ↗')}</a>`:''}</article>`;
+  const when=row.date?formatNewsDate(row.date,bn):row.year?(bn?toBnDigits(row.year):String(row.year)):'';
+  return `<article class="catalog-offer-row card-tile publication-card"><p class="catalog-note">${escapeHTML([bn?row.bank_name_bn:row.bank_name_en,label].filter(Boolean).join(' · '))}</p><h2 lang="${/[ঀ-৿]/.test(row.title)?'bn':'en'}">${escapeHTML(row.title)}</h2>${bn&&!/[ঀ-৿]/.test(row.title)?'<p class="catalog-note" lang="bn">মূল শিরোনাম ইংরেজিতে</p>':''}<p class="news-date">${escapeHTML(when)}</p>${/^https?:\/\//.test(row.source_url)?`<a class="catalog-source" aria-label="${escapeHTML((bn?'উৎস খুলুন: ':'Open source: ')+row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind==='index'?(bn?'মূল উৎসের সূচি খুলুন ↗':'Open source index ↗'):(bn?'উৎস খুলুন ↗':'Open source ↗')}</a>`:''}</article>`;
 }
 window.publicationHTML=publicationHTML;
 
-async function loadExtraNews(feed,isBn){
-  if(isBn!==(currentLang==='bn'))return;
-  document.getElementById('extra-news-sections')?.remove();
-  const section=document.createElement('section');section.id='extra-news-sections';feed.after(section);
-  try{
-    const response=await fetch('/v1/extra-news',{headers:anonymousDevice?{'X-ILMA-Device':anonymousDevice}:{},cache:'no-store'});
-    if(!response.ok)throw Error('extra news unavailable');const data=await response.json();
-    if(!section.isConnected)return;
-    const groups=[['warnings','বাংলাদেশ ব্যাংকের সতর্কবার্তা ও ঘোষণা','BB warnings and notices','বাংলাদেশ ব্যাংকের ঘোষণা','Bangladesh Bank notice'],['rules','নতুন নিয়ম','New rules','বাংলাদেশ ব্যাংকের সার্কুলার','Bangladesh Bank circular'],['announcements','নজরে রাখা ব্যাংকের ঘোষণা','Watched-bank announcements','ডিএসই-তে ব্যাংকের নিজের ঘোষণা','The bank’s own DSE announcement']];
-    section.innerHTML=groups.map(([key,bn,en,labelBn,labelEn])=>`<section aria-label="${escapeHTML(isBn?bn:en)}"><h2>${escapeHTML(isBn?bn:en)}</h2>${(data[key]||[]).map(row=>publicationHTML(row,isBn?labelBn:labelEn)).join('')||`<p class="catalog-note">${key==='announcements'&&!data.watching?(isBn?'ব্যাংক ট্যাবে একটি ব্যাংক নজরে রাখুন। ব্যক্তিগত তালিকার ঘোষণাই এখানে দেখানো হবে।':'Watch a bank in the Banks tab to see its announcements here.'):(isBn?'এই বিভাগে সরবরাহকৃত তথ্য নেই।':'No supplied records in this section.')}</p>`}</section>`).join('');
-  }catch{section.textContent=isBn?'অতিরিক্ত ঘোষণা লোড করা যায়নি। আবার চেষ্টা করুন।':'Could not load additional notices. Please try again.';}
+function renderNews() {
+  const isBn = currentLang === 'bn';
+  const feed = document.getElementById("news-feed");
+  let extraSection = document.getElementById('extra-news-sections');
+  if (!feed) return;
+  if (!extraSection) {
+    extraSection = document.createElement('section');
+    extraSection.id = 'extra-news-sections';
+    feed.after(extraSection);
+  }
+
+  const newsItems = newsState.items || [];
+  const extra = newsState.extra || { warnings: [], rules: [], announcements: [] };
+  const warnings = extra.warnings || [];
+  const rules = extra.rules || [];
+  const announcements = extra.announcements || [];
+
+  // Update localized text for static labels in tab-news
+  const filterTitle = document.getElementById('news-filter-title');
+  if (filterTitle) filterTitle.textContent = isBn ? 'সংবাদ অনুসন্ধান ও ফিল্টার' : 'Search & Filter News';
+  const searchInput = document.getElementById('news-search-input');
+  if (searchInput) searchInput.placeholder = isBn ? 'সংবাদ, সার্কুলার বা বিষয় খুঁজুন…' : 'Search news, circulars, or topics…';
+  const catLabel = document.getElementById('news-category-label');
+  if (catLabel) catLabel.textContent = isBn ? 'খবরের ধরন' : 'Type of News';
+  const bankLabel = document.getElementById('news-bank-label');
+  if (bankLabel) bankLabel.textContent = isBn ? 'ব্যাংক বা নিয়ন্ত্রক সংস্থা' : 'Bank or Authority';
+  const audioNote = document.getElementById('news-audio-note');
+  if (audioNote) audioNote.textContent = isBn ? 'বাংলাদেশ ব্যাংক সার্কুলার ও সংবাদপত্রের সর্বশেষ প্রধান আপডেট শুনুন।' : 'Listen to latest Bangladesh Bank circulars and press updates.';
+  const feedHeading = document.getElementById('news-feed-heading');
+  if (feedHeading) feedHeading.textContent = isBn ? 'সংবাদ ও সার্কুলারের তালিকা' : 'News & Circular Feed';
+  const feedSub = document.getElementById('news-feed-sub');
+  if (feedSub) feedSub.textContent = isBn ? 'নিচের প্রতিটি সংবাদ বা সার্কুলারের মূল উৎস সরাসরি দেখতে পারেন' : 'Explore original published sources for each item below';
+  const lblListen = document.getElementById('lbl-listen-news');
+  if (lblListen) lblListen.textContent = isBn ? 'সংবাদ সারসংক্ষেপ শুনুন' : 'Listen to news summary';
+
+  // Category Tab Badges
+  const totalAll = newsItems.length + warnings.length + rules.length + announcements.length;
+  const countAll = document.getElementById('count-all');
+  const countRules = document.getElementById('count-rules');
+  const countWarnings = document.getElementById('count-warnings');
+  const countPress = document.getElementById('count-press');
+  if (countAll) countAll.textContent = '(' + (isBn ? toBnDigits(totalAll) : totalAll) + ')';
+  if (countRules) countRules.textContent = '(' + (isBn ? toBnDigits(rules.length) : rules.length) + ')';
+  if (countWarnings) countWarnings.textContent = '(' + (isBn ? toBnDigits(warnings.length) : warnings.length) + ')';
+  if (countPress) countPress.textContent = '(' + (isBn ? toBnDigits(newsItems.length) : newsItems.length) + ')';
+
+  // Category Tab Labels
+  const lblCatAll = document.getElementById('lbl-cat-all');
+  if (lblCatAll) lblCatAll.textContent = isBn ? 'সব' : 'All';
+  const lblCatRules = document.getElementById('lbl-cat-rules');
+  if (lblCatRules) lblCatRules.textContent = isBn ? 'সার্কুলার' : 'Circulars';
+  const lblCatWarnings = document.getElementById('lbl-cat-warnings');
+  if (lblCatWarnings) lblCatWarnings.textContent = isBn ? 'সতর্কতা' : 'Notices';
+  const lblCatPress = document.getElementById('lbl-cat-press');
+  if (lblCatPress) lblCatPress.textContent = isBn ? 'সংবাদ' : 'Press';
+
+  // Highlight Banner
+  const bannerTitle = document.getElementById('news-highlight-title');
+  const bannerMeta = document.getElementById('news-highlight-meta');
+  const bannerLabel = document.getElementById('news-highlight-label');
+  const latestRule = rules[0] || warnings[0];
+  if (latestRule && bannerTitle) {
+    if (bannerLabel) bannerLabel.textContent = isBn ? '📢 সর্বশেষ নিয়ন্ত্রক সার্কুলার' : '📢 Latest Regulatory Circular';
+    bannerTitle.textContent = latestRule.title;
+    if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(latestRule.date, isBn)} · ${isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank'}`;
+  }
+
+  // Filter Matcher
+  const query = (newsState.query || '').trim().toLowerCase();
+  const bankFilter = newsState.bank;
+  const catFilter = newsState.category;
+
+  const matchesFilter = (item) => {
+    // Bank filter
+    const bKey = newsBankKey(item);
+    if (bankFilter !== 'all') {
+      if (bankFilter === 'bb' && bKey !== 'bb') return false;
+      if (bankFilter === 'brac' && bKey !== 'brac') return false;
+      if (bankFilter === 'city' && bKey !== 'city') return false;
+      if (bankFilter === 'other' && !['other', 'ebl'].includes(bKey)) return false;
+    }
+    // Text search query
+    if (query) {
+      const hay = [
+        item.title, item.title_bn, item.title_en,
+        item.publisher, item.bank_name_bn, item.bank_name_en,
+        item.summary_bn, item.summary_en, item.source_url
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  };
+
+  feed.innerHTML = "";
+  let visibleCount = 0;
+
+  // 1. Render Press News Items into #news-feed
+  if (catFilter === 'all' || catFilter === 'press') {
+    const filteredPress = newsItems.filter(matchesFilter);
+    visibleCount += filteredPress.length;
+
+    filteredPress.forEach(n => {
+      const card = document.createElement("div");
+      card.setAttribute("role", "listitem");
+      card.className = "catalog-offer-row card-tile publication-card";
+      card.style.cssText = "background: var(--paper);";
+      card.innerHTML = `
+        <div class="card-bank-heading" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span class="news-badge ${n.official ? 'official' : 'reported'}" style="background: ${n.official ? '#E6F4EA' : 'rgba(246, 240, 228, 0.08)'}; color: ${n.official ? '#1B5E20' : 'var(--on-stage-2)'};">
+            ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
+          </span>
+          <small class="news-date">${escapeHTML(formatNewsDate(n.date, isBn))}</small>
+        </div>
+        <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 4px 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
+        ${isBn && !/[ঀ-৿]/.test(n.title_bn) ? '<p class="catalog-note" style="margin: 0 0 8px;">খবরটি ইংরেজিতে</p>' : ''}
+        <footer class="card-tile-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px solid rgba(246,240,228,0.08);">
+          <small style="color:var(--on-stage-2); font-size:calc(var(--fs) * .85);">${escapeHTML(n.publisher || '—')}</small>
+          ${/^https?:\/\//i.test(n.source_url || "") ? `<a class="catalog-source" href="${escapeHTML(n.source_url)}" target="_blank" rel="noopener noreferrer">${isBn ? "উৎস খুলুন ↗" : "Open source ↗"}</a>` : ""}
+        </footer>
+      `;
+      feed.appendChild(card);
+    });
+  }
+
+  // 2. Render Extra Sections (Rules, Warnings, Announcements)
+  extraSection.innerHTML = "";
+  const extraGroups = [
+    ['rules', isBn ? 'বাংলাদেশ ব্যাংকের সার্কুলার ও নতুন নিয়ম' : 'BB Circulars & New Rules', isBn ? '🏛️ বাংলাদেশ ব্যাংক সার্কুলার' : '🏛️ Bangladesh Bank circular', 'circular'],
+    ['warnings', isBn ? 'বাংলাদেশ ব্যাংকের সতর্কবার্তা ও ঘোষণা' : 'BB Warnings and Notices', isBn ? '⚠️ বাংলাদেশ ব্যাংকের সতর্কবার্তা' : '⚠️ Bangladesh Bank warning', 'warning'],
+    ['announcements', isBn ? 'নজরে রাখা ব্যাংকের ঘোষণা' : 'Watched-bank announcements', isBn ? '📢 ডিএসই-তে ব্যাংকের ঘোষণা' : '📢 DSE announcement', 'announcement']
+  ];
+
+  extraGroups.forEach(([key, groupTitle, label, badgeClass]) => {
+    if (catFilter !== 'all' && catFilter !== key) return;
+    const groupItems = (extra[key] || []).filter(matchesFilter);
+    visibleCount += groupItems.length;
+
+    if (groupItems.length > 0) {
+      const grpEl = document.createElement('section');
+      grpEl.setAttribute('aria-label', groupTitle);
+      grpEl.innerHTML = `<h2>${escapeHTML(groupTitle)}</h2>` + groupItems.map(row => {
+        const when = row.date ? formatNewsDate(row.date, isBn) : (row.year ? (isBn ? toBnDigits(row.year) : String(row.year)) : '');
+        return `<article class="catalog-offer-row card-tile publication-card">
+          <div class="card-bank-heading" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="news-badge ${badgeClass}">${escapeHTML([isBn ? row.bank_name_bn : row.bank_name_en, label].filter(Boolean).join(' · '))}</span>
+            <small class="news-date">${escapeHTML(when)}</small>
+          </div>
+          <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 4px 0 6px; color: var(--ink);" lang="${/[ঀ-৿]/.test(row.title) ? 'bn' : 'en'}">${escapeHTML(row.title)}</h2>
+          ${isBn && !/[ঀ-৿]/.test(row.title) ? '<p class="catalog-note" style="margin: 0 0 8px;" lang="bn">মূল শিরোনাম ইংরেজিতে</p>' : ''}
+          <footer class="card-tile-footer">
+            <small>${escapeHTML(when)}</small>
+            ${/^https?:\/\//.test(row.source_url) ? `<a class="catalog-source" aria-label="${escapeHTML((isBn ? 'উৎস খুলুন: ' : 'Open source: ') + row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind === 'index' ? (isBn ? 'মূল উৎসের সূচি খুলুন ↗' : 'Open source index ↗') : (isBn ? 'মূল সার্কুলার / উৎস ↗' : 'Open document ↗')}</a>` : ''}
+          </footer>
+        </article>`;
+      }).join('');
+      extraSection.appendChild(grpEl);
+    } else if (catFilter === key) {
+      const grpEl = document.createElement('section');
+      grpEl.innerHTML = `<h2>${escapeHTML(groupTitle)}</h2><p class="catalog-note">${key === 'announcements' && !extra.watching ? (isBn ? 'ব্যাংক ট্যাবে একটি ব্যাংক নজরে রাখুন। ব্যক্তিগত তালিকার ঘোষণাই এখানে দেখানো হবে।' : 'Watch a bank in the Banks tab to see its announcements here.') : (isBn ? 'এই বিভাগে সরবরাহকৃত তথ্য নেই।' : 'No supplied records in this section.')}</p>`;
+      extraSection.appendChild(grpEl);
+    }
+  });
+
+  // Total Count
+  const totalCountEl = document.getElementById('news-total-count');
+  if (totalCountEl) totalCountEl.textContent = (isBn ? toBnDigits(visibleCount) : visibleCount) + ' ' + (isBn ? 'টি আইটেম' : 'items');
+
+  // Empty State
+  const emptyMsg = document.getElementById('news-empty-message');
+  if (emptyMsg) {
+    if (visibleCount === 0) {
+      emptyMsg.hidden = false;
+      emptyMsg.innerHTML = `<div class="deposit-empty-guidance">
+        <p class="guidance-title">ℹ️ ${isBn ? 'কোনো সংবাদ বা সার্কুলার পাওয়া যায়নি' : 'No matching news or circulars'}</p>
+        <p>${isBn ? 'আপনার ফিল্টার বা অনুসন্ধানের শর্তে কোনো সংবাদ বা সার্কুলার নেই। অন্য শব্দ দিয়ে খুঁজুন বা ফিল্টার রিসেট করুন।' : 'No items match your search or filter criteria. Try different keywords or reset filters.'}</p>
+        <div class="guidance-actions">
+          <button type="button" id="news-reset-btn" class="catalog-action">${isBn ? 'সব সংবাদ দেখুন ›' : 'View all news ›'}</button>
+        </div>
+      </div>`;
+      const resetBtn = document.getElementById('news-reset-btn');
+      if (resetBtn) resetBtn.onclick = () => {
+        newsState.category = 'all';
+        newsState.bank = 'all';
+        newsState.query = '';
+        const searchInput = document.getElementById('news-search-input');
+        if (searchInput) searchInput.value = '';
+        const bankSelect = document.getElementById('news-bank-select');
+        if (bankSelect) bankSelect.value = 'all';
+        document.querySelectorAll('[data-news-category]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.newsCategory === 'all')));
+        renderNews();
+      };
+    } else {
+      emptyMsg.hidden = true;
+      emptyMsg.innerHTML = "";
+    }
+  }
+}
+
+function wireNewsControls() {
+  if (newsState.wired) return;
+  newsState.wired = true;
+  const searchInput = document.getElementById('news-search-input');
+  const searchClear = document.getElementById('news-search-clear');
+  const bankSelect = document.getElementById('news-bank-select');
+
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      newsState.query = e.target.value;
+      if (searchClear) searchClear.style.display = newsState.query ? 'inline-block' : 'none';
+      renderNews();
+    };
+  }
+  if (searchClear) {
+    searchClear.onclick = () => {
+      if (searchInput) searchInput.value = '';
+      newsState.query = '';
+      searchClear.style.display = 'none';
+      renderNews();
+    };
+  }
+  if (bankSelect) {
+    bankSelect.onchange = (e) => {
+      newsState.bank = e.target.value;
+      renderNews();
+    };
+  }
+  document.querySelectorAll('[data-news-category]').forEach(btn => {
+    btn.onclick = () => {
+      newsState.category = btn.dataset.newsCategory;
+      document.querySelectorAll('[data-news-category]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      renderNews();
+    };
+  });
+}
+
+async function loadExtraNews(feed, isBn) {
+  if (!newsState.extra) {
+    try {
+      const response = await fetch('/v1/extra-news', { headers: anonymousDevice ? { 'X-ILMA-Device': anonymousDevice } : {}, cache: 'no-store' });
+      if (response.ok) {
+        newsState.extra = await response.json();
+        renderNews();
+      }
+    } catch {}
+  }
 }
 
 async function loadNews() {
   try {
-    const res = await fetch("/v1/news");
-    if (!res.ok) throw new Error("News load error");
-    const newsItems = await res.json();
-    const feed = document.getElementById("news-feed");
-    feed.innerHTML = "";
     const isBn = currentLang === "bn";
-
-    if (!newsItems.length) feed.textContent = isBn ? "এখন কোনো সংবাদ নেই।" : "No news available.";
-    newsItems.forEach(n => {
-      const card = document.createElement("div");
-      card.setAttribute("role", "listitem");
-      card.style.cssText = "background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px;";
-      card.innerHTML = `
-        <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: calc(var(--fs) * .85); font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
-          ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
-        </span>
-        <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
-        ${isBn&&!/[\u0980-\u09ff]/.test(n.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}
-        <div style="font-size: calc(var(--fs) * .85); color: var(--ink-2); display: flex; justify-content: space-between;">
-          <span>${escapeHTML(n.publisher || '—')}</span>
-          <span>${escapeHTML(new Intl.DateTimeFormat(isBn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(n.date+'T00:00:00')))}</span>
-        </div>
-        ${/^https?:\/\//i.test(n.source_url || "") ? `<a class="catalog-source" href="${escapeHTML(n.source_url)}" target="_blank" rel="noopener noreferrer">${isBn ? "উৎস খুলুন ↗" : "Open source ↗"}</a>` : ""}
-      `;
-      feed.appendChild(card);
-    });
-    await loadExtraNews(feed,isBn);
+    const [newsRes, extraRes] = await Promise.all([
+      fetch("/v1/news"),
+      fetch('/v1/extra-news', { headers: anonymousDevice ? { 'X-ILMA-Device': anonymousDevice } : {}, cache: 'no-store' }).catch(() => null)
+    ]);
+    if (!newsRes.ok) throw new Error("News load error");
+    const newsItems = await newsRes.json();
+    let extraData = { warnings: [], rules: [], announcements: [] };
+    if (extraRes && extraRes.ok) {
+      try { extraData = await extraRes.json(); } catch {}
+    }
+    newsState.items = newsItems;
+    newsState.extra = extraData;
+    wireNewsControls();
+    renderNews();
   } catch (e) {
-    document.getElementById("news-feed").textContent = currentLang === "bn" ? "সংবাদ লোড করা যায়নি। আবার চেষ্টা করুন।" : "Could not load news. Try again.";
+    const feed = document.getElementById("news-feed");
+    if (feed) feed.textContent = currentLang === "bn" ? "সংবাদ লোড করা যায়নি। আবার চেষ্টা করুন।" : "Could not load news. Try again.";
   }
 }
 
