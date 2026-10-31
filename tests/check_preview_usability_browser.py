@@ -98,6 +98,22 @@ def focus(page):
     assert page.evaluate("document.activeElement.tagName")=='H2'
 
 
+def layout(page):
+    page.locator('.dock [data-tab=services]').click();page.locator('[data-category=loan]').click()
+    page.locator('#loan-amount').wait_for()
+    summary=page.locator('#loan-savings')
+    assert summary.is_visible()
+    assert summary.bounding_box()['y'] < page.locator('.loan-calculator').bounding_box()['y']
+    assert summary.bounding_box()['y'] < page.viewport_size['height']-80
+    assert len(page.locator('[data-loan-years]').all())>=7
+    page.locator('[data-loan-years="5"]').click()
+    assert page.locator('[data-loan-years="5"]').get_attribute('aria-pressed')=='true'
+    page.evaluate("document.documentElement.style.setProperty('--fs','28px')")
+    assert not page.locator('#services-catalog').evaluate('e=>e.scrollWidth>e.clientWidth+1')
+    page.locator('#loan-amount').fill('3000000')
+    assert page.locator('#loan-amount').input_value()=='3000000'
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default='http://127.0.0.1:8027');parser.add_argument('--engine',choices=['chromium','webkit','all'],default='all');parser.add_argument('--check',default='dialogs');args=parser.parse_args()
     with sync_playwright() as p:

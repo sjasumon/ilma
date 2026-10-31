@@ -1300,3 +1300,12 @@ input, textarea, select, .calc-field, .input-select,
 
 /* Preserve exact approved paragraph breaks in saved narration. */
 #comparison-narration { white-space: pre-line; }
+
+/* Keep the current example and answer ahead of compact, fully visible controls. */
+.catalog-view-heading { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.catalog-view-heading h2 { margin:0; flex:1; min-width:0; }
+.loan-term-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(max(36px,calc(var(--fs) * 2.6)),1fr)); gap:4px; margin:8px 0 0; }
+.loan-term-options button { min-width:0; padding:8px 4px; }
+.loan-calculator .catalog-note { margin:6px 0; }
+.loan-audio-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr)); align-items:center; gap:10px; margin:10px 0; }
+.loan-audio-controls .catalog-note { margin:0; }
