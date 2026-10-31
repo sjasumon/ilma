@@ -1286,3 +1286,14 @@ input, textarea, select, .calc-field, .input-select,
   font: inherit;
 }
 .settings-dialog button:hover { background: #285c53; }
+
+/* The primary action becomes available only after its handlers are installed. */
+#home-tap-target:disabled { cursor: wait; }
+#home-loading {
+  grid-column: 1;
+  grid-row: 3;
+  padding-top: 10px;
+  color: var(--on-stage);
+  font-size: calc(var(--fs) * 1.15);
+  text-align: center;
+}

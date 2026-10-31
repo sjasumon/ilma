@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-worker-version="41fd02dafae21d45" lang="bn">
+<html data-worker-version="909462cb3aa984e6" lang="bn">
 <head>
   <script id="text-size-bootstrap">try{var s=Number(localStorage.getItem('ilma.textSize'));document.documentElement.style.setProperty('--fs',([14,16,19,22].includes(s)?s:14)+'px')}catch(e){}</script>
   <meta charset="utf-8">
@@ -22,7 +22,7 @@
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/fonts/fonts.css?v=sha256-7e786499b46bb84c">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-ac7eb0a63a1f285b">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-e73d5e2382a42576">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -68,7 +68,7 @@
     <!-- TAB 1: S-01 HOME & S-02 LISTENING -->
     <section id="tab-home" class="tab-content active" aria-label="হোম">
       <div class="home-tap-target">
-        <button id="home-tap-target" class="home-speak-button" type="button" aria-label="কথা বলুন। ব্যাংকের নাম বলুন।"></button>
+        <button id="home-tap-target" class="home-speak-button" type="button" disabled aria-busy="true" aria-label="কথা বলুন। ব্যাংকের নাম বলুন।"></button>
         <!-- Decorative waveform; driven by the real voice pipeline. -->
         <svg id="home-orb" class="home-waveform" data-state="idle" viewBox="0 0 420 160" role="presentation" aria-hidden="true" preserveAspectRatio="none">
       <defs><radialGradient id="home-wave-glow"><stop stop-color="#6ce0c9" stop-opacity=".16"/><stop offset="1" stop-color="#6ce0c9" stop-opacity="0"/></radialGradient></defs>
@@ -82,7 +82,8 @@
     </svg>
 
         <!-- Idle State View -->
-        <div class="home-idle-view" id="home-idle-view">
+        <p id="home-loading" class="home-loading" role="status">ইলমা চালু হচ্ছে… / Loading ILMA…</p>
+        <div class="home-idle-view" id="home-idle-view" hidden>
           <div class="home-greeting" aria-hidden="true">
             <p class="home-greeting-line" id="home-greeting-line" lang="bn">কথা বলতে যেকোনো জায়গায় ট্যাপ করুন</p>
           </div>
@@ -412,7 +413,7 @@
   <script src="/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23"></script>
   <script src="/static/js/ivr.js?v=sha256-2929c97da156ab49"></script>
   <script src="/static/js/voice-agent.js?v=sha256-d20001d6aede81d8"></script>
-  <script src="/static/js/app.js?v=sha256-71da7b63d9de9597"></script>
+  <script src="/static/js/app.js?v=sha256-5afc8250df562a70"></script>
   <script src="/static/js/catalog-common.js?v=sha256-ba956ab9c1dd4d5a"></script>
   <script src="/static/js/bank-ui.js?v=sha256-d79f803b974836ca"></script>
 <script src="/static/js/account-ui.js?v=sha256-4bb9fc68f13503c8"></script>

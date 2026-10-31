@@ -1704,6 +1704,14 @@ document.addEventListener("DOMContentLoaded", () => {
   calculateRealReturn();
   setupAgentPanel();
   setupGuidedVoice();
+  // Keep the server-rendered loading state until all primary controls, including
+  // microphone consent, have handlers. No provider or data request gates this.
+  document.getElementById("home-loading").hidden = true;
+  document.getElementById("home-idle-view").hidden = !document.getElementById("home-listening-view").hidden;
+  if (tapTarget) {
+    tapTarget.setAttribute("aria-busy", "false");
+    tapTarget.disabled = false;
+  }
 });
 
 // The label lives in updateSettingsText; the table is shared with timing tests.

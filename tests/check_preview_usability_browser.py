@@ -54,12 +54,44 @@ def fixed_audio(page):
     page.locator('#settings-close').click()
 
 
+
+def readiness(page):
+    # Hold a real final bundle, rather than assuming a timeout represents loading.
+    page.context.clear_cookies()
+    held=[]
+    page.context.route('**/static/js/bank-services-ui.js?*', lambda route:held.append(route))
+    page.goto(page.url,wait_until='commit')
+    button=page.locator('#home-tap-target')
+    page.wait_for_function("()=>document.getElementById('home-loading')&&document.readyState==='loading'")
+    assert button.is_disabled()
+    assert button.get_attribute('aria-busy')=='true'
+    assert page.locator('#home-loading').is_visible()
+    assert not page.locator('#home-idle-view').is_visible()
+    page.wait_for_function("()=>document.querySelector('script[src*=bank-services-ui]')!==null")
+    # Process the pending route callback without using a slow fixed sleep.
+    for _ in range(100):
+        if held:break
+        page.wait_for_timeout(10)
+    assert held, 'final bundle should be held by the route'
+    box=button.bounding_box()
+    page.mouse.click(box['x']+box['width']/2,box['y']+box['height']/2)
+    assert not page.locator('#mic-permission-dialog').is_visible()
+    held[0].continue_()
+    page.wait_for_load_state('domcontentloaded')
+    assert button.is_enabled()
+    assert button.get_attribute('aria-busy')=='false'
+    assert not page.locator('#home-loading').is_visible()
+    button.click()
+    assert page.locator('#mic-permission-dialog').is_visible()
+    page.locator('#mic-permission-later').click()
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default='http://127.0.0.1:8027');parser.add_argument('--engine',choices=['chromium','webkit','all'],default='all');parser.add_argument('--check',default='dialogs');args=parser.parse_args()
     with sync_playwright() as p:
         for engine,device in [('chromium','Pixel 7'),('webkit','iPhone 13')]:
             if args.engine not in ('all',engine):continue
-            browser=getattr(p,engine).launch();context=browser.new_context(**p.devices[device]);context.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true,micExplained:false,voiceonly:false}))")
+            browser=getattr(p,engine).launch();context=browser.new_context(**p.devices[device],service_workers='block' if args.check=='readiness' else 'allow');context.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true,micExplained:false,voiceonly:false}))")
             page=context.new_page();page.goto(args.base,wait_until='networkidle')
             globals()[args.check](page)
             print('PASS',engine,args.check,flush=True);context.close();browser.close()

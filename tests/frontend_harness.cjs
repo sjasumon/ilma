@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-function createApp({ reducedMotion = false, animationThrows = false, savedSettings = null, storageBlocked = false, pointerEvents = true, recordingSupported = true, recordingError = null } = {}) {
+function createApp({ autoStart = true, reducedMotion = false, animationThrows = false, savedSettings = null, storageBlocked = false, pointerEvents = true, recordingSupported = true, recordingError = null } = {}) {
   const recorders = [];
   class Recorder {
     static supported() { return recordingSupported; }
@@ -53,7 +53,7 @@ function createApp({ reducedMotion = false, animationThrows = false, savedSettin
   });
   vm.runInContext(fs.readFileSync('static/js/app.js', 'utf8'), context);
   const emit = (name, event = {}) => (handlers.get(name) || []).forEach(callback => callback({ key: 'Tab', ...event }));
-  emit('DOMContentLoaded');
+  if (autoStart) emit('DOMContentLoaded');
   return {
     context, document, node, emit, stored, recorders,
     fire(id, name, event = {}) { let result; for (const callback of node(id).handlers.get(name) || []) result = callback({ target: node(id), preventDefault() {}, ...event }); return result; },
