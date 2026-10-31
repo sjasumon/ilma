@@ -43,7 +43,7 @@ def test_scope_sources_and_no_status_changes(context):
             if row.kind=='bank_notice' and row.institution_id==36:assert 'pakistan' not in row.title.lower()
         assert db.query(ExtraItem).filter_by(kind='compliance').count()==2
         expected=sum(len(read(SEED/f)) for f in ('fact.csv','incidents/fact.csv'))
-        assert db.query(Fact).count()==expected and db.query(ServiceOffer).count()==606
+        assert db.query(Fact).count()==expected and db.query(ServiceOffer).count()==610
         assert get_institution_report_card(db,'nbl')['status']['code']=='high'
         assert get_institution_report_card(db,'islamibank')['status']['code']=='high'
         assert get_institution_report_card(db,'bracbank')['status']['code']=='strong'

@@ -19,6 +19,8 @@ def parse_terms(product='',condition='',exact=None):
         return {'tenor_min_months':low,'tenor_max_months':high,'tenor_options':None}
     if len(options)>1:return {'tenor_min_months':min(options),'tenor_max_months':max(options),'tenor_options':sorted(options)}
     if exact is not None:options={exact}
+    year=re.search(r'\bYear\s+(\d+)\b',text) if not options else None
+    if year:options={int(year[1])*12}
     if options:
         value=next(iter(options));return {'tenor_min_months':value,'tenor_max_months':value,'tenor_options':[value]}
     return {'tenor_min_months':None,'tenor_max_months':None,'tenor_options':None}

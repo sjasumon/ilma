@@ -377,6 +377,56 @@ class RelatedEntity(Base):
     parent_bank_id = Column(Integer, nullable=False)
 
 
+# Bank awards: past recognition with sources. Never an input to bank condition.
+class Awarder(Base):
+    __tablename__ = 'awarder'
+    awarder_id = Column(String(64), primary_key=True)
+    name = Column(String(255), nullable=False)
+    name_bn = Column(String(255), nullable=False)
+    awarder_type = Column(String(64), nullable=False)
+    country = Column(String(64), nullable=False, default='')
+    website = Column(String(512), nullable=False, default='')
+    paid_flag = Column(String(16), nullable=False)
+    evidence_url = Column(String(1024), nullable=False, default='')
+    evidence_quote = Column(Text, nullable=False)
+    note = Column(Text, nullable=False)
+    source_pack = Column(String(64), nullable=False)
+
+
+class BankAward(Base):
+    __tablename__ = 'bank_award'
+    award_id = Column(String(96), primary_key=True)
+    institution_id = Column(Integer, ForeignKey('institution.id'), nullable=False, index=True)
+    awarder_id = Column(String(64), ForeignKey('awarder.awarder_id'), nullable=False)
+    award_name_en = Column(String(512), nullable=False)
+    award_name_bn = Column(String(512), nullable=False)
+    short_name_bn = Column(String(255), nullable=False)
+    category = Column(String(255), nullable=False, default='')
+    award_year = Column(SmallInteger)  # Undated self-reported rows exist; never spoken.
+    announced_on = Column(Date)
+    result = Column(String(32), nullable=False)
+    medal = Column(String(16), nullable=False, default='')
+    scope = Column(String(32), nullable=False, default='')
+    confirmation = Column(String(32), nullable=False)
+    paid_flag = Column(String(16), nullable=False)
+    hide_in_app = Column(Boolean, nullable=False, default=False)
+    source_pack = Column(String(64), nullable=False)
+
+
+class BankAwardSource(Base):
+    __tablename__ = 'bank_award_source'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    award_id = Column(String(96), ForeignKey('bank_award.award_id'), nullable=False, index=True)
+    row_hash = Column(String(64), nullable=False, unique=True)
+    url = Column(String(1024), nullable=False)
+    source_kind = Column(String(32), nullable=False)
+    outlet = Column(String(255), nullable=False, default='')
+    published_on = Column(Date)
+    quote = Column(Text, nullable=False)
+    language = Column(String(8), nullable=False, default='')
+    is_pr_copy = Column(Boolean, nullable=False, default=False)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "create":
         create_tables()

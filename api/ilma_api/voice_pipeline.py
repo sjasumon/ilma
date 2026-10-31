@@ -322,8 +322,8 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             yield event('result', {'type':'ivr_action','ivr_action':action,'omit_history':True,'sources':[],'text':''})
             outcome='answered'
             return
-        from ilma_api.human_resolver import is_best_dps_question
-        if is_best_dps_question(text):context=context.model_copy(update={'agent':True,'ivr_step':None})
+        from ilma_api.human_resolver import best_rate_product
+        if best_rate_product(text):context=context.model_copy(update={'agent':True,'ivr_step':None})
         if context.conversation or context.agent and context.ivr_step not in {'open','mic','language'}:
             from ilma_api.voice_agent import run_agent_turn
             agent_candidates=match_candidates(text,banks) if text else []
@@ -336,7 +336,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 return
             # Refusals remain deterministic and are never sent to the planner.
             from ilma_api.human_agent import enabled as human_enabled
-            if ADVICE.search(text) and not human_enabled() and not is_best_dps_question(text):
+            if ADVICE.search(text) and not human_enabled() and not best_rate_product(text):
                 yield event('result', {'type':'refused','omit_history':True,'sources':[], 'text':'ব্যাংক বেছে দেওয়া বা টাকা রাখার পরামর্শ দেওয়া হয় না।' if context.ui_lang=='bn' else 'ILMA does not recommend where to deposit money.'})
                 return
             agent_started=time.monotonic()
@@ -528,7 +528,9 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         import logging
         logging.getLogger(__name__).warning('voice_pipeline_error code=%s', error.code)
         yield event('error', {'code': error.code, 'message_bn': error.bn, 'message_en': error.en})
-    except SQLAlchemyError:
+    except SQLAlchemyError as error:
+        import logging
+        logging.getLogger(__name__).warning('voice_pipeline_database type=%s code=%s',type(error).__name__,(getattr(getattr(error,'orig',None),'args',None) or (None,))[0])
         trace_stage(diagnostic, 'failed', started, code='bank_data_unavailable')
         db.rollback()
         yield event('speech_unavailable' if result_sent else 'error', {'code': 'speech_unavailable' if result_sent else 'bank_data_unavailable', 'message_bn': 'ব্যাংকের তথ্য এখন পাওয়া যাচ্ছে না।', 'message_en': 'Bank data is unavailable.'})

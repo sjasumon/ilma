@@ -8,8 +8,15 @@ from ilma_api.db import BankProfile,Institution,engine
 
 FIELDS={'founded_year','branches','sub_branches','atms','agent_outlets','customers','known_for'}
 
+# Facts Sumon collected by hand have his wording as evidence and no source link.
+MANUAL='manual_sumon'
+MANUAL_FIELDS={'founded_year','founded_date','founder','founder_bn','interim_net_profit','interim_profit_change','interim_npl','service_groups'}
+
 def validate(row):
     if date.fromisoformat(row['as_of'])>date.today():raise ValueError('Future profile date')
+    if row.get('page')==MANUAL:
+        if not row.get('quote') or not row.get('value') or row['field'] not in MANUAL_FIELDS:raise ValueError('Manual profile fact needs a known field, a value and its wording')
+        return row
     if row['field'] not in FIELDS:raise ValueError('Unknown profile field')
     if not row.get('quote') or not row.get('page') or not row.get('source_url','').startswith('https://'):
         raise ValueError('Profile requires a source URL, page and quotation')
@@ -29,7 +36,7 @@ def load(path,bind=engine):
         for row in rows:
             bank=db.query(Institution).filter_by(slug=row['bank_slug']).one_or_none()
             if bank is None:raise ValueError('Unknown profile bank')
-            db.merge(BankProfile(fact_id=row['fact_id'],bank_id=bank.id,field=row['field'],value=row['value'],as_of=date.fromisoformat(row['as_of']),source_url=row['source_url'],page=row['page'],quote=row['quote'],checked_by='source-import',checked_on=date.today()))
+            db.merge(BankProfile(fact_id=row['fact_id'],bank_id=bank.id,field=row['field'],value=row['value'],as_of=date.fromisoformat(row['as_of']),source_url=row['source_url'],page=row['page'],quote=row['quote'],checked_by=MANUAL if row['page']==MANUAL else 'source-import',checked_on=date.today()))
         db.commit()
     return len(rows)
 

@@ -135,6 +135,7 @@ try {
   }
 } catch { /* Preferences still work when storage is unavailable. */ }
 let lastAgentChoice = "";
+let stateBeforeAnswer = null;
 let agentConversation = null, agentPanel = null, agentPendingResult = null, bargeMonitor = null;
 let voiceLanguageReturn = null, voiceLanguageOverride = null;
 let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
@@ -1512,7 +1513,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ivr?.active) ivr.skip();
       const tab = btn.getAttribute("data-tab");
       if (tab === "detail") currentBankId = null;
-      switchTab(tab);
+      if (tab === "home") goHome();
+      else switchTab(tab);
     });
   });
 
@@ -1906,6 +1908,32 @@ function hideAgentConversation() {
   document.getElementById('agent-panel').hidden = true;
   document.getElementById('tab-home').classList.remove('agent-open');
   startExampleCycle();
+  // The answer's history entry becomes the screen it came from, so Back never stops on it.
+  if (window.history?.state?.ilmaAnswer) window.history.replaceState?.(stateBeforeAnswer, '');
+}
+
+// The answer lives inside the Home tab, so every way home goes through here.
+function goHome() {
+  const onAnswerEntry = Boolean(window.history?.state?.ilmaAnswer);
+  stopListening(); stopAudio();
+  if (agentConversation || agentPanel?.active || !document.getElementById('agent-panel').hidden) resetAgentConversation();
+  activeVoiceContext = { tab: 'home', bank_id: null };
+  switchTab('home');
+  if (onAnswerEntry) window.history.back();
+}
+
+function setupBackToHome() {
+  window.addEventListener?.('popstate', event => {
+    const closed = document.getElementById('agent-panel').hidden;
+    // A tab opened from an answer leaves that answer's entry behind; Back skips it.
+    if (closed && event.state?.ilmaAnswer) window.history.back();
+    else if (!closed) goHome();
+  });
+  // Only a native wrapper provides this; the web app has its browser Back.
+  window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => {
+    if (document.getElementById('agent-panel').hidden) window.Capacitor.Plugins.App.minimizeApp?.();
+    else goHome();
+  });
 }
 
 function resetAgentConversation() {
@@ -1932,6 +1960,10 @@ async function showAgentTurn(result) {
   }
   if (currentTab !== 'home') switchTab('home');
   agentConversation = result.conversation;
+  if (window.history?.pushState && !window.history.state?.ilmaAnswer) {
+    stateBeforeAnswer = window.history.state;
+    window.history.pushState({ ilmaAnswer: true }, '');
+  }
   if (agentPanel) {
     // Result text renders immediately; streamed speech is delivered separately.
     void agentPanel.show(result,guided);
@@ -2019,7 +2051,7 @@ function setupAgentPanel() {
         const button = document.createElement('button');button.type = 'button';button.textContent = option.label;
         button.addEventListener('click',()=>agentPanel.choose(option.value)); options.appendChild(button);
       }
-      const labels = {'agent-report':bn?'পুরো রিপোর্ট দেখুন':'View full report','agent-repeat':bn?'আবার':'Repeat','agent-end':bn?'শেষ':'Finish'};
+      const labels = {'agent-home':bn?'← হোম':'← Home','agent-report':bn?'পুরো রিপোর্ট দেখুন':'View full report','agent-repeat':bn?'আবার':'Repeat','agent-end':bn?'শেষ':'Finish'};
       for (const [id,text] of Object.entries(labels)) document.getElementById(id).textContent = text;
       document.getElementById('agent-report').hidden = !result.conversation.institution_id;
       document.getElementById('agent-text-form').hidden=!result.offer_typing;
@@ -2049,5 +2081,7 @@ function setupAgentPanel() {
   document.getElementById('agent-text-form').addEventListener('submit',event=>{event.preventDefault();const input=document.getElementById('agent-text-input');if(!input.value.trim())return;stopAudio();void submitTextQuestion(input.value);});
   document.getElementById('agent-stop-speech').addEventListener('click',()=>agentPanel.suspend());
   document.getElementById('agent-tap').addEventListener('click',event=>agentPanel.tap(event));
+  document.getElementById('agent-home').addEventListener('click', goHome);
+  setupBackToHome();
   for (const [id,choice] of [['agent-report','report'],['agent-repeat','repeat'],['agent-end','end']]) document.getElementById(id).addEventListener('click',()=>agentPanel.choose(choice));
 }

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 function createRecorder({ permissionError = null, stopStalls = false, permissionState = "granted", echoCancellation = true } = {}) {
   const intervals = new Map(), timeouts = new Map();
-  let now = 0, level = .1, next = 0, tracksStopped = 0;
+  let now = 0, level = .1, next = 0, tracksStopped = 0, requests = 0;
   const decoded = { length: 48000, sampleRate: 48000, numberOfChannels: 1, getChannelData: () => new Float32Array(48000).fill(.1) };
   class AudioContext {
     state = 'running'; destination = {};
@@ -23,6 +23,7 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   const context = vm.createContext({
     Blob, Date: { now: () => now },
     navigator: { permissions: {async query(){return {state:permissionState}}}, mediaDevices: { async getUserMedia() {
+      requests++;
       if (permissionError) throw Object.assign(Error('Permission denied'), { name: permissionError });
       const track={stop(){tracksStopped++},getSettings(){return {echoCancellation}}};return {getTracks:()=>[track],getAudioTracks:()=>[track]};
     } } },
@@ -35,7 +36,7 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
     context, decoded, recorder: new context.window.IlmaVoiceRecorder(),
     sample(time, amplitude) { now = time; level = amplitude; for (const fn of [...intervals.values()]) fn(); },
     limit() { for (const fn of [...timeouts.values()]) fn(); },
-    stopped: () => tracksStopped, timers: () => intervals.size + timeouts.size
+    stopped: () => tracksStopped, requests: () => requests, timers: () => intervals.size + timeouts.size
   };
 }
 (async () => {
@@ -46,8 +47,12 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   app.sample(2000, 0); assert.equal(completed, 1);
   const recorded = await app.recorder.finish();
   assert.equal(recorded.type, 'audio/webm');
-  assert.ok(app.stopped());
+  assert.equal(app.stopped(), 0, 'Keep the microphone for the visit');
   assert.equal(app.timers(), 0);
+  const again = new app.context.window.IlmaVoiceRecorder();
+  await again.start({ onComplete() {}, onError() {} }); again.cancel();
+  assert.equal(app.requests(), 1, 'Ask for the microphone once per visit');
+  app.context.window.IlmaMicrophone.release(); assert.ok(app.stopped());
 
   const brief=createRecorder();let briefCompleted=0,briefError;
   await brief.recorder.start({onComplete(){briefCompleted++},onError(code){briefError=code}});
@@ -69,7 +74,7 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   await noSpeech.recorder.start({ onComplete() {}, onError: code => error = code });
   noSpeech.sample(6100, 0);
   assert.equal(error, 'no-speech');
-  assert.ok(noSpeech.stopped());
+  noSpeech.context.window.IlmaMicrophone.release(); assert.ok(noSpeech.stopped());
   assert.equal(noSpeech.timers(), 0);
 
   const patient=createRecorder();let patientError;
@@ -77,10 +82,10 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   patient.sample(6100,0);assert.equal(patientError,undefined);patient.sample(8100,0);assert.equal(patientError,'no-speech');
   const cap = createRecorder(); let capped = 0;
   await cap.recorder.start({ onComplete: () => capped++, onError() {} });
-  cap.sample(400,.1);cap.limit(); assert.equal(capped, 1); cap.recorder.cancel(); assert.ok(cap.stopped());
+  cap.sample(400,.1);cap.limit(); assert.equal(capped, 1); cap.recorder.cancel(); cap.context.window.IlmaMicrophone.release(); assert.ok(cap.stopped());
   const guidedQuiet = createRecorder(); let guidedError;
   await guidedQuiet.recorder.start({ maxMs: 6000, onComplete() { throw Error('silent IVR audio must not upload'); }, onError: code => guidedError = code });
-  guidedQuiet.limit(); assert.equal(guidedError, 'no-speech'); assert.ok(guidedQuiet.stopped());
+  guidedQuiet.limit(); assert.equal(guidedError, 'no-speech'); guidedQuiet.context.window.IlmaMicrophone.release(); assert.ok(guidedQuiet.stopped());
   const guidedSpeech = createRecorder(); let guidedCompleted = 0;
   await guidedSpeech.recorder.start({ maxMs: 6000, onComplete() { guidedCompleted++; }, onError(code) { throw Error(code); } });
   guidedSpeech.sample(400, .1); guidedSpeech.limit(); assert.equal(guidedCompleted, 1); guidedSpeech.recorder.cancel();
@@ -93,12 +98,12 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   stalled.limit();
   await rejected;
   assert.equal(stalled.timers(), 0);
-  assert.ok(stalled.stopped());
+  stalled.context.window.IlmaMicrophone.release(); assert.ok(stalled.stopped());
   const cancelled = createRecorder({stopStalls:true});
   await cancelled.recorder.start({onComplete(){},onError(){}});
   const cancelledFinish = assert.rejects(cancelled.recorder.finish(), /cancelled/);
   cancelled.recorder.cancel();
   await cancelledFinish;
   assert.equal(cancelled.timers(), 0);
-  console.log('Audio recorder passed: raw compressed recording, configurable silence detection, 15-second timer, no-speech, track/timer cleanup and permission denial');
+  console.log('Audio recorder passed: raw compressed recording, configurable silence detection, 15-second timer, no-speech, one microphone grant per visit, track/timer cleanup and permission denial');
 })().catch(error => { console.error(error); process.exitCode = 1; });
