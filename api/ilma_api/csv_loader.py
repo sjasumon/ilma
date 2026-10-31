@@ -89,7 +89,8 @@ def load(directory, engine):
                 from ilma_api.service_terms import parse_terms
                 row.update(parse_terms(row['product'],row['condition'],row.get('tenor_months')))
                 for field in ('source_url','page','quote','doc_date'):
-                    if not row.get(field): fail('missing ' + field)
+                    if field=='source_url' and row.get('checked_by')=='manual_sumon':continue
+                    if not row.get(field) and not (field=='page' and row.get('checked_by')=='manual_sumon'): fail('missing ' + field)
                 if row.get('value_num') is not None and row['value_num'] not in quote_numbers(row['quote']) and not (
                     row['value_num']==0 and row['value_text'].casefold()=='free' and re.search(r'\bfree\b',row['quote'],re.I)): fail('number absent from quote')
                 if row.get('variant','main') not in ({'main','variant','excluded','scheme'} if row['category']=='deposit' else {'main','variant','excluded'}): fail('invalid service variant')

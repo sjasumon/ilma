@@ -8,8 +8,10 @@ ACRONYMS={'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
  'nccbank':('NCC','এনসিসি'),'dutchbangl':('DBBL','ডিবিবিএল'),
  'sbacbank':('SBAC','এসবিএসি'),'primebank':('Prime','প্রাইম'),
  'citybank':('City Bank','সিটি ব্যাংক'),'bracbank':('BRAC','ব্র্যাক','break bank','breakbank','ব্রেক ব্যাংক')}
-PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsurance\b|\bprotection\b|(?:ব্যাংক|bank).{0,20}(?:বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
+PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsur(?:ance|ed|e)\b|\bprotect(?:ion|ed)\b|(?:ব্যাংক|bank).{0,20}(?:(?<!ম্)বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
 CORRECTION=re.compile(r'^না(?:[\s,।]|$)|না আমি|নয়|নয়|ভুল|শুধরে|বদলে|সংশোধন|ধরুন|আগের প্রশ্ন|আমার কথা ছিল|কথাই বলছি|আমি বলেছিলাম|নাম.{0,24}হবে|জন্যই জানতে চেয়েছি|\b(?:i meant|not|correct|instead|that should|use .*previous|was asking|previous question|bank in my last question)\b',re.I)
+
+AWARDS=re.compile(r'পুরস্কার|পুরষ্কার|অ্যাওয়ার্ড|এওয়ার্ড|স্বীকৃতি|\bawards?\b|\brecogni[sz]',re.I)
 
 def is_best_dps_question(text):
     """Only the global best-DPS question family; no ASR normalization changes."""
@@ -21,6 +23,20 @@ def is_best_dps_question(text):
     normalized=normalize_numbers(value.replace('বছরের','বছর').replace('মাসের','মাস'))
     explicit=re.search(r'(?<!\w)(\d+)\s*months?\b',normalized)
     return (best or where and good) and (not explicit or int(explicit[1])==60)
+
+def is_best_fdr_question(text):
+    """The global best-FDR question family; one-year term unless another is named."""
+    value=unicodedata.normalize('NFC',text).casefold()
+    if not re.search(r'এফ\s*ডি\s*আর|(?<![a-z])f\s*d\s*r(?![a-z])|fixed\s+deposit|স্থায়ী\s*আমানত|স্থায়ী\s*আমানত',value):return False
+    best=bool(re.search(r'(?:সবথেকে|সবচেয়ে|সবচে|সবচেয়ে)\s*(?:ভালো|ভাল|বেশি)|সেরা|সর্বোচ্চ|\bbest\b|\bhighest\b',value))
+    where=bool(re.search(r'কোথায়|কোথায়|কোন\s*ব্যাংক|\bwhere\b|\bwhich\s*bank',value))
+    good=bool(re.search(r'ভালো|ভাল|বেশি|\bgood\b|\bbetter\b',value))
+    normalized=normalize_numbers(value.replace('বছরের','বছর').replace('মাসের','মাস'))
+    explicit=re.search(r'(?<!\w)(\d+)\s*months?\b',normalized)
+    return (best or where and good) and (not explicit or int(explicit[1])==12)
+
+def best_rate_product(text):
+    return 'dps' if is_best_dps_question(text) else 'fdr' if is_best_fdr_question(text) else None
 
 @dataclass
 class ResolvedTurn:
@@ -45,6 +61,9 @@ def resolve(text,c,banks):
     text=join_acronyms(unicodedata.normalize('NFC',text)).strip()
     matched_text=re.sub(r'(প্রাইম|সিটি|ইবিএল|এনসিসি|এমটিবি|ব্র্যাক)(?:ের|র)(?=$|[\s,।.!?])',r'\1',text)
     indexed=[{**b,'aliases':[*b.get('aliases',[]),*ACRONYMS.get(b.get('slug'),())]} for b in banks]
+    # A possessive ending on any Bangla bank name ("ব্যাংক এশিয়ার") still names that bank.
+    for alias in sorted({unicodedata.normalize('NFC',a) for b in indexed for a in [b.get('name_bn') or '',*b['aliases']] if re.search(r'[ঀ-৿]$',a)},key=len,reverse=True):
+        matched_text=re.sub(re.escape(alias)+r'(?:ের|র)(?=$|[\s,।.!?])',alias,matched_text)
     correction=bool(CORRECTION.search(text))
     candidates=match_candidates(matched_text,indexed)
     from ilma_api.voice_text import normalize_alias
@@ -72,7 +91,7 @@ def resolve(text,c,banks):
     bank=named[0] if named else c.institution_id
     if correction and not [b for b in strong if b['id'] not in excluded] and excluded:
         bank=c.institution_id if c.institution_id not in excluded else None
-    product=next((p for p,pattern in [('fdr',r'এফডিআর|এফ ডি আর|\bfdr\b|fixed deposit'),('dps',r'ডিপিএস|ডি পি এস|\bdps\b|monthly savings|মাসিক সঞ্চয়|কনফিডেন্স|কোটিপতি|লাখপতি'),('savings',r'সঞ্চয়ী|সেভিংস|\bsavings?\b'),('card',r'কার্ড|\bcards?\b|visa|mastercard'),('home_loan',r'গৃহঋণ|home loan'),('personal_loan',r'personal loan|ব্যক্তিগত ঋণ'),('auto_loan',r'গাড়ি|car loan|auto loan')] if re.search(pattern,text,re.I)),None)
+    product=next((p for p,pattern in [('fdr',r'এফডিআর|এফ ডি আর|\bfdr\b|fixed deposit|ফিক্সড ডিপোজিট|স্থায়ী আমানত'),('dps',r'ডিপিএস|ডি পি এস|\bdps\b|monthly savings|মাসিক সঞ্চয়|কনফিডেন্স|কোটিপতি|লাখপতি'),('savings',r'সঞ্চয়ী|সেভিংস|\bsavings?\b'),('card',r'কার্ড|\bcards?\b|visa|mastercard'),('home_loan',r'গৃহঋণ|home loan'),('personal_loan',r'personal loan|ব্যক্তিগত ঋণ'),('auto_loan',r'গাড়ি|car loan|auto loan')] if re.search(pattern,text,re.I)),None)
     changed=bank!=c.institution_id
     retained=correction or not changed
     selected=product or (c.product if retained else None)
@@ -80,7 +99,7 @@ def resolve(text,c,banks):
     match=re.search(r'(?<!\w)(\d+)\s*(?:months?|মাস)(?:ের)?',normalized,re.I)
     tenor=int(match[1]) if match and 1<=int(match[1])<=600 else c.tenor if retained and (product is None or product==c.product) else None
     network=next((value for value,pattern in [('Visa',r'visa|ভিসা'),('Mastercard',r'mastercard|মাস্টারকার্ড'),('Amex',r'amex|অ্যামেক্স')] if re.search(pattern,text,re.I)),None)
-    tier=next((value for value,pattern in [('Gold',r'gold|গোল্ড'),('Platinum',r'platinum|প্লাটিনাম'),('Signature',r'signature|সিগনেচার'),('Classic',r'classic|ক্লাসিক'),('World',r'world|ওয়ার্ল্ড'),('Infinite',r'infinite|ইনফিনিট'),('Titanium',r'titanium|টাইটানিয়াম')] if re.search(pattern,text,re.I)),None)
+    tier=next((value for value,pattern in [('Gold',r'gold|গোল্ড'),('Platinum',r'platinum|প্লাটিনাম|প্ল্যাটিনাম'),('Signature',r'signature|সিগনেচার|সিগনিচার'),('Classic',r'classic|ক্লাসিক'),('World',r'world|ওয়ার্ল্ড'),('Infinite',r'infinite|ইনফিনিট'),('Titanium',r'titanium|টাইটানিয়াম')] if re.search(pattern,text,re.I)),None)
     if selected=='card':network=network or (c.network if retained else None);tier=tier or (c.tier if retained else None)
     else:network=tier=None
     direct=bool(PROTECTION.search(text))
@@ -99,14 +118,15 @@ def resolve(text,c,banks):
     if intent!='compare':compare=[]
     confirm=[b['id'] for b in candidates if .7<=b['confidence']<.9][:2] if not bank else []
     wanted=next((name for name,pattern in [('sub_branches',r'উপশাখা|sub.branch'),('branches',r'শাখা|branches'),('founded_year',r'প্রতিষ্ঠা(?=$|[\s:?।]|কাল|সাল|বছর)|প্রতিষ্ঠিত|কোন সালে|যাত্রা শুরু|founded|established'),('atms',r'এটিএম|\batms?\b'),('customers',r'গ্রাহকের সংখ্যা|customers'),('agent_outlets',r'এজেন্ট|agent outlet'),('known_for',r'কী জন্য পরিচিত|known for')] if re.search(pattern,text,re.I)),None)
-    metric=next((name for name,pattern in [('net_profit',r'মুনাফা|নিট লাভ|লাভ কত|লাভ কম|লাভ কেমন|লোকসান|profit'),('crar',r'মূলধন|capital ratio|\bcrar\b'),('npl_ratio',r'খেলাপি ঋণ|bad loans|percentage of loans|\bnpl\b'),('rating',r'রেটিং|rating')] if re.search(pattern,text,re.I)),None)
+    metric=next((name for name,pattern in [('net_profit',r'মুনাফা|নিট লাভ|লাভ কত|লাভ কম|লাভ কেমন|লোকসান|profit'),('crar',r'মূলধন|\bcapital\b|\bcrar\b'),('npl_ratio',r'খেলাপি ঋণ|bad loans|percentage of loans|\bnpl\b'),('rating',r'রেটিং|rating')] if re.search(pattern,text,re.I)),None)
     if metric=='net_profit' and re.search(r'আগের বছর|গত বছর|last year|previous year',text,re.I) and not re.search(r'অন্য ব্যাংক|other bank',text,re.I):intent='bank_figures'
     explain=bool(re.search(r'মানে|অর্থ|জিনিস|শব্দটা.*বুঝিয়ে|বোঝায়|(?:এফডিআর|ডিপিএস|মূলধন) কী$|\bmean\b|what is (?:a |an |net |capital |credit )|explain .*simply',text,re.I))
     if not correction and intent not in {'compare','insurance','stop','repeat'}:
         if explain and (metric or product or re.search(r'মধ্যমান|বাফার|median|buffer',text,re.I)):intent='explain_term'
         elif wanted:intent='bank_profile'
-        elif metric and re.search(r'কত|অঙ্ক|হিসাব|figure|how much|ratio|percentage|profit',text,re.I):intent='bank_figures'
-    if not direct and intent not in {'repeat','stop'}:
+        elif metric and re.search(r'কত|কেমন|পর্যাপ্ত|অঙ্ক|হিসাব|figure|how much|\bhow\b|enough|adequate|ratio|percentage|profit',text,re.I):intent='bank_figures'
+    if not correction and intent not in {'compare','insurance','stop','repeat'} and AWARDS.search(text):intent='bank_awards'
+    if not direct and intent not in {'repeat','stop','bank_awards'}:
         if re.search(r'সেরা|(?:সবচেয়ে|সবার চেয়ে).*(?:ভালো|ভাল|নিরাপদ|ভরসা)|এক নম্বর ব্যাংক|\b(?:best|safest|most reliable|number (?:one|1))\b',text,re.I):intent='best_bank'
         elif re.search(r'টাকা.*(?:রাখব|রাখা উচিত|তুলে|সরাব)|কোথায়.*রাখ|কোন ব্যাংকে.*সঞ্চয়|বেছে|সিদ্ধান্ত.*(?:নিন|নেব|নিতে)|পরামর্শ চাই|আমার হয়ে|\brecommend\b|\bshould (?:i|we)\b|\b(?:i|we) should\b|(?:which|what) bank should|decide.*(?:keep|savings)|choose.*bank|where.*(?:keep|invest|deposit)',text,re.I):intent='advice_request'
     if intent is None and re.search(r'সেবা|পণ্য|services|products',text,re.I):intent='services_list'
@@ -119,6 +139,7 @@ def resolve(text,c,banks):
     elif changed:
         named_bank=next((b for b in banks if b['id']==bank),{})
         basis='islamic' if named_bank.get('islamic') else 'conventional'
-    if is_best_dps_question(text):
-        bank=None;selected='dps';tenor=60;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
+    best=best_rate_product(text)
+    if best:
+        bank=None;selected=best;tenor=60 if best=='dps' else 12;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
     return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric)
