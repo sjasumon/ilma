@@ -135,6 +135,7 @@ try {
   }
 } catch { /* Preferences still work when storage is unavailable. */ }
 let lastAgentChoice = "";
+let stateBeforeAnswer = null;
 let agentConversation = null, agentPanel = null, agentPendingResult = null, bargeMonitor = null;
 let voiceLanguageReturn = null, voiceLanguageOverride = null;
 let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
@@ -1907,16 +1908,18 @@ function hideAgentConversation() {
   document.getElementById('agent-panel').hidden = true;
   document.getElementById('tab-home').classList.remove('agent-open');
   startExampleCycle();
-  // Leaving by any route drops the answer's history entry, so Back never returns to it.
-  if (window.history?.state?.ilmaAnswer) window.history.back();
+  // The answer's history entry becomes the screen it came from, so Back never stops on it.
+  if (window.history?.state?.ilmaAnswer) window.history.replaceState?.(stateBeforeAnswer, '');
 }
 
 // The answer lives inside the Home tab, so every way home goes through here.
 function goHome() {
+  const onAnswerEntry = Boolean(window.history?.state?.ilmaAnswer);
   stopListening(); stopAudio();
   if (agentConversation || agentPanel?.active || !document.getElementById('agent-panel').hidden) resetAgentConversation();
   activeVoiceContext = { tab: 'home', bank_id: null };
   switchTab('home');
+  if (onAnswerEntry) window.history.back();
 }
 
 function setupBackToHome() {
@@ -1952,7 +1955,10 @@ async function showAgentTurn(result) {
   }
   if (currentTab !== 'home') switchTab('home');
   agentConversation = result.conversation;
-  if (window.history?.pushState && !window.history.state?.ilmaAnswer) window.history.pushState({ ilmaAnswer: true }, '');
+  if (window.history?.pushState && !window.history.state?.ilmaAnswer) {
+    stateBeforeAnswer = window.history.state;
+    window.history.pushState({ ilmaAnswer: true }, '');
+  }
   if (agentPanel) {
     // Result text renders immediately; streamed speech is delivered separately.
     void agentPanel.show(result,guided);
