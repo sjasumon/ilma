@@ -105,5 +105,10 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   cancelled.recorder.cancel();
   await cancelledFinish;
   assert.equal(cancelled.timers(), 0);
+  const device=createRecorder();const closes=(userAgent,platform='',maxTouchPoints=0)=>{Object.assign(device.context.navigator,{userAgent,platform,maxTouchPoints});return device.context.window.IlmaMicrophone.closesForPlayback()};
+  assert.equal(closes('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'),true,'iPhone closes the mic for playback');
+  assert.equal(closes('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)','MacIntel',5),true,'iPad in desktop mode closes the mic');
+  assert.equal(closes('Mozilla/5.0 (Linux; Android 14; Pixel 8)','Linux armv8l',5),false,'Android keeps the mic behaviour');
+  assert.equal(closes('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)','MacIntel',0),false,'A Mac keeps the mic behaviour');
   console.log('Audio recorder passed: raw compressed recording, configurable silence detection, 15-second timer, no-speech, one microphone grant per visit, track/timer cleanup and permission denial');
 })().catch(error => { console.error(error); process.exitCode = 1; });

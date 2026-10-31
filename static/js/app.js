@@ -840,6 +840,7 @@ function stopAudio() {
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
   if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts|news)\/(?:bn|en)\/[a-z0-9_-]+\.mp3(?:\?v=[a-f0-9]{16})?$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
+  if (window.IlmaMicrophone?.closesForPlayback?.()) { bargeMonitor?.cancel(); bargeMonitor=null; window.IlmaMicrophone.release(); }
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
   const label = currentTab === "detail" ? "lbl-listen-rpt" : currentTab === "services" ? "lbl-listen-srv" : currentTab === "news" ? "lbl-listen-news" : null;
@@ -2132,14 +2133,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if(agentPanel?.active){
       const stop=document.getElementById('agent-stop-speech');stop.hidden=false;stop.textContent=currentLang==='bn'?'থামান':'Stop speaking';
       bargeMonitor?.cancel();
-      if(window.IlmaBargeMonitor&&appSettings.micExplained){
+      if(window.IlmaBargeMonitor&&appSettings.micExplained&&!window.IlmaMicrophone?.closesForPlayback?.()){
         const generation=agentPanel.generation;
         bargeMonitor=new window.IlmaBargeMonitor();void bargeMonitor.start(stream=>{
           if(!agentPanel?.active||generation!==agentPanel.generation){stream.getTracks().forEach(t=>t.stop());return;}
           agentPanel.suspend();void startListening(stream);
         });
       }
-    }else if(!ivr?.active&&window.IlmaBargeMonitor&&appSettings.micExplained){
+    }else if(!ivr?.active&&window.IlmaBargeMonitor&&appSettings.micExplained&&!window.IlmaMicrophone?.closesForPlayback?.()){
       const generation=playbackRequest;
       bargeMonitor?.cancel();bargeMonitor=new window.IlmaBargeMonitor();
       void bargeMonitor.start(stream=>{

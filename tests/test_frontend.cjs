@@ -137,3 +137,9 @@ assert.ok(html.includes('data-worker-version="'+workerHash+'"'),'Worker registra
   assert.equal(run('Object.keys(fixedClips).length'), 0, 'Never retain stale clips after a validation failure');
   console.log('Fixed prompt capability, localization and unavailable fallback passed');
 })().catch(error => {console.error(error);process.exitCode=1;});
+
+const playbackSource=fs.readFileSync('static/js/app.js','utf8');
+const playStart=playbackSource.indexOf('function playVoiceAudio');
+assert.ok(playbackSource.indexOf('IlmaMicrophone.release()',playStart)<playbackSource.indexOf('player.src = url',playStart),'iOS releases the microphone before an answer plays');
+assert.equal((playbackSource.match(/appSettings\.micExplained&&!window\.IlmaMicrophone\?\.closesForPlayback\?\.\(\)/g)||[]).length,2,'Both barge-in monitors stay closed during iOS playback');
+console.log('iOS playback regressions passed: microphone released first, no barge-in monitor');

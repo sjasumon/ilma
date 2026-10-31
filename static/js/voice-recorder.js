@@ -141,5 +141,11 @@
   }
   window.IlmaBargeMonitor=BargeMonitor;
   window.IlmaVoiceRecorder = VoiceRecorder;
-  window.IlmaMicrophone={release:releaseMicrophone};
+  // iOS moves an open microphone's page into its call audio mode, which rides the
+  // speech volume up and down. There the mic closes while an answer plays.
+  function micClosesForPlayback(){
+    const agent=navigator.userAgent||'';
+    return /iP(?:hone|ad|od)/.test(agent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  }
+  window.IlmaMicrophone={release:releaseMicrophone,closesForPlayback:micClosesForPlayback};
 })();
