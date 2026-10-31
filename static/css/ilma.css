@@ -946,10 +946,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* Bank and service catalogue: sourced information on an ivory sheet. */
 #tab-detail, #tab-services { overflow-wrap: anywhere; }
-.catalog-search { display:flex; gap:8px; width:100%; margin:18px 0; }
+.catalog-search { display:flex; gap:8px; width:100%; margin:8px 0 18px; }
 .catalog-search input { flex:1; min-width:0; border:1px solid var(--on-stage-2); border-radius:14px; padding:12px; font:inherit; }
 .catalog-search button, .catalog-action { min-height:56px; border:1px solid var(--on-stage-2); border-radius:14px; padding:10px 16px; background:var(--stage); color:var(--on-stage); font:inherit; cursor:pointer; }
-.catalog-back { min-height:48px; border:0; background:transparent; color:inherit; padding:8px 0; font:inherit; cursor:pointer; }
+.catalog-back { display:inline-flex; align-items:center; gap:8px; min-height:42px; margin:4px 0 10px; padding:6px 14px 6px 10px; border:1px solid rgba(246,240,228,.24); border-radius:999px; background:rgba(246,240,228,.08); color:var(--on-stage); font:600 calc(var(--fs) * .95)/1.4 var(--body); cursor:pointer; transition:background .15s ease, border-color .15s ease, transform .1s ease; user-select:none; -webkit-tap-highlight-color:transparent; }
+.catalog-back:hover, .catalog-back:focus-visible { background:rgba(246,240,228,.15); border-color:rgba(246,203,85,.6); color:#fff; }
+.catalog-back:active { background:rgba(246,203,85,.2); border-color:var(--gold); transform:scale(.97); }
+.catalog-back .back-arrow { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:rgba(246,203,85,.22); color:var(--gold); font-size:calc(var(--fs) * 1.05); font-weight:700; line-height:1; }
 .catalog-bank-row { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:100px; padding:18px 0; text-align:start; border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--ink); font:inherit; cursor:pointer; }
 .catalog-bank-row strong, .catalog-open-offer strong { display:block; font:600 calc(var(--fs) * 1.15)/1.6 var(--body); }
 .catalog-bank-row small, .catalog-open-offer small { display:block; font:calc(var(--fs) * 1)/1.6 var(--latin); color:var(--ink-2); }
@@ -965,13 +968,26 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .bank-report-header { padding:24px 20px 12px; }
 #tab-detail .sheet h2 { font-size:calc(var(--fs) * 1.15); }
 #tab-detail .screen-header h1, #tab-services .screen-header h1 { font:400 calc(var(--fs) * 1.5)/1.6 var(--display); }
+/* Services landing keeps a compact header: title sits closer to the search row. */
+#tab-services .screen-header { padding:16px 20px 4px; }
+#tab-services .screen-header .catalog-back { margin:0 0 8px; }
+#tab-services .screen-header h1 { margin:0 0 4px; line-height:1.25; }
+#tab-services .screen-header p { margin:0; line-height:1.4; }
+#tab-services #services-catalog.sheet { margin-top:4px; padding-top:0; }
+#tab-services .catalog-search { margin:10px 0 16px; }
 .catalog-card { padding:18px 0; border-bottom:1px solid var(--line); }
 .catalog-card h2, .catalog-card h3 { font:600 calc(var(--fs) * 1.15)/1.6 var(--body); margin:0 0 12px; }
 .catalog-card p { margin:8px 0; }
 .catalog-value { display:block; font:600 calc(var(--fs) * 1.5)/1.5 var(--body); color:var(--ink); }
-.catalog-tiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:20px 0; }
-.catalog-tile { display:flex; flex-direction:column; align-items:flex-start; gap:18px; min-height:160px; border:1px solid var(--line); border-radius:18px; padding:20px; background:var(--ivory-2); color:var(--ink); text-align:start; font:600 calc(var(--fs) * 1.15)/1.6 var(--body); cursor:pointer; }
-.catalog-tile span { font-size:calc(var(--fs) * 1.5); color:var(--stage); }
+.catalog-tiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0 20px; }
+.catalog-tile { display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start; min-height:112px; border:1px solid var(--line); border-radius:18px; padding:14px; background:var(--ivory-2); color:var(--ink); text-align:start; font:600 calc(var(--fs) * 1.15)/1.6 var(--body); cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+.catalog-tile:active { background:rgba(246,240,228,.12); border-color:var(--gold); }
+.catalog-tile .tile-top { display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:10px; }
+.catalog-tile .tile-icon { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; background:var(--stage); color:var(--gold); font-size:calc(var(--fs) * 1.35); }
+.catalog-tile .tile-go { color:var(--ink-2); font-size:calc(var(--fs) * 1.25); font-weight:400; line-height:1; }
+.catalog-tile .tile-content { display:flex; flex-direction:column; gap:2px; width:100%; }
+.catalog-tile .tile-title { font-size:calc(var(--fs) * 1.05); font-weight:700; line-height:1.3; color:var(--ink); }
+.catalog-tile .tile-sub { font-size:calc(var(--fs) * 0.82); color:var(--ink-2); font-weight:400; line-height:1.3; }
 .catalog-selectors { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
 .catalog-selectors label { display:flex; flex-direction:column; flex:1 1 140px; gap:5px; min-width:0; font-size:calc(var(--fs) * 1); }
 .catalog-selectors select { width:100%; min-width:0; min-height:52px; border:1px solid var(--line); border-radius:12px; padding:8px; background:var(--paper); color:var(--ink); font:inherit; }
@@ -1058,7 +1074,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   color: var(--on-stage);
   border-color: var(--on-stage);
 }
-:is(#tab-services, #tab-detail, #tab-news) .catalog-tile span {
+:is(#tab-services, #tab-detail, #tab-news) .catalog-tile .tile-icon {
   color: var(--gold);
 }
 :is(#tab-services, #tab-detail, #tab-news) .q-pill.active {
@@ -1211,6 +1227,8 @@ button, input, select, textarea { font-family: inherit; }
 html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,small,label,h1,h2,h3) { line-height:1.5; }
 
 .card-compare-heading { display:flex; align-items:center; gap:8px; }
+.card-compare-heading button { background:none; border:1px solid var(--line); color:var(--on-stage-2); width:28px; height:28px; min-height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; padding:0; font-size:calc(var(--fs)*0.85); cursor:pointer; line-height:1; }
+.card-compare-heading button:hover { border-color:var(--gold); color:var(--gold); }
 .card-compare-controls select { width:100%; min-height:48px; border:1px solid var(--on-stage-2); border-radius:12px; background:var(--stage); color:var(--on-stage); padding:8px 12px; font:inherit; margin:6px 0 14px; }
 .card-explanation { margin:18px 0; padding:14px 0; border-block:1px solid var(--line); }
 .card-explanation h3 { font-size:calc(var(--fs)*1.4); margin:0 0 16px; }
@@ -1256,6 +1274,50 @@ html:lang(bn) :is(#tab-services,#tab-detail,#tab-news) :is(p,button,span,strong,
 .loan-chips button {max-width:100%;overflow-wrap:anywhere;}
 
 .deposit-table-wrap{max-width:100%;overflow-x:auto}.deposit-rate-table{width:100%;border-collapse:collapse;font-size:.9em}.deposit-rate-table th,.deposit-rate-table td{text-align:start;vertical-align:top;padding:8px;border:1px solid var(--line);overflow-wrap:anywhere}.deposit-variants section{padding:12px 0;border-top:1px solid var(--line)}#deposit-rows .card-bank-heading{flex-wrap:wrap}#deposit-rows .card-tile{min-width:0}#deposit-earnings{overflow-wrap:anywhere}.deposit-rate-table button{white-space:normal}
+
+/* Deposit & Savings redesigned group cards */
+.deposit-group-card { border: 1px solid var(--line); border-radius: 18px; background: var(--paper); padding: 16px 18px; margin-bottom: 16px; }
+.deposit-group-card h3 { margin: 0 0 12px; font: 700 calc(var(--fs) * 1.05)/1.4 var(--body); color: var(--on-stage); }
+.deposit-group-card .calc-field-group { margin-bottom: 12px; }
+.deposit-group-card .calc-field-group:last-of-type { margin-bottom: 8px; }
+.deposit-group-card .calc-label { display: block; font: 600 calc(var(--fs) * 0.92)/1.4 var(--body); color: var(--on-stage-2); margin-bottom: 6px; }
+
+/* Segmented control for Type & Sort */
+.segmented-control { display: flex; width: 100%; box-sizing: border-box; background: rgba(6, 17, 15, 0.65); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 12px; }
+.segmented-item { flex: 1; min-height: 42px; border: 0; border-radius: 10px; background: transparent; color: var(--on-stage-2); font: 600 calc(var(--fs) * 0.95)/1.3 var(--body); cursor: pointer; transition: background .15s ease, color .15s ease; display: inline-flex; align-items: center; justify-content: center; text-align: center; padding: 6px 10px; }
+.segmented-item[aria-pressed="true"] { background: var(--gold); color: #06110F; font-weight: 700; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+
+/* Stat banner for difference */
+.deposit-stat-banner { border: 1px solid rgba(246, 203, 85, 0.35); background: rgba(246, 203, 85, 0.08); border-radius: 14px; padding: 12px 14px; margin: 12px 0 16px; color: var(--on-stage); font: calc(var(--fs) * 0.95)/1.6 var(--body); }
+.stat-highlight-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; margin-bottom: 8px; }
+.stat-col { display: flex; flex-direction: column; gap: 2px; flex: 1 1 140px; }
+.stat-label { font-size: calc(var(--fs) * 0.82); color: var(--on-stage-2); }
+.stat-diff-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(246, 203, 85, 0.18); border: 1px solid rgba(246, 203, 85, 0.5); border-radius: 999px; padding: 4px 12px; color: var(--gold); font-weight: 700; margin: 4px 0; }
+.stat-diff-badge small { color: var(--on-stage-2); font-weight: 400; }
+.stat-warning { margin: 6px 0 0; font-size: calc(var(--fs) * 0.85); color: #f6a623; }
+.privacy-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: calc(var(--fs) * 0.82); color: var(--on-stage-2); }
+
+/* Bank list section header */
+.deposit-section-heading { margin: 24px 0 12px; }
+.deposit-heading-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.deposit-section-heading h3 { margin: 0; font: 700 calc(var(--fs) * 1.15)/1.4 var(--body); color: var(--gold); }
+.deposit-bank-count { font-size: calc(var(--fs) * 0.85); color: var(--on-stage-2); background: rgba(246, 240, 228, 0.08); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+
+/* Upgraded bank cards in deposit & account views */
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-tile { border: 1px solid rgba(246, 240, 228, 0.18); border-radius: 18px; background: rgba(246, 240, 228, 0.05); padding: 18px; margin-bottom: 16px; min-width: 0; transition: border-color .15s ease, background .15s ease; }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-tile:hover { border-color: rgba(246, 203, 85, 0.45); background: rgba(246, 240, 228, 0.08); }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-tile.catalog-offer-row { border-bottom: 1px solid rgba(246, 240, 228, 0.18); }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-top-fact { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; background: rgba(246, 203, 85, 0.1); border: 1px solid rgba(246, 203, 85, 0.28); border-radius: 12px; padding: 10px 14px; margin: 10px 0 8px; }
+:is(#deposit-rows, #account-rows, #loan-rows, #comparison-rows) .card-top-fact strong.catalog-value { color: var(--gold); font-size: calc(var(--fs) * 1.35); font-weight: 700; display: inline; }
+
+/* Guidance message when category/audience has no specialized products */
+.deposit-empty-guidance { border: 1px dashed rgba(246, 203, 85, 0.45); background: rgba(246, 240, 228, 0.04); border-radius: 18px; padding: 20px; margin: 16px 0; color: var(--on-stage); }
+.deposit-empty-guidance .guidance-title { margin: 0 0 8px; font-weight: 700; font-size: calc(var(--fs) * 1.05); color: var(--gold); }
+.deposit-empty-guidance p { margin: 0 0 16px; line-height: 1.5; color: var(--on-stage-2); }
+.deposit-empty-guidance strong { color: var(--on-stage); }
+.deposit-empty-guidance .guidance-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.deposit-empty-guidance .guidance-actions button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--gold); border-radius: 12px; background: rgba(246, 203, 85, 0.12); color: var(--gold); font: 600 calc(var(--fs) * 0.95)/1.3 var(--body); cursor: pointer; transition: background .15s ease; }
+.deposit-empty-guidance .guidance-actions button:hover { background: rgba(246, 203, 85, 0.24); }
 
 .account-toggle{display:flex;align-items:center;gap:12px;min-height:48px}.account-toggle input{width:24px;height:24px;accent-color:var(--gold)}.account-net{color:var(--on-stage);overflow-wrap:anywhere}#account-rows .card-bank-heading{flex-wrap:wrap}#account-rows .card-tile{min-width:0}
 

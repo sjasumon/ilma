@@ -67,6 +67,44 @@ assert.ok(!appSrc.includes('background: #FFF'), 'no white cards on the dark tabs
 assert.ok(!appSrc.includes('color: #555') && !appSrc.includes('color: #666'), 'no dark-grey notes on the dark tabs');
 console.log('Unified Home theme regressions passed');
 
+const servicesSrc = fs.readFileSync('static/js/services-ui.js', 'utf8');
+assert.ok(servicesSrc.includes("back('services-home-back'"), 'services landing must offer a Home back button');
+assert.ok(servicesSrc.includes("switchTab('home')"), 'services back button must return home');
+assert.ok(servicesSrc.includes('tile-icon'), 'category tiles must use the icon badge');
+assert.ok(servicesSrc.includes('tile-go'), 'category tiles must carry a tap hint');
+assert.ok(css.includes('.catalog-tile .tile-icon'), 'tile badge styles missing');
+assert.ok(css.includes('#tab-services .screen-header'), 'compact services header missing');
+assert.ok(css.includes('.catalog-back .back-arrow'), 'prominent back-arrow badge style missing');
+assert.ok(servicesSrc.includes('serviceSuggestions'), 'service suggestion shortcuts must be defined');
+assert.ok(servicesSrc.includes('openComparison(s.target,s.calc)'), 'suggestion clicks must route to comparisons directly without voice clarification modal');
+assert.ok(servicesSrc.includes('data-suggestion-index'), 'suggestion elements must bind by index');
+const navSrc = fs.readFileSync('static/js/navigation.js', 'utf8');
+assert.ok(navSrc.includes("event.target.closest('#services-home-back')"), 'services-home-back must not be intercepted by generic history.back()');
+console.log('Services landing regressions passed: back button, tile design, compact header, direct suggestion comparison routing, prominent pill back button, home navigation isolation');
+
+const depositSrc = fs.readFileSync('static/js/deposit-ui.js', 'utf8');
+assert.ok(depositSrc.includes('deposit-group-card'), 'deposit view must use grouped cards');
+assert.ok(depositSrc.includes('deposit-audience-select'), 'audience selection must use select dropdown');
+assert.ok(depositSrc.includes('deposit-term-select'), 'term selection must use select dropdown');
+assert.ok(depositSrc.includes('segmented-control'), 'product type and sorting must use segmented controls');
+assert.ok(depositSrc.includes('deposit-section-heading'), 'all bank offers section heading must be present');
+assert.ok(depositSrc.includes('deposit-bank-count'), 'bank count indicator must be present');
+assert.ok(css.includes('.deposit-group-card'), 'deposit-group-card css missing');
+assert.ok(css.includes('.segmented-control'), 'segmented-control css missing');
+assert.ok(css.includes('.deposit-stat-banner'), 'deposit-stat-banner css missing');
+assert.ok(css.includes('#deposit-rows .card-tile'), 'upgraded bank card tile css missing');
+assert.ok(depositSrc.includes('deposit-empty-guidance'), 'empty guidance card must be provided when no specialized products match');
+assert.ok(depositSrc.includes('deposit-sort-note'), 'comparison sort explanation note must be present');
+assert.ok(css.includes('.deposit-empty-guidance'), 'deposit-empty-guidance css missing');
+const accountSrc = fs.readFileSync('static/js/account-ui.js', 'utf8');
+assert.ok(accountSrc.includes("account_audience==='all'"), 'account maintenance must fall back to all audience when specialized maintenance is unstated');
+assert.ok(accountSrc.includes('account-audience-select'), 'account audience selection must use select dropdown');
+assert.ok(accountSrc.includes('account-earnings-box'), 'account stat earnings banner must be present');
+assert.ok(accountSrc.includes('account-bank-count'), 'account bank count indicator must be present');
+assert.ok(accountSrc.includes('deposit-empty-guidance'), 'account empty guidance must be present');
+assert.ok(accountSrc.includes('account-sort-note'), 'account sort explanatory note must be present');
+console.log('Deposit and account comparison screen regressions passed: grouped cards, select controls, segmented tabs, bank list heading, stat banner, empty guidance');
+
 // Header/dock geometry and content scrolling are checked by check_app_frame.py.
 const bootstrap = html.match(/<script id="text-size-bootstrap">([\s\S]*?)<\/script>/)[1];
 for (const [saved, expected] of [[null,'14px'],['14','14px'],['16','16px'],['19','19px'],['22','22px'],['8','14px']]) {

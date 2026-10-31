@@ -37,6 +37,7 @@
   window.addEventListener('popstate',event=>{save();if(event.state?.ilma){activeEntry=event.state.entry;void restore(event.state);}});
   // Native Back and the app's Back controls follow the same entry sequence.
   document.addEventListener('click',event=>{
+    if(event.target.closest('#services-home-back'))return;
     if(!event.target.closest('.catalog-back, #bank-list-back')||!history.state?.depth)return;
     event.preventDefault();event.stopImmediatePropagation();save();history.back();
   },true);

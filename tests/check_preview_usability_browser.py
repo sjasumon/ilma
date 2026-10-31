@@ -35,10 +35,11 @@ def navigation(page):
     page.go_forward();page.locator('#loan-amount').wait_for()
     assert page.locator('#loan-amount').input_value().replace(',','') in ('1234567','১২৩৪৫৬৭')
     page.locator('.dock [data-tab=services]').click();page.locator('[data-category=account_fee]').click()
-    page.locator('[data-account-audience=women]').click()
+    page.locator('#account-audience-select').select_option('women')
     page.locator('[data-account-detail]').first.click()
     page.locator('#account-detail-back').click()
-    page.locator('[data-account-audience=women][aria-pressed=true]').wait_for()
+    page.locator('#account-audience-select').wait_for()
+    page.wait_for_function("() => document.getElementById('account-audience-select')?.value === 'women'")
     page.goto(report_url);page.locator('#bank-report-view').wait_for()
     page.locator('#bank-profile-chips').get_by_text('১৯৯২',exact=False).wait_for()
 
@@ -92,8 +93,8 @@ def focus(page):
     page.locator('#loan-amount').wait_for()
     assert page.evaluate("document.activeElement.tagName")=='H2'
     page.locator('#loan-back').click();page.locator('[data-category=account_fee]').click()
-    page.locator('[data-account-audience=women]').click()
-    assert page.locator('[data-account-audience=women]').evaluate('e=>e===document.activeElement')
+    page.locator('#account-audience-select').select_option('women')
+    assert page.locator('#account-audience-select').evaluate('e=>e===document.activeElement')
     page.locator('[data-account-detail]').first.click();page.locator('#account-detail-back').wait_for()
     assert page.evaluate("document.activeElement.tagName")=='H2'
 

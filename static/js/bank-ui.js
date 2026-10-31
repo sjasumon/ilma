@@ -48,7 +48,7 @@
   function showReport() { window.IlmaNavigation?.visit({screen:'report',bank:currentBankId}); ++state.epoch; bankPage='report';reportView(true);$('btn-watch-bank').setAttribute('aria-pressed','false');$('btn-watch-bank').disabled=true;$('bank-list-back').onclick=showBankList;return loadReportCard(currentBankId); }
   function reportReady(data) {
     const bn=currentLang==='bn', bank=data.institution;
-    $('bank-list-back').textContent='← '+tr('ব্যাংক','Banks');$('bank-list-back').onclick=showBankList;
+    $('bank-list-back').innerHTML='<span class="back-arrow" aria-hidden="true">←</span><span>'+E(tr('ব্যাংক','Banks'))+'</span>';$('bank-list-back').onclick=showBankList;
     $('card-bank-meta').textContent=bn?bank.name_en:'';
     $('bank-profile-chips').innerHTML=[data.founded_year?tr('প্রতিষ্ঠা ','Founded ')+digits(data.founded_year):'',data.data_date?digits(data.data_date.slice(0,4))+tr(' সালের নিরীক্ষিত তথ্য',' audited figures'):''].filter(Boolean).map(text=>`<span class="bank-meta-chip">${E(text)}</span>`).join('');
     if(data.founding_source){const chip=$('bank-profile-chips').firstElementChild;if(chip){const button=document.createElement('button');button.className='bank-meta-chip';button.type='button';button.textContent=chip.textContent;button.onclick=()=>openProofModal(tr('প্রতিষ্ঠার বছর','Founding year'),(data.founding_source.summary?tr('সূত্রের সারাংশ: ','Source summary: '):'')+data.founding_source.quote,data.founding_source.source_url,data.founding_source.page);chip.replaceWith(button);}}
