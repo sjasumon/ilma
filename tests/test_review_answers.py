@@ -322,3 +322,9 @@ def test_savings_slabs_are_said_in_words():
 def test_a_senior_deposit_is_not_called_a_savings_account():
     assert product({'product':'Monthly Benefit Plus FDR for Senior Citizen','product_type':'fdr'},True)=='প্রবীণদের মান্থলি বেনিফিট প্লাস এফডিআর'
     assert product({'product':'Seniors’ Savings Account','product_type':'savings'},True)=='প্রবীণদের সঞ্চয়ী হিসাব'
+
+
+def test_a_dated_result_replaces_the_annual_bad_loan_figure():
+    facts=facts_of('strong',fig('crar',.15),fig('npl_ratio',.0227))
+    text=' '.join(s for s,_ in answers.overview_lines('ট','টের ','strong',facts,1,True,interim=('2026 সালের প্রথম 9 মাসে খেলাপি ঋণের হার 2.03%।',['x'])))
+    assert '2.03%' in text and '2.27%' not in text

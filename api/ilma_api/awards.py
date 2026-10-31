@@ -11,6 +11,7 @@ DIGITS=str.maketrans('0123456789','০১২৩৪৫৬৭৮৯')
 
 
 SPOKEN_AWARDER={'ifc':'আইএফসি'}
+SPOKEN_AWARDER_EN={'ifc':'IFC','icsb':'ICSB'}
 IFC_PURPOSE=(', বাণিজ্য অর্থায়নের জন্য',' for trade finance')
 def rows(db,bank_id,confirmations=VERIFIED):
     query=db.query(BankAward,Awarder).join(Awarder,Awarder.awarder_id==BankAward.awarder_id).filter(
@@ -50,14 +51,14 @@ def phrase(award,awarder,language,subject=None):
         if 'সম্মাননা' in name:return f"{start} {name} দিয়েছে।"
         if re.search(r'ব্যাংক|প্রতিষ্ঠান',name):return f"{start} {name} বলেছে{IFC_PURPOSE[0] if getattr(awarder,'awarder_id','')=='ifc' and 'বাণিজ্য' not in name else ''}।"
         return f"{start} {name} পুরস্কার দিয়েছে।"
-    name=title(award.award_name_en)
+    name=title(award.award_name_en);giver=SPOKEN_AWARDER_EN.get(getattr(awarder,'awarder_id',''),awarder.name)
     if subject:
-        if medal:return f"{subject} won {medal[1]} in {awarder.name}’s {name} in {year}."
-        if re.search(r'\bbank|institution',name,re.I):return f"{subject} was named {name} by {awarder.name} in {year}."
-        return f"{subject} received the {name} award from {awarder.name} in {year}."
-    if medal:return f"In {year}, {awarder.name} gave it {medal[1]} in {name}."
-    if re.search(r'\bbank|institution',name,re.I):return f"In {year}, {awarder.name} named it {name}."
-    return f"In {year}, {awarder.name} gave it the {name} award."
+        if medal:return f"{subject} won {medal[1]} in {giver}’s {name} category in {year}."
+        if re.search(r'\bbank|institution',name,re.I):return f"{subject} was named {name} by {giver} in {year}."
+        return f"{subject} received the {name} award from {giver} in {year}."
+    if medal:return f"In {year}, {giver} gave it {medal[1]} in {name}."
+    if re.search(r'\bbank|institution',name,re.I):return f"In {year}, {giver} named it {name}."
+    return f"In {year}, {giver} gave it the {name} award."
 
 
 def fact(award,awarder,sources,language):

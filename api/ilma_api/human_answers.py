@@ -77,6 +77,8 @@ def overview_lines(name,whose,status,facts,bank,bn,intro=None,award=False,interi
         elif small:loan=(f'আর {year} সালের হিসাবে খেলাপি ঋণ মাত্র {x}%।' if bn else f'Bad loans are only {x}%, as of {year}.')
         else:loan=(f'তবে {year} সালের হিসাবে খেলাপি ঋণ {x}%।' if bn else f'Bad loans are {x}%, as of {year}.')
         loan=(loan,ids(loans))
+    # A dated part-year result carries the newer bad-loan figure, so the annual one is not said too.
+    if interim:loan=None
     rows=[*(intro or []),*([loan] if award and loan else []),condition,*([interim] if interim else []),*([loan] if loan and not award else [])]
     return rows
 
