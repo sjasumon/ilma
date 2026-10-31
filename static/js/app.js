@@ -838,7 +838,7 @@ function stopAudio() {
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts|news)\/(?:bn|en)\/[a-z0-9_-]+\.mp3(?:\?v=[a-f0-9]{16})?$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -1484,21 +1484,14 @@ const newsState = {
   wired: false
 };
 
-let currentNewsAudio = null;
 let currentNewsBtn = null;
+let currentNewsAudioId = null;
+let lastPlayingNewsBtn = null;
 
 function stopNewsAudio() {
-  if (currentNewsAudio) {
-    try {
-      if (typeof currentNewsAudio.pause === 'function') currentNewsAudio.pause();
-      if ('currentTime' in currentNewsAudio) currentNewsAudio.currentTime = 0;
-    } catch {}
-    currentNewsAudio = null;
-  }
-  if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) {
-    try { window.speechSynthesis.cancel(); } catch {}
-  }
   if (currentNewsBtn) {
+    lastPlayingNewsBtn = currentNewsBtn;
+    setTimeout(() => { if (lastPlayingNewsBtn === currentNewsBtn) lastPlayingNewsBtn = null; }, 100);
     currentNewsBtn.classList.remove('is-playing');
     const isBn = currentLang === 'bn';
     if (currentNewsBtn.id === 'btn-listen-news') {
@@ -1511,24 +1504,35 @@ function stopNewsAudio() {
       if (icon) icon.textContent = '🔊';
     }
     currentNewsBtn = null;
+    currentNewsAudioId = null;
   }
 }
 
 function playNewsSummary(itemId, buttonEl) {
   const isBn = currentLang === 'bn';
-  if (currentNewsBtn === buttonEl) {
-    stopNewsAudio();
+
+  // Toggle off if the exact same button was already playing
+  if (currentNewsBtn === buttonEl || lastPlayingNewsBtn === buttonEl) {
+    lastPlayingNewsBtn = null;
+    stopAudio();
     return;
   }
+  lastPlayingNewsBtn = null;
 
-  stopNewsAudio();
-  if (typeof stopAudio === 'function') stopAudio();
+  stopAudio();
+  const request = playbackRequest;
 
   const summaryObj = NEWS_SUMMARIES[itemId];
   const textToSpeak = summaryObj ? (isBn ? summaryObj.bn : summaryObj.en) : '';
   if (!textToSpeak) return;
 
+  const audioUrl = `/static/audio/news/${currentLang}/${itemId}.mp3`;
+  const player = document.getElementById("ilma-player");
+  if (!player) return;
+
   currentNewsBtn = buttonEl;
+  currentNewsAudioId = itemId;
+
   if (buttonEl) buttonEl.classList.add('is-playing');
   if (buttonEl && buttonEl.id === 'btn-listen-news') {
     const lbl = document.getElementById('lbl-listen-news');
@@ -1540,44 +1544,24 @@ function playNewsSummary(itemId, buttonEl) {
     if (icon) icon.textContent = '⏹️';
   }
 
-  const audioUrl = `/static/audio/news/${currentLang}/${itemId}.mp3`;
-  let fallbackTriggered = false;
+  // Pre-unlock session for iOS WebKit if needed
+  if (window.IlmaAudioSession && typeof window.IlmaAudioSession.unlock === 'function') {
+    try { window.IlmaAudioSession.unlock(player); } catch {}
+  }
 
-  const triggerFallbackSpeech = () => {
-    if (fallbackTriggered) return;
-    fallbackTriggered = true;
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = isBn ? 'bn-BD' : 'en-US';
-        utterance.rate = 0.95;
-        utterance.onend = () => stopNewsAudio();
-        utterance.onerror = () => stopNewsAudio();
-        window.speechSynthesis.speak(utterance);
-      } catch {
-        stopNewsAudio();
-      }
-    } else {
-      stopNewsAudio();
-    }
-  };
+  player.src = audioUrl;
+  player.playbackRate = appSettings.slow ? 0.85 : 1;
 
   try {
-    if (typeof Audio !== 'undefined') {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => stopNewsAudio();
-      audio.onerror = () => triggerFallbackSpeech();
-      currentNewsAudio = audio;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => triggerFallbackSpeech());
-      }
-    } else {
-      triggerFallbackSpeech();
+    const playPromise = player.play?.();
+    if (playPromise !== undefined && playPromise?.catch) {
+      playPromise.catch(() => {
+        if (request !== playbackRequest) return;
+        stopAudio();
+      });
     }
   } catch {
-    triggerFallbackSpeech();
+    stopAudio();
   }
 }
 
@@ -1902,7 +1886,6 @@ function renderNews() {
   document.querySelectorAll('.news-card-listen').forEach(btn => {
     btn.onclick = (e) => {
       e.preventDefault();
-      e.stopPropagation();
       playNewsSummary(btn.dataset.newsAudio, btn);
     };
   });
