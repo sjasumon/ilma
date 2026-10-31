@@ -35,6 +35,9 @@ function makeElement(id) {
     setAttribute(k, v) { this.attributes[k] = String(v); },
     getAttribute(k) { return this.attributes[k] || null; },
     removeAttribute(k) { delete this.attributes[k]; },
+    pause() {},
+    play() { return Promise.resolve(); },
+    load() {},
     addEventListener() {},
     querySelectorAll(sel) {
       const results = [];
