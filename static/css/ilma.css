@@ -1266,3 +1266,23 @@ input, textarea, select, .calc-field, .input-select,
 #voice-feedback input, #agent-text-input, #loan-amount, #deposit-amount, #account-balance {
   font-size: max(16px, var(--fs));
 }
+
+/* Dialog surfaces must not inherit transparent sheet colours. */
+.settings-dialog {
+  color-scheme: dark;
+  background: #0d302c;
+  color: #f6f0e4;
+  border-color: #8ca7a1;
+  --ink: #f6f0e4;
+  --ink-2: #d2dfda;
+  --link: #9de5d9;
+}
+.settings-dialog button {
+  background: #1d4c44;
+  color: #f6f0e4;
+  border: 1px solid #8ca7a1;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font: inherit;
+}
+.settings-dialog button:hover { background: #285c53; }
