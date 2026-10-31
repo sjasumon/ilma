@@ -317,3 +317,8 @@ def test_savings_slabs_are_said_in_words():
     assert answers.slab('1 Crore & above',False)=='1 crore or more'
     assert answers.slab('1 Lac-<25 Lac',True)=='1 লাখ থেকে 25 লাখ টাকার কম জমায়'
     assert answers.slab('any balance',True) is None
+
+
+def test_a_senior_deposit_is_not_called_a_savings_account():
+    assert product({'product':'Monthly Benefit Plus FDR for Senior Citizen','product_type':'fdr'},True)=='প্রবীণদের মান্থলি বেনিফিট প্লাস এফডিআর'
+    assert product({'product':'Seniors’ Savings Account','product_type':'savings'},True)=='প্রবীণদের সঞ্চয়ী হিসাব'
