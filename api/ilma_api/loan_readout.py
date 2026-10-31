@@ -1,6 +1,7 @@
 """Fixed-example loan facts and saved audio lookup. No runtime provider requests."""
 import hashlib,json,math,re
 from pathlib import Path
+from ilma_api.audio_integrity import verified_audio
 from ilma_api.loan_catalog import DEFAULTS,LABELS,emi,fee_amount
 from ilma_api.service_clips import SHORT,LOC,join_bn
 ROOT=Path(__file__).resolve().parents[2]
@@ -62,5 +63,5 @@ def readout(result):
         expected='bn/loan_'+CLIP_KEYS[kind].removeprefix('loan:bn:')+'.mp3'
         if item.get('reviewed') and file==expected and item.get('example_amount')==pack['amount'] and item.get('example_years')==pack['years']:
             path=ROOT/'static/audio/services'/file
-            if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):url='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16]
+            if verified_audio(path,item.get('audio_sha256')):url='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16]
     return dict(text=text,audio_url=url,source_sha256=source,example_amount=pack['amount'],example_years=pack['years'])

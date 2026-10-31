@@ -53,13 +53,15 @@ def calculate(bank,balance,card=True,sms=True,audience='all'):
 
 def banks(db):
     from ilma_api.bank_services import demo_banks,bank_view
+    from ilma_api.report_card import status_inputs
+    bank_list=demo_banks(db);inputs=status_inputs(db,bank_list)
     out=[]
-    for bank in demo_banks(db):
+    for bank in bank_list:
         fees=[fee_view(r) for r in db.query(ServiceOffer).filter_by(institution_id=bank.id,category='account_fee',hidden=False).all() if fresh(r) and 'quote_unreadable' not in r.condition]
         fees=[r for r in fees if r['value_num'] is not None]
         interest=[r for r in savings_rates(db,bank) if r['product_type']=='savings' and r['audience']!='check']
         if not fees and not interest:continue
-        b=bank_view(db,bank);code=b['status']['code'];b['status'].update(label_bn=RISK[code][0],label_en=RISK[code][1])
+        b=bank_view(db,bank,inputs=inputs);code=b['status']['code'];b['status'].update(label_bn=RISK[code][0],label_en=RISK[code][1])
         cards=[r for r in fees if r['is_debit'] and r['attribute']=='annual_fee']
         main=next((r for r in cards if r['variant']=='main'),None)
         replacement=next((r for r in fees if main and r['product']==main['product'] and r['attribute']=='card_replacement_fee'),None)
@@ -72,6 +74,8 @@ def catalog(db,item='savings',audience='all'):
     from ilma_api.account_readout import readouts
     result['readouts']=readouts(result)
     from ilma_api.deposit_catalog import catalog as deposit_catalog
-    deposits=deposit_catalog(db,'savings')
+    from ilma_api.deposit_readout import PLANS
+    bank_views={b['id']:{k:b[k] for k in ('id','slug','name_bn','name_en','status','aliases')} for b in result['banks']}
+    deposits=deposit_catalog(db,'savings',readout_plans=[p for p in PLANS if p[0]=='savings'],bank_views=bank_views)
     result['deposit_readouts']={k:v for k,v in deposits['readouts'].items() if k.startswith('savings-')}
     return result

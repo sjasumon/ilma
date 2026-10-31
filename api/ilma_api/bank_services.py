@@ -21,8 +21,8 @@ def demo_banks(db,include_incident_banks=False):
     return db.query(Institution).filter(Institution.slug.in_(codes)).all()
 
 
-def bank_view(db, bank):
-    card = get_institution_report_card(db,bank.id)
+def bank_view(db, bank, *, inputs=None):
+    card = get_institution_report_card(db,bank.id,status_only=True,inputs=inputs)
     return dict(id=bank.id,slug=bank.slug,name_bn=bank.name_bn,name_en=bank.name_en,status=card['status'],aliases=[row.alias for row in bank.aliases])
 
 

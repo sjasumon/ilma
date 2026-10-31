@@ -1,6 +1,7 @@
 """Fixed-default source-bound deposit narration; no runtime provider requests."""
 import hashlib,json,math,re
 from pathlib import Path
+from ilma_api.audio_integrity import verified_audio
 from ilma_api.deposit_catalog import select,fv,AUDIENCES
 from ilma_api.service_clips import SHORT,LOC,join_bn
 ROOT=Path(__file__).resolve().parents[2]
@@ -39,18 +40,18 @@ def narration(pack):
     if rule:parts.append(f"আমানত সুরক্ষার নিয়ম অনুযায়ী কিছু শর্ত মেনে প্রতি ব্যাংকে একজন জমাকারীর যোগ্য আমানত {rule['limit_bdt']} টাকা পর্যন্ত ফেরত পাওয়ার নিয়ম আছে। একই ব্যাংকের সব হিসাব একত্রে গণ্য।")
     parts.append('হিসাব আনুমানিক, কর ও আবগারি শুল্ক কাটার আগে।')
     return pronounce(' '.join(parts),'bn')
-def readouts(result):
+def readouts(result, plans=None):
     try:clips=json.loads((ROOT/'static/audio/services/manifest.json').read_text()).get('clips',{})
     except (OSError,ValueError):clips={}
     source=hashlib.sha256(json.dumps({'banks':result['catalog_banks'],'insurance':result['insurance']},sort_keys=True,ensure_ascii=False,default=str).encode()).hexdigest();out={}
-    for p,m,a in PLANS:
+    for p,m,a in PLANS if plans is None else plans:
         pack=facts(result,p,m,a);k=pack['key'];text=narration(pack);item=clips.get('deposit:bn:'+k,clips.get(k,{}));url=None
         if not text:continue
         if item.get('approved_exact_text') and item.get('source_sha256')==source and hashlib.sha256(item.get('text','').encode()).hexdigest()==item.get('text_sha256'):
             text=item['text'];file=item.get('file','').removeprefix('static/audio/services/')
             if item.get('reviewed') and re.fullmatch(r'bn/deposit_[a-z0-9-]+\.mp3',file):
                 path=ROOT/'static/audio/services'/file
-                if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==item.get('audio_sha256'):url='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16];text=item['text']
+                if verified_audio(path,item.get('audio_sha256')):url='/static/audio/services/'+file+'?v='+item['audio_sha256'][:16];text=item['text']
         from ilma_api.deposit_references import references
         out[k]=dict(references=references(result,p,m,a),text=text,audio_url=url,source_sha256=source,example_amount=pack['amount'],example_months=m,product_type=p,audience=a)
     return out

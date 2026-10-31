@@ -1,6 +1,7 @@
 """Bank-screen presentation derived from sourced records; risk rules are unchanged."""
 import csv,hashlib,json,re
 from pathlib import Path
+from ilma_api.audio_integrity import verified_audio
 from sqlalchemy import inspect
 from ilma_api.rules.reasons import to_bn_digits
 from ilma_api.db import BankProfile,ServiceOffer,Event
@@ -80,7 +81,7 @@ def enrich(db,card):
     url=None;filename=clip.get('file','').removeprefix('static/audio/bank/')
     if clip.get('reviewed') and (not clip.get('approved_exact_text') or clip.get('source_sha256')==source_sha) and re.fullmatch(r'bn/[a-z0-9_-]+\.mp3',filename) and clip.get('text_sha256')==hashlib.sha256(text.encode()).hexdigest():
         path=ROOT/'static/audio/bank'/filename
-        if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==clip.get('audio_sha256'):url='/static/audio/bank/'+filename+'?v='+clip['audio_sha256'][:16]
+        if verified_audio(path,clip.get('audio_sha256')):url='/static/audio/bank/'+filename+'?v='+clip['audio_sha256'][:16]
     card['readout']={'text':text,'audio_url':url,'source_sha256':source_sha}
     return card
 

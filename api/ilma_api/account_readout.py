@@ -1,6 +1,7 @@
 """Frozen account examples; code facts and saved recordings only."""
 import hashlib,json,math,re
 from pathlib import Path
+from ilma_api.audio_integrity import verified_audio
 from ilma_api.account_catalog import calculate,yearly
 from ilma_api.deposit_catalog import AUDIENCES
 from ilma_api.service_clips import SHORT,LOC,join_bn
@@ -87,6 +88,6 @@ def readouts(result):
             file=saved.get('file','')
             if saved.get('reviewed') and re.fullmatch(r'bn/[a-z0-9-]+\.mp3',file):
                 path=ROOT/'static/audio/accounts'/file
-                if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()==saved.get('audio_sha256'):text=saved['text'];url='/static/audio/accounts/'+file+'?v='+saved['audio_sha256'][:16]
+                if verified_audio(path,saved.get('audio_sha256')):text=saved['text'];url='/static/audio/accounts/'+file+'?v='+saved['audio_sha256'][:16]
         out[k]=dict(text=text,audio_url=url,source_sha256=source,example_balance=100000)
     return out

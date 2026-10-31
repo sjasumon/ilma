@@ -1,4 +1,5 @@
 """Published deposit catalog; borrower-independent metadata and fixed examples."""
+from copy import deepcopy
 import csv,math,re
 from pathlib import Path
 from ilma_api.loan_catalog import fresh,percentage,RISK
@@ -78,14 +79,14 @@ def select(rows,product,months,who,amount):
 def fv(monthly,rate,months):
     i=rate/1200
     return monthly*months if not i else monthly*math.expm1(months*math.log1p(i))/i*(1+i)
-def catalog(db,product='fdr',who='all',months=None,basis='conventional'):
+def catalog(db,product='fdr',who='all',months=None,basis='conventional',*,readout_plans=None,bank_views=None):
     from ilma_api.bank_services import bank_view,demo_banks,source_view
     months=months or (36 if product=='dps' else 12);banks=[];all_banks=[]
     for bank in demo_banks(db):
         all_facts=[r for r in rates(db,bank) if r['basis']==basis]
         facts=[r for r in all_facts if r['product_type']==product and r['audience']==who]
         if not all_facts:continue
-        b=bank_view(db,bank);code=b['status']['code'];b['status'].update(label_bn=RISK[code][0],label_en=RISK[code][1]);from ilma_api.bank_services import offer_view
+        b=deepcopy(bank_views[bank.id]) if bank_views is not None and bank.id in bank_views else bank_view(db,bank);code=b['status']['code'];b['status'].update(label_bn=RISK[code][0],label_en=RISK[code][1]);from ilma_api.bank_services import offer_view
         account_fees=[offer_view(r) for r in db.query(ServiceOffer).filter_by(institution_id=bank.id,category='account_fee',hidden=False).all() if fresh(r)]
         all_banks.append({**b,'rates':all_facts,'account_fees':account_fees});chosen=select(facts,product,months,who,5000 if product=='dps' else 100000)
         b.update(rates=facts,offer=next((r for r in chosen if r['variant']!='scheme'),None),alternatives=[r for r in chosen if r['variant']=='scheme' or 'extra value' in r['product'].lower()],other_tenors=facts,state='published');
@@ -95,5 +96,5 @@ def catalog(db,product='fdr',who='all',months=None,basis='conventional'):
         insurance=dict(limit_bdt=rule.limit_bdt,text_bn=rule.text_bn,text_en=rule.text_en,**source_view(rule.source))
     result=dict(catalog_banks=all_banks,choice=dict(product_type=product,audience=who,basis=basis,tenor_months=months),rows=banks,insurance=insurance,sort='higher_rate_first',defaults=dict(amount=5000 if product=='dps' else 100000,months=months))
     from ilma_api.deposit_readout import readouts
-    result['readouts']=readouts(result)
+    result['readouts']=readouts(result,plans=readout_plans)
     return result

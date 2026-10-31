@@ -2,15 +2,38 @@ from datetime import date
 from typing import Any
 import numpy as np
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from ilma_api.db import Institution, Fact, Rating, Rate, Event, InsuranceRule, SharePriceFlag, Source, Release, ServiceOffer
 from ilma_api.rules.status import evaluate, EvalResult
 
-def get_institution_report_card(db: Session, institution_id_or_slug: int | str, as_of: date | None = None) -> dict[str, Any] | None:
+def status_inputs(db: Session, institutions):
+    """Load one catalog's evaluator inputs in bulk; never cache across requests."""
+    ids = [bank.id for bank in institutions]
+    def groups(rows):
+        result = {}
+        for row in rows:
+            result.setdefault(row.institution_id, []).append(row)
+        return result
+    facts = db.query(Fact).options(joinedload(Fact.source)).filter(Fact.institution_id.in_(ids)).order_by(Fact.period_end.desc()).all()
+    ratings = db.query(Rating).options(joinedload(Rating.source)).filter(Rating.institution_id.in_(ids)).order_by(Rating.rated_on.desc()).all()
+    events = db.query(Event).options(selectinload(Event.sources)).filter(Event.institution_id.in_(ids)).order_by(Event.event_date.desc()).all()
+    rates = db.query(Rate).options(joinedload(Rate.source)).filter_by(product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).all()
+    service_rates = db.query(ServiceOffer).filter_by(product_type='fdr', tenor_months=12,
+        attribute='rate', basis='conventional', hidden=False, unit='pct_year').all()
+    flags = db.query(SharePriceFlag).options(joinedload(SharePriceFlag.source)).filter(SharePriceFlag.institution_id.in_(ids)).all()
+    return dict(institutions={bank.id: bank for bank in institutions}, facts=groups(facts),
+        ratings=groups(ratings), events=groups(events), rates=rates,
+        service_rates=service_rates, flags={row.institution_id: row for row in flags})
+
+
+def get_institution_report_card(db: Session, institution_id_or_slug: int | str, as_of: date | None = None, *, status_only: bool = False, inputs: dict | None = None) -> dict[str, Any] | None:
     if as_of is None:
         as_of = date.today()
 
-    if isinstance(institution_id_or_slug, int) or (isinstance(institution_id_or_slug, str) and institution_id_or_slug.isdigit()):
+    if inputs is not None:
+        inst = next((bank for bank in inputs['institutions'].values()
+            if str(bank.id) == str(institution_id_or_slug) or bank.slug == institution_id_or_slug), None)
+    elif isinstance(institution_id_or_slug, int) or (isinstance(institution_id_or_slug, str) and institution_id_or_slug.isdigit()):
         inst = db.query(Institution).filter_by(id=int(institution_id_or_slug)).first()
     else:
         inst = db.query(Institution).filter_by(slug=institution_id_or_slug).first()
@@ -38,7 +61,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         }
 
     # Gather facts
-    facts_rows = db.query(Fact).filter_by(institution_id=inst.id).order_by(Fact.period_end.desc()).all()
+    facts_rows = inputs['facts'].get(inst.id, []) if inputs is not None else db.query(Fact).filter_by(institution_id=inst.id).order_by(Fact.period_end.desc()).all()
     latest_facts: dict[str, dict[str, Any]] = {}
     newest_checked_on = date(2026, 1, 1)
 
@@ -46,7 +69,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         if f.checked_on and f.checked_on > newest_checked_on:
             newest_checked_on = f.checked_on
         if f.metric not in latest_facts:
-            src = db.query(Source).filter_by(source_id=f.source_id).first()
+            src = f.source if inputs is not None else db.query(Source).filter_by(source_id=f.source_id).first()
             latest_facts[f.metric] = {
                 "fact_id": f.fact_id,
                 "metric": f.metric,
@@ -69,12 +92,12 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
             }
 
     # Gather ratings
-    ratings_rows = db.query(Rating).filter_by(institution_id=inst.id).order_by(Rating.rated_on.desc()).all()
+    ratings_rows = inputs['ratings'].get(inst.id, []) if inputs is not None else db.query(Rating).filter_by(institution_id=inst.id).order_by(Rating.rated_on.desc()).all()
     ratings_data: list[dict[str, Any]] = []
     for r in ratings_rows:
         if r.checked_on and r.checked_on > newest_checked_on:
             newest_checked_on = r.checked_on
-        src = db.query(Source).filter_by(source_id=r.source_id).first()
+        src = r.source if inputs is not None else db.query(Source).filter_by(source_id=r.source_id).first()
         ratings_data.append({
             "fact_id": r.fact_id,
             "agency": r.agency,
@@ -97,7 +120,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
         })
 
     # Gather events
-    events_rows = db.query(Event).filter_by(institution_id=inst.id).order_by(Event.event_date.desc()).all()
+    events_rows = inputs['events'].get(inst.id, []) if inputs is not None else db.query(Event).filter_by(institution_id=inst.id).order_by(Event.event_date.desc()).all()
     events_data: list[dict[str, Any]] = []
     for ev in events_rows:
         if ev.checked_on and ev.checked_on > newest_checked_on:
@@ -126,15 +149,16 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
 
     # Gather rates & median
     latest_rates = {}
-    for rate_row in db.query(Rate).filter_by(product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).all():
+    rate_rows = inputs['rates'] if inputs is not None else db.query(Rate).filter_by(product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).all()
+    for rate_row in rate_rows:
         latest_rates.setdefault(rate_row.institution_id, float(rate_row.rate))
     all_fdr_rates = list(latest_rates.values())
     median_fdr = float(np.median(all_fdr_rates)) if all_fdr_rates else None
 
-    inst_rate_row = db.query(Rate).filter_by(institution_id=inst.id, product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).first()
+    inst_rate_row = next((row for row in rate_rows if row.institution_id == inst.id), None) if inputs is not None else db.query(Rate).filter_by(institution_id=inst.id, product="fdr", tenor_months=12).order_by(Rate.as_of.desc()).first()
     rates_dict = {}
     if inst_rate_row:
-        src = db.query(Source).filter_by(source_id=inst_rate_row.source_id).first()
+        src = inst_rate_row.source if inputs is not None else db.query(Source).filter_by(source_id=inst_rate_row.source_id).first()
         rates_dict["fdr_12m"] = {
             "fact_id": inst_rate_row.fact_id,
             "rate": float(inst_rate_row.rate),
@@ -149,7 +173,7 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
     # The current service export supersedes legacy deposit-rate fixtures.
     # unit='pct_year' is load-bearing: value_num is divided by 100 below, so a
     # bdt-unit row must never enter the median or a bank's own rate.
-    service_rates = db.query(ServiceOffer).filter_by(product_type='fdr', tenor_months=12,
+    service_rates = inputs['service_rates'] if inputs is not None else db.query(ServiceOffer).filter_by(product_type='fdr', tenor_months=12,
         attribute='rate', basis='conventional', hidden=False, unit='pct_year').all()
     if service_rates:
         chosen = {}
@@ -165,10 +189,10 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
                     page=current.page,published_at=current.doc_date))
 
     # Share price flag
-    spf = db.query(SharePriceFlag).filter_by(institution_id=inst.id).first()
+    spf = inputs['flags'].get(inst.id) if inputs is not None else db.query(SharePriceFlag).filter_by(institution_id=inst.id).first()
     spf_dict = None
     if spf:
-        src = db.query(Source).filter_by(source_id=spf.source_id).first()
+        src = spf.source if inputs is not None else db.query(Source).filter_by(source_id=spf.source_id).first()
         spf_dict = {
             "days_below_face": spf.days_below_face,
             "window_end": spf.window_end,
@@ -191,6 +215,14 @@ def get_institution_report_card(db: Session, institution_id_or_slug: int | str, 
     }
 
     eval_res: EvalResult = evaluate(inst_dict, data_dict, as_of=as_of)
+
+    if status_only:
+        # Lists need the same live risk evaluation, without report presentation,
+        # profile comparisons or saved-audio verification.
+        from ilma_api.bank_screen import RISK
+        label_bn, label_en = RISK[eval_res.code]
+        return {"status": dict(code=eval_res.code, label_bn=label_bn,
+            label_en=label_en, rules_version=eval_res.rules_version)}
 
     # Insurance rule
     ins_rule = db.query(InsuranceRule).filter_by(inst_type=inst.type).first()
