@@ -327,6 +327,15 @@
     $('bank-detail-links').innerHTML=entries.filter(([key])=>counts[key]>0).map(args=>row(...args)).join('')+(extra.length?`<details class="bank-more"><summary>${tr('আরও তথ্য','More information')}</summary>${extra.map(args=>row(...args)).join('')}</details>`:'')+row('ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank');
     $('bank-detail-links').querySelectorAll('button').forEach(button=>button.onclick=()=>button.dataset.bankDetail==='services'?openBankServices(bank.id):showBankDetail(button.dataset.bankDetail));
     $('btn-watch-bank').disabled=!anonymousDevice;
+    let watchNotice=$('watch-notice');
+    if(!watchNotice){
+      watchNotice=document.createElement('p');
+      watchNotice.id='watch-notice';
+      watchNotice.className='catalog-note';
+      watchNotice.setAttribute('role','status');
+      $('btn-watch-bank').parentElement.after(watchNotice);
+    }
+    watchNotice.textContent=tr('নজরে রাখলে শুধু তালিকায় সংরক্ষিত হবে। SMS/WhatsApp বিজ্ঞপ্তি শিগগির আসছে; এখন পাঠানো হবে না।','Watch saves this bank to your list. SMS/WhatsApp alerts are coming soon; none will be sent now.');
     if(anonymousDevice)fetch(`/v1/institutions/${bank.id}/watch`,{headers:{'X-ILMA-Device':anonymousDevice}}).then(r=>r.ok?r.json():null).then(state=>{if(state&&currentBankId===bank.id){$('btn-watch-bank').setAttribute('aria-pressed',String(state.watching));$('lbl-watch-rpt').textContent=state.watching?tr('নজরে রাখা হচ্ছে','Watching'):tr('নজরে রাখুন','Watch');}}).catch(()=>{});
   }
   async function toggleWatch(){
@@ -336,6 +345,15 @@
       if(!response.ok)throw Error();const state=await response.json();if(currentBankId!==bank)return;
       button.setAttribute('aria-pressed',String(state.watching));$('lbl-watch-rpt').textContent=state.watching?tr('নজরে রাখা হচ্ছে','Watching'):tr('নজরে রাখুন','Watch');
       $('sr-announcer').textContent=state.watching?tr('নজরে রাখার তালিকায় যোগ হয়েছে।','Added to your watch list.'):tr('নজরে রাখার তালিকা থেকে সরানো হয়েছে।','Removed from your watch list.');
+      let watchNotice=$('watch-notice');
+      if(!watchNotice){
+        watchNotice=document.createElement('p');
+        watchNotice.id='watch-notice';
+        watchNotice.className='catalog-note';
+        watchNotice.setAttribute('role','status');
+        $('btn-watch-bank').parentElement.after(watchNotice);
+      }
+      watchNotice.textContent=state.watching?tr('তালিকায় সংরক্ষিত। SMS/WhatsApp বিজ্ঞপ্তি শিগগির আসছে; এখন পাঠানো হবে না।','Saved to your list. SMS/WhatsApp alerts are coming soon; none will be sent now.'):tr('তালিকা থেকে সরানো হয়েছে।','Removed from your watch list.');
 
     }catch{$('sr-announcer').textContent=tr('নজরে রাখার পরিবর্তন সংরক্ষণ করা যায়নি।','Could not save the watch change.');}finally{button.disabled=false;}
   }

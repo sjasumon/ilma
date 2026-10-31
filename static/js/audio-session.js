@@ -17,8 +17,15 @@
  }
  // Safari's call mode can outlast the microphone, so each use names its mode.
  function setMode(type){try{if(root.navigator?.audioSession)root.navigator.audioSession.type=type}catch{}}
- function forPlayback(){setMode('playback');if(context?.state==='running')context.suspend().catch(()=>{})}
- function forRecording(){setMode('play-and-record')}
+ // Returns how long to wait, if the mode has only just changed.
+ let mode='',changedAt=0;
+ function forPlayback(){
+  const now=Date.now();
+  if(mode!=='playback'){mode='playback';changedAt=now;setMode('playback')}
+  if(context?.state==='running')context.suspend().catch(()=>{});
+  return Math.max(0,changedAt+200-now);
+ }
+ function forRecording(){mode='play-and-record';setMode('play-and-record')}
  root.IlmaAudioSession={getContext,unlock,forPlayback,forRecording};
  root.document?.addEventListener('visibilitychange',()=>{if(root.document.hidden&&context?.state==='running')context.suspend().catch(()=>{})});
 })(window);

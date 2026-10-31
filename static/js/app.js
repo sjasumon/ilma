@@ -837,11 +837,23 @@ function stopAudio() {
   if(typeof stopNewsAudio==='function')stopNewsAudio();
 }
 
+// iPhone and iPad only: close the mic, name playback mode, and return any wait left.
+function prepareAnswerAudio() {
+  if (!window.IlmaMicrophone?.closesForPlayback?.()) return 0;
+  bargeMonitor?.cancel(); bargeMonitor=null; window.IlmaMicrophone.release();
+  return window.IlmaAudioSession?.forPlayback?.() || 0;
+}
+
+// The silent lead-in lets iOS finish raising the volume before speech starts.
+function answerAudioUrl(url) {
+  return window.IlmaMicrophone?.closesForPlayback?.() && /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || '') ? url+'?lead=1' : url;
+}
+
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
   if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts|news)\/(?:bn|en)\/[a-z0-9_-]+\.mp3(?:\?v=[a-f0-9]{16})?$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
-  if (window.IlmaMicrophone?.closesForPlayback?.()) { bargeMonitor?.cancel(); bargeMonitor=null; window.IlmaMicrophone.release(); window.IlmaAudioSession?.forPlayback?.(); }
-  player.src = url;
+  const settle = prepareAnswerAudio();
+  player.src = answerAudioUrl(url);
   player.playbackRate = appSettings.slow ? .85 : 1;
   const label = currentTab === "detail" ? "lbl-listen-rpt" : currentTab === "services" ? "lbl-listen-srv" : currentTab === "news" ? "lbl-listen-news" : null;
   if (label) document.getElementById(label).textContent = currentLang === "bn" ? "থামুন" : "Stop";
@@ -850,7 +862,8 @@ function playVoiceAudio(url, request = playbackRequest, manual = false, onError 
   const loanListen=document.getElementById('loan-listen');if(currentTab==='services'&&loanListen)loanListen.textContent=currentLang==='bn'?'থামুন':'Stop';
   const depositListen=document.getElementById('deposit-listen');if(currentTab==='services'&&depositListen)depositListen.textContent=currentLang==='bn'?'থামুন':'Stop';
   const accountListen=document.getElementById('account-listen');if(currentTab==='services'&&accountListen)accountListen.textContent=currentLang==='bn'?'থামুন':'Stop';
-  player.play?.().catch(() => { if(request!==playbackRequest)return; stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
+  const startAnswer = () => player.play?.().catch(() => { if(request!==playbackRequest)return; stopAudio(); document.getElementById("sr-announcer").textContent = currentLang === "bn" ? "উত্তর শুনতে শুনুন বোতাম চাপুন।" : "Tap Listen to hear the answer."; onError?.(); });
+  if (settle) setTimeout(() => { if (request === playbackRequest) startAnswer(); }, settle); else startAnswer();
   return true;
 }
 
@@ -923,6 +936,7 @@ async function loadBankOptions() {
 }
 
 async function sendVoiceInput(audio, text, request, choice = null) {
+  prepareAnswerAudio();
   voiceLanguageReturn=null;voiceLanguageOverride=null;document.getElementById('voice-language-chip').hidden=true;
   const keepTypingOnMiss=!audio&&!choice&&!document.getElementById('agent-text-form').hidden;
   const form = new FormData();
@@ -2421,7 +2435,10 @@ async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, aud
         }
       }
       if(controller.signal.aborted)return;
-      player.src = url; player.playbackRate = appSettings.slow ? .85 : 1;
+      const settle=prepareAnswerAudio();
+      if(settle)await new Promise(resolve=>setTimeout(resolve,settle));
+      if(controller.signal.aborted)return;
+      player.src = answerAudioUrl(url); player.playbackRate = appSettings.slow ? .85 : 1;
       await player.play();
     } catch { done(false); }
   })();
