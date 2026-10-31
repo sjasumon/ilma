@@ -23,12 +23,42 @@ jobs:
       - run: python -m pip install -r requirements-dev.txt
       - run: PYTHONPATH=api python -m pytest -q
       - run: |
-          node tests/test_frontend.cjs
-          node tests/test_greeting_cycle.cjs
-          node tests/test_voice_search.cjs
-          node tests/test_ivr_steps.cjs
-          node tests/test_voice_agent.cjs
-          node tests/test_audio_recorder.cjs
-          node tests/test_offline.cjs
+          for suite in tests/test_*.cjs; do
+            node "$suite"
+          done
       - run: python ops/install_gitleaks.py
       - run: ILMA_GITLEAKS="$PWD/.tools/gitleaks" python ops/check_repo.py --with-secrets
+
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: android
+            engine: chromium
+          - profile: iphone
+            engine: webkit
+          - profile: desktop
+            engine: chromium
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.10'
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m playwright install --with-deps ${{ matrix.engine }}
+      - name: Check synthetic browser journeys
+        run: python tests/check_browser_smoke.py --profile ${{ matrix.profile }} --check-retry --check-offline --check-readiness --output "$RUNNER_TEMP/browser-smoke"
+      - name: Save failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: browser-smoke-${{ matrix.profile }}
+          path: ${{ runner.temp }}/browser-smoke
+          if-no-files-found: ignore
+          retention-days: 7
