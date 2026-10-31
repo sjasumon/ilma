@@ -153,5 +153,5 @@
     $('incident-filter').onchange=render;render();
   }
 
-  window.IlmaBank={async restore(route){if(route.screen==='banks')return showBankList();await showReport();if(route.screen==='bank-section')return showBankDetail(route.kind);},reportReady,toggleWatch,listenReport,enter(){currentBankId?showReport():showBankList();},relocalize(){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}};
+  window.IlmaBank={async restore(route,isCurrent=()=>true){if(route.screen==='banks')return showBankList();await showReport();if(!isCurrent())return;if(route.screen==='bank-section')return showBankDetail(route.kind);},reportReady,toggleWatch,listenReport,enter(){currentBankId?showReport():showBankList();},relocalize(){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}};
 })();

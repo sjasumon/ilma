@@ -211,6 +211,10 @@ async function requestReadout(kind, institutionId = null) {
 }
 
 function switchTab(tabName, keepVoiceStream = false, restoringRoute = false) {
+  if(currentTab!==tabName){
+    if(window.IlmaCatalogCommon)++window.IlmaCatalogCommon.state.epoch;
+    ++reportRequest;
+  }
   window.IlmaNavigation?.visit(tabName==="detail"?(currentBankId?{screen:"report",bank:currentBankId}:{screen:"banks"}):{screen:tabName});
   if (agentConversation && currentTab !== tabName) resetAgentConversation();
   currentTab = tabName;

@@ -8,23 +8,27 @@
   function save(){if(history.state?.ilma)positions.set(activeEntry,document.getElementById('main-content').scrollTop);}
   function visit(route){
     if(restoring)return;
-    route=clean(route);
+    ++turn;route=clean(route);
     if(JSON.stringify(history.state?.route)===JSON.stringify(route))return;
     save();const depth=(history.state?.ilma?history.state.depth:0)+1;
     activeEntry=++serial;history.pushState({ilma:true,entry:activeEntry,depth,route},'', '#'+new URLSearchParams(route));
   }
   async function restore(entry){
-    const request=++turn;restoring++;
+    const request=++turn;let pending;
+    // Suppress only the synchronous route dispatch. A slow request must never
+    // prevent a later user action from recording its own navigation.
+    restoring++;
     try{
       const route=entry.route||{},screen=route.screen;
       if(['banks','report','bank-section'].includes(screen)){
         currentBankId=screen==='banks'?null:Number(route.bank);switchTab('detail',false,true);
-        await window.IlmaBank.restore(route);
+        pending=window.IlmaBank.restore(route,()=>request===turn);
       }else if(['services','compare','offer','bank-services','account-bank'].includes(screen)){
-        switchTab('services',false,true);await window.IlmaServices.restore(route);
+        switchTab('services',false,true);pending=window.IlmaServices.restore(route);
       }else switchTab(screen==='news'?'news':'home',false,true);
-      if(request===turn)document.getElementById('main-content').scrollTop=positions.get(entry.entry)||0;
     }finally{restoring--;}
+    await pending;
+    if(request===turn)document.getElementById('main-content').scrollTop=positions.get(entry.entry)||0;
   }
   function update(changes){if(restoring||!history.state?.ilma)return;const entry={...history.state,route:clean({...history.state.route,...changes})};history.replaceState(entry,'','#'+new URLSearchParams(entry.route));}
   window.IlmaNavigation={visit,update,get restoring(){return restoring>0;}};

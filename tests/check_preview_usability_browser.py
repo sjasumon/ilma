@@ -114,12 +114,35 @@ def layout(page):
     assert page.locator('#loan-amount').input_value()=='3000000'
 
 
+def navigation_race(page):
+    page.locator('.dock [data-tab=detail]').click()
+    with page.expect_response(lambda r:r.url.endswith('/report-card')) as initial:
+        page.locator('[data-bank]').first.click()
+    initial.value.json()
+    page.locator('.dock [data-tab=services]').click()
+    held=[]
+    page.context.route('**/report-card',lambda r:held.append(r),times=1)
+    page.go_back()
+    for _ in range(100):
+        if held:break
+        page.wait_for_timeout(10)
+    assert held
+    page.locator('.dock [data-tab=services]').click()
+    assert 'screen=services' in page.url
+    with page.expect_response(lambda r:r.url.endswith('/report-card')) as restored:
+        held[0].continue_()
+    restored.value.json()
+    page.locator('[data-category=loan]').wait_for()
+    assert 'screen=services' in page.url
+    assert page.locator('#tab-services').get_attribute('class')=='tab-content active'
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default='http://127.0.0.1:8027');parser.add_argument('--engine',choices=['chromium','webkit','all'],default='all');parser.add_argument('--check',default='dialogs');args=parser.parse_args()
     with sync_playwright() as p:
         for engine,device in [('chromium','Pixel 7'),('webkit','iPhone 13')]:
             if args.engine not in ('all',engine):continue
-            browser=getattr(p,engine).launch();context=browser.new_context(**p.devices[device],service_workers='block' if args.check=='readiness' else 'allow');context.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true,micExplained:false,voiceonly:false}))")
+            browser=getattr(p,engine).launch();context=browser.new_context(**p.devices[device],service_workers='block' if args.check in ('readiness','navigation_race') else 'allow');context.add_init_script("localStorage.setItem('ilma-settings',JSON.stringify({ivrFinished:true,micExplained:false,voiceonly:false}))")
             page=context.new_page();page.goto(args.base,wait_until='networkidle')
             globals()[args.check](page)
             print('PASS',engine,args.check,flush=True);context.close();browser.close()
