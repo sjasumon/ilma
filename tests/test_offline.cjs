@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 require('./test_catalog_recovery.cjs');
+require('./test_audio_cache.cjs');
 const handlers = new Map(), stores = new Map();
 let offline = false;
 let background=[];

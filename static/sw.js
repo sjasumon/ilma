@@ -1,5 +1,5 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-f54da8c65cfca5da';
+const SHELL = 'ilma-shell-14deafd118ee2676';
 const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
 const ASSETS = ['/static/js/navigation.js?v=sha256-15fbf488d620b394','/static/js/account-ui.js?v=sha256-6caff4601855a62f','/static/js/deposit-ui.js?v=sha256-913b6d52f103b304','/static/js/loan-ui.js?v=sha256-39d8df4832547be2','/static/js/catalog-common.js?v=sha256-919486cfd88b590d','/static/js/bank-ui.js?v=sha256-6bc828148c344f78','/static/js/services-ui.js?v=sha256-530c958c20793e4f',"/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-407658bda0cc364d', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-c77b697cbeb14781', '/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd', '/static/js/audio-session.js?v=sha256-5054f0d844b15ef6', '/static/js/voice-recorder.js?v=sha256-cdbba7f8df091a23'];
@@ -7,7 +7,7 @@ self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('ilma-shell-') && key !== SHELL).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('ilma-shell-') && key !== SHELL).map(key => caches.delete(key)))).then(() => self.clients.claim()).then(() => maintainAudio()));
 });
 self.addEventListener('fetch', event => {
   const request = event.request, url = new URL(request.url);
@@ -19,12 +19,16 @@ self.addEventListener('fetch', event => {
   event.respondWith((async () => {
     const serviceAudio=/^\/static\/audio\/(?:services\/bn\/(?:card-|deposit_|loan_)[a-z0-9-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+)\.mp3$/.test(url.pathname);
     let cache;
-    try { cache = await caches.open(serviceAudio ? SERVICE_AUDIO : bank ? BANKS : SHELL); }
+    try { if (!serviceAudio) cache = await caches.open(bank ? BANKS : SHELL); }
     catch (_) { return fetch(request); }
     async function savedResponse() {
       let cached;
-      try { cached = await cache.match(request); } catch (_) { return null; }
+      try { if (!cache) cache = await caches.open(SERVICE_AUDIO); cached = await cache.match(request); } catch (_) { return null; }
       if (!cached) return null;
+      if (serviceAudio) {
+        const copy = cached.clone();
+        event.waitUntil(queueAudio(() => touchAudio(new Request(request.url), copy)));
+      }
       if (!bank) return cached;
       const headers = new Headers(cached.headers); headers.set('X-ILMA-Offline', '1');
       return new Response(cached.body, {status: cached.status, headers});
@@ -45,9 +49,14 @@ self.addEventListener('fetch', event => {
         if (complete) {
           const headers = new Headers(response.headers); headers.delete('Content-Range');
           const full = new Response(response.clone().body, { status: 200, headers });
-          event.waitUntil(cache.put(new Request(request.url), full).catch(() => {}));
+          event.waitUntil(queueAudio(() => storeAudio(new Request(request.url), full)));
         }
         return response;
+      }
+      const manifestScope = AUDIO_MANIFESTS.find(([path]) => path === url.pathname)?.[1];
+      if (manifestScope && response.ok) {
+        const fresh = response.clone();
+        event.waitUntil(queueAudio(() => applyAudioManifest(fresh, manifestScope)));
       }
       if (response.ok && response.status !== 206) {
         // Quota/storage failures must never turn a successful fetch into an error.
@@ -77,3 +86,120 @@ self.addEventListener('message', event => {
   const urls = event.data.urls.filter(url => /^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url));
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(urls)));
 });
+
+// Listened clips only: bounded, best-effort storage, never a full offline bundle.
+const AUDIO_META = 'ilma-service-audio-meta-v1';
+const AUDIO_MAX_BYTES = 32 * 1024 * 1024;
+const AUDIO_MAX_ENTRIES = 40;
+const AUDIO_MANIFESTS = [
+  ['/v1/services/audio-manifest', '/static/audio/services/'],
+  ['/static/audio/bank/manifest.json', '/static/audio/bank/'],
+  ['/static/audio/accounts/manifest.json', '/static/audio/accounts/']
+];
+let audioQueue = Promise.resolve(), audioClock = 0;
+const currentAudio = new Map();
+const usedNow = () => audioClock = Math.max(Date.now(), audioClock + 1);
+function queueAudio(work) {
+  // Serialize writes/touches/eviction across simultaneous media requests.
+  audioQueue = audioQueue.then(work).catch(() => {});
+  return audioQueue;
+}
+async function audioStores() { return Promise.all([caches.open(SERVICE_AUDIO), caches.open(AUDIO_META)]); }
+async function metadata(meta, request) {
+  try {
+    const data = await (await meta.match(request)).json();
+    if (Number.isSafeInteger(data.bytes) && data.bytes > 0 && Number.isFinite(data.used)) return data;
+  } catch (_) {}
+  return null;
+}
+async function saveMetadata(meta, request, data) {
+  try { await meta.put(request, new Response(JSON.stringify(data), {headers: {'Content-Type':'application/json'}})); } catch (_) {}
+}
+async function pruneAudio(cache, meta) {
+  const entries = [], live = new Set();
+  let total = 0;
+  for (const request of await cache.keys()) {
+    const response = await cache.match(request);
+    if (!response) continue;
+    live.add(request.url);
+    let data = await metadata(meta, request);
+    if (!data) {
+      // Legacy entries have no trusted byte count; measure them once in background.
+      data = {bytes: (await response.arrayBuffer()).byteLength, used: 0};
+      await saveMetadata(meta, request, data);
+    }
+    entries.push({request, ...data}); total += data.bytes;
+  }
+  entries.sort((a,b) => a.used - b.used);
+  let count = entries.length;
+  for (const entry of entries) {
+    if (count <= AUDIO_MAX_ENTRIES && total <= AUDIO_MAX_BYTES) break;
+    await cache.delete(entry.request); await meta.delete(entry.request);
+    live.delete(entry.request.url); total -= entry.bytes; count--;
+  }
+  for (const request of await meta.keys()) if (!live.has(request.url)) await meta.delete(request);
+}
+function audioScope(url) {
+  return AUDIO_MANIFESTS.find(([,scope]) => new URL(url).pathname.startsWith(scope))?.[1];
+}
+async function storeAudio(request, response) {
+  const [cache, meta] = await audioStores(), scope = audioScope(request.url);
+  if (scope && currentAudio.has(scope) && !currentAudio.get(scope).has(request.url)) return;
+  const bytes = await response.arrayBuffer();
+  if (!bytes.byteLength || bytes.byteLength > AUDIO_MAX_BYTES) return;
+  await cache.put(request, new Response(bytes, {status:200, headers:response.headers}));
+  await saveMetadata(meta, request, {bytes:bytes.byteLength, used:usedNow()});
+  await pruneAudio(cache, meta);
+}
+async function touchAudio(request, response) {
+  const [cache, meta] = await audioStores();
+  const data = await metadata(meta, request) || {bytes:(await response.arrayBuffer()).byteLength};
+  await saveMetadata(meta, request, {...data, used:usedNow()});
+  await pruneAudio(cache, meta);
+}
+async function applyAudioManifest(response, scope) {
+  if (!response.ok || response.headers.get('X-ILMA-Offline') === '1') return;
+  let data;
+  try { data = await response.json(); } catch (_) { return; }
+  if (!data || typeof data.clips !== 'object' || Array.isArray(data.clips) || !data.clips) return;
+  const clips = Object.values(data.clips), urls = new Set();
+  // An empty/error/partial malformed response is not evidence to erase saved clips.
+  if (!clips.length || data.batch_complete === false || (data.remaining_clips != null && data.remaining_clips !== 0) || (Number.isSafeInteger(data.expected_clips) && clips.length < data.expected_clips)) return;
+  for (const clip of clips) {
+    if (!clip || clip.reviewed !== true || !/^[a-f0-9]{64}$/.test(clip.audio_sha256 || '') || typeof clip.file !== 'string') return;
+    const path = clip.file.startsWith('static/audio/') ? '/' + clip.file : scope + clip.file;
+    if (!path.startsWith(scope) || !/^\/static\/audio\/(?:services|bank|accounts)\/bn\/[a-z0-9_-]+\.mp3$/.test(path)) return;
+    urls.add(new URL(path + '?v=' + clip.audio_sha256.slice(0,16), self.location.origin).href);
+  }
+  currentAudio.set(scope, urls);
+  const [cache, meta] = await audioStores();
+  for (const request of await cache.keys()) {
+    if (new URL(request.url).pathname.startsWith(scope) && !urls.has(request.url)) {
+      await cache.delete(request); await meta.delete(request);
+    }
+  }
+  await pruneAudio(cache, meta);
+}
+async function maintainAudio() {
+  // Fetch JSON only; never preload recordings. A failed manifest retains saved audio.
+  let savedAccounts = false;
+  try {
+    const cache = await caches.open(SERVICE_AUDIO);
+    savedAccounts = (await cache.keys()).some(request => new URL(request.url).pathname.startsWith('/static/audio/accounts/'));
+  } catch (_) {}
+  const requested = AUDIO_MANIFESTS.filter(([,scope]) => scope !== '/static/audio/accounts/' || savedAccounts);
+  const manifests = await Promise.all(requested.map(async ([url,scope]) => {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 4000);
+    try {
+      const response = await fetch(new Request(new URL(url,self.location.origin), {cache:'no-store',signal:controller.signal}));
+      if (!response.ok) return [null,scope];
+      const bytes = await response.arrayBuffer();
+      return [new Response(bytes,{status:response.status,headers:response.headers}),scope];
+    } catch (_) { return [null,scope]; }
+    finally { clearTimeout(timer); }
+  }));
+  await queueAudio(async () => {
+    const [cache, meta] = await audioStores(); await pruneAudio(cache,meta);
+    for (const [response,scope] of manifests) if (response) await applyAudioManifest(response,scope);
+  });
+}
