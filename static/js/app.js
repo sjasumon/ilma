@@ -455,7 +455,10 @@ function updateLocalizedText() {
   document.getElementById("home-tap-target").setAttribute("aria-label", currentLang === "bn" ? "কথা বলুন। ব্যাংকের নাম বলুন।" : "Speak. Say a bank name.");
   document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "থামুন" : "Stop";
   document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "থামুন" : "Stop");
-  if (currentTab === "news") loadNews();
+  if (currentTab === "news") {
+    if (newsState.items && newsState.items.length) renderNews();
+    else loadNews();
+  }
   calculateInsuranceSplit();
   calculateRealReturn();
 }
@@ -831,10 +834,11 @@ function stopAudio() {
   const depositListen=document.getElementById('deposit-listen');if(depositListen)depositListen.textContent=window.IlmaDeposits?.listenLabel?.()||(currentLang==='bn'?'এই সঞ্চয়ের হিসাব শুনুন':'Listen in Bangla');
   const loanListen=document.getElementById('loan-listen');if(loanListen)loanListen.textContent=window.IlmaLoans?.listenLabel?.()||'Listen';
   if(compareListen)compareListen.textContent=window.IlmaCatalog?.listenLabel?.()||(currentLang==='bn'?'শুনুন':'Listen');
+  if(typeof stopNewsAudio==='function')stopNewsAudio();
 }
 
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts|news)\/(?:bn|en)\/[a-z0-9_-]+\.mp3(?:\?v=[a-f0-9]{16})?$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
   const player = document.getElementById("ilma-player");
   player.src = url;
   player.playbackRate = appSettings.slow ? .85 : 1;
@@ -1377,61 +1381,708 @@ function calculateRealReturn() {
   `;
 }
 
+const NEWS_SUMMARIES = {
+  // --- Press News Items (4) ---
+  'export-news-2-11': {
+    bn: 'ব্র্যাক ব্যাংক ও সিটি ব্যাংক যৌথভাবে বাংলাদেশে স্মার্ট লকার সেবা ‘ডিজিবক্স’ চালু করেছে। এর মাধ্যমে গ্রাহকরা সপ্তাহের ৭ দিন ২৪ ঘণ্টাই স্বয়ংক্রিয় প্রযুক্তির মাধ্যমে নিরাপদে পার্সেল ও প্রয়োজনীয় সামগ্রী গ্রহণ বা জমা দিতে পারবেন।',
+    en: 'BRAC Bank and City Bank have jointly launched ‘Digibox’, an automated smart locker service in Bangladesh, enabling customers to securely drop off and retrieve packages 24/7 using digital self-service lockers.'
+  },
+  'export-news-12-11': {
+    bn: 'ব্র্যাক ব্যাংক পরিবেশবান্ধব প্রকল্প ও টেকসই শিল্প উদ্যোগে অর্থায়নের জন্য দেশের প্রথম ১,০০০ কোটি টাকার গ্রিন বন্ড ছাড়ার উদ্যোগ নিয়েছে। এটি পরিবেশবান্ধব বিনিয়োগ ও সবুজ অর্থায়নে একটি নতুন মাইলফলক।',
+    en: 'BRAC Bank is issuing Bangladesh\'s first Tk 1,000 crore green bond to finance environmentally sustainable industrial projects, renewable energy, and climate-resilient initiatives.'
+  },
+  'export-news-13-11': {
+    bn: '২০২৬ সালের জানুয়ারি থেকে জুন সময়ে ব্র্যাক ব্যাংকের নিট মুনাফা ৫৭ শতাংশ বৃদ্ধি পেয়েছে। আমানত বৃদ্ধি, এসএমই ঋণ এবং পরিচালন ব্যয় দক্ষতার কারণে ব্যাংকের সামগ্রিক আয় উল্লেখযোগ্যভাবে বেড়েছে।',
+    en: 'BRAC Bank registered a 57% surge in net profit during January–June 2026, driven by robust deposit inflows, diversified SME lending, and enhanced operating efficiency.'
+  },
+  'export-news-16-14': {
+    bn: 'সিটি ব্যাংক তাদের অনুমোদিত মূলধন বাড়িয়ে ৩,০০০ কোটি টাকায় উন্নীত করার পরিকল্পনা করেছে। ভবিষ্যৎ ব্যবসার সম্প্রসারণ, আন্তর্জাতিক বাণিজ্য অর্থায়ন এবং ঝুঁকি মোকাবিলায় মূলধন ভিত্তি শক্তিশালী করাই এর মূল লক্ষ্য।',
+    en: 'City Bank plans to raise its authorised capital to Tk 3,000 crore to strengthen its capital adequacy ratio, support commercial expansion, and scale international trade operations.'
+  },
+
+  // --- Regulatory Circulars / Rules (12) ---
+  'extra54-rule-13': {
+    bn: 'বাংলাদেশ ব্যাংক ব্যবসায়ী প্রতিষ্ঠানের চলতি ও এসটিডি হিসাব খোলার ক্ষেত্রে ব্যবসা শনাক্তকরণ নম্বর (বিআইএন) সনদ সংরক্ষণ বাধ্যতামূলক করেছে। কর ফাঁকি রোধ ও স্বচ্ছ ব্যাংকিং নিশ্চিত করতে এই নির্দেশনা দেওয়া হয়েছে।',
+    en: 'Bangladesh Bank has mandated the collection and retention of Business Identification Number (BIN) certificates when opening current and STD accounts for business entities.'
+  },
+  'extra54-rule-19': {
+    bn: 'রপ্তানিকারকদের সহায়তায় প্রাক-জাহাজীকরণ ঋণ পুনঃঅর্থায়ন তহবিলের সুদহার ও ঋণের পরিমাণ পুনঃনির্ধারণ করেছে কেন্দ্রীয় ব্যাংক, যাতে সময়মতো রপ্তানি ও উৎপাদন কার্যক্রম সচল থাকে।',
+    en: 'Bangladesh Bank has revised the interest rates and allocation caps of the Pre-Shipment Credit Refinancing Scheme to provide affordable export trade financing.'
+  },
+  'extra54-rule-63': {
+    bn: 'বাংলাদেশে ই-ভিসা নিয়ে কর্মরত বিদেশি নাগরিকদের জন্য ব্যাংক হিসাব খোলার নিয়ম সহজ করেছে বাংলাদেশ ব্যাংক। বৈধ ভিসা ও প্রতিষ্ঠানের সুপারিশের ভিত্তিতে ব্যাংক হিসাব পরিচালনা করা যাবে।',
+    en: 'The central bank has streamlined requirements for foreign nationals working legally in Bangladesh under the E-Visa category to open and maintain local bank accounts.'
+  },
+  'extra54-rule-71': {
+    bn: 'আয়কর আইন ২০২৩ অনুযায়ী আমানতের সুদ বা মুনাফার ওপর নির্ধারিত হারে উৎসে কর কর্তন এবং তা সময়মতো সরকারি কোষাগারে জমা দেওয়ার জন্য সকল তফসিলি ব্যাংককে নির্দেশ দেওয়া হয়েছে।',
+    en: 'Commercial banks are instructed to deduct source tax on deposit interest/profit under the Income Tax Act 2023 and remit it timely to the Government Treasury.'
+  },
+  'extra54-rule-73': {
+    bn: 'বাংলা কিউআর লেনদেনের ফি ও চার্জ নির্ধারণ করেছে কেন্দ্রীয় ব্যাংক। ক্ষুদ্র ও সাধারণ ব্যবসায়ীদের ডিজিটাল পেমেন্টে উৎসাহিত করতে মার্চেন্ট ডিসকাউন্ট রেট (এমডিআর) যৌক্তিক হারে বেঁধে দেওয়া হয়েছে।',
+    en: 'Bangladesh Bank has fixed transaction fees and merchant discount rates for Bangla QR payments to accelerate digital payment adoption among micro-merchants.'
+  },
+  'extra54-rule-84': {
+    bn: 'তফসিলি ব্যাংকগুলোকে প্রদত্ত টিটি ডিসকাউন্টিং সুবিধার বিপরীতে বাংলাদেশ ব্যাংকে রক্ষিত চলতি হিসাবের ব্যালেন্স লিয়েন রাখার বিষয়ে স্পষ্ট কার্যপ্রণালী ও নির্দেশনা জারি করেছে কেন্দ্রীয় ব্যাংক।',
+    en: 'Central bank issued operational directives regarding liens on commercial banks\' current account balances maintained with Bangladesh Bank against TT discounting facilities.'
+  },
+  'extra54-rule-90': {
+    bn: 'কার্ড থেকে বিকাশ বা নগদসহ যেকোনো এমএফএস ব্যক্তিগত অ্যাকাউন্টে অ্যাড মানি লেনদেনের সীমা, নিরাপত্তা নীতিমালা এবং চার্জ সংক্রান্ত হালনাগাদ নির্দেশনা জারি করেছে বাংলাদেশ ব্যাংক।',
+    en: 'Bangladesh Bank updated directives outlining daily transaction limits, security standards, and fee structures for adding money from cards to personal MFS accounts.'
+  },
+  'extra54-rule-126': {
+    bn: 'ন্যাশনাল পেমেন্ট সুইচ বাংলাদেশ (এনপিএসবি) এর মাধ্যমে এটিএম, পিওএস ও ইন্টারনেট ব্যাংকিং লেনদেন এবং সরকারি সেবামূল্য পরিশোধের সর্বোচ্চ ফি ও সার্ভিস চার্জ নির্ধারণ করা হয়েছে।',
+    en: 'Bangladesh Bank has capped interchange and customer transaction fees for ATM, POS, and fund transfers conducted through the National Payment Switch Bangladesh (NPSB).'
+  },
+  'extra54-rule-132': {
+    bn: 'ঋণ ও আমানতের ভারিত গড় সুদহারের ব্যবধান (স্প্রেড) যৌক্তিক সীমায় রাখার নির্দেশনা দিয়েছে বাংলাদেশ ব্যাংক, যাতে আমানতকারীরা ন্যায্য মুনাফা পান এবং ব্যবসায় ঋণের ব্যয় নিয়ন্ত্রণে থাকে।',
+    en: 'Guidelines on maintaining the interest rate spread between advances and deposits within central bank limits to protect depositors and keep loan costs manageable.'
+  },
+  'extra54-rule-165': {
+    bn: 'ডিজিটাল লেনদেনে স্বচ্ছতা ও জালিয়াতি রোধে কার্ড থেকে এমএফএস হিসাবে অর্থ স্থানান্তরের ক্ষেত্রে টু-ফ্যাক্টর অথেনটিকেশন ও স্বয়ংক্রিয় তদারকি ব্যবস্থা বাধ্যতামূলক করা হয়েছে।',
+    en: 'Mandatory enforcement of two-factor authentication and automated fraud surveillance protocols for funds transferred from payment cards to mobile financial service accounts.'
+  },
+  'extra54-rule-170': {
+    bn: 'ব্যাংক ঋণ ও বিনিয়োগের সুদহার নির্ধারণের বাজারভিত্তিক পদ্ধতি এবং গ্রাহকদের ওপর অপ্রয়োজনীয় বা লুকানো চার্জ আরোপ না করার বিষয়ে নির্দেশনা পুনর্ব্যক্ত করেছে বাংলাদেশ ব্যাংক।',
+    en: 'Central bank instructions governing market-based lending rates and strictly prohibiting hidden administrative charges on loans and investments.'
+  },
+  'extra54-rule-218': {
+    bn: 'ক্রেডিট কার্ড পরিচালনা সংক্রান্ত সমন্বিত নীতিমালা জারি করেছে বাংলাদেশ ব্যাংক। এতে কার্ডের সর্বোচ্চ সুদহার, লেট ফি, বার্ষিক ফি এবং গ্রাহক সচেতনতার নিয়ম স্পষ্ট করা হয়েছে।',
+    en: 'Comprehensive guidelines on credit card operations regulating interest rate caps, late payment penalties, annual renewal terms, and customer disclosure duties.'
+  },
+
+  // --- Regulatory Warnings & Public Advisories (5) ---
+  'extra54-press-21': {
+    bn: 'কয়েকটি ব্যাংকের প্রযুক্তিগত আপগ্রেডেশনের কারণে সাময়িক ডিজিটাল লেনদেন বিভ্রাটের তথ্য প্রকাশ করেছে কেন্দ্রীয় ব্যাংক। বিকল্প চ্যানেল ব্যবহারের পরামর্শ এবং ব্যাংকগুলোকে দ্রুত সমাধানের নির্দেশ দেওয়া হয়েছে।',
+    en: 'Bangladesh Bank acknowledged temporary digital banking disruptions due to IT upgrades in select banks, advising alternative service channels while expediting technical resolution.'
+  },
+  'extra54-press-81': {
+    bn: 'উত্তরাঞ্চলে কৃষিভিত্তিক বিশেষ অর্থনৈতিক হাব প্রতিষ্ঠায় ৩,০০০ কোটি টাকার পুনঃঅর্থায়ন তহবিল ঘোষণা করেছে বাংলাদেশ ব্যাংক, যার মাধ্যমে সহজ শর্তে স্থানীয় প্রক্রিয়াকরণ শিল্পে বিনিয়োগ করা যাবে।',
+    en: 'Bangladesh Bank launched a Tk 3,000 crore refinance scheme to finance agro-processing industries and establish an agricultural economic hub in northern Bangladesh.'
+  },
+  'extra54-press-89': {
+    bn: 'অনুমোদনহীন মোবাইল অ্যাপ ও সামাজিক যোগাযোগ মাধ্যমে পরিচালিত চড়া সুদের অবৈধ ঋণ ফাঁদ সম্পর্কে জনসাধারণের জন্য জরুরি সতর্কতা। কোনো অননুমোদিত ডিজিটাল প্ল্যাটফর্ম থেকে ঋণ না নেওয়ার নির্দেশ দেওয়া হয়েছে।',
+    en: 'Public advisory warning citizens against illegal micro-lending mobile applications and social media platforms that operate without regulatory authorization.'
+  },
+  'extra54-press-98': {
+    bn: 'খাদ্য নিরাপত্তা নিশ্চিতকরণ এবং গ্রামীণ কর্মসংস্থান বৃদ্ধির লক্ষ্যে কৃষি ও পল্লী খাতের জন্য কম সুদে সহজ শর্তে পুনঃঅর্থায়ন ঋণ সুবিধার বিস্তারিত ঘোষণা করেছে কেন্দ্রীয় ব্যাংক।',
+    en: 'Central Bank refinance package aimed at reinforcing national food security and boosting rural employment through subsidized credit for agricultural enterprises.'
+  },
+  'extra54-press-137': {
+    bn: 'ক্রিপ্টোকারেন্সি ট্রেডিং, অবৈধ ফরেক্স ও এমএলএম পিরামিড স্কিমের মাধ্যমে অর্থ আত্মসাতের বিরুদ্ধে কঠোর সতর্কবার্তা। বাংলাদেশে অননুমোদিত ভার্চুয়াল মুদ্রা লেনদেন আইনত দণ্ডনীয় অপরাধ।',
+    en: 'Regulatory warning cautioning the public against deceptive cryptocurrency trading schemes and unauthorized MLM platforms in violation of foreign exchange laws.'
+  }
+};
+NEWS_SUMMARIES['export-news-2-14'] = NEWS_SUMMARIES['export-news-2-11'];
+if (typeof window !== 'undefined') window.NEWS_SUMMARIES = NEWS_SUMMARIES;
+
+const newsState = {
+  items: [],
+  extra: null,
+  category: 'all',
+  bank: 'all',
+  query: '',
+  wired: false
+};
+
+let currentNewsBtn = null;
+let currentNewsAudioId = null;
+let lastPlayingNewsBtn = null;
+
+function stopNewsAudio() {
+  if (currentNewsBtn) {
+    lastPlayingNewsBtn = currentNewsBtn;
+    setTimeout(() => { if (lastPlayingNewsBtn === currentNewsBtn) lastPlayingNewsBtn = null; }, 100);
+    currentNewsBtn.classList.remove('is-playing');
+    const isBn = currentLang === 'bn';
+    if (currentNewsBtn.id === 'btn-listen-news') {
+      const lbl = document.getElementById('lbl-listen-news');
+      if (lbl) lbl.textContent = isBn ? 'সংবাদ সারসংক্ষেপ শুনুন' : 'Listen to news summary';
+    } else {
+      const lbl = currentNewsBtn.querySelector('.listen-label');
+      if (lbl) lbl.textContent = isBn ? 'সারসংক্ষেপ শুনুন' : 'Listen';
+      const icon = currentNewsBtn.querySelector('.listen-icon');
+      if (icon) icon.textContent = '🔊';
+    }
+    currentNewsBtn = null;
+    currentNewsAudioId = null;
+  }
+}
+
+function playNewsSummary(itemId, buttonEl) {
+  const isBn = currentLang === 'bn';
+
+  // Toggle off if the exact same button was already playing
+  if (currentNewsBtn === buttonEl || lastPlayingNewsBtn === buttonEl) {
+    lastPlayingNewsBtn = null;
+    stopAudio();
+    return;
+  }
+  lastPlayingNewsBtn = null;
+
+  stopAudio();
+  const request = playbackRequest;
+
+  const summaryObj = NEWS_SUMMARIES[itemId];
+  const textToSpeak = summaryObj ? (isBn ? summaryObj.bn : summaryObj.en) : '';
+  if (!textToSpeak) return;
+
+  const audioUrl = `/static/audio/news/${currentLang}/${itemId}.mp3`;
+  const player = document.getElementById("ilma-player");
+  if (!player) return;
+
+  currentNewsBtn = buttonEl;
+  currentNewsAudioId = itemId;
+
+  if (buttonEl) buttonEl.classList.add('is-playing');
+  if (buttonEl && buttonEl.id === 'btn-listen-news') {
+    const lbl = document.getElementById('lbl-listen-news');
+    if (lbl) lbl.textContent = isBn ? 'থামুন' : 'Stop';
+  } else if (buttonEl) {
+    const lbl = buttonEl.querySelector('.listen-label');
+    if (lbl) lbl.textContent = isBn ? 'থামুন' : 'Stop';
+    const icon = buttonEl.querySelector('.listen-icon');
+    if (icon) icon.textContent = '⏹️';
+  }
+
+  // Pre-unlock session for iOS WebKit if needed
+  if (window.IlmaAudioSession && typeof window.IlmaAudioSession.unlock === 'function') {
+    try { window.IlmaAudioSession.unlock(player); } catch {}
+  }
+
+  player.src = audioUrl;
+  player.playbackRate = appSettings.slow ? 0.85 : 1;
+
+  try {
+    const playPromise = player.play?.();
+    if (playPromise !== undefined && playPromise?.catch) {
+      playPromise.catch(() => {
+        if (request !== playbackRequest) return;
+        stopAudio();
+      });
+    }
+  } catch {
+    stopAudio();
+  }
+}
+
+function formatNewsDate(dateStr, isBn) {
+  if (!dateStr) return '';
+  try {
+    return new Intl.DateTimeFormat(isBn ? 'bn-BD' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr + 'T00:00:00'));
+  } catch {
+    return dateStr;
+  }
+}
+
+function itemMatchesBank(item, bankFilter) {
+  if (bankFilter === 'all') return true;
+  const id = String(item.id || item.item_id || '');
+  const title = (item.title || item.title_bn || item.title_en || '');
+  const text = title + ' ' + (item.bank_name_en || '') + ' ' + (item.bank_name_bn || '');
+
+  if (bankFilter === 'city') {
+    // City Bank: strictly institution 14, and exclude BRAC Bank items / titles
+    if (id.endsWith('-11') || /^\s*BRAC/i.test(title)) return false;
+    return item.institution_id === 14 || id.endsWith('-14') || (/City\s*Bank/i.test(text) && !/BRAC/i.test(text));
+  }
+  if (bankFilter === 'brac') {
+    if (id.endsWith('-14') && !id.endsWith('-11')) return false;
+    return item.institution_id === 11 || id.endsWith('-11') || /BRAC/i.test(text);
+  }
+  if (bankFilter === 'ebl') {
+    return /EBL|Eastern\s*Bank/i.test(text) || item.institution_id === 19;
+  }
+  if (bankFilter === 'bb') {
+    return item.topic === 'bb_notice' || item.topic === 'new_rule' || /Bangladesh\s*Bank|BRPD|PSD|Central\s*Bank/i.test(text);
+  }
+  return false;
+}
+
+function newsBankKey(item) {
+  const id = String(item.id || item.item_id || '');
+  const title = (item.title || item.title_bn || item.title_en || '');
+  const text = title + ' ' + (item.bank_name_en || '') + ' ' + (item.bank_name_bn || '');
+  if ((item.institution_id === 14 || id.endsWith('-14') || /City\s*Bank/i.test(text)) && !id.endsWith('-11') && !/^\s*BRAC/i.test(title)) return 'city';
+  if (item.institution_id === 11 || id.endsWith('-11') || /BRAC/i.test(text)) return 'brac';
+  if (/EBL|Eastern\s*Bank/i.test(text) || item.institution_id === 19) return 'ebl';
+  if (/Bangladesh\s*Bank|BRPD|PSD|Central\s*Bank/i.test(text) || item.topic === 'bb_notice' || item.topic === 'new_rule') return 'bb';
+  return 'other';
+}
+
 function publicationHTML(row,label) {
   const bn=currentLang==='bn';
-  const when=row.date?new Intl.DateTimeFormat(bn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(row.date+'T00:00:00')):row.year?(bn?toBnDigits(row.year):String(row.year)):'';
-  return `<article class="catalog-card publication-card"><p class="catalog-note">${escapeHTML([bn?row.bank_name_bn:row.bank_name_en,label].filter(Boolean).join(' · '))}</p><h2 lang="${/[\u0980-\u09ff]/.test(row.title)?'bn':'en'}">${escapeHTML(row.title)}</h2>${bn&&!/[\u0980-\u09ff]/.test(row.title)?'<p class="catalog-note" lang="bn">মূল শিরোনাম ইংরেজিতে</p>':''}<p>${escapeHTML(when)}</p>${/^https?:\/\//.test(row.source_url)?`<a class="catalog-source" aria-label="${escapeHTML((bn?'উৎস খুলুন: ':'Open source: ')+row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind==='index'?(bn?'মূল উৎসের সূচি খুলুন ↗':'Open source index ↗'):(bn?'উৎস খুলুন ↗':'Open source ↗')}</a>`:''}</article>`;
+  const when=row.date?formatNewsDate(row.date,bn):row.year?(bn?toBnDigits(row.year):String(row.year)):'';
+  return `<article class="catalog-offer-row card-tile publication-card"><p class="catalog-note">${escapeHTML([bn?row.bank_name_bn:row.bank_name_en,label].filter(Boolean).join(' · '))}</p><h2 lang="${/[ঀ-৿]/.test(row.title)?'bn':'en'}">${escapeHTML(row.title)}</h2>${bn&&!/[ঀ-৿]/.test(row.title)?'<p class="catalog-note" lang="bn">মূল শিরোনাম ইংরেজিতে</p>':''}<p class="news-date">${escapeHTML(when)}</p>${/^https?:\/\//.test(row.source_url)?`<a class="catalog-source" aria-label="${escapeHTML((bn?'উৎস খুলুন: ':'Open source: ')+row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind==='index'?(bn?'মূল উৎসের সূচি খুলুন ↗':'Open source index ↗'):(bn?'উৎস খুলুন ↗':'Open source ↗')}</a>`:''}</article>`;
 }
 window.publicationHTML=publicationHTML;
 
-async function loadExtraNews(feed,isBn){
-  if(isBn!==(currentLang==='bn'))return;
-  document.getElementById('extra-news-sections')?.remove();
-  const section=document.createElement('section');section.id='extra-news-sections';feed.after(section);
-  try{
-    const response=await fetch('/v1/extra-news',{headers:anonymousDevice?{'X-ILMA-Device':anonymousDevice}:{},cache:'no-store'});
-    if(!response.ok)throw Error('extra news unavailable');const data=await response.json();
-    if(!section.isConnected)return;
-    const groups=[['warnings','বাংলাদেশ ব্যাংকের সতর্কবার্তা ও ঘোষণা','BB warnings and notices','বাংলাদেশ ব্যাংকের ঘোষণা','Bangladesh Bank notice'],['rules','নতুন নিয়ম','New rules','বাংলাদেশ ব্যাংকের সার্কুলার','Bangladesh Bank circular'],['announcements','নজরে রাখা ব্যাংকের ঘোষণা','Watched-bank announcements','ডিএসই-তে ব্যাংকের নিজের ঘোষণা','The bank’s own DSE announcement']];
-    section.innerHTML=groups.map(([key,bn,en,labelBn,labelEn])=>`<section aria-label="${escapeHTML(isBn?bn:en)}"><h2>${escapeHTML(isBn?bn:en)}</h2>${(data[key]||[]).map(row=>publicationHTML(row,isBn?labelBn:labelEn)).join('')||`<p class="catalog-note">${key==='announcements'&&!data.watching?(isBn?'ব্যাংক ট্যাবে একটি ব্যাংক নজরে রাখুন। ব্যক্তিগত তালিকার ঘোষণাই এখানে দেখানো হবে।':'Watch a bank in the Banks tab to see its announcements here.'):(isBn?'এই বিভাগে সরবরাহকৃত তথ্য নেই।':'No supplied records in this section.')}</p>`}</section>`).join('');
-  }catch{section.textContent=isBn?'অতিরিক্ত ঘোষণা লোড করা যায়নি। আবার চেষ্টা করুন।':'Could not load additional notices. Please try again.';}
+function renderNews() {
+  const isBn = currentLang === 'bn';
+  const feed = document.getElementById("news-feed");
+  let extraSection = document.getElementById('extra-news-sections');
+  if (!feed) return;
+  if (!extraSection) {
+    extraSection = document.createElement('section');
+    extraSection.id = 'extra-news-sections';
+    feed.after(extraSection);
+  }
+
+  const newsItems = newsState.items || [];
+  const extra = newsState.extra || { warnings: [], rules: [], announcements: [] };
+  const warnings = extra.warnings || [];
+  const rules = extra.rules || [];
+  const announcements = extra.announcements || [];
+
+  // Update localized text for static labels in tab-news
+  const filterTitle = document.getElementById('news-filter-title');
+  if (filterTitle) filterTitle.textContent = isBn ? 'সংবাদ অনুসন্ধান ও ফিল্টার' : 'Search & Filter News';
+  const searchInput = document.getElementById('news-search-input');
+  if (searchInput) searchInput.placeholder = isBn ? 'সংবাদ, সার্কুলার বা বিষয় খুঁজুন…' : 'Search news, circulars, or topics…';
+  const catLabel = document.getElementById('news-category-label');
+  if (catLabel) catLabel.textContent = isBn ? 'খবরের ধরন' : 'Type of News';
+  const bankLabel = document.getElementById('news-bank-label');
+  if (bankLabel) bankLabel.textContent = isBn ? 'ব্যাংক বা নিয়ন্ত্রক সংস্থা' : 'Bank or Authority';
+  const audioNote = document.getElementById('news-audio-note');
+  if (audioNote) audioNote.textContent = isBn ? 'বাংলাদেশ ব্যাংক সার্কুলার ও সংবাদপত্রের সর্বশেষ প্রধান আপডেট শুনুন।' : 'Listen to latest Bangladesh Bank circulars and press updates.';
+  const feedHeading = document.getElementById('news-feed-heading');
+  if (feedHeading) feedHeading.textContent = isBn ? 'সংবাদ ও সার্কুলারের তালিকা' : 'News & Circular Feed';
+  const feedSub = document.getElementById('news-feed-sub');
+  if (feedSub) feedSub.textContent = isBn ? 'নিচের প্রতিটি সংবাদ বা সার্কুলারের মূল উৎস সরাসরি দেখতে পারেন' : 'Explore original published sources for each item below';
+  const lblListen = document.getElementById('lbl-listen-news');
+  if (lblListen && !currentNewsBtn) lblListen.textContent = isBn ? 'সংবাদ সারসংক্ষেপ শুনুন' : 'Listen to news summary';
+
+  const bankFilter = newsState.bank;
+  const catFilter = newsState.category;
+  const query = (newsState.query || '').trim().toLowerCase();
+
+  // Dynamic counts for Category tab badges (based on currently selected bank)
+  const countForCat = (cat) => {
+    let count = 0;
+    if (cat === 'all' || cat === 'press') {
+      count += newsItems.filter(item => itemMatchesBank(item, bankFilter)).length;
+    }
+    if (cat === 'all' || cat === 'rules') {
+      count += rules.filter(item => itemMatchesBank(item, bankFilter)).length;
+    }
+    if (cat === 'all' || cat === 'warnings') {
+      count += warnings.filter(item => itemMatchesBank(item, bankFilter)).length;
+    }
+    return count;
+  };
+
+  // Dynamic counts for Bank tab badges (based on currently selected category)
+  const countForBank = (bank) => {
+    let count = 0;
+    if (catFilter === 'all' || catFilter === 'press') {
+      count += newsItems.filter(item => itemMatchesBank(item, bank)).length;
+    }
+    if (catFilter === 'all' || catFilter === 'rules') {
+      count += rules.filter(item => itemMatchesBank(item, bank)).length;
+    }
+    if (catFilter === 'all' || catFilter === 'warnings') {
+      count += warnings.filter(item => itemMatchesBank(item, bank)).length;
+    }
+    return count;
+  };
+
+  const countAll = document.getElementById('count-all');
+  const countRules = document.getElementById('count-rules');
+  const countWarnings = document.getElementById('count-warnings');
+  const countPress = document.getElementById('count-press');
+  const totalCatAll = countForCat('all');
+  if (countAll) countAll.textContent = '(' + (isBn ? toBnDigits(totalCatAll) : totalCatAll) + ')';
+  if (countRules) countRules.textContent = '(' + (isBn ? toBnDigits(countForCat('rules')) : countForCat('rules')) + ')';
+  if (countWarnings) countWarnings.textContent = '(' + (isBn ? toBnDigits(countForCat('warnings')) : countForCat('warnings')) + ')';
+  if (countPress) countPress.textContent = '(' + (isBn ? toBnDigits(countForCat('press')) : countForCat('press')) + ')';
+
+  const countBankAll = document.getElementById('count-bank-all');
+  const countBankBB = document.getElementById('count-bank-bb');
+  const countBankBrac = document.getElementById('count-bank-brac');
+  const countBankCity = document.getElementById('count-bank-city');
+  const totalBankAll = countForBank('all');
+  if (countBankAll) countBankAll.textContent = '(' + (isBn ? toBnDigits(totalBankAll) : totalBankAll) + ')';
+  if (countBankBB) countBankBB.textContent = '(' + (isBn ? toBnDigits(countForBank('bb')) : countForBank('bb')) + ')';
+  if (countBankBrac) countBankBrac.textContent = '(' + (isBn ? toBnDigits(countForBank('brac')) : countForBank('brac')) + ')';
+  if (countBankCity) countBankCity.textContent = '(' + (isBn ? toBnDigits(countForBank('city')) : countForBank('city')) + ')';
+
+  // Category Tab Labels
+  const lblCatAll = document.getElementById('lbl-cat-all');
+  if (lblCatAll) lblCatAll.textContent = isBn ? 'সব' : 'All';
+  const lblCatRules = document.getElementById('lbl-cat-rules');
+  if (lblCatRules) lblCatRules.textContent = isBn ? 'সার্কুলার' : 'Circulars';
+  const lblCatWarnings = document.getElementById('lbl-cat-warnings');
+  if (lblCatWarnings) lblCatWarnings.textContent = isBn ? 'সতর্কতা' : 'Notices';
+  const lblCatPress = document.getElementById('lbl-cat-press');
+  if (lblCatPress) lblCatPress.textContent = isBn ? 'সংবাদ' : 'Press';
+
+  // Bank Tab Labels
+  const lblBankAll = document.getElementById('lbl-bank-all');
+  if (lblBankAll) lblBankAll.textContent = isBn ? 'সকল উৎস' : 'All Sources';
+  const lblBankBB = document.getElementById('lbl-bank-bb');
+  if (lblBankBB) lblBankBB.textContent = isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank';
+  const lblBankBrac = document.getElementById('lbl-bank-brac');
+  if (lblBankBrac) lblBankBrac.textContent = isBn ? 'ব্র্যাক' : 'BRAC';
+  const lblBankCity = document.getElementById('lbl-bank-city');
+  if (lblBankCity) lblBankCity.textContent = isBn ? 'সিটি' : 'City';
+
+  // Highlight Banner (dynamically reflects selected bank or category)
+  const bannerTitle = document.getElementById('news-highlight-title');
+  const bannerMeta = document.getElementById('news-highlight-meta');
+  const bannerLabel = document.getElementById('news-highlight-label');
+  const bannerBox = document.getElementById('news-highlight-banner');
+  if (bannerTitle && bannerBox) {
+    let highlightItem = null;
+    let highlightKind = 'rule';
+
+    if (bankFilter === 'city') {
+      highlightItem = newsItems.find(n => itemMatchesBank(n, 'city'));
+      highlightKind = 'city';
+    } else if (bankFilter === 'brac') {
+      highlightItem = newsItems.find(n => itemMatchesBank(n, 'brac'));
+      highlightKind = 'brac';
+    } else if (catFilter === 'press') {
+      highlightItem = newsItems.find(n => itemMatchesBank(n, bankFilter)) || newsItems[0];
+      highlightKind = 'press';
+    } else if (catFilter === 'warnings') {
+      highlightItem = warnings.find(n => itemMatchesBank(n, bankFilter)) || warnings[0];
+      highlightKind = 'warning';
+    } else {
+      highlightItem = rules.find(n => itemMatchesBank(n, bankFilter)) || rules[0] || warnings[0] || newsItems[0];
+      highlightKind = 'rule';
+    }
+
+    if (highlightItem) {
+      bannerBox.dataset.highlightId = highlightItem.id || highlightItem.item_id;
+      if (highlightKind === 'city') {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📰 সিটি ব্যাংকের খবর' : '📰 City Bank News';
+        bannerTitle.textContent = isBn ? (highlightItem.title_bn || highlightItem.title) : (highlightItem.title_en || highlightItem.title);
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(highlightItem.date || highlightItem.published_on, isBn)} · ${isBn ? 'সিটি ব্যাংক' : 'City Bank'}`;
+      } else if (highlightKind === 'brac') {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📰 ব্র্যাক ব্যাংকের খবর' : '📰 BRAC Bank News';
+        bannerTitle.textContent = isBn ? (highlightItem.title_bn || highlightItem.title) : (highlightItem.title_en || highlightItem.title);
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(highlightItem.date || highlightItem.published_on, isBn)} · ${isBn ? 'ব্র্যাক ব্যাংক' : 'BRAC Bank'}`;
+      } else if (highlightKind === 'warning') {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '⚠️ বাংলাদেশ ব্যাংক সতর্কবার্তা' : '⚠️ BB Warning Notice';
+        bannerTitle.textContent = highlightItem.title;
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(highlightItem.published_on || highlightItem.date, isBn)} · ${isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank'}`;
+      } else if (highlightKind === 'press') {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📰 প্রধান ব্যাংকিং সংবাদ' : '📰 Top Banking News';
+        bannerTitle.textContent = isBn ? (highlightItem.title_bn || highlightItem.title) : (highlightItem.title_en || highlightItem.title);
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(highlightItem.date, isBn)} · ${highlightItem.publisher || (isBn ? 'সংবাদমাধ্যম' : 'Press')}`;
+      } else {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📢 সর্বশেষ নিয়ন্ত্রক সার্কুলার' : '📢 Latest Regulatory Circular';
+        bannerTitle.textContent = highlightItem.title;
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(highlightItem.published_on || highlightItem.date, isBn)} · ${isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank'}`;
+      }
+      bannerBox.hidden = false;
+    }
+  }
+
+  // Filter Matcher
+  const matchesFilter = (item) => {
+    if (!itemMatchesBank(item, bankFilter)) return false;
+    if (query) {
+      const hay = [
+        item.title, item.title_bn, item.title_en,
+        item.publisher, item.bank_name_bn, item.bank_name_en,
+        item.summary_bn, item.summary_en, item.source_url
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  };
+
+  feed.innerHTML = "";
+  let visibleCount = 0;
+
+  // 1. Render Press News Items into #news-feed
+  if (catFilter === 'all' || catFilter === 'press') {
+    const filteredPress = newsItems.filter(matchesFilter);
+    visibleCount += filteredPress.length;
+
+    filteredPress.forEach(n => {
+      const card = document.createElement("article");
+      card.setAttribute("role", "listitem");
+      card.className = "catalog-offer-row card-tile publication-card";
+      card.style.cssText = "background: var(--paper);";
+      const summary = NEWS_SUMMARIES[n.id] ? (isBn ? NEWS_SUMMARIES[n.id].bn : NEWS_SUMMARIES[n.id].en) : '';
+      const isOfficial = Boolean(n.official);
+
+      card.innerHTML = `
+        <div class="card-bank-heading" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span class="news-badge ${isOfficial ? 'official' : 'reported'}">
+            ${isOfficial ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
+          </span>
+          <small class="news-date">${escapeHTML(formatNewsDate(n.date, isBn))}</small>
+        </div>
+        <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 4px 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
+        ${isBn && !/[ঀ-৿]/.test(n.title_bn) ? '<p class="catalog-note" style="margin: 0 0 8px;">খবরটি ইংরেজিতে</p>' : ''}
+        ${summary ? `<div class="news-summary-box"><p class="news-summary-text">${escapeHTML(summary)}</p></div>` : ''}
+        <footer class="card-tile-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid rgba(246,240,228,0.08);">
+          <div class="news-card-actions">
+            <button type="button" class="catalog-action news-card-listen" data-news-audio="${escapeHTML(n.id)}" aria-label="${isBn ? 'সংবাদের সারসংক্ষেপ শুনুন' : 'Listen to news summary'}">
+              <span class="listen-icon">🔊</span> <span class="listen-label">${isBn ? 'সারসংক্ষেপ শুনুন' : 'Listen'}</span>
+            </button>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <small style="color:var(--on-stage-2); font-size:calc(var(--fs) * .85);">${escapeHTML(n.publisher || '—')}</small>
+              ${/^https?:\/\//i.test(n.source_url || "") ? `<a class="catalog-source" href="${escapeHTML(n.source_url)}" target="_blank" rel="noopener noreferrer">${isBn ? "উৎস খুলুন ↗" : "Open source ↗"}</a>` : ""}
+            </div>
+          </div>
+        </footer>
+      `;
+      feed.appendChild(card);
+    });
+  }
+
+  // 2. Render Extra Sections (Rules, Warnings, Announcements)
+  extraSection.innerHTML = "";
+  const extraGroups = [
+    ['rules', isBn ? 'বাংলাদেশ ব্যাংকের সার্কুলার ও নতুন নিয়ম' : 'BB Circulars & New Rules', isBn ? '🏛️ বাংলাদেশ ব্যাংক সার্কুলার' : '🏛️ Bangladesh Bank circular', 'circular'],
+    ['warnings', isBn ? 'বাংলাদেশ ব্যাংকের সতর্কবার্তা ও ঘোষণা' : 'BB Warnings and Notices', isBn ? '⚠️ বাংলাদেশ ব্যাংকের সতর্কবার্তা' : '⚠️ Bangladesh Bank warning', 'warning'],
+    ['announcements', isBn ? 'নজরে রাখা ব্যাংকের ঘোষণা' : 'Watched-bank announcements', isBn ? '📢 ডিএসই-তে ব্যাংকের ঘোষণা' : '📢 DSE announcement', 'announcement']
+  ];
+
+  extraGroups.forEach(([key, groupTitle, label, badgeClass]) => {
+    if (catFilter !== 'all' && catFilter !== key) return;
+    const groupItems = (extra[key] || []).filter(matchesFilter);
+    visibleCount += groupItems.length;
+
+    if (groupItems.length > 0) {
+      const grpEl = document.createElement('section');
+      grpEl.setAttribute('aria-label', groupTitle);
+      grpEl.innerHTML = `<h2>${escapeHTML(groupTitle)}</h2>` + groupItems.map(row => {
+        const when = row.date ? formatNewsDate(row.date, isBn) : (row.year ? (isBn ? toBnDigits(row.year) : String(row.year)) : '');
+        const summary = NEWS_SUMMARIES[row.item_id] ? (isBn ? NEWS_SUMMARIES[row.item_id].bn : NEWS_SUMMARIES[row.item_id].en) : '';
+        return `<article class="catalog-offer-row card-tile publication-card" style="background: var(--paper);">
+          <div class="card-bank-heading" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="news-badge ${badgeClass}">${escapeHTML([isBn ? row.bank_name_bn : row.bank_name_en, label].filter(Boolean).join(' · '))}</span>
+            <small class="news-date">${escapeHTML(when)}</small>
+          </div>
+          <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 4px 0 6px; color: var(--ink);" lang="${/[ঀ-৿]/.test(row.title) ? 'bn' : 'en'}">${escapeHTML(row.title)}</h2>
+          ${isBn && !/[ঀ-৿]/.test(row.title) ? '<p class="catalog-note" style="margin: 0 0 8px;" lang="bn">মূল শিরোনাম ইংরেজিতে</p>' : ''}
+          ${summary ? `<div class="news-summary-box"><p class="news-summary-text">${escapeHTML(summary)}</p></div>` : ''}
+          <footer class="card-tile-footer">
+            <div class="news-card-actions">
+              <button type="button" class="catalog-action news-card-listen" data-news-audio="${escapeHTML(row.item_id)}" aria-label="${isBn ? 'সারসংক্ষেপ শুনুন' : 'Listen to summary'}">
+                <span class="listen-icon">🔊</span> <span class="listen-label">${isBn ? 'সারসংক্ষেপ শুনুন' : 'Listen'}</span>
+              </button>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <small>${escapeHTML(when)}</small>
+                ${/^https?:\/\//.test(row.source_url) ? `<a class="catalog-source" aria-label="${escapeHTML((isBn ? 'উৎস খুলুন: ' : 'Open source: ') + row.title)}" href="${escapeHTML(row.source_url)}" target="_blank" rel="noopener noreferrer">${row.source_kind === 'index' ? (isBn ? 'মূল উৎসের সূচি খুলুন ↗' : 'Open source index ↗') : (isBn ? 'মূল সার্কুলার / উৎস ↗' : 'Open document ↗')}</a>` : ''}
+              </div>
+            </div>
+          </footer>
+        </article>`;
+      }).join('');
+      extraSection.appendChild(grpEl);
+    } else if (catFilter === key || (key === 'announcements' && catFilter === 'all')) {
+      const grpEl = document.createElement('section');
+      grpEl.innerHTML = `<h2>${escapeHTML(groupTitle)}</h2><p class="catalog-note">${key === 'announcements' && !extra.watching ? (isBn ? 'ব্যাংক ট্যাবে একটি ব্যাংক নজরে রাখুন। ব্যক্তিগত তালিকার ঘোষণাই এখানে দেখানো হবে।' : 'Watch a bank in the Banks tab to see its announcements here.') : (isBn ? 'এই বিভাগে সরবরাহকৃত তথ্য নেই।' : 'No supplied records in this section.')}</p>`;
+      extraSection.appendChild(grpEl);
+    }
+  });
+
+  // Wire per-card audio buttons
+  document.querySelectorAll('.news-card-listen').forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      playNewsSummary(btn.dataset.newsAudio, btn);
+    };
+  });
+
+  // Wire banner audio button
+  const btnListen = document.getElementById('btn-listen-news');
+  if (btnListen) {
+    btnListen.onclick = (e) => {
+      e.preventDefault();
+      const activeId = bannerBox?.dataset?.highlightId || (rules[0] ? rules[0].item_id : 'export-news-16-14');
+      playNewsSummary(activeId, btnListen);
+    };
+  }
+
+  // Total Count
+  const totalCountEl = document.getElementById('news-total-count');
+  if (totalCountEl) totalCountEl.textContent = (isBn ? toBnDigits(visibleCount) : visibleCount) + ' ' + (isBn ? 'টি আইটেম' : 'items');
+
+  // Empty State with Guidance
+  const emptyMsg = document.getElementById('news-empty-message');
+  if (emptyMsg) {
+    if (visibleCount === 0) {
+      emptyMsg.hidden = false;
+      let promptTitle = isBn ? 'কোনো সংবাদ বা সার্কুলার পাওয়া যায়নি' : 'No matching news or circulars';
+      let promptDetail = '';
+      let actionsHTML = '';
+
+      if (catFilter === 'rules' && ['city', 'brac'].includes(bankFilter)) {
+        const bankName = bankFilter === 'city' ? (isBn ? 'সিটি ব্যাংক' : 'City Bank') : (isBn ? 'ব্র্যাক ব্যাংক' : 'BRAC Bank');
+        promptDetail = isBn
+          ? `${bankName}-এর জন্য কোনো সরাসরি নিয়ন্ত্রক সার্কুলার নেই। বাংলাদেশ ব্যাংকের সার্কুলার বা ${bankName}-এর সংবাদ দেখতে পারেন।`
+          : `No direct regulatory circulars for ${bankName}. You can view Bangladesh Bank circulars or ${bankName} news.`;
+        actionsHTML = `
+          <button type="button" class="catalog-action guidance-switch-cat" data-target-cat="press">${isBn ? `📰 ${bankName}-এর সংবাদ দেখুন ›` : `View ${bankName} news ›`}</button>
+          <button type="button" class="catalog-action guidance-switch-bank" data-target-bank="bb">${isBn ? '🏛️ বাংলাদেশ ব্যাংকের সার্কুলার দেখুন ›' : 'View BB circulars ›'}</button>
+          <button type="button" class="catalog-action guidance-reset-all">${isBn ? '↺ সব দেখুন ›' : 'View all ›'}</button>
+        `;
+      } else if (catFilter === 'warnings' && ['city', 'brac'].includes(bankFilter)) {
+        const bankName = bankFilter === 'city' ? (isBn ? 'সিটি ব্যাংক' : 'City Bank') : (isBn ? 'ব্র্যাক ব্যাংক' : 'BRAC Bank');
+        promptDetail = isBn
+          ? `${bankName}-এর জন্য কোনো সতর্কবার্তা নেই।`
+          : `No regulatory warning notices for ${bankName}.`;
+        actionsHTML = `
+          <button type="button" class="catalog-action guidance-switch-cat" data-target-cat="press">${isBn ? `📰 ${bankName}-এর সংবাদ দেখুন ›` : `View ${bankName} news ›`}</button>
+          <button type="button" class="catalog-action guidance-switch-bank" data-target-bank="bb">${isBn ? '⚠️ বাংলাদেশ ব্যাংকের সতর্কতা দেখুন ›' : 'View BB notices ›'}</button>
+          <button type="button" class="catalog-action guidance-reset-all">${isBn ? '↺ সব দেখুন ›' : 'View all ›'}</button>
+        `;
+      } else if (catFilter === 'press' && bankFilter === 'bb') {
+        promptDetail = isBn
+          ? 'বাংলাদেশ ব্যাংকের জন্য কোনো প্রেস নিউজ নেই। সার্কুলার ও নোটিশসমূহ দেখতে পারেন।'
+          : 'No commercial press releases for Bangladesh Bank. You can view circulars and notices.';
+        actionsHTML = `
+          <button type="button" class="catalog-action guidance-switch-cat" data-target-cat="rules">${isBn ? '🏛️ বাংলাদেশ ব্যাংকের সার্কুলার দেখুন ›' : 'View BB circulars ›'}</button>
+          <button type="button" class="catalog-action guidance-switch-bank" data-target-bank="all">${isBn ? '📰 সকল ব্যাংকের সংবাদ দেখুন ›' : 'View all bank news ›'}</button>
+          <button type="button" class="catalog-action guidance-reset-all">${isBn ? '↺ সব দেখুন ›' : 'View all ›'}</button>
+        `;
+      } else {
+        promptDetail = isBn
+          ? 'আপনার ফিল্টার বা অনুসন্ধানের শর্তে কোনো তথ্য নেই। অন্য ফিল্টার বেছে নিন বা রিসেট করুন।'
+          : 'No items match your filter or search. Try another filter or reset.';
+        actionsHTML = `
+          <button type="button" class="catalog-action guidance-reset-all">${isBn ? '↺ সব সংবাদ ও সার্কুলার দেখুন ›' : 'View all news & circulars ›'}</button>
+        `;
+      }
+
+      emptyMsg.innerHTML = `<div class="deposit-empty-guidance">
+        <p class="guidance-title">ℹ️ ${promptTitle}</p>
+        <p>${promptDetail}</p>
+        <div class="guidance-actions" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+          ${actionsHTML}
+        </div>
+      </div>`;
+
+      emptyMsg.querySelectorAll('.guidance-switch-cat').forEach(b => {
+        b.onclick = () => setNewsCategory(b.dataset.targetCat);
+      });
+      emptyMsg.querySelectorAll('.guidance-switch-bank').forEach(b => {
+        b.onclick = () => setNewsBank(b.dataset.targetBank);
+      });
+      const resetBtn = emptyMsg.querySelector('.guidance-reset-all');
+      if (resetBtn) {
+        resetBtn.onclick = () => {
+          setNewsCategory('all');
+          setNewsBank('all');
+          newsState.query = '';
+          const searchInput = document.getElementById('news-search-input');
+          if (searchInput) searchInput.value = '';
+          const searchClear = document.getElementById('news-search-clear');
+          if (searchClear) searchClear.style.display = 'none';
+          renderNews();
+        };
+      }
+    } else {
+      emptyMsg.hidden = true;
+      emptyMsg.innerHTML = "";
+    }
+  }
+}
+
+function setNewsCategory(catKey) {
+  newsState.category = catKey;
+  document.querySelectorAll('[data-news-category]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.newsCategory === catKey));
+  });
+  renderNews();
+}
+
+function setNewsBank(bankKey) {
+  newsState.bank = bankKey;
+  const bankSelect = document.getElementById('news-bank-select');
+  if (bankSelect) bankSelect.value = bankKey;
+  document.querySelectorAll('[data-news-bank]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.newsBank === bankKey));
+  });
+  renderNews();
+}
+
+function wireNewsControls() {
+  if (newsState.wired) return;
+  newsState.wired = true;
+  const searchInput = document.getElementById('news-search-input');
+  const searchClear = document.getElementById('news-search-clear');
+  const bankSelect = document.getElementById('news-bank-select');
+
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      newsState.query = e.target.value;
+      if (searchClear) searchClear.style.display = newsState.query ? 'inline-block' : 'none';
+      renderNews();
+    };
+  }
+  if (searchClear) {
+    searchClear.onclick = () => {
+      if (searchInput) searchInput.value = '';
+      newsState.query = '';
+      searchClear.style.display = 'none';
+      renderNews();
+    };
+  }
+  if (bankSelect) {
+    bankSelect.onchange = (e) => setNewsBank(e.target.value);
+  }
+  document.querySelectorAll('[data-news-category]').forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      setNewsCategory(btn.dataset.newsCategory);
+    };
+  });
+  document.querySelectorAll('[data-news-bank]').forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      setNewsBank(btn.dataset.newsBank);
+    };
+  });
+}
+
+async function loadExtraNews(feed, isBn) {
+  if (!newsState.extra) {
+    try {
+      const response = await fetch('/v1/extra-news', { headers: anonymousDevice ? { 'X-ILMA-Device': anonymousDevice } : {}, cache: 'no-store' });
+      if (response.ok) {
+        newsState.extra = await response.json();
+        renderNews();
+      }
+    } catch {}
+  }
 }
 
 async function loadNews() {
   try {
-    const res = await fetch("/v1/news");
-    if (!res.ok) throw new Error("News load error");
-    const newsItems = await res.json();
-    const feed = document.getElementById("news-feed");
-    feed.innerHTML = "";
     const isBn = currentLang === "bn";
-
-    if (!newsItems.length) feed.textContent = isBn ? "এখন কোনো সংবাদ নেই।" : "No news available.";
-    newsItems.forEach(n => {
-      const card = document.createElement("div");
-      card.setAttribute("role", "listitem");
-      card.style.cssText = "background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px;";
-      card.innerHTML = `
-        <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: calc(var(--fs) * .85); font-weight: 700; background: #E6F4EA; color: #1B5E20; margin-bottom: 8px;">
-          ${n.official ? (isBn ? 'সরকারি সূত্র' : 'Official source') : (isBn ? 'খবরে প্রকাশিত, নিশ্চিত নয়' : 'Reported, unconfirmed')}
-        </span>
-        <h2 style="font-family: var(--display); font-size: calc(var(--fs) * 1.15); font-weight: 700; margin: 0 0 6px; color: var(--ink);">${escapeHTML(isBn ? n.title_bn : n.title_en)}</h2>
-        ${isBn&&!/[\u0980-\u09ff]/.test(n.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}
-        <div style="font-size: calc(var(--fs) * .85); color: var(--ink-2); display: flex; justify-content: space-between;">
-          <span>${escapeHTML(n.publisher || '—')}</span>
-          <span>${escapeHTML(new Intl.DateTimeFormat(isBn?'bn-BD':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(n.date+'T00:00:00')))}</span>
-        </div>
-        ${/^https?:\/\//i.test(n.source_url || "") ? `<a class="catalog-source" href="${escapeHTML(n.source_url)}" target="_blank" rel="noopener noreferrer">${isBn ? "উৎস খুলুন ↗" : "Open source ↗"}</a>` : ""}
-      `;
-      feed.appendChild(card);
-    });
-    await loadExtraNews(feed,isBn);
+    const [newsRes, extraRes] = await Promise.all([
+      fetch("/v1/news"),
+      fetch('/v1/extra-news', { headers: anonymousDevice ? { 'X-ILMA-Device': anonymousDevice } : {}, cache: 'no-store' }).catch(() => null)
+    ]);
+    if (!newsRes.ok) throw new Error("News load error");
+    const newsItems = await newsRes.json();
+    let extraData = { warnings: [], rules: [], announcements: [] };
+    if (extraRes && extraRes.ok) {
+      try { extraData = await extraRes.json(); } catch {}
+    }
+    newsState.items = newsItems;
+    newsState.extra = extraData;
+    wireNewsControls();
+    renderNews();
   } catch (e) {
-    document.getElementById("news-feed").textContent = currentLang === "bn" ? "সংবাদ লোড করা যায়নি। আবার চেষ্টা করুন।" : "Could not load news. Try again.";
+    const feed = document.getElementById("news-feed");
+    if (feed) feed.textContent = currentLang === "bn" ? "সংবাদ লোড করা যায়নি। আবার চেষ্টা করুন।" : "Could not load news. Try again.";
   }
 }
 
-function speakNews() { return requestReadout("news"); }
+function speakNews() {
+  const bannerBox = document.getElementById('news-highlight-banner');
+  const btnListen = document.getElementById('btn-listen-news');
+  const activeId = bannerBox?.dataset?.highlightId || (newsState.extra?.rules?.[0]?.item_id || 'export-news-16-14');
+  return playNewsSummary(activeId, btnListen);
+}
 
 let phoneLandscape = false;
 function syncOrientation() {
@@ -1453,6 +2104,7 @@ function syncOrientation() {
 
 document.addEventListener("DOMContentLoaded", () => {
   updateLocalizedText();
+  wireNewsControls();
   startExampleCycle();
   syncOrientation();
   window.addEventListener?.('orientationchange',syncOrientation);

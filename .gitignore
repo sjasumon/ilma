@@ -65,6 +65,10 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 /docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md
 /docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENTV1.md
+/docs/AGENT_INSTRUCTIONS_*.md
+/docs/*_AUDIO_FINAL_*.md
+/docs/*_clips_bn_approved.json
+/docs/services/
 /docs/FIX_*.md
 
 # Only approved service comparison audio and its manifest are publishable here.
@@ -103,6 +107,17 @@ docs/TAP_OR_TALK_FIXES_*.md
 !/static/audio/services/bn/loan_auto.mp3
 !/static/audio/services/bn/loan_personal.mp3
 !/static/audio/services/bn/loan_fdr.mp3
+
+# Owner-approved news summary recordings and manifest.
+!/static/audio/news/
+/static/audio/news/*
+!/static/audio/news/manifest.json
+!/static/audio/news/bn/
+/static/audio/news/bn/*
+!/static/audio/news/bn/*.mp3
+!/static/audio/news/en/
+/static/audio/news/en/*
+!/static/audio/news/en/*.mp3
 
 # Private ChatGPT working notes stay on the server, never published.
 docs/chatgpt/

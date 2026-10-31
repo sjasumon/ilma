@@ -349,3 +349,37 @@ def test_meeting_slabs_read_without_the_range():
     rows=[rate('a','Savings Account',0,3,kind='savings',condition='1 Crore & above'),rate('b','Savings Account',0,2,kind='savings',condition='< 1 Crore')]
     text=answers.savings_lines(rows,'টেস্টের ',True,lambda v:'সঞ্চয়ী হিসাব')[0][0]
     assert text=='টেস্টের সঞ্চয়ী হিসাবে 1 কোটি টাকার কম জমায় সুদ 2%, আর 1 কোটি বা তার বেশি জমায় 3%।'
+
+
+@pytest.mark.parametrize('intent,text,status,award,shared,expected',[
+ ('bank_overview','ব্র্যাক ব্যাংক সম্পর্কে বলুন','strong',False,False,'আপনার কি আরও জানার আছে এই ব্যাংক সম্পর্কে?'),
+ ('bank_overview','ইসলামী ব্যাংক কেমন আছে?','high',False,False,'আপনার কি আরও জানার আছে এই ব্যাংক সম্পর্কে?'),
+ ('bank_overview','ব্যাংক এশিয়ার অবস্থা কেমন?','strong',True,False,'আপনি কি এই ব্যাংক সম্পর্কে আরও কিছু জানতে চাচ্ছেন?'),
+ ('bank_overview','প্রাইম ব্যাংকের অবস্থা কেমন?','strong',False,False,None),
+ ('explain_term','ডিপিএস মানে কী?',None,False,False,'আপনার কি কোন নির্দিষ্ট ব্যাংক এর সম্পর্কে জানার আছে?'),
+ ('bank_awards','ইস্টার্ন ব্যাংক কী কী পুরস্কার পেয়েছে?','strong',False,False,'আপনার কি আরও জানার আছে এই ব্যাংক সম্পর্কে?'),
+ ('bank_awards','ব্র্যাক ব্যাংক কোনো পুরস্কার পেয়েছে?','strong',False,False,None),
+ ('compare','তুলনা করুন','strong',False,True,'আপনি ব্যাংকের সেবাগুলো শুনবেন, না অন্য ব্যাংক দেখবেন?'),
+ ('compare','তুলনা করুন','strong',False,False,None)])
+def test_closing_question_follows_the_kind_of_answer(intent,text,status,award,shared,expected):
+    assert answers.closing(intent,text,status,True,award,shared)==expected
+
+def test_english_term_closing():
+    assert answers.closing('explain_term','What does DPS mean?',None,False)=='Would you like to hear other bank services or another bank?'
+    assert answers.closing('bank_overview','Tell me about Eastern Bank','strong',False,True) is None
+
+def test_account_and_savings_are_one_product_type():
+    from ilma_api.human_facts import inventory_labels
+    assert inventory_labels(['account_fee','card','savings'])==['সেভিংস অ্যাকাউন্ট','কার্ড']
+
+
+def test_a_deposit_protection_term_with_no_bank_gets_the_term_closing():
+    assert answers.closing('insurance','আমানত বীমা কী?',None,True,no_bank=True)==answers.ASK_ANY_BANK
+    assert answers.closing('insurance','বীমা কত',None,True) is None
+
+def test_an_award_opening_alone_does_not_change_a_how_is_it_closing():
+    assert answers.closing('bank_overview','সিটি ব্যাংক কেমন আছে?','strong',True,True) is None
+
+
+def test_award_list_closing_survives_a_collapsed_repeated_word():
+    assert answers.closing('bank_awards','ইস্টার্ন ব্যাংক কী পুরস্কার পেয়েছে?','strong',True)==answers.MORE_ABOUT_BANK[0]

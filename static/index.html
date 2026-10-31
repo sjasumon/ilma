@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-worker-version="5a93bdff35496624" lang="bn">
+<html data-worker-version="936c1229c12c0676" lang="bn">
 <head>
   <script id="text-size-bootstrap">try{var s=Number(localStorage.getItem('ilma.textSize'));document.documentElement.style.setProperty('--fs',([14,16,19,22].includes(s)?s:14)+'px')}catch(e){}</script>
   <meta charset="utf-8">
@@ -22,7 +22,7 @@
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/fonts/fonts.css?v=sha256-7e786499b46bb84c">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-6d91fc30a52f74e0">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-471af262e3fb054b">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -282,10 +282,71 @@
       </div>
 
       <div class="sheet">
-        <button id="btn-listen-news" class="btn-primary-listen" style="margin-bottom: 18px;" aria-label="সংবাদ পড়ে শুনুন">
-          🔊 <span id="lbl-listen-news">সংবাদ শুনুন</span>
-        </button>
+        <!-- Group 1: Filter & Search Card -->
+        <section class="deposit-group-card deposit-filter-card" style="margin-bottom: 14px;">
+          <h3 id="news-filter-title">সংবাদ অনুসন্ধান ও ফিল্টার</h3>
+          <div class="calc-field-group">
+            <label for="news-search-input" class="sr-only">সংবাদ খুঁজুন</label>
+            <div class="catalog-search" style="margin: 0;">
+              <input id="news-search-input" placeholder="সংবাদ, সার্কুলার বা বিষয় খুঁজুন…" maxlength="200" autocomplete="off">
+              <button type="button" id="news-search-clear" style="display: none;" aria-label="মুছুন">×</button>
+            </div>
+          </div>
+          <div class="calc-field-group">
+            <label class="calc-label" id="news-category-label">খবরের ধরন</label>
+            <div class="segmented-control" role="tablist" aria-label="খবরের ধরন" id="news-category-tabs">
+              <button type="button" class="segmented-item" data-news-category="all" aria-pressed="true"><span id="lbl-cat-all">সব</span> <span class="news-count" id="count-all"></span></button>
+              <button type="button" class="segmented-item" data-news-category="rules" aria-pressed="false"><span id="lbl-cat-rules">সার্কুলার</span> <span class="news-count" id="count-rules"></span></button>
+              <button type="button" class="segmented-item" data-news-category="warnings" aria-pressed="false"><span id="lbl-cat-warnings">সতর্কতা</span> <span class="news-count" id="count-warnings"></span></button>
+              <button type="button" class="segmented-item" data-news-category="press" aria-pressed="false"><span id="lbl-cat-press">সংবাদ</span> <span class="news-count" id="count-press"></span></button>
+            </div>
+          </div>
+          <div class="calc-field-group" style="margin-bottom: 4px;">
+            <label class="calc-label" id="news-bank-label">ব্যাংক বা কর্তৃপক্ষ</label>
+            <div class="segmented-control" role="tablist" aria-label="ব্যাংক বা কর্তৃপক্ষ" id="news-bank-tabs">
+              <button type="button" class="segmented-item" data-news-bank="all" aria-pressed="true"><span id="lbl-bank-all">সকল উৎস</span> <span class="news-count" id="count-bank-all"></span></button>
+              <button type="button" class="segmented-item" data-news-bank="bb" aria-pressed="false"><span id="lbl-bank-bb">বাংলাদেশ ব্যাংক</span> <span class="news-count" id="count-bank-bb"></span></button>
+              <button type="button" class="segmented-item" data-news-bank="brac" aria-pressed="false"><span id="lbl-bank-brac">ব্র্যাক</span> <span class="news-count" id="count-bank-brac"></span></button>
+              <button type="button" class="segmented-item" data-news-bank="city" aria-pressed="false"><span id="lbl-bank-city">সিটি</span> <span class="news-count" id="count-bank-city"></span></button>
+            </div>
+            <select id="news-bank-select" class="calc-field input-select" style="display: none;" aria-hidden="true" tabindex="-1">
+              <option value="all">সকল ব্যাংক ও উৎস</option>
+              <option value="bb">🏛️ বাংলাদেশ ব্যাংক (সার্কুলার ও নোটিশ)</option>
+              <option value="brac">ব্র্যাক ব্যাংক (BRAC Bank)</option>
+              <option value="city">সিটি ব্যাংক (City Bank)</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Group 2: Featured Bulletin & Audio Card -->
+        <section class="deposit-group-card deposit-summary-card" style="margin-bottom: 18px;">
+          <div id="news-highlight-banner" class="deposit-stat-banner" role="status">
+            <div class="stat-highlight-row">
+              <div class="stat-col">
+                <span class="stat-label" id="news-highlight-label">📢 সর্বশেষ নিয়ন্ত্রক সার্কুলার</span>
+                <strong id="news-highlight-title">BRPD-1 Circular Letter No. 35: BIN for Current Accounts</strong>
+              </div>
+            </div>
+            <div class="stat-diff-badge"><span id="news-highlight-meta">✓ ১১ অক্টোবর, ২০২৬ · বাংলাদেশ ব্যাংক</span></div>
+          </div>
+          <button id="btn-listen-news" class="btn-primary-listen catalog-action" style="margin-bottom: 0;" aria-label="সংবাদ পড়ে শুনুন">
+            🔊 <span id="lbl-listen-news">সংবাদ সারসংক্ষেপ শুনুন</span>
+          </button>
+          <p class="catalog-note" id="news-audio-note" style="margin-top: 8px; margin-bottom: 0;">বাংলাদেশ ব্যাংক সার্কুলার ও সংবাদপত্রের সর্বশেষ প্রধান আপডেট শুনুন।</p>
+        </section>
+
+        <!-- Section Heading with Live Count -->
+        <div class="deposit-section-heading">
+          <div class="deposit-heading-row">
+            <h3 id="news-feed-heading">সংবাদ ও সার্কুলারের তালিকা</h3>
+            <span id="news-total-count" class="deposit-bank-count"></span>
+          </div>
+          <p class="catalog-note" id="news-feed-sub">নিচের প্রতিটি সংবাদ বা সার্কুলারের মূল উৎস সরাসরি দেখতে পারেন</p>
+        </div>
+
+        <div id="news-empty-message" hidden></div>
         <div id="news-feed" role="list" aria-label="সংবাদ ও সার্কুলারের তালিকা"></div>
+        <div id="extra-news-sections"></div>
       </div>
     </section>
     </main>
@@ -415,7 +476,7 @@
   <script src="/static/js/voice-recorder.js?v=sha256-62303133eb8b7443"></script>
   <script src="/static/js/ivr.js?v=sha256-2929c97da156ab49"></script>
   <script src="/static/js/voice-agent.js?v=sha256-d20001d6aede81d8"></script>
-  <script src="/static/js/app.js?v=sha256-13c0a574b2a522a4"></script>
+  <script src="/static/js/app.js?v=sha256-86f8639ba7fedb35"></script>
   <script src="/static/js/catalog-common.js?v=sha256-0656a46f9f31436a"></script>
   <script src="/static/js/bank-ui.js?v=sha256-fa22d4a811d0933a"></script>
 <script src="/static/js/account-ui.js?v=sha256-2557a03d31051b83"></script>

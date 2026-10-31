@@ -219,6 +219,13 @@ def card_waiver(db,id,network,tier):
     return item(rule.offer_id,id,'service_note',f'বছরে {found[1]} বার লেনদেন করলে নবায়ন ফি দিতে হয় না',f'No renewal fee applies after {found[1]} transactions in a year',dict(source_url=rule.source_url,source_title=rule.product,page=rule.page,quote=rule.quote,published_at=str(rule.doc_date),condition=rule.condition))
 
 
+def inventory_labels(products):
+    """Bangla product types; account rows and savings are one "সেভিংস অ্যাকাউন্ট"."""
+    from ilma_api.answer_wording import PRODUCTS
+    labels=['সেভিংস অ্যাকাউন্ট' if p in {'savings','account_fee'} else PRODUCTS.get(p,(p,p))[0] for p in products]
+    return list(dict.fromkeys(labels))
+
+
 def service_inventory(db,id):
     rows=db.query(ServiceOffer).filter_by(institution_id=id,hidden=False).filter(ServiceOffer.variant!='excluded',ServiceOffer.doc_date<=date.today()).all()
     if not rows:return None
@@ -227,7 +234,7 @@ def service_inventory(db,id):
     networks=sorted({r.network for r in rows if r.product_type=='card' and r.network})
     tiers=sorted({r.tier for r in rows if r.product_type=='card' and r.tier})
     urls=sorted({r.source_url for r in rows if r.source_url})
-    return item('inventory:'+str(id),id,'inventory','প্রকাশিত সেবার ধরন '+', '.join(PRODUCTS.get(p,(p,p))[0] for p in products),'Published product types include '+', '.join(PRODUCTS.get(p,(p,p))[1] for p in products),dict(kind='computed',source_url=urls[0],source_title='Published product inventory',quote='Derived from visible published product rows',inputs=[dict(source_url=u) for u in urls]),product_types=products,card_networks=networks,card_tiers=tiers)
+    return item('inventory:'+str(id),id,'inventory','প্রকাশিত সেবার ধরন '+', '.join(inventory_labels(products)),'Published product types include '+', '.join(PRODUCTS.get(p,(p,p))[1] for p in products),dict(kind='computed',source_url=urls[0],source_title='Published product inventory',quote='Derived from visible published product rows',inputs=[dict(source_url=u) for u in urls]),product_types=products,card_networks=networks,card_tiers=tiers)
 
 
 def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=(),network=None,tier=None):
