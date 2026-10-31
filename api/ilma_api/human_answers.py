@@ -219,7 +219,7 @@ def savings_lines(rows,whose,bn,label,general_only=False):
         wording=[]
         if all(s for s,_ in slabs):wording=[f'{s} {number(r)}%' if bn else (f'{number(r)}% from {s} taka' if ' to ' in s else f'{number(r)}% at {s}') for s,r in slabs]
         # Slabs that meet ("under 1 crore", "1 crore or more") already give the whole range.
-        joined=len(slabs)==2 and bool(re.match(r'<',(items[0]['source'].get('condition') or '').split(';')[-1].strip()+' '+(items[1]['source'].get('condition') or '').split(';')[-1].strip()))
+        joined=len(slabs)==2 and any(re.match(r'\s*<',(f['source'].get('condition') or '').split(';')[-1]) for f in items)
         if joined and bn and wording:
             first=wording[0].replace(' জমায় ',' জমায় সুদ ',1);text=f"{shown}ে {first}, আর {wording[1]}"
         elif bn:text=f"{shown}ে সুদ জমার পরিমাণভেদে {number(values[0])}% থেকে {number(values[-1])}%"+('। '+', '.join(wording) if wording else '')

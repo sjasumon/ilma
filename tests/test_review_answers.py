@@ -328,3 +328,24 @@ def test_a_dated_result_replaces_the_annual_bad_loan_figure():
     facts=facts_of('strong',fig('crar',.15),fig('npl_ratio',.0227))
     text=' '.join(s for s,_ in answers.overview_lines('ট','টের ','strong',facts,1,True,interim=('2026 সালের প্রথম 9 মাসে খেলাপি ঋণের হার 2.03%।',['x'])))
     assert '2.03%' in text and '2.27%' not in text
+
+
+def test_a_mysql_deadlock_is_retried_once_and_other_errors_are_not():
+    from sqlalchemy.exc import OperationalError
+    from ilma_api.database_tasks import retrying
+    calls=[]
+    def work(code):
+        def inner():
+            calls.append(code)
+            if len(calls)==1:raise OperationalError('x',{},Exception(code,'synthetic'))
+            return 'done'
+        return inner
+    assert retrying(work(1213))=='done' and len(calls)==2
+    calls.clear()
+    with pytest.raises(OperationalError):retrying(work(2013))
+    assert len(calls)==1
+
+def test_meeting_slabs_read_without_the_range():
+    rows=[rate('a','Savings Account',0,3,kind='savings',condition='1 Crore & above'),rate('b','Savings Account',0,2,kind='savings',condition='< 1 Crore')]
+    text=answers.savings_lines(rows,'টেস্টের ',True,lambda v:'সঞ্চয়ী হিসাব')[0][0]
+    assert text=='টেস্টের সঞ্চয়ী হিসাবে 1 কোটি টাকার কম জমায় সুদ 2%, আর 1 কোটি বা তার বেশি জমায় 3%।'
