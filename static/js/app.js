@@ -1395,6 +1395,16 @@ function formatNewsDate(dateStr, isBn) {
   }
 }
 
+function itemMatchesBank(item, bankFilter) {
+  if (bankFilter === 'all') return true;
+  const text = (item.title || item.title_bn || item.title_en || '') + ' ' + (item.bank_name_en || '') + ' ' + (item.bank_name_bn || '');
+  if (bankFilter === 'brac') return /BRAC/i.test(text) || item.institution_id === 11;
+  if (bankFilter === 'city') return /City\s*Bank/i.test(text) || item.institution_id === 14;
+  if (bankFilter === 'ebl') return /EBL|Eastern\s*Bank/i.test(text) || item.institution_id === 19;
+  if (bankFilter === 'bb') return /Bangladesh\s*Bank|BRPD|PSD|Central\s*Bank/i.test(text) || item.topic === 'bb_notice' || item.topic === 'new_rule';
+  return false;
+}
+
 function newsBankKey(item) {
   const text = (item.title || item.title_bn || item.title_en || '') + ' ' + (item.bank_name_en || '') + ' ' + (item.bank_name_bn || '');
   if (/BRAC/i.test(text) || item.institution_id === 11) return 'brac';
@@ -1457,6 +1467,19 @@ function renderNews() {
   if (countWarnings) countWarnings.textContent = '(' + (isBn ? toBnDigits(warnings.length) : warnings.length) + ')';
   if (countPress) countPress.textContent = '(' + (isBn ? toBnDigits(newsItems.length) : newsItems.length) + ')';
 
+  // Bank Tab Badges
+  const countBankAll = document.getElementById('count-bank-all');
+  const countBankBB = document.getElementById('count-bank-bb');
+  const countBankBrac = document.getElementById('count-bank-brac');
+  const countBankCity = document.getElementById('count-bank-city');
+  const bbCount = rules.length + warnings.length;
+  const bracCount = newsItems.filter(n => /BRAC/i.test(n.title_en || n.title_bn)).length;
+  const cityCount = newsItems.filter(n => /City/i.test(n.title_en || n.title_bn)).length;
+  if (countBankAll) countBankAll.textContent = '(' + (isBn ? toBnDigits(totalAll) : totalAll) + ')';
+  if (countBankBB) countBankBB.textContent = '(' + (isBn ? toBnDigits(bbCount) : bbCount) + ')';
+  if (countBankBrac) countBankBrac.textContent = '(' + (isBn ? toBnDigits(bracCount) : bracCount) + ')';
+  if (countBankCity) countBankCity.textContent = '(' + (isBn ? toBnDigits(cityCount) : cityCount) + ')';
+
   // Category Tab Labels
   const lblCatAll = document.getElementById('lbl-cat-all');
   if (lblCatAll) lblCatAll.textContent = isBn ? 'সব' : 'All';
@@ -1467,15 +1490,47 @@ function renderNews() {
   const lblCatPress = document.getElementById('lbl-cat-press');
   if (lblCatPress) lblCatPress.textContent = isBn ? 'সংবাদ' : 'Press';
 
-  // Highlight Banner
+  // Bank Tab Labels
+  const lblBankAll = document.getElementById('lbl-bank-all');
+  if (lblBankAll) lblBankAll.textContent = isBn ? 'সকল উৎস' : 'All Sources';
+  const lblBankBB = document.getElementById('lbl-bank-bb');
+  if (lblBankBB) lblBankBB.textContent = isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank';
+  const lblBankBrac = document.getElementById('lbl-bank-brac');
+  if (lblBankBrac) lblBankBrac.textContent = isBn ? 'ব্র্যাক' : 'BRAC';
+  const lblBankCity = document.getElementById('lbl-bank-city');
+  if (lblBankCity) lblBankCity.textContent = isBn ? 'সিটি' : 'City';
+
+  // Highlight Banner (dynamically reflects selected bank or category)
   const bannerTitle = document.getElementById('news-highlight-title');
   const bannerMeta = document.getElementById('news-highlight-meta');
   const bannerLabel = document.getElementById('news-highlight-label');
-  const latestRule = rules[0] || warnings[0];
-  if (latestRule && bannerTitle) {
-    if (bannerLabel) bannerLabel.textContent = isBn ? '📢 সর্বশেষ নিয়ন্ত্রক সার্কুলার' : '📢 Latest Regulatory Circular';
-    bannerTitle.textContent = latestRule.title;
-    if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(latestRule.date, isBn)} · ${isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank'}`;
+  const bannerBox = document.getElementById('news-highlight-banner');
+  if (bannerTitle && bannerBox) {
+    if (newsState.bank === 'brac') {
+      const bracItem = newsItems.find(n => /BRAC/i.test(n.title_en || n.title_bn));
+      if (bracItem) {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📰 ব্র্যাক ব্যাংকের খবর' : '📰 BRAC Bank News';
+        bannerTitle.textContent = isBn ? bracItem.title_bn : bracItem.title_en;
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(bracItem.date, isBn)} · ${bracItem.publisher || (isBn ? 'ব্র্যাক ব্যাংক' : 'BRAC Bank')}`;
+        bannerBox.hidden = false;
+      }
+    } else if (newsState.bank === 'city') {
+      const cityItem = newsItems.find(n => /City/i.test(n.title_en || n.title_bn));
+      if (cityItem) {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📰 সিটি ব্যাংকের খবর' : '📰 City Bank News';
+        bannerTitle.textContent = isBn ? cityItem.title_bn : cityItem.title_en;
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(cityItem.date, isBn)} · ${cityItem.publisher || (isBn ? 'সিটি ব্যাংক' : 'City Bank')}`;
+        bannerBox.hidden = false;
+      }
+    } else {
+      const latestRule = rules[0] || warnings[0];
+      if (latestRule) {
+        if (bannerLabel) bannerLabel.textContent = isBn ? '📢 সর্বশেষ নিয়ন্ত্রক সার্কুলার' : '📢 Latest Regulatory Circular';
+        bannerTitle.textContent = latestRule.title;
+        if (bannerMeta) bannerMeta.textContent = `✓ ${formatNewsDate(latestRule.date, isBn)} · ${isBn ? 'বাংলাদেশ ব্যাংক' : 'Bangladesh Bank'}`;
+        bannerBox.hidden = false;
+      }
+    }
   }
 
   // Filter Matcher
@@ -1485,13 +1540,7 @@ function renderNews() {
 
   const matchesFilter = (item) => {
     // Bank filter
-    const bKey = newsBankKey(item);
-    if (bankFilter !== 'all') {
-      if (bankFilter === 'bb' && bKey !== 'bb') return false;
-      if (bankFilter === 'brac' && bKey !== 'brac') return false;
-      if (bankFilter === 'city' && bKey !== 'city') return false;
-      if (bankFilter === 'other' && !['other', 'ebl'].includes(bKey)) return false;
-    }
+    if (!itemMatchesBank(item, bankFilter)) return false;
     // Text search query
     if (query) {
       const hay = [
@@ -1592,14 +1641,13 @@ function renderNews() {
       </div>`;
       const resetBtn = document.getElementById('news-reset-btn');
       if (resetBtn) resetBtn.onclick = () => {
-        newsState.category = 'all';
-        newsState.bank = 'all';
+        setNewsCategory('all');
+        setNewsBank('all');
         newsState.query = '';
         const searchInput = document.getElementById('news-search-input');
         if (searchInput) searchInput.value = '';
-        const bankSelect = document.getElementById('news-bank-select');
-        if (bankSelect) bankSelect.value = 'all';
-        document.querySelectorAll('[data-news-category]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.newsCategory === 'all')));
+        const searchClear = document.getElementById('news-search-clear');
+        if (searchClear) searchClear.style.display = 'none';
         renderNews();
       };
     } else {
@@ -1607,6 +1655,41 @@ function renderNews() {
       emptyMsg.innerHTML = "";
     }
   }
+}
+
+function setNewsCategory(catKey) {
+  newsState.category = catKey;
+  // If user selected circulars/warnings and current bank is BRAC or City, switch bank to 'bb' or 'all'
+  if (['rules', 'warnings'].includes(catKey) && ['brac', 'city'].includes(newsState.bank)) {
+    newsState.bank = 'bb';
+    const bankSelect = document.getElementById('news-bank-select');
+    if (bankSelect) bankSelect.value = 'bb';
+    document.querySelectorAll('[data-news-bank]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.newsBank === 'bb')));
+  } else if (catKey === 'press' && newsState.bank === 'bb') {
+    newsState.bank = 'all';
+    const bankSelect = document.getElementById('news-bank-select');
+    if (bankSelect) bankSelect.value = 'all';
+    document.querySelectorAll('[data-news-bank]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.newsBank === 'all')));
+  }
+  document.querySelectorAll('[data-news-category]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.newsCategory === catKey)));
+  renderNews();
+}
+
+function setNewsBank(bankKey) {
+  newsState.bank = bankKey;
+  const bankSelect = document.getElementById('news-bank-select');
+  if (bankSelect) bankSelect.value = bankKey;
+  document.querySelectorAll('[data-news-bank]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.newsBank === bankKey)));
+
+  // If bank is BRAC or City, they only have press articles, so switch category to 'press' or 'all'
+  if (['brac', 'city'].includes(bankKey) && ['rules', 'warnings'].includes(newsState.category)) {
+    newsState.category = 'press';
+    document.querySelectorAll('[data-news-category]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.newsCategory === 'press')));
+  } else if (bankKey === 'bb' && newsState.category === 'press') {
+    newsState.category = 'all';
+    document.querySelectorAll('[data-news-category]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.newsCategory === 'all')));
+  }
+  renderNews();
 }
 
 function wireNewsControls() {
@@ -1632,16 +1715,20 @@ function wireNewsControls() {
     };
   }
   if (bankSelect) {
-    bankSelect.onchange = (e) => {
-      newsState.bank = e.target.value;
-      renderNews();
-    };
+    const handleBank = (e) => setNewsBank(e.target.value);
+    bankSelect.onchange = handleBank;
+    bankSelect.oninput = handleBank;
   }
   document.querySelectorAll('[data-news-category]').forEach(btn => {
-    btn.onclick = () => {
-      newsState.category = btn.dataset.newsCategory;
-      document.querySelectorAll('[data-news-category]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
-      renderNews();
+    btn.onclick = (e) => {
+      e.preventDefault();
+      setNewsCategory(btn.dataset.newsCategory);
+    };
+  });
+  document.querySelectorAll('[data-news-bank]').forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      setNewsBank(btn.dataset.newsBank);
     };
   });
 }
@@ -1703,6 +1790,7 @@ function syncOrientation() {
 
 document.addEventListener("DOMContentLoaded", () => {
   updateLocalizedText();
+  wireNewsControls();
   startExampleCycle();
   syncOrientation();
   window.addEventListener?.('orientationchange',syncOrientation);

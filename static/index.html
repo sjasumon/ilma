@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-worker-version="b3e80b2aba20686e" lang="bn">
+<html data-worker-version="3664b5fc9a9efd5a" lang="bn">
 <head>
   <script id="text-size-bootstrap">try{var s=Number(localStorage.getItem('ilma.textSize'));document.documentElement.style.setProperty('--fs',([14,16,19,22].includes(s)?s:14)+'px')}catch(e){}</script>
   <meta charset="utf-8">
@@ -22,7 +22,7 @@
   <meta property="og:image:alt" content="ILMA wordmark in gold on teal with the line: Say a bank’s name. See its sourced financial status.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/fonts/fonts.css?v=sha256-7e786499b46bb84c">
-  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-a6dc618d4be97f92">
+  <link rel="stylesheet" href="/static/css/ilma.css?v=sha256-8440700d647af9f4">
   <style>
     /* State and assistive text must stay hidden even before assets finish loading. */
     [hidden] { display: none !important; }
@@ -302,8 +302,14 @@
             </div>
           </div>
           <div class="calc-field-group" style="margin-bottom: 4px;">
-            <label for="news-bank-select" class="calc-label" id="news-bank-label">ব্যাংক বা নিয়ন্ত্রক সংস্থা</label>
-            <select id="news-bank-select" class="calc-field input-select">
+            <label class="calc-label" id="news-bank-label">ব্যাংক বা কর্তৃপক্ষ</label>
+            <div class="segmented-control" role="tablist" aria-label="ব্যাংক বা কর্তৃপক্ষ" id="news-bank-tabs">
+              <button type="button" class="segmented-item" data-news-bank="all" aria-pressed="true"><span id="lbl-bank-all">সকল উৎস</span> <span class="news-count" id="count-bank-all"></span></button>
+              <button type="button" class="segmented-item" data-news-bank="bb" aria-pressed="false"><span id="lbl-bank-bb">বাংলাদেশ ব্যাংক</span> <span class="news-count" id="count-bank-bb"></span></button>
+              <button type="button" class="segmented-item" data-news-bank="brac" aria-pressed="false"><span id="lbl-bank-brac">ব্র্যাক</span> <span class="news-count" id="count-bank-brac"></span></button>
+              <button type="button" class="segmented-item" data-news-bank="city" aria-pressed="false"><span id="lbl-bank-city">সিটি</span> <span class="news-count" id="count-bank-city"></span></button>
+            </div>
+            <select id="news-bank-select" class="calc-field input-select" style="display: none;" aria-hidden="true" tabindex="-1">
               <option value="all">সকল ব্যাংক ও উৎস</option>
               <option value="bb">🏛️ বাংলাদেশ ব্যাংক (সার্কুলার ও নোটিশ)</option>
               <option value="brac">ব্র্যাক ব্যাংক (BRAC Bank)</option>
@@ -470,7 +476,7 @@
   <script src="/static/js/voice-recorder.js?v=sha256-62303133eb8b7443"></script>
   <script src="/static/js/ivr.js?v=sha256-2929c97da156ab49"></script>
   <script src="/static/js/voice-agent.js?v=sha256-d20001d6aede81d8"></script>
-  <script src="/static/js/app.js?v=sha256-841fe7ebae91be36"></script>
+  <script src="/static/js/app.js?v=sha256-119b6e420f6da2e9"></script>
   <script src="/static/js/catalog-common.js?v=sha256-0656a46f9f31436a"></script>
   <script src="/static/js/bank-ui.js?v=sha256-fa22d4a811d0933a"></script>
 <script src="/static/js/account-ui.js?v=sha256-2557a03d31051b83"></script>
