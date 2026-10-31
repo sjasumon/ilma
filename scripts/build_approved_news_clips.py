@@ -45,27 +45,38 @@ async def generate(items, output_dir, client, request_timeout=120):
     manifest = json.loads(manifest_path.read_text(encoding='utf-8')) if manifest_path.exists() else {'version': 1, 'clips': {}}
 
     for item in items:
-        target = output_path / Path(item['file']).name if not item['file'].startswith('static/audio/news/') else Path(item['file'])
-        old = manifest['clips'].get(item['key'], {})
-        if target.is_file() and old.get('text_sha256') == item['text_sha256']:
+        target = Path(item['file'])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        old = manifest.get('clips', {}).get(item['key'], {})
+        if target.is_file() and target.stat().st_size > 0 and old.get('text_sha256') == item['text_sha256']:
             print(f"{item['key']} unchanged", flush=True)
             continue
+        print(f"Synthesizing {item['key']} ({len(item['text'])} chars)...", flush=True)
         audio, used = await elevenlabs.synthesize(
             client,
             item['text'],
             voice_settings={'stability': 0.5, 'similarity_boost': 0.75},
             timeout_seconds=request_timeout
         )
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(audio)
-        manifest['clips'][item['key']] = {
+        temp = target.with_suffix('.tmp')
+        temp.write_bytes(audio)
+        temp.replace(target)
+        manifest.setdefault('clips', {})[item['key']] = {
             **item,
             **used,
             'audio_sha256': hashlib.sha256(audio).hexdigest(),
             'reviewed': True
         }
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-        print(f"{item['key']} generated and saved", flush=True)
+        print(f"{item['key']} generated and saved ({len(audio)} bytes)", flush=True)
+
+    # Alias duplicate event 2-14 to 2-11 for both languages if present
+    for lang in ('bn', 'en'):
+        src = Path(f'static/audio/news/{lang}/export-news-2-11.mp3')
+        dst = Path(f'static/audio/news/{lang}/export-news-2-14.mp3')
+        if src.is_file() and not dst.is_file():
+            dst.write_bytes(src.read_bytes())
+            print(f"Copied alias {dst} from {src}", flush=True)
 
 
 if __name__ == '__main__':

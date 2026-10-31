@@ -1,5 +1,5 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-dd0652b1cc1f77c1';
+const SHELL = 'ilma-shell-d05fa9312590b279';
 const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
 const ASSETS = ['/static/js/navigation.js?v=sha256-af89eb2c066f5aeb','/static/js/account-ui.js?v=sha256-2557a03d31051b83','/static/js/deposit-ui.js?v=sha256-738a5547971d7276','/static/js/loan-ui.js?v=sha256-f4186b981cbff2c1','/static/js/catalog-common.js?v=sha256-0656a46f9f31436a','/static/js/bank-ui.js?v=sha256-fa22d4a811d0933a','/static/js/services-ui.js?v=sha256-d33af839d9312991',"/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-471af262e3fb054b', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-5ade28272ee940ba', '/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd', '/static/js/audio-session.js?v=sha256-5054f0d844b15ef6', '/static/js/voice-recorder.js?v=sha256-62303133eb8b7443'];
@@ -17,7 +17,7 @@ self.addEventListener('fetch', event => {
   const asset = url.pathname === '/' || url.pathname.startsWith('/static/');
   if (!bank && !asset && url.pathname !== '/v1/content/fixed') return;
   event.respondWith((async () => {
-    const serviceAudio=/^\/static\/audio\/(?:services\/bn\/(?:card-|deposit_|loan_)[a-z0-9-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+)\.mp3$/.test(url.pathname);
+    const serviceAudio=/^\/static\/audio\/(?:services\/bn\/(?:card-|deposit_|loan_)[a-z0-9-]+|(?:bank|loans|deposits|accounts|news)\/(?:bn|en)\/[a-z0-9_-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+)\.mp3$/.test(url.pathname);
     let cache;
     try { if (!serviceAudio) cache = await caches.open(bank ? BANKS : SHELL); }
     catch (_) { return fetch(request); }
