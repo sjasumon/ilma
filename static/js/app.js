@@ -111,7 +111,7 @@ const T = {
     detail: {
       whyHeading: "Why this status? (Top 3 reasons)",
       checksHeading: "7 Key Health Checks",
-      listenReport: "Listen to report",
+      listenReport: "Listen in Bangla",
       watchReport: "Watch Bank",
       sourceBtn: "Source ›",
       disclaimer: "This is factual information, not financial advice. Verify terms directly with the bank."
@@ -822,8 +822,8 @@ function stopAudio() {
   const labels = { "lbl-listen-rpt": T[currentLang].detail.listenReport, "lbl-listen-srv": T[currentLang].services.listenBtn, "lbl-listen-news": T[currentLang].news.listenNews };
   Object.entries(labels).forEach(([id, text]) => document.getElementById(id).textContent = text);
   const compareListen=document.getElementById('compare-listen');
-  const accountListen=document.getElementById('account-listen');if(accountListen)accountListen.textContent=currentLang==='bn'?'এই হিসাব শুনুন':'Listen to this example';
-  const depositListen=document.getElementById('deposit-listen');if(depositListen)depositListen.textContent=currentLang==='bn'?'এই সঞ্চয়ের হিসাব শুনুন':'Listen to this savings example';
+  const accountListen=document.getElementById('account-listen');if(accountListen)accountListen.textContent=window.IlmaAccounts?.listenLabel?.()||(currentLang==='bn'?'এই হিসাব শুনুন':'Listen in Bangla');
+  const depositListen=document.getElementById('deposit-listen');if(depositListen)depositListen.textContent=window.IlmaDeposits?.listenLabel?.()||(currentLang==='bn'?'এই সঞ্চয়ের হিসাব শুনুন':'Listen in Bangla');
   const loanListen=document.getElementById('loan-listen');if(loanListen)loanListen.textContent=window.IlmaLoans?.listenLabel?.()||'Listen';
   if(compareListen)compareListen.textContent=window.IlmaCatalog?.listenLabel?.()||(currentLang==='bn'?'শুনুন':'Listen');
 }

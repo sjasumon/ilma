@@ -9,10 +9,10 @@
   function listenReport(){
     if(suppressReadoutClick){suppressReadoutClick=false;return;}
     stopAudio();const saved=reportCardData?.readout;
-    $('bank-report-transcript').textContent=currentLang==='bn'?(saved?.text||''):'';$('bank-report-transcript').hidden=false;
+    $('bank-report-transcript').textContent=saved?.text||'';$('bank-report-transcript').lang='bn';$('bank-report-transcript').hidden=false;
     const failed=()=>{$('bank-report-audio-error').hidden=false;$('bank-report-audio-error').textContent=tr('এখন শোনানো যাচ্ছে না, লেখাটি পড়ুন','Audio is unavailable now. Please read the text.');};
     $('bank-report-audio-error').hidden=true;
-    if(currentLang!=='bn'||!saved?.audio_url||!playVoiceAudio(saved.audio_url,playbackRequest,true,failed))failed();
+    if(!saved?.audio_url||!playVoiceAudio(saved.audio_url,playbackRequest,true,failed))failed();
   }
   function reportView(show) {
     $('main-content').scrollTop=0;

@@ -1297,3 +1297,6 @@ input, textarea, select, .calc-field, .input-select,
   font-size: calc(var(--fs) * 1.15);
   text-align: center;
 }
+
+/* Preserve exact approved paragraph breaks in saved narration. */
+#comparison-narration { white-space: pre-line; }
