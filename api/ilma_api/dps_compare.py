@@ -11,8 +11,8 @@ from ilma_api.database_tasks import call
 from ilma_api.voice_numbers import pronounce,NUMBERS,SCALES
 
 # Never ask for an amount: the closing question offers detail, not a calculation.
-QUESTION='কোনটার বিস্তারিত শুনবেন?'
-QUESTIONS=(QUESTION,'কোন ব্যাংকের {word} বিস্তারিত শুনবেন?','কোনটার কথা আরও জানতে চান?')
+QUESTION='আপনি কোনটার বিস্তারিত শুনবেন?'
+QUESTIONS=(QUESTION,QUESTION,QUESTION)
 # Each product's comparison term; only DPS gets the monthly-saving illustration.
 PRODUCTS={'dps':{'word':'ডিপিএস','months':60},'fdr':{'word':'এফডিআর','months':12}}
 # Full spoken names (never "প্রাইম" or "এনসিসি" alone).
@@ -224,7 +224,7 @@ natural spoken Bangla, 40-55 words, using ONLY the supplied facts:
 - Keep each warning sentence's meaning for any bank marked with a warning.
 - Write every number as digits with % (for example 8.75%); code pronounces them.
 - No calculations, no money amounts, no dates, no advice, no other banks or facts.
-- End with one short question offering details, such as "কোনটার বিস্তারিত শুনবেন?"
+- End with one short question offering details, such as "আপনি কোনটার বিস্তারিত শুনবেন?"
 Return JSON {"answer": "..."}.'''
 
 async def compose(data,trace,client=None,variant=0):
@@ -284,6 +284,7 @@ async def run_question(text,context,banks,db,watch_identity=None,client=None,dev
         card=card_line(row,data)+' হারতালিকা '+format_date(date.fromisoformat(row['date']),bn=True)
         facts.append({'fact_id':product+'-compare:'+row['offer_id'],'institution_id':row['bank_id'],'kind':'service','text_bn':card,'text_en':row['product'],'values':{'rate_percent':row['rate_percent'],'tenor_months':data['months'] if row not in data['flagged'] else row['comparison_months'],'monthly_example_bdt':data['monthly_bdt'],'maturity_estimate_bdt':row.get('maturity_estimate_bdt'),'status':row['status'],'calculation':data['calculation']},'source':{'source_url':row['source_url'],'source_title':row['product'],'published_at':row['date'],'page':row['page'],'quote':row['quote']}})
     reply,question=split_question(spoken)
+    if re.search(r'[\u0980-\u09ff]',question):question=QUESTION
     answer=controls('compare',c,reply,question,['repeat','end']).model_copy(update={'used_fact_ids':[f['fact_id'] for f in facts]})
     result=render(answer,c,facts,trace,'template' if reason else 'code')
     result.update(comparison_product=product,dps_data_ready=True,dps_comparison_facts=spoken_facts(data),dps_comparison_data={key:data[key] for key in ['top','flagged','conditions','monthly_bdt','months','years','calculation','tie_break','cutoff_ties']},dps_model_fallback_reason=reason)
