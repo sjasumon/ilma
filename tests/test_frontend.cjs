@@ -142,4 +142,13 @@ const playbackSource=fs.readFileSync('static/js/app.js','utf8');
 const playStart=playbackSource.indexOf('function playVoiceAudio');
 assert.ok(playbackSource.indexOf('IlmaMicrophone.release()',playStart)<playbackSource.indexOf('player.src = url',playStart),'iOS releases the microphone before an answer plays');
 assert.equal((playbackSource.match(/appSettings\.micExplained&&!window\.IlmaMicrophone\?\.closesForPlayback\?\.\(\)/g)||[]).length,2,'Both barge-in monitors stay closed during iOS playback');
+{
+  const set=[];let suspended=0;const window={navigator:{audioSession:{set type(v){set.push(v)}}},document:{addEventListener(){}},URL:{},AudioContext:class{state='running';resume(){return Promise.resolve()}suspend(){suspended++;this.state='suspended';return Promise.resolve()}}};
+  require('node:vm').runInNewContext(fs.readFileSync('static/js/audio-session.js','utf8'),{window,Uint8Array,DataView,Blob:class{},Promise,setTimeout});
+  window.IlmaAudioSession.getContext();window.IlmaAudioSession.forPlayback();window.IlmaAudioSession.forRecording();
+  assert.deepEqual(set,['playback','play-and-record']);assert.equal(suspended,1);
+  const plain={document:{addEventListener(){}},navigator:{}};require('node:vm').runInNewContext(fs.readFileSync('static/js/audio-session.js','utf8'),{window:plain,Promise});
+  assert.doesNotThrow(()=>plain.IlmaAudioSession.forPlayback(),'Browsers without audioSession are unaffected');
+}
+assert.ok(playbackSource.indexOf('forPlayback',playStart)<playbackSource.indexOf('player.src = url',playStart),'iOS names playback mode before the answer plays');
 console.log('iOS playback regressions passed: microphone released first, no barge-in monitor');

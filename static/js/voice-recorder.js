@@ -5,6 +5,7 @@
   let sessionStream=null;
   async function sessionMicrophone(){
     if(sessionStream?.getAudioTracks().some(track=>track.readyState!=='ended'))return sessionStream;
+    if(micClosesForPlayback())window.IlmaAudioSession?.forRecording?.();
     sessionStream=await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
     return sessionStream;
   }

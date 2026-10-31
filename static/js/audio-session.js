@@ -15,6 +15,10 @@
   player.volume=0;player.src=url;
   Promise.resolve(player.play()).then(()=>{unlocked=true}).catch(()=>{}).finally(()=>{player.volume=volume;pending=false;setTimeout(()=>root.URL.revokeObjectURL(url),1000)});
  }
- root.IlmaAudioSession={getContext,unlock};
+ // Safari's call mode can outlast the microphone, so each use names its mode.
+ function setMode(type){try{if(root.navigator?.audioSession)root.navigator.audioSession.type=type}catch{}}
+ function forPlayback(){setMode('playback');if(context?.state==='running')context.suspend().catch(()=>{})}
+ function forRecording(){setMode('play-and-record')}
+ root.IlmaAudioSession={getContext,unlock,forPlayback,forRecording};
  root.document?.addEventListener('visibilitychange',()=>{if(root.document.hidden&&context?.state==='running')context.suspend().catch(()=>{})});
 })(window);
