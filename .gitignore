@@ -65,6 +65,10 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 /docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md
 /docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENTV1.md
+/docs/AGENT_INSTRUCTIONS_*.md
+/docs/*_AUDIO_FINAL_*.md
+/docs/*_clips_bn_approved.json
+/docs/services/
 /docs/FIX_*.md
 
 # Only approved service comparison audio and its manifest are publishable here.
