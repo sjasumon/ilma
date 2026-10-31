@@ -9,7 +9,7 @@ const node = id => {
 };
 const years = [1, 5, 20].map(y => ({dataset:{loanYears:String(y)}, setAttribute(){}}));
 let played = 0, stopped = 0;
-const common = {$:node, E:String, tr:(bn,en)=>bn, digits:String, dateText:String, number:String, bankNames:()=>'', bankName:()=>'', back:()=>''};
+const common = {$:node, E:String, tr:(bn,en)=>bn, digits:String, dateText:String, number:String, bankNames:()=>'', bankName:()=>'', back:()=>'',offlineNote:()=>''};
 const context = vm.createContext({
   window:{IlmaCatalogCommon:common}, document:{querySelectorAll:selector=>selector==='[data-loan-years]'?years:[]},
   currentLang:'bn', suppressReadoutClick:false, playbackRequest:0,

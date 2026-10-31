@@ -1,6 +1,6 @@
 /* Bank list, report and sourced section screens. */
 (()=>{
-  const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,bankNames,productText,conditionText,offerStatus,back,json,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
+  const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,bankNames,productText,conditionText,offerStatus,back,json,offlineNote,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
   let banks=[],bankPage='list',detailKind='health',search='';
   const openBankServices=(...args)=>window.IlmaServices.openBankServices(...args);
   const empty=text=>text?`<p class="catalog-empty" role="status">${E(text)}</p>`:'';
@@ -26,11 +26,11 @@
     const root=$('bank-list-view'), request=++state.epoch;
     root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try { banks=await json('/v1/institutions?list=demo'); if(request!==state.epoch)return; renderBankList(); }
-    catch(e){if(request===state.epoch)error(root,e);}
+    catch(e){if(request===state.epoch)error(root,e,showBankList);}
   }
   function renderBankList() {
     const root=$('bank-list-view');
-    root.innerHTML=`<div class="screen-header"><h1>${tr('ব্যাংক','Banks')}</h1><p>${tr('কোন ব্যাংকের ঝুঁকি জানতে চান?','Which bank do you want to check?')}</p>
+    root.innerHTML=`${offlineNote(banks)}<div class="screen-header"><h1>${tr('ব্যাংক','Banks')}</h1><p>${tr('কোন ব্যাংকের ঝুঁকি জানতে চান?','Which bank do you want to check?')}</p>
       <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div></div>
       <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr(`${digits(banks.length)}টি ব্যাংকের প্রকাশিত তথ্য`,`Published information for ${banks.length} banks`)}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
     $('bank-list-search').value=search;
@@ -115,7 +115,7 @@
           return heading+`<article class="catalog-card"><h2>${E(currentLang==='bn'?row.type_label_bn:row.type_label_en)}</h2><p class="catalog-note" lang="en">${E(row.title)}</p>${row.date?`<p>${dateText(row.date)}</p>`:''}<a class="catalog-source" href="${E(row.source_url)}" target="_blank" rel="noopener noreferrer">${tr('সূত্র ↗','Source ↗')}</a></article>`;
         }).join('');itemsRoot.insertAdjacentHTML('beforeend',html);
         if(page*20<response.total){itemsRoot.insertAdjacentHTML('beforeend',`<button type="button" class="catalog-action" data-more>${tr('আরও দেখুন','Show more')}</button>`);itemsRoot.querySelector('[data-more]').onclick=()=>{itemsRoot.querySelector('[data-more]').disabled=true;page++;more();};}
-      }catch(e){if(request===state.epoch&&turn===publicationRequest)error(itemsRoot,e);}}
+      }catch(e){if(request===state.epoch&&turn===publicationRequest){const previous=itemsRoot.innerHTML;error(itemsRoot,e,()=>{itemsRoot.innerHTML=previous;return more();});}}}
       body.querySelectorAll('[data-pub-filter]').forEach(button=>button.onclick=()=>{group=button.dataset.pubFilter;page=1;lastYear=null;itemsRoot.innerHTML='';body.querySelectorAll('[data-pub-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));more();});
       more();return;
     }
@@ -136,7 +136,7 @@
       } else {
         body.innerHTML=rows.map(r=>`<article class="catalog-card"><h2>${E(currentLang==='bn'?r.title_bn:r.title_en)}</h2>${currentLang==='bn'&&!/[\u0980-\u09ff]/.test(r.title_bn)?'<p class="catalog-note">খবরটি ইংরেজিতে</p>':''}<p>${dateText(r.date)}</p><p class="catalog-note">${tr('সংবাদমাধ্যমের খবর','News report')}</p>${r.sources.filter(s=>/^https?:\/\//.test(s.source_url)).map(s=>`<a class="catalog-source" href="${E(s.source_url)}" target="_blank" rel="noopener noreferrer">${tr('মূল সূত্র ↗','Original source ↗')}</a>`).join('')}</article>`).join('');
       }
-    }catch(e){if(request===state.epoch)error(body,e);}
+    }catch(e){if(request===state.epoch)error(body,e,()=>showBankDetail(kind));}
   }
 
   function renderHistory(body,data) {

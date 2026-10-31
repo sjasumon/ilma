@@ -46,8 +46,19 @@
     const response=await fetch(url);
     if(!response.ok) throw Error(tr('তথ্য লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load data. Please try again.'));
     const data=await response.json();
-    if(response.headers?.get('X-ILMA-Offline')==='1')data._offline=true;
+    if(response.headers?.get('X-ILMA-Offline')==='1') {
+      data._offline=true;
+      data._cachedAt=response.headers.get('X-ILMA-Cached-At')||null;
+    }
     return data;
+  }
+  function offlineNote(data) {
+    if(!data?._offline)return '';
+    const time=Date.parse(data._cachedAt);
+    const saved=Number.isFinite(time)
+      ? tr('সংরক্ষণের সময়: ','Saved: ')+new Intl.DateTimeFormat(currentLang==='bn'?'bn-BD':'en-GB',{dateStyle:'medium',timeStyle:'short'}).format(new Date(time))+'. '
+      : tr('সংরক্ষণের সময় জানা নেই। ','Saved time is unavailable. ');
+    return `<p class="catalog-note catalog-offline" role="status">${E(tr('সংরক্ষিত কপি — তথ্য পুরনো হতে পারে। ','Saved copy — data may be out of date. ')+saved+tr('মূল সূত্রের তারিখ দেখুন।','Check the source document dates.'))}</p>`;
   }
   function sourceButton(source,bank=null) {
     const subject=currentLang==='bn'?(source.product?productText(source):({crar:'মূলধন অনুপাত',npl_ratio:'খেলাপি ঋণ',net_profit:'মুনাফা'})[source.metric]||'মূল নথি'):(source.product||source.source_title||source.metric||'');
@@ -62,6 +73,12 @@
   }
   function voice(tab,bank=null) { switchTab('home'); activeVoiceContext={tab,bank_id:bank}; startListening(); }
   function ask(text,tab,bank=null) { activeVoiceContext={tab,bank_id:bank}; return submitTextQuestion(text); }
-  function error(root,error) { root.innerHTML=empty(error.message)+`<button type="button" class="catalog-action" data-retry>${tr('আবার চেষ্টা করুন','Try again')}</button>`;root.querySelector('[data-retry]').onclick=()=>window.IlmaCatalog.enter(currentTab); }
-  window.IlmaCatalogCommon={$,E,tr,digits,dateText,number,label,outlook,percent,bankName,statusChip,bankNames,productText,conditionText,offerStatus,empty,back,json,sourceButton,wireSources,voice,ask,error,state:{epoch:0}};
+  function error(root,failure,retry) {
+    // Browser/provider messages vary by platform and are never useful UI copy.
+    root.innerHTML=empty(tr('তথ্য আনা যায়নি। সংযোগ দেখুন, তারপর আবার চেষ্টা করুন।','Could not load this information. Check your connection, then try again.'))+`<button type="button" class="catalog-action" data-retry>${tr('আবার চেষ্টা করুন','Try again')}</button>`;
+    const button=root.querySelector('[data-retry]');
+    button.hidden=typeof retry!=='function';
+    button.onclick=()=>{button.disabled=true;return retry();};
+  }
+  window.IlmaCatalogCommon={$,E,tr,digits,dateText,number,label,outlook,percent,bankName,statusChip,bankNames,productText,conditionText,offerStatus,empty,back,json,offlineNote,sourceButton,wireSources,voice,ask,error,state:{epoch:0}};
 })();
