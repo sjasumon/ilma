@@ -1133,7 +1133,7 @@ async function loadReportCard(bankId) {
   document.getElementById("card-status-mark").textContent = "";
   document.getElementById("card-status-meaning").textContent = "";
   document.getElementById("scale-marker").className = "scale-marker hidden";
-  ["reasons-list", "checks-list", "card-insurance-line"].forEach(id => document.getElementById(id).replaceChildren());
+  ["reasons-list", "checks-list", "card-insurance-line", "bank-kpi-summary"].forEach(id => { const el = document.getElementById(id); if (el) el.replaceChildren(); });
   showReportError("");
   if (!bankId) return;
   try {

@@ -2,10 +2,35 @@
 (()=>{
   const {$,E,tr,digits,dateText,number,label,outlook,percent,bankName,bankNames,productText,conditionText,offerStatus,back,json,offlineNote,focusHeading,sourceButton,wireSources,voice,ask,error,state}=window.IlmaCatalogCommon;
   let banks=[],bankPage='list',detailKind='health',search='';
+  let bankTypeFilter='all',bankRiskFilter='all';
   const openBankServices=(...args)=>window.IlmaServices.openBankServices(...args);
   const empty=text=>text?`<p class="catalog-empty" role="status">${E(text)}</p>`:'';
   const riskWords={strong:['ঝুঁকি কম','Low risk'],watch:['ঝুঁকি মাঝারি','Medium risk'],high:['ঝুঁকি বেশি','High risk'],no_data:['মূল্যায়ন করা হয়নি','Not rated']};
   const statusChip=bank=>`<span class="catalog-status ${E(bank.status?.code||'no_data')}">${({strong:'✓ ',watch:'⚠ ',high:'✕ ',no_data:''})[bank.status?.code||'no_data']}${E(riskWords[bank.status?.code||'no_data'][currentLang==='bn'?0:1])}</span>`;
+
+  const BANK_MONOGRAMS = {
+    ebl: 'EBL',
+    bracbank: 'BRAC',
+    citybank: 'CITY',
+    dutchbangl: 'DBBL',
+    bankasia: 'ASIA',
+    islamibank: 'IBBL',
+    mtb: 'MTB',
+    nbl: 'NBL',
+    nccbank: 'NCC',
+    primebank: 'PRIME',
+    sbacbank: 'SBAC'
+  };
+  function bankMonogram(b) {
+    if (b.slug && BANK_MONOGRAMS[b.slug]) return BANK_MONOGRAMS[b.slug];
+    const alias = (b.aliases || [])[0];
+    if (alias && alias.length <= 5) return alias.toUpperCase();
+    return (b.name_en || '').replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() || 'BNK';
+  }
+  function isBankIslamic(b) {
+    return Boolean(b.islamic || b.slug === 'islamibank' || /islam/i.test(b.name_en || ''));
+  }
+
   function listenReport(){
     if(suppressReadoutClick){suppressReadoutClick=false;return;}
     stopAudio();const saved=reportCardData?.readout;
@@ -23,6 +48,7 @@
   async function showBankList() {
     window.IlmaNavigation?.visit({screen:"banks"});
     ++reportRequest; reportCardData=null;bankPage='list'; currentBankId=null; reportView(false); $('bank-list-view').hidden=false;
+    bankTypeFilter='all'; bankRiskFilter='all';
     const root=$('bank-list-view'), request=++state.epoch;
     root.innerHTML=empty(tr('একটু অপেক্ষা করুন…','Please wait…'));
     try { banks=await json('/v1/institutions?list=demo'); if(request!==state.epoch)return; renderBankList();focusHeading?.(root); }
@@ -30,17 +56,150 @@
   }
   function renderBankList() {
     const root=$('bank-list-view');
-    root.innerHTML=`${offlineNote(banks)}<div class="screen-header"><h1>${tr('ব্যাংক','Banks')}</h1><p>${tr('কোন ব্যাংকের ঝুঁকি জানতে চান?','Which bank do you want to check?')}</p>
-      <div class="catalog-search"><label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label><input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}"><button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div></div>
-      <div class="sheet"><div id="bank-list-rows"></div><p class="catalog-note">${tr(`${digits(banks.length)}টি ব্যাংকের প্রকাশিত তথ্য`,`Published information for ${banks.length} banks`)}</p><button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button></div>`;
+    const total=banks.length;
+    const strongCount=banks.filter(b=>b.status?.code==='strong').length;
+    const highCount=banks.filter(b=>b.status?.code==='high').length;
+    const noDataCount=banks.filter(b=>b.status?.code==='no_data').length;
+    const islamicCount=banks.filter(isBankIslamic).length;
+    const conventionalCount=total-islamicCount;
+
+    root.innerHTML=`${offlineNote(banks)}<div class="screen-header">
+      <h1>${tr('ব্যাংক','Banks')}</h1>
+      <p>${tr('কোন ব্যাংকের ঝুঁকি জানতে চান?','Which bank do you want to check?')}</p>
+
+      <section class="deposit-group-card bank-sector-overview" aria-label="${tr('ব্যাংকিং খাত সংক্ষেপ','Banking sector overview')}">
+        <div class="bank-sector-header">
+          <div class="bank-sector-title-wrap">
+            <span class="bank-sector-icon" aria-hidden="true">🏛️</span>
+            <div>
+              <h2 class="bank-sector-title">${tr('ব্যাংকিং খাত সার্বিক চিত্র','Banking Sector Overview')}</h2>
+              <p class="bank-sector-subtitle">${tr(`${digits(total)}টি ব্যাংকের সর্বশেষ নিরীক্ষিত প্রতিবেদন ও ঝুঁকি বিশ্লেষণ`,`Latest audited reports & risk analysis for ${total} banks`)}</p>
+            </div>
+          </div>
+        </div>
+        <div class="bank-sector-stats">
+          <div class="sector-stat-pill stat-total">
+            <span class="stat-num">${digits(total)}</span>
+            <span class="stat-lbl">${tr('মোট ব্যাংক','Total Banks')}</span>
+          </div>
+          <div class="sector-stat-pill stat-strong">
+            <span class="stat-num">✓ ${digits(strongCount)}</span>
+            <span class="stat-lbl">${tr('ঝুঁকি কম','Low Risk')}</span>
+          </div>
+          <div class="sector-stat-pill stat-high">
+            <span class="stat-num">✕ ${digits(highCount)}</span>
+            <span class="stat-lbl">${tr('ঝুঁকি বেশি','High Risk')}</span>
+          </div>
+          ${noDataCount>0?`
+          <div class="sector-stat-pill stat-nodata">
+            <span class="stat-num">? ${digits(noDataCount)}</span>
+            <span class="stat-lbl">${tr('মূল্যায়ন বাকি','Unrated')}</span>
+          </div>`:''}
+        </div>
+      </section>
+
+      <div class="catalog-search">
+        <label class="sr-only" for="bank-list-search">${tr('ব্যাংকের নাম লিখুন','Type a bank name')}</label>
+        <input id="bank-list-search" type="search" placeholder="${tr('ব্যাংকের নাম লিখুন','Type a bank name')}">
+        <button type="button" id="bank-list-mic" aria-label="${tr('ব্যাংকের নাম বলুন','Say a bank name')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="bank-filter-controls">
+        <div class="bank-filter-row">
+          <div class="segmented-control bank-filter-pills" role="tablist" aria-label="${tr('ব্যাংকের ধরন','Bank Type')}">
+            <button type="button" class="segmented-item" data-type-filter="all" aria-pressed="${bankTypeFilter==='all'}">
+              <span>${tr('সব ব্যাংক','All')}</span> <span class="filter-count">(${digits(total)})</span>
+            </button>
+            <button type="button" class="segmented-item" data-type-filter="conventional" aria-pressed="${bankTypeFilter==='conventional'}">
+              <span>${tr('বাণিজ্যিক','Conventional')}</span> <span class="filter-count">(${digits(conventionalCount)})</span>
+            </button>
+            <button type="button" class="segmented-item" data-type-filter="islamic" aria-pressed="${bankTypeFilter==='islamic'}">
+              <span>${tr('ইসলামী','Islamic')}</span> <span class="filter-count">(${digits(islamicCount)})</span>
+            </button>
+          </div>
+        </div>
+        <div class="bank-filter-row" style="margin-top: 8px;">
+          <div class="segmented-control bank-filter-pills" role="tablist" aria-label="${tr('ঝুঁকির মাত্রা','Risk Level')}">
+            <button type="button" class="segmented-item" data-risk-filter="all" aria-pressed="${bankRiskFilter==='all'}">
+              <span>${tr('সব ঝুঁকি','All Risk')}</span>
+            </button>
+            <button type="button" class="segmented-item" data-risk-filter="strong" aria-pressed="${bankRiskFilter==='strong'}">
+              <span>✓ ${tr('ঝুঁকি কম','Low Risk')}</span> <span class="filter-count">(${digits(strongCount)})</span>
+            </button>
+            <button type="button" class="segmented-item" data-risk-filter="high" aria-pressed="${bankRiskFilter==='high'}">
+              <span>✕ ${tr('ঝুঁকি বেশি','High Risk')}</span> <span class="filter-count">(${digits(highCount)})</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet">
+      <div id="bank-list-rows"></div>
+      <p class="catalog-note">${tr(`${digits(banks.length)}টি ব্যাংকের প্রকাশিত তথ্য`,`Published information for ${banks.length} banks`)}</p>
+      <button type="button" class="catalog-source" id="prior-work">${tr('তথ্য কোথা থেকে এসেছে','Where the data comes from')}</button>
+    </div>`;
+
     $('bank-list-search').value=search;
-    function rows(){search=$('bank-list-search').value;const query=search.trim().toLowerCase();
+    function rows(){
+      search=$('bank-list-search').value;
+      const query=search.trim().toLowerCase();
       const name=currentLang==='en'?'name_en':'name_bn';
-      $('bank-list-rows').innerHTML=banks.filter(b=>`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query)).sort((a,b)=>a[name].localeCompare(b[name],currentLang==='en'?'en':'bn')).map(bank=>
-        `<button class="catalog-bank-row" type="button" data-bank="${bank.id}"><span>${bankNames(bank)}</span>${statusChip(bank)}</button>`).join('')||empty();
+      const filtered=banks.filter(b=>{
+        if(query&&!`${b.name_bn} ${b.name_en} ${b.slug} ${(b.aliases||[]).join(" ")}`.toLowerCase().includes(query))return false;
+        if(bankTypeFilter==='islamic'&&!isBankIslamic(b))return false;
+        if(bankTypeFilter==='conventional'&&isBankIslamic(b))return false;
+        if(bankRiskFilter!=='all'&&(b.status?.code||'no_data')!==bankRiskFilter)return false;
+        return true;
+      }).sort((a,b)=>a[name].localeCompare(b[name],currentLang==='en'?'en':'bn'));
+
+      $('bank-list-rows').innerHTML=filtered.map(bank=>{
+        const isIslamic=isBankIslamic(bank);
+        const monogram=bankMonogram(bank);
+        const primaryName=currentLang==='bn'?bank.name_bn:bank.name_en;
+        const secondaryName=currentLang==='bn'?`<small class="bank-name-secondary" lang="en">${E(bank.name_en)}</small>`:'';
+        const typeBadge=isIslamic?tr('ইসলামী শরিয়াহ','Islamic Shariah'):tr('প্রচলিত বাণিজ্যিক','Conventional');
+        const dseBadge=bank.listed?tr('ডিএসই তালিকাভুক্ত','DSE Listed'):'';
+        return `<button class="catalog-bank-row" type="button" data-bank="${bank.id}">
+          <div class="bank-card-main">
+            <div class="bank-avatar bank-avatar-${E(bank.slug)}" aria-hidden="true">${E(monogram)}</div>
+            <div class="bank-card-info">
+              <div class="bank-title-line">
+                <strong class="bank-name-primary">${E(primaryName)}</strong>
+                ${secondaryName}
+              </div>
+              <div class="bank-sub-meta">
+                <span class="bank-type-pill">${E(typeBadge)}</span>
+                ${dseBadge?`<span class="bank-type-pill">${E(dseBadge)}</span>`:''}
+              </div>
+            </div>
+          </div>
+          <div class="bank-card-end">
+            ${statusChip(bank)}
+            <span class="bank-card-arrow" aria-hidden="true">›</span>
+          </div>
+        </button>`;
+      }).join('')||empty(tr('কোনো ব্যাংক পাওয়া যায়নি','No banks match this filter'));
+
       root.querySelectorAll('[data-bank]').forEach(button=>button.onclick=()=>openBank(Number(button.dataset.bank)));
     }
-    rows(); $('bank-list-search').oninput=rows; $('bank-list-mic').onclick=()=>voice('bank');
+    rows();
+    $('bank-list-search').oninput=rows;
+    $('bank-list-mic').onclick=()=>voice('bank');
+    root.querySelectorAll('[data-type-filter]').forEach(btn=>btn.onclick=()=>{
+      bankTypeFilter=btn.dataset.typeFilter;
+      root.querySelectorAll('[data-type-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));
+      rows();
+    });
+    root.querySelectorAll('[data-risk-filter]').forEach(btn=>btn.onclick=()=>{
+      bankRiskFilter=btn.dataset.riskFilter;
+      root.querySelectorAll('[data-risk-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));
+      rows();
+    });
     $('prior-work').onclick=()=>openProofModal(tr('তথ্য কোথা থেকে এসেছে','Where the data comes from'),tr(
       'উৎসের তথ্য প্রকল্পের আগে সংগ্রহ করা হয়েছিল। প্রতিটি সংখ্যার উদ্ধৃতি ও মূল নথির সংযোগ দেখুন। সংবাদমাধ্যমের খবর ও সরকারি নথি আলাদাভাবে চিহ্নিত করা হয়।',
       'Source collection predates this project. See each quotation and original document. News reports and official documents are labelled separately.'),'',null,null);
@@ -61,15 +220,108 @@
     $('bank-risk-heading').textContent=tr('ঝুঁকি','Risk');$('bank-risk-basis').textContent=tr('প্রকাশিত তথ্য অনুযায়ী','Based on published data');
     $('card-status-meaning').textContent=code==='no_data'?tr('এই ব্যাংকের ঝুঁকি এখনো মূল্যায়ন করা হয়নি। নিচে প্রকাশিত রেটিং দেখুন।','This bank’s risk has not been rated. See its published rating below.'):'';
     $('scale-marker').hidden=code==='no_data';['strong','watch','high'].forEach(c=>$('scale-label-'+c).textContent=riskWords[c][bn?0:1]);
+
+    // Financial KPI Summary Cards
+    const kpiSummary = $('bank-kpi-summary');
+    if (kpiSummary) {
+      const figures = data.figures || [];
+      const crarFig = figures.find(f => f.metric === 'crar');
+      const nplFig = figures.find(f => f.metric === 'npl_ratio');
+      const ins = data.insurance;
+
+      let crarVal = tr('অপ্রকাশিত','Not published');
+      let crarNote = tr('আইনি ন্যূনতম: ১০%','Legal minimum: 10%');
+      let crarClass = 'kpi-nodata';
+      if (crarFig && crarFig.value != null) {
+        crarVal = percent(crarFig.value * 100) + '%';
+        if (crarFig.value >= 0.10) {
+          crarNote = tr('আইনি সীমা ≥ ১০% পূরণ ✓','Meets ≥ 10% legal rule ✓');
+          crarClass = 'kpi-pass';
+        } else {
+          crarNote = tr('১০% সীমার নিচে ✕','Below 10% legal rule ✕');
+          crarClass = 'kpi-fail';
+        }
+      }
+      const crarPeriod = crarFig?.period ? tr(`নিরীক্ষিত ${digits(crarFig.period)}`,`Audited ${crarFig.period}`) : '';
+
+      let nplVal = tr('অপ্রকাশিত','Not published');
+      let nplNote = tr('সহনশীল সীমা: ≤ ৫%','Tolerable: ≤ 5%');
+      let nplClass = 'kpi-nodata';
+      if (nplFig && nplFig.value != null) {
+        nplVal = percent(nplFig.value * 100) + '%';
+        if (nplFig.value <= 0.05) {
+          nplNote = tr('স্বাভাবিক সীমা (≤ ৫%) ✓','Normal range (≤ 5%) ✓');
+          nplClass = 'kpi-pass';
+        } else {
+          nplNote = tr('সতর্কতা প্রয়োজন ⚠','Requires caution ⚠');
+          nplClass = 'kpi-warn';
+        }
+      }
+      const nplPeriod = nplFig?.period ? tr(`নিরীক্ষিত ${digits(nplFig.period)}`,`Audited ${nplFig.period}`) : '';
+
+      const insVal = (ins?.covered && ins?.limit_bdt === 200000) ? tr('২ লাখ ৳','BDT 2 Lakh') : tr('অপ্রযোজ্য','N/A');
+      const insNote = ins?.covered ? tr('আইনি সুরক্ষা সীমা (১০০%)','100% legal protection') : tr('সুরক্ষা নেই','No protection');
+      const insClass = ins?.covered ? 'kpi-pass' : 'kpi-nodata';
+      const insPeriod = tr('আমানত সুরক্ষা আইন','Deposit Protection Act');
+
+      kpiSummary.innerHTML = `
+        <div class="bank-kpi-card ${crarClass}">
+          <div class="kpi-card-header">
+            <span class="kpi-icon" aria-hidden="true">🏛️</span>
+            <span class="kpi-period">${E(crarPeriod)}</span>
+          </div>
+          <div class="kpi-label">${tr('মূলধন অনুপাত (CRAR)','Capital Ratio (CRAR)')}</div>
+          <div class="kpi-value">${E(crarVal)}</div>
+          <div class="kpi-subtext ${crarClass}">${E(crarNote)}</div>
+        </div>
+        <div class="bank-kpi-card ${nplClass}">
+          <div class="kpi-card-header">
+            <span class="kpi-icon" aria-hidden="true">📊</span>
+            <span class="kpi-period">${E(nplPeriod)}</span>
+          </div>
+          <div class="kpi-label">${tr('খেলাপি ঋণ (NPL)','Bad Loans (NPL)')}</div>
+          <div class="kpi-value">${E(nplVal)}</div>
+          <div class="kpi-subtext ${nplClass}">${E(nplNote)}</div>
+        </div>
+        <div class="bank-kpi-card ${insClass}">
+          <div class="kpi-card-header">
+            <span class="kpi-icon" aria-hidden="true">🛡️</span>
+            <span class="kpi-period">${E(insPeriod)}</span>
+          </div>
+          <div class="kpi-label">${tr('আমানত সুরক্ষা','Deposit Protection')}</div>
+          <div class="kpi-value">${E(insVal)}</div>
+          <div class="kpi-subtext ${insClass}">${E(insNote)}</div>
+        </div>
+      `;
+    }
+
     $('reasons-list').querySelectorAll('.reason-source-link').forEach((button,i)=>{button.textContent=tr('সূত্র › ','Source › ')+(bn?data.reasons[i]?.source_label_bn:data.reasons[i]?.source_title);});
     const insured=data.insurance?.covered&&data.insurance?.limit_bdt===200000&&data.insurance?.source_url;
     $('card-insurance-line').hidden=!insured;
-    if(insured){$('card-insurance-line').innerHTML=`<p>${tr('প্রতি ব্যাংকে একজন জমাকারীর ২ লাখ টাকা পর্যন্ত আমানত সুরক্ষার নিয়ম আছে, শর্ত প্রযোজ্য।','Deposit protection rules cover up to BDT 200,000 per depositor per bank, subject to conditions.')} <button type="button" class="catalog-source" id="bank-insurance-details">${tr('বিস্তারিত ›','Details ›')}</button></p>`;$('bank-insurance-details').onclick=()=>{const dialog=$('bank-insurance-dialog');$('bank-insurance-full').textContent=bn?data.insurance.text_bn:data.insurance.text_en;$('bank-insurance-source').href=data.insurance.source_url;dialog.showModal();};}
+    if(insured){$('card-insurance-line').innerHTML=`<p>${tr('প্রতি ব্যাংকে একজন জমাকারীর ২ লাখ টাকা পর্যন্ত আমানত সুরক্ষার নিয়ম আছে, শর্ত প্রযোজ্য।','Deposit protection rules cover up to 2 lakh BDT per depositor per bank, subject to conditions.')} <a class="catalog-source" href="${E(data.insurance.source_url)}" target="_blank" rel="noopener noreferrer">${tr('আইনের সূত্র ↗','Legal source ↗')}</a> <button type="button" class="catalog-source" id="bank-insurance-details">${tr('বিস্তারিত ›','Details ›')}</button></p>`;$('bank-insurance-details').onclick=()=>{const dialog=$('bank-insurance-dialog');$('bank-insurance-full').textContent=bn?data.insurance.text_bn:data.insurance.text_en;$('bank-insurance-source').href=data.insurance.source_url;dialog.showModal();};}
     $('bank-insurance-title').textContent=tr('আমানত সুরক্ষা','Deposit protection');$('bank-insurance-source').textContent=tr('আইনের সূত্র ↗','Legal source ↗');$('bank-insurance-close').textContent=tr('বন্ধ করুন','Close');
     $('bank-insurance-close').onclick=()=>$('bank-insurance-dialog').close();
-    $('card-why-heading').textContent=tr('কেন?','Why?');
+    $('card-why-heading').textContent=tr('কেন এই অবস্থা? (৩টি প্রধান কারণ)','Why this status? (Top 3 reasons)');
     $('bank-not-checked').hidden=true;
-    const counts=data.section_counts||{},row=(key,b,e)=>`<button type="button" class="catalog-detail-row" data-bank-detail="${key}">${tr(b,e)}${['history','news','announcements','reports','bb-notices'].includes(key)?' ('+digits(counts[key])+')':''} <span aria-hidden="true">›</span></button>`;
+
+    const ICONS = {
+      health: '📊',
+      rating: '🛡️',
+      services: '💳',
+      history: '⚖️',
+      news: '📰',
+      'bb-notices': '📜',
+      announcements: '📢',
+      reports: '📑',
+      ask: '💬'
+    };
+    const counts=data.section_counts||{};
+    const row=(key,b,e)=>{
+      const icon = ICONS[key] || '📄';
+      const hasCount = ['history','news','announcements','reports','bb-notices'].includes(key) && counts[key];
+      const countBadge = hasCount ? `<span class="detail-count-badge">${digits(counts[key])}</span>` : '';
+      return `<button type="button" class="catalog-detail-row bank-nav-tile" data-bank-detail="${key}"><span class="bank-nav-icon" aria-hidden="true">${icon}</span><span class="bank-nav-text">${tr(b,e)}</span>${countBadge}<span class="bank-nav-arrow" aria-hidden="true">›</span></button>`;
+    };
     const entries=[['health','আর্থিক অবস্থা','Financial health'],['rating','রেটিং','Rating'],['services','এই ব্যাংকের সেবা ও হার','Services and rates'],['history','জালিয়াতি ও মামলার ইতিহাস','Fraud and legal history'],['news','খবর','News']];
     const extra=[['bb-notices','বাংলাদেশ ব্যাংকের নোটিশ','Bangladesh Bank notices'],['announcements','কোম্পানির ঘোষণা','Company announcements'],['reports','প্রতিবেদন','Reports']].filter(([key])=>counts[key]>0);
     $('bank-detail-links').innerHTML=entries.filter(([key])=>counts[key]>0).map(args=>row(...args)).join('')+(extra.length?`<details class="bank-more"><summary>${tr('আরও তথ্য','More information')}</summary>${extra.map(args=>row(...args)).join('')}</details>`:'')+row('ask','এই ব্যাংক নিয়ে প্রশ্ন করুন','Ask about this bank');
@@ -153,5 +405,5 @@
     $('incident-filter').onchange=render;render();
   }
 
-  window.IlmaBank={async restore(route,isCurrent=()=>true){if(route.screen==='banks')return showBankList();await showReport();if(!isCurrent())return;if(route.screen==='bank-section')return showBankDetail(route.kind);},reportReady,toggleWatch,listenReport,enter(){currentBankId?showReport():showBankList();},relocalize(){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}};
+  window.IlmaBank={renderBankList,setBanks(b){banks=b;},async restore(route,isCurrent=()=>true){if(route.screen==='banks')return showBankList();await showReport();if(!isCurrent())return;if(route.screen==='bank-section')return showBankDetail(route.kind);},reportReady,toggleWatch,listenReport,enter(){currentBankId?showReport():showBankList();},relocalize(){if(bankPage==='list')renderBankList();else if(bankPage==='detail')showBankDetail(detailKind);else if(reportCardData)reportReady(reportCardData);}};
 })();
