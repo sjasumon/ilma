@@ -1923,7 +1923,12 @@ function goHome() {
 }
 
 function setupBackToHome() {
-  window.addEventListener?.('popstate', () => { if (!document.getElementById('agent-panel').hidden) goHome(); });
+  window.addEventListener?.('popstate', event => {
+    const closed = document.getElementById('agent-panel').hidden;
+    // A tab opened from an answer leaves that answer's entry behind; Back skips it.
+    if (closed && event.state?.ilmaAnswer) window.history.back();
+    else if (!closed) goHome();
+  });
   // Only a native wrapper provides this; the web app has its browser Back.
   window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => {
     if (document.getElementById('agent-panel').hidden) window.Capacitor.Plugins.App.minimizeApp?.();
