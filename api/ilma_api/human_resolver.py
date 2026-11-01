@@ -7,7 +7,7 @@ from ilma_api.voice_numbers import normalize_numbers
 ACRONYMS={'sbacbank':('SBAC','এসবিএসি','South Bangla Bank','South Bangla','সাউথ বাংলা ব্যাংক','সাউথ বাংলা'),'nbl':('National Bank','ন্যাশনাল ব্যাংক'),'islamibank':('Islami Bank','ইসলামী ব্যাংক'),'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
  'nccbank':('NCC','এনসিসি'),'dutchbangl':('DBBL','ডিবিবিএল'),
  'primebank':('Prime','প্রাইম'),
- 'citybank':('City Bank','সিটি ব্যাংক'),'bracbank':('BRAC','ব্র্যাক','break bank','breakbank','bragg bank','brak bank','ব্রেক ব্যাংক')}
+ 'citybank':('City Bank','সিটি ব্যাংক'),'bracbank':('BRAC','ব্র্যাক','break bank','breakbank','bragg bank','brak bank','black bank','brack bank','ব্রেক ব্যাংক','ব্ল্যাক ব্যাংক','ব্রাক ব্যাংক')}
 PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsur(?:ance|ed|e)\b|\bprotect(?:ion|ed)\b|(?:ব্যাংক|bank).{0,20}(?:(?<!ম্)বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
 CORRECTION=re.compile(r'^না(?:[\s,।]|$)|না আমি|নয়|নয়|ভুল|শুধরে|বদলে|সংশোধন|ধরুন|আগের প্রশ্ন|আমার কথা ছিল|কথাই বলছি|আমি বলেছিলাম|নাম.{0,24}হবে|জন্যই জানতে চেয়েছি|\b(?:i meant|not|correct|instead|that should|use .*previous|was asking|previous question|bank in my last question)\b',re.I)
 

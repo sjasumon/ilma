@@ -237,3 +237,21 @@ def test_award_caveat_is_not_cited_as_the_award():
     assert [line['text'] for line in lines]==['Synthetic Bank was named best bank.']
     lines,_=reviewed.spoken_lines('পরীক্ষা ব্যাংককে সেরা ব্যাংক বলেছে। তবে পুরস্কার ব্যাংকের নিরাপত্তার প্রমাণ নয়।','bn',[award],[],'bank_overview')
     assert [line['text'] for line in lines]==['পরীক্ষা ব্যাংককে সেরা ব্যাংক বলেছে।']
+
+def test_spoken_questions_keep_their_reviewed_answers_without_a_closing_mark():
+    assert reviewed.question_key('Tell me about my account?') in reviewed.question_keys('Tell me about my account')
+    assert reviewed.question_key('Someone asked for my PIN.') in reviewed.question_keys('Someone asked for my PIN')
+
+def test_incident_lines_need_a_history_question_and_their_year():
+    incident=card_fact('incident','history','Synthetic incident',event_date='2014-05-01')
+    lines,_=reviewed.spoken_lines('There is one report from ২০১৪. It is not confirmed.','bn',[incident],[],'bank_history')
+    assert [line['text'] for line in lines]==['There is one report from ২০১৪.']
+    assert reviewed.spoken_lines('There is one report from 2014.','en',[incident],[],'bank_overview')==([],[])
+
+def test_declared_evidence_sits_on_the_claim_not_the_comfort_sentence():
+    row=card_fact('reviewed:bank:1','reviewed_evidence','Synthetic quote')
+    lines,_=reviewed.spoken_lines('It is natural to feel scared. The limit is 2 lakh.','en',[row],[],None)
+    assert [line['text'] for line in lines]==['The limit is 2 lakh.']
+
+def test_a_malformed_number_cannot_lose_the_reviewed_answer():
+    assert '7.5' in reviewed.numbers('Version 1.2.3 and 7.5%')

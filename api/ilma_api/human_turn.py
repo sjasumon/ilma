@@ -638,7 +638,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     facts_started=time.monotonic();conversation_bank_before=c.institution_id
     r,c,packs,comparisons,registry,facts=await call(db,lambda owned:prepare(owned,safe,c,banks,forced,resolved))
     from ilma_api.reviewed_sources import context as reviewed_context
-    memory['_reviewed_context']=await call(db,lambda owned:reviewed_context(owned,safe,r,facts,c.language,conversation_bank_before))
+    heard=redact_user(context.raw_text or text)
+    memory['_reviewed_context']=await call(db,lambda owned:reviewed_context(owned,heard,r,facts,c.language,conversation_bank_before))
     trace.append(dict(stage='FACTS',model='database',ms=round((time.monotonic()-facts_started)*1000),status='ok'))
     if r.intent=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
     blocked=None if selected else answers.refusal(text,c.language=='bn',any(b['confidence']>=.9 for b in r.candidates))
@@ -665,6 +666,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         memory['clarify_candidates']=r.confirm_ids
         options=[{'value':'bank_'+str(i+1),'label':next(b['name_bn' if c.language=='bn' else 'name_en'] for b in banks if b['id']==value)} for i,value in enumerate(r.confirm_ids)]
         question=(' নাকি '.join(o['label'] for o in options)+' বলছেন?' if c.language=='bn' else 'Did you mean '+' or '.join(o['label'] for o in options)+'?')
+        # One close bank is a yes-or-no question, not a list of one.
+        if len(options)==1:options=[{'value':'bank_1','label':'হ্যাঁ' if c.language=='bn' else 'Yes'},{'value':'ask_bank','label':'না' if c.language=='bn' else 'No'}]
         result=render(controls('unclear',c,question),c,[],trace,'code');result['next']={'question':question,'options':options}
         return await finish(result,safe,id,memory,db,started)
     if r.bank_id is None and (selected=='ask_bank' or r.intent in {'bank_overview','bank_condition','bank_reasons','bank_figures','bank_profile','bank_history','bank_awards','services_list','service_detail'}):

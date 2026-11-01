@@ -694,10 +694,12 @@ async def run_scripted_turn(text,context,banks,db,candidates=(),choice=None,watc
 async def run_agent_turn(text,context,banks,db,candidates=(),choice=None,watch_identity=None,client=None,device_hash=None,on_sentence=None):
     from ilma_api.human_resolver import best_rate_product
     product=None if choice or context.audio_truncated else best_rate_product(text)
-    if product:
+    from ilma_api.human_agent import enabled,run
+    from ilma_api.reviewed_answers import has_answer
+    # A reviewed best-rate question keeps its saved answer; any other wording is computed.
+    if product and not (enabled() and has_answer(context.raw_text or text,context.ui_lang)):
         from ilma_api.dps_compare import run_question
         return await run_question(text,context,banks,db,watch_identity,client,device_hash,on_sentence,product)
-    from ilma_api.human_agent import enabled,run
     if enabled():return await run(text,context,banks,db,candidates,choice,watch_identity,client,device_hash,on_sentence)
     return await run_scripted_turn(text,context,banks,db,candidates,choice,watch_identity,client,device_hash)
 

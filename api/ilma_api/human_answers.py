@@ -23,8 +23,12 @@ def on(day,bn):
     day=date.fromisoformat(str(day)[:10])
     return format_date(day,True) if bn else f'{day.day} {day:%B %Y}'
 
+SCAM=re.compile(r'চাইছে|চেয়েছে|চায়|ফোন|মেসেজ|\b(?:ask(?:ed|ing|s)?|wants?|wanted|messaged|called|calling)\b',re.I)
 def refusal(text,bn,named=False):
     """Account, PIN and off-topic questions end here. The words said are never repeated."""
+    # Someone else asking for a PIN is a scam warning, not a balance request.
+    if PIN.search(text) and SCAM.search(text):
+        return ('পিন দেবেন না। এটা প্রতারণা হতে পারে। পিন, ওটিপি বা পাসওয়ার্ড কাউকে জানাবেন না। মেসেজের উত্তর দেবেন না, আর কার্ড বা অ্যাপে থাকা ব্যাংকের নিজের নম্বরে ফোন করে জানান।' if bn else 'Please do not share your PIN. This may be a scam. Never give your PIN, OTP or password to anyone. Do not reply to the message, and call your bank on the number on your card or app.',('আপনি আগে জিজ্ঞেস করে ঠিক করেছেন।' if bn else 'You did the right thing by asking first.'))
     if PIN.search(text):
         return ('দুঃখিত, আমি হিসাবের ব্যালেন্স দেখতে পারি না। আপনার পিন কখনো কাউকে জানাবেন না, এখানেও না। ব্যালেন্স জানতে ব্যাংকের অ্যাপ বা শাখায় যোগাযোগ করুন। ব্যাংকের অবস্থা বা সুদের হার বলতে পারি।' if bn else 'Sorry, I cannot check your balance. Never share your PIN with anyone, including here. Please use your bank\'s app or visit a branch. I can tell you about bank conditions or rates.'),''
     if BALANCE.search(text) or ACCOUNT.search(text):

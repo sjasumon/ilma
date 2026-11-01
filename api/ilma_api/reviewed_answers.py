@@ -14,14 +14,31 @@ def question_key(text):
     from ilma_api.human_memory import redact_user
     return hashlib.sha256(normalize_alias(redact_user(text)).encode()).hexdigest()
 
+def question_keys(text):
+    """A spoken question usually has no closing mark, and the stored question may."""
+    text=text.strip()
+    return {question_key(text+mark) for mark in ('','?','.')}
+
+def has_answer(text,language):
+    try:
+        data=json.loads((ROOT/'static/audio/answers/manifest.json').read_text())
+        keys=question_keys(text)
+        return any(v.get('language')==language and keys&set(v.get('question_keys',[])) for v in data['clips'].values())
+    except (OSError,ValueError,KeyError):return False
+
+def digits(text):
+    return str(text).translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789'))
+
 def numbers(text):
     """Stated numbers without calendar years; 2.50 and 2.5 are the same figure."""
-    found=re.findall(r'\d+(?:[.,]\d+)*',str(text).translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789')))
-    values={format(float(n.replace(',','')),'g') if len(n)<16 else n for n in found}
+    values=set()
+    for n in re.findall(r'\d+(?:[.,]\d+)*',digits(text)):
+        try:values.add(format(float(n.replace(',','')),'g'))
+        except ValueError:continue
     return {n for n in values if not re.fullmatch(r'(?:19|20)\d\d',n)}
 
 def stated_numbers(f):
-    """The number a fact asserts, not every number in its label or its source quote."""
+    """The numbers a fact asserts, not the numbers in its product name or source quote."""
     from ilma_api.human_tokens import card_text
     v=f.get('values') or {}
     if f.get('kind')=='service':return numbers(v.get('rate',''))
@@ -29,40 +46,42 @@ def stated_numbers(f):
         raw=v.get('value_num') or v.get('value') or ''
         try:return {format(float(raw),'g'),format(round(float(raw)*100,6),'g')}
         except ValueError:return numbers(raw)
-    try:text=card_text(f,'en')
+    try:return numbers(card_text(f,'en'))
     except (KeyError,TypeError,ValueError):return set()
-    return set(sorted(numbers(text),key=text.find)[:1])
 
 STATUS_WORDS=re.compile(r'অবস্থা|ঝুঁকি|condition|\brisk\b',re.I)
 AWARD_WORDS=re.compile(r'পুরস্কার|স্বীকৃতি|সেরা|\bnamed\b|\bawards?\b',re.I)
 AWARD_CAVEAT=re.compile(r'প্রমাণ নয়|\bnot proof\b',re.I)
-UNSPOKEN={'history','coverage','peer','inventory'}
+UNSPOKEN={'coverage','peer','inventory'}
+SENTENCE=r'(?<=[।?!])\s+|(?<=\.)\s+'
+
+def said_in(f,sentence,said,intent):
+    kind=f.get('kind')
+    if kind=='status':return bool(STATUS_WORDS.search(sentence))
+    if kind=='award':return bool(AWARD_WORDS.search(sentence)) and not AWARD_CAVEAT.search(sentence)
+    # An incident is matched by its year, and only when the question was about incidents.
+    if kind=='history':return intent=='bank_history' and str((f.get('values') or {}).get('event_date',''))[:4] in digits(sentence)
+    return bool(stated_numbers(f)&said)
 
 def spoken_lines(body,language,facts,cited,intent):
     """One card line per spoken sentence, carrying only the facts that sentence states."""
-    pool={f['fact_id']:f for f in [*facts,*cited]}.values()
-    # Incidents reach the card only when the question was about them.
-    pool=[f for f in pool if f.get('kind') not in UNSPOKEN or intent=='bank_history' and f.get('kind')=='history' and f in cited]
-    declared=[f for f in pool if f.get('kind')=='reviewed_evidence']
-    lines=[];kept={}
-    for sentence in re.split(r'(?<=[।?!])\s+|(?<=\.)\s+',body.strip()):
-        if not sentence.strip():continue
-        said=numbers(sentence);own=[f for f in pool if stated_numbers(f)&said]
-        named=[f for f in own if f.get('kind')=='service' and str((f.get('values') or {}).get('product','')).casefold().split(' ')[-1] in sentence.casefold()]
-        own=[f for f in own if f.get('kind')!='service']+(named or [f for f in own if f.get('kind')=='service'])[:2]
-        own+=[f for f in pool if f.get('kind')=='status' and STATUS_WORDS.search(sentence) or f.get('kind')=='award' and AWARD_WORDS.search(sentence) and not AWARD_CAVEAT.search(sentence) or f.get('kind')=='history' and f in pool]
-        own=list({f['fact_id']:f for f in own}.values())
-        if not own:continue
-        kept.update({f['fact_id']:f for f in own})
-        lines.append(dict(text=sentence.strip(),fact_ids=[f['fact_id'] for f in own],source=own[0].get('source',{})))
-    # A term or declared source backs the answer as a whole when no sentence quotes its number.
-    whole=[f for f in pool if f['fact_id'] not in kept and (f.get('kind')=='term' and f in cited or f in declared and not kept)]
-    if whole:
-        first=re.split(r'(?<=[।?!])\s+|(?<=\.)\s+',body.strip())[0].strip()
-        if lines and lines[0]['text']==first:lines[0]['fact_ids']+=[f['fact_id'] for f in whole]
-        elif first:lines.insert(0,dict(text=first,fact_ids=[f['fact_id'] for f in whole],source=whole[0].get('source',{})))
-        kept.update({f['fact_id']:f for f in whole})
-    return lines,list(kept.values())
+    pool=[f for f in {f['fact_id']:f for f in [*facts,*cited]}.values() if f.get('kind') not in UNSPOKEN]
+    sentences=[s.strip() for s in re.split(SENTENCE,body.strip()) if s.strip()]
+    own={}
+    for sentence in sentences:
+        said=numbers(sentence);found=[f for f in pool if said_in(f,sentence,said,intent)]
+        rates=[f for f in found if f.get('kind')=='service']
+        named=[f for f in rates if str((f.get('values') or {}).get('product','')).casefold().split(' ')[-1] in sentence.casefold()]
+        own[sentence]=[f for f in found if f.get('kind')!='service']+(named or rates)[:max(2,len(said))]
+    kept={f['fact_id'] for row in own.values() for f in row}
+    # A declared source or a cited term backs the claim when no sentence quotes its number.
+    whole=[f for f in pool if f['fact_id'] not in kept and (f.get('kind')=='reviewed_evidence' or f.get('kind')=='term' and f in cited)]
+    if whole and sentences:
+        claim=next((s for s in sentences if re.search(r'\d',digits(s))),sentences[0])
+        own[claim]=[*own[claim],*whole]
+    lines=[dict(text=s,fact_ids=[f['fact_id'] for f in row],source=row[0].get('source',{})) for s,row in own.items() if row]
+    public={f['fact_id']:f for row in own.values() for f in row}
+    return lines,list(public.values())
 
 def apply(result,user,context,memory):
     if not context:return result
@@ -71,7 +90,8 @@ def apply(result,user,context,memory):
         data=json.loads((ROOT/'static/audio/answers/manifest.json').read_text())
         from ilma_api.reviewed_sources import complete
         if not complete(data):return result
-        candidates=[v for v in data['clips'].values() if v.get('language')==result['language'] and question_key(user) in v.get('question_keys',[]) and v.get('source_sha256')==context['source_sha256'] and v.get('slots')==context['slots']]
+        asked=question_keys(user)|set(context.get('question_keys',[]))
+        candidates=[v for v in data['clips'].values() if v.get('language')==result['language'] and asked&set(v.get('question_keys',[])) and v.get('source_sha256')==context['source_sha256'] and v.get('slots')==context['slots']]
         if not candidates:return result
         previous=memory.get('reviewed_answer_key');item=next((v for v in candidates if v['key']!=previous),candidates[0]);text=item['text']
         if hashlib.sha256(text.encode()).hexdigest()!=item['text_sha256']:return result

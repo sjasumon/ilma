@@ -20,6 +20,7 @@ class VoiceContext(BaseModel):
     choice: Choice | None = None
     ivr_step: Literal['open', 'mic', 'language', 'menu', 'name', 'confirm', 'report', 'next'] | None = None
     audio_truncated: bool = False
+    raw_text: str | None = None
 
 
 class VoiceIntent(BaseModel):
@@ -90,6 +91,12 @@ def indexed_alias(alias):
     return normalized,len(normalized.split())
 
 
+def different_start(alias, heard):
+    """A short Latin name must start alike: Sitty can be City, but Black cannot be SBAC."""
+    same=lambda a,b:a==b or {a,b}=={'c','s'}
+    return len(alias)<=5 and alias.isascii() and heard.isascii() and not same(alias[0],heard[0])
+
+
 def match_candidates(text, banks, scorer=None):
     query = normalize_alias(text)
     tokens = query.split()
@@ -122,7 +129,7 @@ def match_candidates(text, banks, scorer=None):
                             scorer = partial_ratio
                         except ImportError:
                             raise VoiceError('voice_dependency_missing', 503, 'ভয়েস সেবা প্রস্তুত নয়।', 'Install the voice service dependencies.') from None
-                    score = scorer(normalized, window)
+                    score = 0 if different_start(normalized, window) else scorer(normalized, window)
                     # Partial substring alone is not sufficient for different-length words.
                     if score == 100 and len(window) != len(normalized):
                         score = 85
@@ -131,7 +138,7 @@ def match_candidates(text, banks, scorer=None):
         if best >= 75:
             matched_windows[bank['id']]=best_window
             single = len(normalize_alias(best_alias).split()) == 1
-            short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'break', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
+            short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'break', 'black', 'brack', 'bragg', 'brak', 'ব্ল্যাক', 'ব্রাক', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
             follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', fold_bengali_vowels(text), re.I))
             candidates.append({**{k: bank[k] for k in ('id', 'slug', 'name_bn', 'name_en', 'type', 'coverage')},
                                'licensed': bank.get('licensed', True), 'confidence': round(best / 100, 3), 'alias': best_alias,

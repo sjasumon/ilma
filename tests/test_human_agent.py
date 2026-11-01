@@ -102,3 +102,29 @@ def test_memory_redacts_identifiers_and_amounts_and_signatures():
 def test_comparison_retains_bank_and_ignores_card_filters(db):
     rows=comparison_facts(db,1,'fdr',12,'conventional',network='Visa',tier='Gold')
     assert {r['institution_id'] for r in rows}=={1,2}
+
+
+def test_someone_else_asking_for_a_pin_gets_the_scam_warning():
+    from ilma_api.human_answers import refusal
+    assert 'scam' in refusal('A man from the bank called asking for my PIN',False)[0]
+    assert 'প্রতারণা' in refusal('ব্যাংক থেকে ফোন করে পিন চাইছে',True)[0]
+    assert 'scam' not in refusal('My PIN is 1234, can you check my balance?',False)[0]
+
+def test_cleaned_transcript_still_finds_the_question_that_was_said():
+    from ilma_api.voice_text import clean_transcript
+    from ilma_api.reviewed_answers import question_key
+    said='ঘরে বসে অল্প অল্প করে জমাতে চাই'
+    assert question_key(clean_transcript(said))!=question_key(said)
+    assert VoiceContext(raw_text=said).raw_text==said
+
+def test_mishearings_name_brac_only_beside_the_word_bank():
+    from ilma_api.human_resolver import resolve
+    fresh=Conversation(language='en')
+    for said in ('Tell me about Black Bank','Brack Bank FDR','ব্ল্যাক ব্যাংক সম্পর্কে বলুন','ব্রাক ব্যাংক সম্পর্কে বলুন'):
+        assert resolve(said,fresh,BANKS).bank_id==1,said
+    assert resolve('What is black money?',fresh,BANKS).bank_id is None
+
+def test_unrelated_short_names_do_not_look_like_a_bank():
+    from ilma_api.voice_text import different_start
+    assert different_start('sbac','black') and different_start('brac','zebra')
+    assert not different_start('city','sitty') and not different_start('brac','bragg')

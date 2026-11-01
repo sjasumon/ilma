@@ -25,7 +25,7 @@ def evidence(db,refs):
     return rows
 
 def context(db,user,r,facts,language=None,previous_bank=None):
-    base={'source_sha256':reviewed.fingerprint(facts),'slots':reviewed.slots(r),'facts':list(facts.values())}
+    base={'source_sha256':reviewed.fingerprint(facts),'slots':reviewed.slots(r),'facts':list(facts.values()),'question_keys':sorted(reviewed.question_keys(user))}
     # The award an overview opens with is sourced from its own tables, outside the fingerprint.
     if r.intent in {'bank_overview','bank_condition'} and r.bank_id:
         from ilma_api.awards import intro_award,fact
@@ -35,7 +35,7 @@ def context(db,user,r,facts,language=None,previous_bank=None):
     try:
         data=json.loads((reviewed.ROOT/'static/audio/answers/manifest.json').read_text())
         if not complete(data):return base
-        item=next((v for v in data['clips'].values() if (language is None or v.get('language')==language) and reviewed.question_key(user) in v.get('question_keys',[]) and v.get('source_refs') is not None),None)
+        item=next((v for v in data['clips'].values() if (language is None or v.get('language')==language) and reviewed.question_keys(user)&set(v.get('question_keys',[])) and v.get('source_refs') is not None),None)
         if item is None:return base
         rows=evidence(db,item['source_refs'])
         # Reviewed explicit questions use their declared sources, independently of a previous bank.

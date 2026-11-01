@@ -292,6 +292,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             finally: del wav
         clean_started=time.monotonic()
         try:
+            context = context.model_copy(update={'raw_text': text})
             text = clean_transcript(text)
         except VoiceError as error:
             if error.code == 'unclear':
