@@ -317,7 +317,7 @@ def service_lines(text,lines,c,r,registry,facts):
             if many>1:
                 # Several schemes: say how many, then what the word means after the rates.
                 short=re.sub(r'জমানোর স্কিম$','জমানো',meaning) if bn else re.sub(r'^A scheme for ','',meaning)
-                counted=COUNTS.get(many,str(many))
+                counted=COUNTS.get(many,(str(many),str(many)))
                 lead.append((f'{whose}{counted[0]}টি {label[0]} আছে।' if bn else f"{name.text} has {counted[1]} {label[1]} schemes.",[]))
                 closing=[((f'{label[0]} মানে {short}।' if bn else f'{label[1]} means {short[:1].lower()+short[1:]}.'),[word['fact_id']])]
             else:lead.append(((f'{label[0]} মানে {meaning}।' if bn else f'{label[1]} means {meaning[:1].lower()+meaning[1:]}.'),[word['fact_id']]))
