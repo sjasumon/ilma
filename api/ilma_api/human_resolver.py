@@ -7,7 +7,7 @@ from ilma_api.voice_numbers import normalize_numbers
 ACRONYMS={'sbacbank':('SBAC','এসবিএসি','South Bangla Bank','South Bangla','সাউথ বাংলা ব্যাংক','সাউথ বাংলা'),'nbl':('National Bank','ন্যাশনাল ব্যাংক'),'islamibank':('Islami Bank','ইসলামী ব্যাংক'),'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
  'nccbank':('NCC','এনসিসি'),'dutchbangl':('DBBL','ডিবিবিএল'),
  'primebank':('Prime','প্রাইম'),
- 'citybank':('City Bank','সিটি ব্যাংক'),'bracbank':('BRAC','ব্র্যাক','break bank','breakbank','ব্রেক ব্যাংক')}
+ 'citybank':('City Bank','সিটি ব্যাংক'),'bracbank':('BRAC','ব্র্যাক','break bank','breakbank','bragg bank','brak bank','ব্রেক ব্যাংক')}
 PROTECTION=re.compile(r'বীমা|বিমা|সুরক্ষা|\binsur(?:ance|ed|e)\b|\bprotect(?:ion|ed)\b|(?:ব্যাংক|bank).{0,20}(?:(?<!ম্)বন্ধ|clos)|টাকা.{0,15}সুরক্ষিত',re.I)
 CORRECTION=re.compile(r'^না(?:[\s,।]|$)|না আমি|নয়|নয়|ভুল|শুধরে|বদলে|সংশোধন|ধরুন|আগের প্রশ্ন|আমার কথা ছিল|কথাই বলছি|আমি বলেছিলাম|নাম.{0,24}হবে|জন্যই জানতে চেয়েছি|\b(?:i meant|not|correct|instead|that should|use .*previous|was asking|previous question|bank in my last question)\b',re.I)
 
@@ -106,6 +106,10 @@ def resolve(text,c,banks):
         if len(affirmative)==1:strong=affirmative
     named=list(dict.fromkeys(b['id'] for b in strong))
     bank=named[0] if named else c.institution_id
+    # A plausible new name must not silently become the previous bank.
+    uncertain_name=not named and any(b['confidence']<.9 for b in candidates)
+    explicit_new_name=bool(re.search(r'\b(?:tell me about|what about|how about|about)\s+(?!(?:this|that|the|my|your|its)\b)[a-z][a-z -]*\bbank\b',text,re.I))
+    if uncertain_name or (explicit_new_name and not named):bank=None
     if correction and not [b for b in strong if b['id'] not in excluded] and excluded:
         bank=c.institution_id if c.institution_id not in excluded else None
     product=next((p for p,pattern in [('fdr',r'এফডিআর|এফ ডি আর|\bfdr\b|fixed deposit|ফিক্সড ডিপোজিট|স্থায়ী আমানত'),('dps',r'ডিপিএস|ডি পি এস|\bdps\b|monthly savings|মাসিক সঞ্চয়|কনফিডেন্স|কোটিপতি|লাখপতি'),('savings',r'সঞ্চয়ী|সেভিংস|\bsavings?\b'),('card',r'কার্ড|\bcards?\b|visa|mastercard'),('home_loan',r'গৃহঋণ|home loan'),('personal_loan',r'personal loan|ব্যক্তিগত ঋণ'),('auto_loan',r'গাড়ি|car loan|auto loan')] if re.search(pattern,text,re.I)),None)
@@ -134,7 +138,7 @@ def resolve(text,c,banks):
         if match is None:tenor=c.tenor
         if selected=='card':network=network or c.network;tier=tier or c.tier
     if intent!='compare':compare=[]
-    confirm=[b['id'] for b in candidates if .7<=b['confidence']<.9][:2] if not bank else []
+    confirm=[b['id'] for b in candidates if .7<=b['confidence']<.9][:2] if not named else []
     # One close name with a clear topic is that bank; two close names still ask.
     if len(confirm)==1 and (selected or metric_named(text)):bank=confirm[0];confirm=[]
     wanted=next((name for name,pattern in [('sub_branches',r'উপশাখা|sub.branch'),('branches',r'শাখা|branches'),('founded_year',r'প্রতিষ্ঠা(?=$|[\s:?।]|কাল|সাল|বছর)|প্রতিষ্ঠিত|কোন সালে|যাত্রা শুরু|founded|established'),('atms',r'এটিএম|\batms?\b'),('customers',r'গ্রাহকের সংখ্যা|customers'),('agent_outlets',r'এজেন্ট|agent outlet'),('known_for',r'কী জন্য পরিচিত|known for')] if re.search(pattern,text,re.I)),None)
@@ -142,7 +146,7 @@ def resolve(text,c,banks):
     # "এফডিআরের মুনাফার হার" is an Islamic deposit rate, not the bank's profit.
     if selected in {'fdr','dps','savings'} and product:metric=None
     if metric=='net_profit' and re.search(r'আগের বছর|গত বছর|last year|previous year',text,re.I) and not re.search(r'অন্য ব্যাংক|other bank',text,re.I):intent='bank_figures'
-    explain=bool(re.search(r'মানে|অর্থ|জিনিস|শব্দটা.*বুঝিয়ে|বোঝায়|(?:এফডিআর|ডিপিএস|মূলধন) কী$|\bmean\b|what is (?:a |an |net |capital |credit )|explain .*simply',text,re.I))
+    explain=bool(re.search(r'মানে|অর্থ|জিনিস|শব্দটা.*বুঝিয়ে|বোঝায়|(?:এফডিআর|ডিপিএস|মূলধন) (?:কী|কি)[?।.!]*$|\bmean\b|what (?:is|are) (?:an? )?(?:fdr|dps|fixed deposits?|savings accounts?)[?।.!]*$|what is (?:a |an |net |capital |credit )|explain .*simply',text,re.I))
     if not correction and intent not in {'compare','insurance','stop','repeat'}:
         if explain and (metric or product or re.search(r'মধ্যমান|বাফার|median|buffer',text,re.I)):intent='explain_term'
         elif wanted:intent='bank_profile'

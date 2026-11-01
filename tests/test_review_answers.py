@@ -413,3 +413,54 @@ def test_the_audio_route_passes_the_lead_in_request_through():
     with patch.object(audio_cache,'get_store',return_value=Store()):
         assert asyncio.run(audio_cache.audio_response('a',True))=='ok'
     assert seen=={'token':'a','lead':True}
+
+@pytest.mark.parametrize('name',['Bragg Bank','Brak Bank','break bank','BRAC Bank'])
+def test_new_brac_name_replaces_eastern_context(name):
+    r=resolve('Tell me about '+name,Conversation(institution_id=2,language='en',product='fdr',tenor=12),BANKS)
+    assert r.bank_id==1 and r.intent=='bank_overview'
+    assert r.product is None and r.tenor is None
+
+@pytest.mark.parametrize('text',['What is FDR','What is FDR?','What is DPS?','What is a fixed deposit?','এফডিআর কী?','ডিপিএস কি?'])
+@pytest.mark.parametrize('bank',[None,1,2])
+def test_definitions_do_not_need_a_bank_or_request_its_rates(text,bank):
+    r=resolve(text,Conversation(institution_id=bank),BANKS)
+    assert r.intent=='explain_term'
+
+
+def test_uncertain_new_name_does_not_silently_reuse_the_current_bank():
+    r=resolve('Tell me about Brakx Bank',Conversation(institution_id=2),BANKS)
+    assert r.bank_id is None and r.confirm_ids
+
+
+def test_unrecognized_explicit_new_bank_does_not_reuse_current_bank():
+    r=resolve('Tell me about Unknown Example Bank',Conversation(institution_id=2),BANKS)
+    assert r.bank_id is None
+
+
+def test_followup_sequence_switches_banks_then_preserves_context_for_rates():
+    c=Conversation(language='en')
+    for text,bank,intent in [('Tell me about Eastern Bank',2,'bank_overview'),('Tell me about Bragg Bank',1,'bank_overview'),('What is FDR?',1,'explain_term'),('What is its FDR rate?',1,'service_detail'),('Tell me about Brak Bank',1,'bank_overview')]:
+        r=resolve(text,c,BANKS)
+        assert (r.bank_id,r.intent)==(bank,intent)
+        c=c.model_copy(update={'institution_id':r.bank_id,'product':r.product,'tenor':r.tenor,'last_intent':r.intent})
+
+
+def test_server_memory_follows_bank_switch_and_definition_across_five_turns(db):
+    async def scenario():
+        c=Conversation(language='en')
+        turns=[('Tell me about Eastern Bank',2,'bank_overview'),('Tell me about Bragg Bank',1,'bank_overview'),('What is FDR?',1,'explain_term'),('What is its FDR rate?',1,'service_detail'),('Tell me about Brak Bank',1,'bank_overview')]
+        from ilma_api.human_stream import Draft
+        with patch('ilma_api.human_turn.generate',AsyncMock(return_value=Draft(error='offline'))):
+            for text,bank,intent in turns:
+                result=await run(text,VoiceContext(agent=True,ui_lang='en',speak=False,conversation=c),BANKS,db)
+                assert result['intent']==intent,text
+                assert result['conversation']['institution_id']==bank,text
+                assert result['conversation']['conversation_token']
+                if intent=='explain_term':assert any(f['kind']=='term' for f in result['facts'])
+                c=Conversation.model_validate(result['conversation'])
+    asyncio.run(scenario())
+
+@pytest.mark.parametrize('text',['What is FDR rate?','What is its FDR rate?','What is the DPS rate?'])
+def test_rate_questions_are_not_mistaken_for_definitions(text):
+    r=resolve(text,Conversation(institution_id=1),BANKS)
+    assert r.intent=='service_detail' and r.bank_id==1
