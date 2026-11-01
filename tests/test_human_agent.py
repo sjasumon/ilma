@@ -154,3 +154,11 @@ def test_saved_answer_keys_still_use_the_frozen_filter():
     from ilma_api.voice_text import normalize_alias
     said='Can you tell me BRAC Bank account details?'
     assert question_key(said)==hashlib.sha256(normalize_alias('Can you tell me BRAC Bank [identifier omitted]').encode()).hexdigest()
+
+
+def test_you_said_line_hides_spoken_numbers_but_keeps_the_question():
+    from ilma_api.human_memory import mask_identifiers
+    assert mask_identifiers('can you tell me uh Black Bank account details')=='can you tell me uh Black Bank account details'
+    for said,secret in (('My PIN is 1234, check my balance','1234'),('account 12345678 balance','12345678'),('আমার পিন ১২৩৪','১২৩৪'),('otp 556677','556677')):
+        out=mask_identifiers(said);assert secret not in out and '••••' in out,(said,out)
+    assert 'balance' in mask_identifiers('account 12345678 balance')

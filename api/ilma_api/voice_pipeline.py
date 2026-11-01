@@ -1,4 +1,5 @@
 """Server-side voice/text pipeline; transcript -> matched intent -> sourced result."""
+from ilma_api.human_memory import mask_identifiers
 import asyncio
 import base64
 import io
@@ -296,7 +297,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
             text = clean_transcript(text)
         except VoiceError as error:
             if error.code == 'unclear':
-                yield event('transcript', {'text': text, 'language': context.ui_lang, 'unusable': True})
+                yield event('transcript', {'text': mask_identifiers(text), 'language': context.ui_lang, 'unusable': True})
                 raise VoiceError('transcript_language_mismatch', 422,
                     'ভয়েস সেবা অন্য লিপিতে কথা লিখেছে। নিচের লেখা দেখুন, আবার বলুন বা সংশোধন করে লিখুন।',
                     'The speech service returned text in an unexpected script. Check what it heard, then speak again or type a correction.') from None
@@ -312,11 +313,11 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 else:banks=banks()
             except Exception:
                 # Preserve the recognized words even if source lookup fails.
-                if not context.choice:yield event('transcript', {'text':text,'language':turn_language(text,context)})
+                if not context.choice:yield event('transcript', {'text':mask_identifiers(text),'language':turn_language(text,context)})
                 raise
         language_candidates=match_candidates(text,banks) if text and not callable(banks) else []
         context=context.model_copy(update={'ui_lang':turn_language(text,context,language_candidates,context.choice)})
-        if not context.choice:yield event('transcript', {'text':text,'language':context.ui_lang})
+        if not context.choice:yield event('transcript', {'text':mask_identifiers(text),'language':context.ui_lang})
         if timings:
             for frame in timings.events():yield frame
         if action:
@@ -430,7 +431,7 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
         trace_stage(diagnostic, 'matching_completed', started, candidates=len(candidates))
         language = decide_language(text, candidates, context.ui_lang)
         if language != context.ui_lang:
-            yield event('transcript', {'text': text, 'language': language})
+            yield event('transcript', {'text': mask_identifiers(text), 'language': language})
         from ilma_api.other_banks import find_other_bank
         other = find_other_bank(text)
         if other:
