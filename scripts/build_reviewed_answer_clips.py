@@ -1,4 +1,4 @@
-"""Generate a reviewed bilingual answer set verbatim with resumable ordered speech accounts."""
+"""Generate reviewed bilingual answers with exact, separately hashed spoken-number scripts."""
 import argparse,asyncio,hashlib,json,os,re,sys
 from pathlib import Path
 
@@ -24,6 +24,11 @@ async def generate(items,directory,client):
     # One synthesis for identical same-language scripts, while retaining all question IDs.
     groups={}
     for row in items:groups.setdefault((row['language'],row['text_sha256']),[]).append(row)
+    from ilma_api.exact_speech_numbers import prepare
+    for row in items:
+        speech,spans=prepare(row['text'],row['language'])
+        if not spans:speech=row['text']
+        row.update(tts_text=speech,tts_sha256=hashlib.sha256(speech.encode()).hexdigest(),tts_policy='exact-number-words-v1',numeric_spans=spans)
     canonical=[rows[0] for rows in groups.values()]
     manifest=await shared_generate(canonical,directory,client,request_timeout=120)
     for rows in groups.values():
@@ -38,12 +43,18 @@ async def generate(items,directory,client):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--approved-json',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--env-file',type=Path);p.add_argument('--generate',action='store_true');a=p.parse_args();items=approved(a.approved_json)
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'api'))
+    from ilma_api.exact_speech_numbers import prepare
     unique={(i['language'],i['text_sha256']):i for i in items}
-    print(f"186 mapped recordings; {len(unique)} unique scripts; {sum(len(i['text']) for i in items)} mapped characters; {sum(len(i['text']) for i in unique.values())} synthesis characters",flush=True)
+    speech_chars=sum(len(prepare(i['text'],i['language'])[0]) for i in unique.values())
+    print(f"186 mapped recordings; {len(unique)} unique scripts; {sum(len(i['text']) for i in items)} mapped characters; {speech_chars} spoken-script characters before reuse",flush=True)
     if not a.generate:return
     if a.env_file:
         from dotenv import load_dotenv
         load_dotenv(a.env_file,override=True)
+        import importlib
+        from ilma_api import settings
+        importlib.reload(settings)
     os.environ['DB_NAME']='ilma'
     sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'api'))
     import httpx

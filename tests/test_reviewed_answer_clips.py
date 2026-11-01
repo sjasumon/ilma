@@ -26,3 +26,35 @@ def test_incomplete_edited_or_unapproved_batch_is_rejected(tmp_path,problem):
     elif problem=='language':d['clips'][0]['language']='en'
     p.write_text(json.dumps(d))
     with pytest.raises(ValueError):builder.approved(p)
+
+
+def test_tts_change_invalidates_old_audio_even_when_display_text_is_same(tmp_path,monkeypatch):
+    import asyncio,sys
+    from unittest.mock import AsyncMock
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+    from build_approved_card_clips import generate
+    from ilma_api import elevenlabs
+    text='৭%';speech='সাত শতাংশ';audio=tmp_path/'bn/q001.mp3';audio.parent.mkdir();audio.write_bytes(b'old numeric audio')
+    item=dict(key='bn:q001',file='bn/q001.mp3',text=text,text_sha256=hashlib.sha256(text.encode()).hexdigest(),tts_text=speech,tts_sha256=hashlib.sha256(speech.encode()).hexdigest())
+    old={**item,'tts_sha256':item['text_sha256'],'audio_sha256':hashlib.sha256(audio.read_bytes()).hexdigest()}
+    (tmp_path/'manifest.json').write_text(json.dumps({'clips':{item['key']:old}}))
+    monkeypatch.setattr(elevenlabs,'accounts',lambda:[('a','synthetic','v')]*3)
+    synth=AsyncMock(return_value=(b'new spoken words',{'key_name_used':'primary','voice_id':'synthetic'}));monkeypatch.setattr(elevenlabs,'synthesize',synth)
+    result=asyncio.run(generate([item],tmp_path,None,120))
+    assert synth.await_args.args[1]==speech and result['batch_complete']
+    assert result['clips'][item['key']]['text']==text and audio.read_bytes()==b'new spoken words'
+
+
+def test_failed_replacement_never_marks_stale_clip_batch_complete(tmp_path,monkeypatch):
+    import asyncio,sys
+    from unittest.mock import AsyncMock
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+    from build_approved_card_clips import generate
+    from ilma_api import elevenlabs
+    item=dict(key='bn:q001',file='bn/q001.mp3',text='৭%',text_sha256='a'*64,tts_text='সাত শতাংশ',tts_sha256='b'*64)
+    audio=tmp_path/item['file'];audio.parent.mkdir();audio.write_bytes(b'old')
+    (tmp_path/'manifest.json').write_text(json.dumps({'clips':{item['key']:{**item,'tts_sha256':'a'*64,'audio_sha256':hashlib.sha256(b'old').hexdigest()}}}))
+    monkeypatch.setattr(elevenlabs,'accounts',lambda:[('a','synthetic','v')]*3)
+    monkeypatch.setattr(elevenlabs,'synthesize',AsyncMock(side_effect=ValueError('synthetic failure')))
+    with pytest.raises(ValueError):asyncio.run(generate([item],tmp_path,None,120))
+    saved=json.loads((tmp_path/'manifest.json').read_text());assert saved['batch_complete'] is False and saved['remaining_clips']==1

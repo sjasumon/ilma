@@ -27,6 +27,9 @@ def prepare(text,language):
     rendered=text.translate(str.maketrans(BN_DIGITS,'0123456789')).replace('−','-')
     rendered=re.sub(r'(?<=\d)[–—-](?=\d)',' থেকে ' if language=='bn' else ' to ',rendered)
     rendered=re.sub(r'(?:মাইনাস|ঋণাত্মক|minus)\s+(?=\d)','-',rendered,flags=re.I)
+    if language=='en':
+        # Say currency after the amount while preserving explicit lakh/crore units.
+        rendered=re.sub(r'\bTk\.?\s*('+NUMBER.pattern+r')(?:\s+(lakh|crore|thousand|million|billion))?',lambda m:m[1]+(' '+m[2] if m[2] else '')+' taka',rendered,flags=re.I)
     spans=[]
     def replace(match):
         spoken=number_words(match[0],language);spans.append(dict(value=match[0].replace(',',''),spoken=spoken));return spoken

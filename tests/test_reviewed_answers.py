@@ -21,7 +21,7 @@ def test_exact_reviewed_text_and_saved_audio_are_selected(tmp_path,monkeypatch):
     assert out['next']['question']=='' and out['expects_reply'] is False
     assert memory['reviewed_answer_key']=='bn:q001'
 
-@pytest.mark.parametrize('problem',['source','bank','question','text','audio','partial','missing','traversal'])
+@pytest.mark.parametrize('problem',['source','bank','question','text','audio','partial','missing','traversal','tts','empty_tts'])
 def test_changed_source_bank_text_or_audio_never_plays_reviewed_recording(tmp_path,monkeypatch,problem):
     r,c,m,p=fixture(tmp_path,monkeypatch);user='প্রশ্ন'
     if problem=='source':c['source_sha256']='b'*64
@@ -32,6 +32,8 @@ def test_changed_source_bank_text_or_audio_never_plays_reviewed_recording(tmp_pa
     elif problem=='partial':m['batch_complete']=False
     elif problem=='missing':m['clips'].pop('en:q093')
     elif problem=='traversal':m['clips']['bn:q001']['file']='../private.mp3'
+    elif problem=='tts':m['clips']['bn:q001'].update(tts_text='Changed speech',tts_sha256='b'*64)
+    elif problem=='empty_tts':m['clips']['bn:q001'].update(tts_text='',tts_sha256=hashlib.sha256(b'').hexdigest())
     p.write_text(json.dumps(m));out=reviewed.apply(r,user,c,{})
     assert 'reviewed_audio_url' not in out and out['speech']=='Old synthetic answer'
 
@@ -80,3 +82,11 @@ def test_saved_recording_is_sent_by_pipeline_without_runtime_synthesis(db):
         assert 'event: speech\n' in wire and '/static/audio/answers/en/q001.mp3' in wire
         assert 'event: speech_unavailable' not in wire and 'event: error' not in wire
     asyncio.run(scenario())
+
+
+def test_display_and_spoken_script_have_separate_checked_hashes(tmp_path,monkeypatch):
+    r,c,m,p=fixture(tmp_path,monkeypatch)
+    m['clips']['bn:q001'].update(tts_text='পরীক্ষার কথ্য উত্তর।',tts_sha256=hashlib.sha256('পরীক্ষার কথ্য উত্তর।'.encode()).hexdigest())
+    p.write_text(json.dumps(m));out=reviewed.apply(r,'প্রশ্ন',c,{})
+    assert out['speech']=='পরীক্ষার উত্তর।' and out['speech_tts']=='পরীক্ষার কথ্য উত্তর।'
+    assert out['reviewed_audio_url']

@@ -21,4 +21,4 @@ def test_lists_and_ranges_do_not_turn_into_amounts_or_negatives():
 def test_english_exact_decimals_and_money():
     text,spans=prepare('Sample 15.63%, 2,121 crore and Tk 10000.','en')
     assert 'fifteen point six three percent' in text and 'two thousand one hundred twenty-one crore' in text
-    assert 'ten thousand' in text and [s['value'] for s in spans]==['15.63','2121','10000']
+    assert 'ten thousand taka' in text and [s['value'] for s in spans]==['15.63','2121','10000']
