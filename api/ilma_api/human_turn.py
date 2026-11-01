@@ -480,7 +480,7 @@ def fallback_lines(intent,c,registry,facts,key):
             forms=[name for name in registry if re.match(r'v\d+:',name) and name.split(':',1)[-1]==token[2:]]
             if forms:token=forms[variant(key,c,len(forms))]
         item=registry[token];bank='bank:'+str(item.bank_id)
-        prefix='⟨'+bank+'⟩'+('ের ' if c.language=='bn' and item.kind in {'status','service','figure','service_note'} else ' ') if bank in registry and (not lines or intent in {'compare'}) else ''
+        prefix='⟨'+bank+'⟩'+('ের ' if c.language=='bn' and item.kind in {'status','service','figure','service_note','gap'} else ' ') if bank in registry and (not lines or intent in {'compare'}) else ''
         lines.append(prefix+'⟨'+token+'⟩'+('।' if c.language=='bn' else '.'))
     return lines
 
@@ -711,7 +711,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     model=None;fallback_reason=None;repaired=[]
     # Every sentence of these answers is a stored value, so code writes them: each
     # rephrasing of a question then gets the same facts in the same order.
-    code_owned=r.intent=='advice_request' or r.intent=='explain_term' and 'term:interest_profit_difference' in facts or bool(r.product) and (forced or r.intent)=='service_detail' or (forced or r.intent)=='bank_figures' and 'asked:figure' in registry or (forced or r.intent)=='bank_profile' and 'asked:founded' in registry or (forced or r.intent) in {'bank_overview','bank_condition'} and not r.requested_metric or (forced or r.intent)=='bank_history' and any(f['kind']=='history' and f['institution_id']==c.institution_id for f in facts.values()) or (forced or r.intent)=='compare' and 'cmp:0' in registry
+    code_owned=r.intent=='advice_request' or r.intent=='explain_term' and 'term:interest_profit_difference' in facts or bool(r.product) and (forced or r.intent)=='service_detail' or (forced or r.intent)=='bank_figures' and 'asked:figure' in registry or (forced or r.intent)=='bank_profile' and 'asked:founded' in registry or (forced or r.intent) in {'bank_overview','bank_condition'} and not r.requested_metric or (forced or r.intent)=='bank_history' and any(f['kind']=='history' and f['institution_id']==c.institution_id for f in facts.values()) or (forced or r.intent)=='compare' and 'cmp:0' in registry or (forced or r.intent)=='compare' and bool(r.product) and any(name.startswith('gap:compare:') for name in registry)
     # Written by code or by the model, an answered question counts the same.
     if not selected and code_owned:await call(db,lambda owned:consume_question(owned,watch_identity or device_hash or 'human-anonymous'))
     if not selected and not code_owned:
@@ -774,6 +774,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if intent=='insurance' and not r.direct_protection:intent='bank_condition'
     c=c.model_copy(update={'last_intent':intent})
     bn=c.language=='bn';question,buttons=next_steps(intent,c,id);lines=[]
+    if not question and intent in {'compare','service_detail'} and any(name.startswith('gap:') for name in registry):
+        # A missing figure is never the end of the answer: offer the next step.
+        question='অন্য কোনো ব্যাংকের তথ্য শুনবেন?' if bn else 'Would you like to hear about another bank?'
     controls_map={
       'advice_request':('কোথায় টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি বিনিয়োগের পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদের হার পাশাপাশি বুঝিয়ে দিতে পারি।' if re.search(r'বিনিয়োগ',safe) else 'কোন ব্যাংকে টাকা রাখবেন সেটা আপনার সিদ্ধান্ত, আমি পরামর্শ দিই না। তবে ব্যাংকের অবস্থা আর সুদ পাশাপাশি বোঝাতে পারি।','That decision is yours; I do not give investment advice. I can explain bank conditions and rates side by side.'),
       'best_bank':('কোন ব্যাংক বেছে নেবেন তা আপনার সিদ্ধান্ত। আমি প্রকাশিত তথ্য পাশাপাশি বুঝিয়ে বলতে পারি।','Choosing a bank is your decision. I can explain the published information side by side.'),

@@ -174,7 +174,7 @@ def resolve(text,c,banks):
     # "এফডিআরের মুনাফার হার" is an Islamic deposit rate, not the bank's profit.
     if selected in {'fdr','dps','savings'} and product:metric=None
     if metric=='net_profit' and re.search(r'আগের বছর|গত বছর|last year|previous year',text,re.I) and not re.search(r'অন্য ব্যাংক|other bank',text,re.I):intent='bank_figures'
-    explain=bool(re.search(r'মানে|অর্থ|জিনিস|শব্দটা.*বুঝিয়ে|বোঝায়|(?:এফডিআর|ডিপিএস|মূলধন) (?:কী|কি)[?।.!]*$|\bmean\b|what (?:is|are) (?:an? )?(?:fdr|dps|fixed deposits?|savings accounts?)[?।.!]*$|what is (?:a |an |net |capital |credit )|explain .*simply',text,re.I))
+    explain=bool(re.search(r'মানে|অর্থ|জিনিস|শব্দটা.*বুঝিয়ে|বোঝায়|(?:এফডিআর|ডিপিএস|মূলধন) (?:কী|কি)[?।.!]*$|\bmean\b|what(?:’s|\'s| is| are) (?:an? |the )?(?:fdr|dps|npl|crar|fixed deposits?|savings accounts?)[?।.!]*$|what is (?:a |an |net |capital |credit )|explain .*simply',text,re.I))
     if not correction and intent not in {'compare','insurance','stop','repeat'}:
         if explain and (metric or product or re.search(r'মধ্যমান|বাফার|median|buffer',text,re.I)):intent='explain_term'
         elif wanted:intent='bank_profile'
@@ -197,6 +197,9 @@ def resolve(text,c,banks):
         basis='islamic' if named_bank.get('islamic') else 'conventional'
     if len(named)>=2 and (intent in {'bank_overview','bank_condition'} or intent is None and not wanted and not metric):
         intent='compare';compare=named;selected=None;tenor=None
+    # Two banks joined by "and" with one service: answer both, not just one.
+    joined=len(named)>=2 and selected not in {None,'account_fee'} and intent in {None,'service_detail'} and not correction
+    if joined:intent='compare';compare=named
     confirm_pair=False
     if declared_pair and intent in {None,'bank_overview','bank_condition','compare','service_detail'}:
         pair_ids=[row['id'] for row in declared_pair]
@@ -212,4 +215,5 @@ def resolve(text,c,banks):
     fee='late_fee' if re.search(r'লেট|দেরিতে|বিলম্ব|\blate\b',text,re.I) else 'annual_fee'
     # Where a question names two banks, keep them in the order it said them.
     compare.sort(key=lambda id:next((s[0] for s in sorted(spans) if s[2]==id),99))
+    if joined and intent=='compare' and compare:bank=compare[0]
     return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric,fee,bool(match),follow or bool(FOLLOW.match(text)),confirm_pair,account_overview)
