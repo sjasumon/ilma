@@ -501,7 +501,7 @@ def fallback_lines(intent,c,registry,facts,key):
             forms=[name for name in registry if re.match(r'v\d+:',name) and name.split(':',1)[-1]==token[2:]]
             if forms:token=forms[variant(key,c,len(forms))]
         item=registry[token];bank='bank:'+str(item.bank_id)
-        prefix='⟨'+bank+'⟩'+('ের ' if c.language=='bn' and item.kind in {'status','service','figure','service_note','gap'} else ' ') if bank in registry and (not lines or intent in {'compare'}) else ''
+        prefix='⟨'+bank+'⟩'+('ের ' if c.language=='bn' and item.kind in {'status','service','figure','service_note','gap'} else ' ') if bank in registry and item.kind!='comparison' and (not lines or intent in {'compare'}) else ''
         lines.append(prefix+'⟨'+token+'⟩'+('।' if c.language=='bn' else '.'))
     return lines
 

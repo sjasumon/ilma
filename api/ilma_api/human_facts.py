@@ -275,7 +275,8 @@ def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=
         if not facts:continue
         plain=[f for f in facts if not NICHE.search(f['values']['product'])] or facts
         # Within the same bank, preserve the general-product selector, not a premium slab.
-        chosen=plain[0];chosen['values']['comparison_term']=reference
+        # Several general schemes at one term: compare the bank's best one, and its name is said with the rate.
+        chosen=max(plain,key=lambda f:f['values'].get('rate') or 0) if product in {'fdr','dps'} else plain[0];chosen['values']['comparison_term']=reference
         # Balance slabs of the same account: one slab's rate is not the account's rate.
         slabs=[f['values']['rate'] for f in facts if f['values']['product']==chosen['values']['product'] and f['values'].get('rate') is not None]
         if product=='savings' and len(set(slabs))>1:chosen['values']['rate_range']=(min(slabs),max(slabs))
