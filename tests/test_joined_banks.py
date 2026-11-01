@@ -82,3 +82,16 @@ def test_a_slabbed_savings_account_gives_its_range_not_one_slab(db):
     db.add(Institution(id=3,slug='dutchbangl',name_en='Dutch Test Bank',name_bn='পরীক্ষা ডাচ ব্যাংক',type='bank',islamic=False,licensed=True,listed=True,coverage='full'));db.commit()
     speech=turn(db,'Dutch Bangla Bank and EBL savings rates','en')['speech']
     assert '2% to 7% by balance' in speech,speech
+
+
+def test_one_bank_in_a_comparison_is_compared_with_all_banks():
+    from ilma_api.human_resolver import resolve
+    r=resolve('compare EBL and Bank DPS',Conversation(language='en'),BANKS)
+    assert r.intent=='compare' and r.compare_bank_ids==[] and r.bank_id==2
+
+def test_other_banks_is_not_a_bank_name():
+    from ilma_api.human_resolver import resolve
+    c=Conversation(language='en',institution_id=2,product='dps',last_intent='service_detail')
+    for said in ('compare with other banks','অন্য ব্যাংকের সাথে মিলিয়ে দেখুন'):
+        r=resolve(said,c,BANKS)
+        assert r.intent=='compare' and not r.candidates and r.bank_id==2,said

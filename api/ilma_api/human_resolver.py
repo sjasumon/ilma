@@ -86,6 +86,8 @@ def resolve(text,c,banks):
     # A possessive ending on any Bangla bank name ("ব্যাংক এশিয়ার") still names that bank.
     for alias in sorted({unicodedata.normalize('NFC',a) for b in indexed for a in [b.get('name_bn') or '',*b['aliases']] if re.search(r'[ঀ-৿]$',a)},key=len,reverse=True):
         matched_text=re.sub(re.escape(alias)+r'(?:ের|র)(?=$|[\s,।.!?])',alias,matched_text)
+    # Words that name no bank ("compare with other banks") must not fuzzy-match one such as "Commerce Bank".
+    matched_text=re.sub(r'\b(?:compare|comparison|(?:with |to )?(?:the )?other banks?|another bank|all (?:the )?banks|other bank)\b|অন্য (?:কোনো )?ব্যাংক(?:ের|গুলোর)?|অন্যান্য ব্যাংক(?:ের)?','',matched_text,flags=re.I)
     # Joined names are independent mentions, not alternative spellings.
     # Fuzzy pairs only propose a joint confirmation; they never authorize facts.
     declared_pair=[]
@@ -212,6 +214,8 @@ def resolve(text,c,banks):
     best=best_rate_product(text)
     if best:
         bank=None;selected=best;tenor=60 if best=='dps' else 12;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
+    # One bank in a comparison (the other name was misheard or left out) is compared with every bank, not with itself.
+    if intent=='compare' and len(compare)==1 and not confirm_pair:compare=[]
     fee='late_fee' if re.search(r'লেট|দেরিতে|বিলম্ব|\blate\b',text,re.I) else 'annual_fee'
     # Where a question names two banks, keep them in the order it said them.
     compare.sort(key=lambda id:next((s[0] for s in sorted(spans) if s[2]==id),99))
