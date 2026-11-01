@@ -162,3 +162,11 @@ def test_you_said_line_hides_spoken_numbers_but_keeps_the_question():
     for said,secret in (('My PIN is 1234, check my balance','1234'),('account 12345678 balance','12345678'),('আমার পিন ১২৩৪','১২৩৪'),('otp 556677','556677')):
         out=mask_identifiers(said);assert secret not in out and '••••' in out,(said,out)
     assert 'balance' in mask_identifiers('account 12345678 balance')
+
+
+def test_password_and_otp_hidden_in_natural_wording():
+    from ilma_api.human_memory import mask_identifiers,redact_user,redact_for_key
+    for said,secret in (('my password is hunter2','hunter2'),('my otp is 556677','556677'),('OTP code: 4411','4411'),('আমার পাসওয়ার্ড হলো abc123','abc123'),('ওটিপি কোড ৭৭৮৮','৭৭৮৮')):
+        assert secret not in mask_identifiers(said),said
+        assert secret not in redact_user(said),said
+    assert redact_for_key('my password is hunter2')=='my [identifier omitted] hunter2'  # frozen for saved-answer keys

@@ -9,14 +9,14 @@ def redact_user(text):
     text=re.sub(r'(?:আমার নাম|my name is|my name\s*[:=])\s*[^।.!?\n]+','[name omitted]',text,flags=re.I)
     # Keep term/year questions; never retain a personal balance, PIN or account.
     text=re.sub(r'(?:[0-9০-৯][0-9০-৯,.]*|এক|দুই|তিন|চার|পাঁচ|দশ|one|two|three|five|ten)\s*(?:লাখ|লক্ষ|কোটি|হাজার|টাকা|lakh|crore|thousand|taka|BDT)(?:\s*(?:টাকা|taka))?','[personal amount omitted]',text,flags=re.I)
-    text=re.sub(r'\b(?:password|otp)\b\s*[:#-]?\s*\S+|\b(?:account|pin)\b\s*(?:(?:no|number|nr|is|was)\b\.?\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*|(?:পাসওয়ার্ড|ওটিপি)\s*[:#-]?\s*\S+|(?:পিন|অ্যাকাউন্ট নম্বর)\s*(?:(?:হলো|হল|নম্বর)\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*','[identifier omitted]',text,flags=re.I)
+    text=re.sub(r'\b(?:password|passcode|otp)\b\s*(?:(?:is|was|no|number|code)\b\.?\s*|[:#=-]\s*)*\S+|\b(?:account|pin)\b\s*(?:(?:no|number|nr|is|was)\b\.?\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*|(?:পাসওয়ার্ড|ওটিপি)\s*(?:(?:হলো|হল|নম্বর|কোড)\s*|[:#=-]\s*)*\S+|(?:পিন|অ্যাকাউন্ট নম্বর)\s*(?:(?:হলো|হল|নম্বর)\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*','[identifier omitted]',text,flags=re.I)
     text=re.sub(r'[0-9০-৯][0-9০-৯ -]{6,}[0-9০-৯]','[identifier omitted]',text)
     return text[:1500]
 
 
 def mask_identifiers(text):
     """For the "You said" line: hide a spoken PIN, account number, password or OTP, keep the other words."""
-    text=re.sub(r'\b(?:password|otp)\b\s*[:#-]?\s*\S+|\b(?:account|pin)\b\s*(?:(?:no|number|nr|is|was)\b\.?\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*|(?:পাসওয়ার্ড|ওটিপি)\s*[:#-]?\s*\S+|(?:পিন|অ্যাকাউন্ট নম্বর)\s*(?:(?:হলো|হল|নম্বর)\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*','••••',text,flags=re.I)
+    text=re.sub(r'\b(?:password|passcode|otp)\b\s*(?:(?:is|was|no|number|code)\b\.?\s*|[:#=-]\s*)*\S+|\b(?:account|pin)\b\s*(?:(?:no|number|nr|is|was)\b\.?\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*|(?:পাসওয়ার্ড|ওটিপি)\s*(?:(?:হলো|হল|নম্বর|কোড)\s*|[:#=-]\s*)*\S+|(?:পিন|অ্যাকাউন্ট নম্বর)\s*(?:(?:হলো|হল|নম্বর)\s*|[:#=-]\s*)*\S*[0-9০-৯]\S*','••••',text,flags=re.I)
     text=re.sub(r'[0-9০-৯][0-9০-৯ -]{6,}[0-9০-৯]','••••',text)
     return text
 
