@@ -77,7 +77,11 @@ def test_per_sentence_repair_and_code_built_comparison_need_one_call(db):
     async def scenario():
         with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)) as mocked:
             result=await run('Compare FDRs for 12 months',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db,device_hash='synthetic')
-            continuation=await run('yes',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation.model_validate(result['conversation'])),BANKS,db)
+            continuation={'facts':[]}
+            if any(o['value']=='more' for o in result['next']['options']):
+                continuation=await run('yes',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation.model_validate(result['conversation'])),BANKS,db)
+            else:
+                assert result['expects_reply'] is False, 'A complete comparison must not solicit an ambiguous yes'
         assert mocked.await_count==1 and result['checked']=='code'
         assert result['conversation']['tenor']==12
         assert {f['institution_id'] for f in result['facts']+continuation['facts']}=={1,2}
@@ -258,7 +262,8 @@ def test_later_english_sentences_start_with_a_capital(db):
         with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=model)):
             return await run('How is it?',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation(institution_id=1,language='en')),BANKS,db)
     sentences=[s for s in asyncio.run(scenario())['speech'].split('. ') if s]
-    assert len(sentences)>1 and all(s[0].isupper() for s in sentences)
+    assert sentences and all(s[0].isupper() for s in sentences)
+    assert 'Would you like FDR or DPS rates?' not in ' '.join(sentences)
 
 def test_possessive_bangla_bank_name_resolves_without_confirmation():
     banks=[{'id':7,'slug':'synthetic-asia','type':'bank','islamic':False,'coverage':'full','licensed':True,'name_bn':'পরীক্ষা এশিয়া পিএলসি','name_en':'Synthetic Asia PLC','aliases':['পরীক্ষা এশিয়া','পরীক্ষা এশিয়া পিএলসি','Synthetic Asia']}]

@@ -1,8 +1,8 @@
 // Only public shell/assets and bank GET responses. No audio uploads or user data.
-const SHELL = 'ilma-shell-6bb44022b4643e42';
+const SHELL = 'ilma-shell-d53cc2287d0a1b4e';
 const SERVICE_AUDIO = 'ilma-service-audio-v1';
 const BANKS = 'ilma-public-banks-v1';
-const ASSETS = ['/static/js/navigation.js?v=sha256-af89eb2c066f5aeb','/static/js/account-ui.js?v=sha256-2557a03d31051b83','/static/js/deposit-ui.js?v=sha256-738a5547971d7276','/static/js/loan-ui.js?v=sha256-f4186b981cbff2c1','/static/js/catalog-common.js?v=sha256-0656a46f9f31436a','/static/js/bank-ui.js?v=sha256-69f9de1e3f34fef6','/static/js/services-ui.js?v=sha256-d33af839d9312991',"/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-d1aa8d1bf1db7edc', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-d20001d6aede81d8', '/static/js/app.js?v=sha256-69ff262a218d8fd6', '/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd', '/static/js/audio-session.js?v=sha256-5c97cf7474d94c72', '/static/js/voice-recorder.js?v=sha256-89ad40222447d88b'];
+const ASSETS = ['/static/js/navigation.js?v=sha256-af89eb2c066f5aeb','/static/js/account-ui.js?v=sha256-2557a03d31051b83','/static/js/deposit-ui.js?v=sha256-738a5547971d7276','/static/js/loan-ui.js?v=sha256-f4186b981cbff2c1','/static/js/catalog-common.js?v=sha256-0656a46f9f31436a','/static/js/bank-ui.js?v=sha256-69f9de1e3f34fef6','/static/js/services-ui.js?v=sha256-d33af839d9312991',"/static/fonts/fonts.css?v=sha256-7e786499b46bb84c", "/static/fonts/noto-sans-bengali-bengali-2.woff2", "/static/fonts/noto-sans-bengali-latin-3.woff2", "/static/fonts/noto-sans-latin-1.woff2", "/static/fonts/tiro-bangla-bengali-4.woff2", "/static/fonts/tiro-bangla-latin-5.woff2", '/', '/static/css/ilma.css?v=sha256-d1aa8d1bf1db7edc', '/static/js/ivr.js?v=sha256-2929c97da156ab49', '/static/js/voice-agent.js?v=sha256-9e07d1015e5614e4', '/static/js/app.js?v=sha256-e02745addcd64932', '/static/js/bank-services-ui.js?v=sha256-ec1eb596f7b72cfd', '/static/js/audio-session.js?v=sha256-5c97cf7474d94c72', '/static/js/voice-recorder.js?v=sha256-89ad40222447d88b'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(SHELL).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -17,7 +17,7 @@ self.addEventListener('fetch', event => {
   const asset = url.pathname === '/' || url.pathname.startsWith('/static/');
   if (!bank && !asset && url.pathname !== '/v1/content/fixed') return;
   event.respondWith((async () => {
-    const serviceAudio=/^\/static\/audio\/(?:services\/bn\/(?:card-|deposit_|loan_)[a-z0-9-]+|(?:bank|loans|deposits|accounts|news)\/(?:bn|en)\/[a-z0-9_-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+)\.mp3$/.test(url.pathname);
+    const serviceAudio=/^\/static\/audio\/(?:services\/bn\/(?:card-|deposit_|loan_)[a-z0-9-]+|(?:bank|loans|deposits|accounts|news|answers)\/(?:bn|en)\/[a-z0-9_-]+|(?:bank|loans|deposits|accounts)\/bn\/[a-z0-9_-]+)\.mp3$/.test(url.pathname);
     let cache;
     try { if (!serviceAudio) cache = await caches.open(bank ? BANKS : SHELL); }
     catch (_) { return fetch(request); }
@@ -94,7 +94,8 @@ const AUDIO_MAX_ENTRIES = 40;
 const AUDIO_MANIFESTS = [
   ['/v1/services/audio-manifest', '/static/audio/services/'],
   ['/static/audio/bank/manifest.json', '/static/audio/bank/'],
-  ['/static/audio/accounts/manifest.json', '/static/audio/accounts/']
+  ['/static/audio/accounts/manifest.json', '/static/audio/accounts/'],
+  ['/static/audio/answers/manifest.json', '/static/audio/answers/']
 ];
 let audioQueue = Promise.resolve(), audioClock = 0;
 const currentAudio = new Map();

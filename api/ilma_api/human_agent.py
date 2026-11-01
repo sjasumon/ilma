@@ -12,6 +12,9 @@ def enabled():return bool(getattr(settings,'HUMAN_VOICE_ENABLED',True) and setti
 def exact_choice(text,c,memory,choice):
     if choice:return choice
     value=' '.join(text.casefold().strip(' .!?,।').split())
+    offered=memory.get('last_next',{})
+    if offered.get('affirmative_action') and value in {'হ্যাঁ','হ্যা','জি','yes','yeah'}:return offered['affirmative_action']
+    if offered.get('negative_action') and value in {'না','no','no thanks'}:return offered['negative_action']
     for option in memory.get('last_next',{}).get('options',[]):
         labels=[option['value'],option['label'],*LABELS.get(option['value'],())]
         if value in (' '.join(label.casefold().strip(' .!?,।').split()) for label in labels):return option['value']
@@ -60,7 +63,7 @@ def render(answer,c,facts,trace,checked='code'):
       'compare_bank_ids':list(dict.fromkeys(f['institution_id'] for f in used if f.get('institution_id') and f['institution_id']!=c.institution_id))[:3] if answer.intent=='compare' else c.compare_bank_ids})
     next=options_for(answer,c,used)
     action={'type':'end'} if answer.intent=='smalltalk' and re.search(r'ধন্যবাদ|thank',answer.reply,re.I) and not question or c.turn>=20 else {'type':'stop'} if answer.intent=='stop' else None
-    return dict(type='agent_turn',intent=answer.intent,language=c.language,offer_typing=c.misses>=2,sentences=[dict(text=f['text_bn' if c.language=='bn' else 'text_en'],fact_ids=[f['fact_id']],source=f['source']) for f in used],facts=used,checked=checked,next=next,conversation=c.model_dump(),action=action,text=speech,speech=speech,speech_tts=pronounce(speech,c.language),speech_format='paragraph',speech_fact_ids=answer.used_fact_ids,sources=[f['source'] for f in used],speech_text=speech,speech_parts=[speech],trace={'steps':trace,'total_ms':0,'status_rule_notice':'ব্যাংকের অবস্থা তথ্যভিত্তিক নিয়মে ঠিক হয়।' if c.language=='bn' else 'Bank conditions come from sourced rules.'},omit_history=False)
+    return dict(expects_reply=bool(question),type='agent_turn',intent=answer.intent,language=c.language,offer_typing=c.misses>=2,sentences=[dict(text=f['text_bn' if c.language=='bn' else 'text_en'],fact_ids=[f['fact_id']],source=f['source']) for f in used],facts=used,checked=checked,next=next,conversation=c.model_dump(),action=action,text=speech,speech=speech,speech_tts=pronounce(speech,c.language),speech_format='paragraph',speech_fact_ids=answer.used_fact_ids,sources=[f['source'] for f in used],speech_text=speech,speech_parts=[speech],trace={'steps':trace,'total_ms':0,'status_rule_notice':'ব্যাংকের অবস্থা তথ্যভিত্তিক নিয়মে ঠিক হয়।' if c.language=='bn' else 'Bank conditions come from sourced rules.'},omit_history=False)
 
 def controls(intent,c,body,question='',buttons=()):
     return HumanReply(intent=intent,bank={'id':c.institution_id,'source':'conversation','mention':None},product=c.product,basis=c.basis,tenor_months=c.tenor,network=c.network,tier=c.tier,compare_banks=[],needs_facts=None,used_fact_ids=[],reply=body,sentence_fact_ids=[[] for _ in sentences(body)],next_question=question,buttons=list(buttons),language=c.language or 'bn')
@@ -70,6 +73,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     return await token_turn(text,context,banks,db,candidates,choice,watch_identity,client,device_hash,on_sentence)
 
 async def finish(result,user,id,memory,db,started,pending=None):
+    from ilma_api.reviewed_answers import apply as apply_reviewed
+    result=apply_reviewed(result,user,memory.pop('_reviewed_context',None),memory)
+    if result.get('reviewed_answer_key'):pending=None
     result['conversation']['conversation_token']=token(id);result['trace']['total_ms']=round((time.monotonic()-started)*1000)
     pending_facts=result.pop('_all_facts',result['facts']) if pending else []
     # Resolved slots and checked replies retain context without saving names or

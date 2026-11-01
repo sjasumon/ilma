@@ -121,3 +121,14 @@ docs/TAP_OR_TALK_FIXES_*.md
 
 # Private ChatGPT working notes stay on the server, never published.
 docs/chatgpt/
+
+# Final owner-reviewed bilingual conversation recordings only.
+!/static/audio/answers/
+/static/audio/answers/*
+!/static/audio/answers/manifest.json
+!/static/audio/answers/bn/
+!/static/audio/answers/en/
+/static/audio/answers/bn/*
+/static/audio/answers/en/*
+!/static/audio/answers/bn/q[0-9][0-9][0-9].mp3
+!/static/audio/answers/en/q[0-9][0-9][0-9].mp3

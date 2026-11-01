@@ -23,11 +23,11 @@ def next_steps(intent,c,key,more=False):
     bn=c.language=='bn'
     if more:return ('আরও শুনবেন?' if bn else 'Would you like to hear more?'),['more','end']
     if intent in {'bank_overview','bank_condition','services_list','advice_request','best_bank'}:
-        return ('এফডিআর বা ডিপিএসের সুদ শুনবেন?' if bn else 'Would you like FDR or DPS rates?'),['fdr','dps']
+        return '',['services','ask_bank']
     if intent=='bank_reasons':return ('আর্থিক হিসাব, না আগের ঘটনা শুনবেন?' if bn else 'Would you like financial figures or past events?'),['figures','history']
-    if intent=='service_detail':return ('আপনি কি অন্য ব্যাংকের সাথে মিলিয়ে দেখবেন, না অন্য সেবা শুনবেন?' if bn else 'Do you want to compare with other banks, or hear another service?'),['compare','services']
+    if intent=='service_detail':return '',['compare','services']
     if intent in {'unclear','out_of_scope'}:return ('আবার বলবেন, না অন্য ব্যাংক দেখবেন?' if bn else 'Ask again, or choose another bank?'),['listen','ask_bank']
-    return ('ব্যাংকের সেবাগুলো শুনবেন, না অন্য ব্যাংক দেখবেন?' if bn else 'Would you like services or another bank?'),['services','ask_bank']
+    return '',['services','ask_bank']
 
 
 def details(facts,bank):
@@ -555,6 +555,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         memory={k:v for k,v in memory.items() if k not in {'last_result','pending_reply','pending_facts','last_next'}}
         memory['last_turns']=[]
     memory['protocol']=2
+    memory.pop('_reviewed_context',None)
     safe=redact_user(text);selected=exact_choice(safe,c,memory,choice)
     if memory.get('pending_reply') and re.fullmatch(r'হ্যাঁ|জি|yes|yeah',safe.strip(' .!?।'),re.I):selected='more'
     if selected=='yes' and memory.get('pending_reply'):selected='more'
@@ -594,6 +595,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     trace.append(dict(stage='RESOLVER',model='code',ms=round((time.monotonic()-resolve_started)*1000),status='ok'))
     facts_started=time.monotonic()
     r,c,packs,comparisons,registry,facts=await call(db,lambda owned:prepare(owned,safe,c,banks,forced,resolved))
+    from ilma_api.reviewed_answers import fingerprint as reviewed_fingerprint,slots as reviewed_slots
+    memory['_reviewed_context']={'source_sha256':reviewed_fingerprint(facts),'slots':reviewed_slots(r),'facts':list(facts.values())}
     trace.append(dict(stage='FACTS',model='database',ms=round((time.monotonic()-facts_started)*1000),status='ok'))
     if r.intent=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
     blocked=None if selected else answers.refusal(text,c.language=='bn',any(b['confidence']>=.9 for b in r.candidates))
@@ -634,6 +637,14 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     await call(db,lambda owned:save(owned,id,memory))
     if on_sentence is not None:
         await on_sentence({'_event':'resolved_context','conversation':{**c.model_dump(),'conversation_token':token(id)}})
+    # Exact reviewed questions use their fact-bound saved answer without a wording request.
+    from ilma_api.reviewed_answers import apply as apply_reviewed
+    probe=apply_reviewed({'language':c.language,'next':{},'conversation':{}},safe,memory.get('_reviewed_context'),dict(memory))
+    if probe.get('reviewed_audio_url') and r.intent:
+        if not selected:await call(db,lambda owned:consume_question(owned,watch_identity or device_hash or 'human-anonymous'))
+        result=render(controls(r.intent,c,''),c,[],trace,'code')
+        trace.append(dict(stage='CHECK',model='code',ms=0,status='ok',reason='reviewed_source_bound_answer'))
+        return await finish(result,safe,id,memory,db,started)
     model=None;fallback_reason=None;repaired=[]
     # Every sentence of these answers is a stored value, so code writes them: each
     # rephrasing of a question then gets the same facts in the same order.
@@ -830,7 +841,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if bn:lines=merge_rates(lines,facts,[t.text for t in registry.values() if t.kind=='bank'])
     if intent=='service_detail':lines=date_once(lines)
     award_open=any(facts.get(i,{}).get('kind')=='award' for _,ids in lines for i in ids)
-    question=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry,not c.institution_id) or question
+    closing=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry,not c.institution_id)
+    if closing is not None:question=closing
     if 'meta:range' in registry:question=''
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)

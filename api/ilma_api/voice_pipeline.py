@@ -386,11 +386,11 @@ async def run_pipeline(audio, text, mime, context, banks, db, mode='voice', devi
                 if timings:
                     timings.mark('tts_start')
                     for frame in timings.events():yield frame
-                ticket=await register_speech(speech_parts,result['language'],short=True)
+                ticket=({'audio_url':result['reviewed_audio_url'],'audio_urls':[result['reviewed_audio_url']]} if result.get('reviewed_audio_url') else await register_speech(speech_parts,result['language'],short=True))
                 if ticket:
                     yield event('speech',{'role':'answer',**ticket})
                     from ilma_api.audio_cache import get_store
-                    if not await get_store().wait(ticket):
+                    if not result.get('reviewed_audio_url') and not await get_store().wait(ticket):
                         failed=await get_store().failed(ticket)
                         yield event('speech_unavailable' if failed else 'speech_pending',{'code':'speech_unavailable' if failed else 'speech_busy','retry_after':1,**ticket})
                 else:yield event('speech_unavailable',{'text':'Speech is unavailable.'})
