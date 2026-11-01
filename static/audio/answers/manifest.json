@@ -8870,7 +8870,7 @@
       "request_timeout_seconds": 120,
       "source_sha256": "8c39164faac9f40c4a93a1610e5e17bcd3c037ef94ddc9d11c8ef88ad4c647fe",
       "slots": {
-        "bank_id": 37,
+        "bank_id": 42,
         "product": "fdr",
         "tenor": 12,
         "basis": "conventional",
@@ -8943,7 +8943,7 @@
       "request_timeout_seconds": 120,
       "source_sha256": "8c39164faac9f40c4a93a1610e5e17bcd3c037ef94ddc9d11c8ef88ad4c647fe",
       "slots": {
-        "bank_id": 37,
+        "bank_id": 42,
         "product": "fdr",
         "tenor": 12,
         "basis": "conventional",
@@ -9020,7 +9020,7 @@
       "request_timeout_seconds": 120,
       "source_sha256": "045dc3b22eb5a0de198b1e73e39a4488ed3788435b328cf714a0ba5a9ca61816",
       "slots": {
-        "bank_id": 33,
+        "bank_id": 42,
         "product": "dps",
         "tenor": 12,
         "basis": "conventional",
@@ -9097,7 +9097,7 @@
       "request_timeout_seconds": 120,
       "source_sha256": "1c29dd00fa31641c1761cb96771aa969eea9f06058d1dc61d3a82044f66bdd0e",
       "slots": {
-        "bank_id": 33,
+        "bank_id": 42,
         "product": "dps",
         "tenor": 12,
         "basis": "conventional",
