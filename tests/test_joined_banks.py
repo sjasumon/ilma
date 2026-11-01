@@ -71,5 +71,14 @@ def test_a_range_is_not_set_against_a_one_year_rate_as_if_alike(db):
     db.add(ServiceOffer(offer_id='test-dbbl-range',institution_id=3,category='deposit',product='Fixed deposit',product_type='fdr',network=None,tier=None,tenor_months=None,attribute='rate_range',value_num=None,value_text='7.75-9.75',unit='pct_year',condition='',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/dbbl.pdf',page=1,quote='Synthetic range',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='manual_sumon',checked_on=date(2026,10,1)))
     db.commit()
     speech=turn(db,'Dutch Bangla Bank and EBL FDR rates','en')['speech']
-    assert 'rate is not in our data' in speech and '7.75% to 9.75%' in speech and '9.1%' in speech,speech
+    assert 'Dutch Test Bank has no 1-year FDR rate in our data' in speech and '7.75% to 9.75%' in speech and '9.1%' in speech,speech
     assert speech.index('Dutch Test Bank')<speech.index('EBL Test Bank'),speech
+
+def test_a_slabbed_savings_account_gives_its_range_not_one_slab(db):
+    from ilma_api.db import ServiceOffer
+    from datetime import date
+    for oid,rate in [('test-he-1',2.0),('test-he-2',7.0)]:
+        db.add(ServiceOffer(offer_id=oid,institution_id=2,category='deposit',product='EBL High Earning Account',product_type='savings',network=None,tier=None,tenor_months=None,attribute='rate',value_num=rate,value_text=str(rate),unit='pct_year',condition='',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/synthetic.pdf',page=1,quote=f'Synthetic rate {rate}%',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='test-fixture',checked_on=date(2026,10,1)))
+    db.add(Institution(id=3,slug='dutchbangl',name_en='Dutch Test Bank',name_bn='পরীক্ষা ডাচ ব্যাংক',type='bank',islamic=False,licensed=True,listed=True,coverage='full'));db.commit()
+    speech=turn(db,'Dutch Bangla Bank and EBL savings rates','en')['speech']
+    assert '2% to 7% by balance' in speech,speech

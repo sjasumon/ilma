@@ -182,7 +182,7 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
                     # A term rate beside a range of terms is not like for like: say so.
                     from ilma_api.human_tokens import term
                     when=term({},c.language=='bn',r.tenor);low,high=ranges[0]['values']['value_text'].split('-')
-                    text=f'{label[0]}ের {when} মেয়াদের হার আমাদের কাছে নেই; মেয়াদভেদে সুদ {low}% থেকে {high}%' if c.language=='bn' else f'{when} {label[1]} rate is not in our data; across terms it publishes {low}% to {high}%'
+                    text=f'{label[0]}ের {when} মেয়াদের হার আমাদের কাছে নেই; মেয়াদভেদে সুদ {low}% থেকে {high}%' if c.language=='bn' else f'has no {when.replace(" ","-")} {label[1]} rate in our data; across terms it publishes {low}% to {high}%'
                     registry['gap:compare:'+str(bank_id)]=FactToken(text,registry['gap:compare:'+str(bank_id)].fact_ids,bank_id,'service_note')
                 registry['meta:range']=FactToken('')
                 continue

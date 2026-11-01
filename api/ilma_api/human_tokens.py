@@ -207,6 +207,10 @@ def build_registry(packs,comparison,language,insurance=False):
         registry[prefix+'rate']=FactToken(number(v['rate'])+unit_label(v['unit'],bn),(f['fact_id'],),f['institution_id'],'row')
         registry[prefix+'term']=FactToken(term(v,bn,v.get('selected_tenor')),(f['fact_id'],),f['institution_id'],'row')
         registry[prefix+'offer']=registry['f:'+f['fact_id']]
+        if v.get('rate_range'):
+            base=registry[prefix+'offer'];low,high=v['rate_range'];said=number(v['rate'])+unit_label(v['unit'],bn)
+            span=(f'জমাভেদে {number(low)}% থেকে {number(high)}%' if bn else f'{number(low)}% to {number(high)}% by balance')
+            if said in base.text:registry[prefix+'offer']=FactToken(base.text.replace(said,span,1),base.fact_ids,base.bank_id,base.kind)
         if v.get('status')=='no_data':
             base=registry[prefix+'offer']
             registry[prefix+'offer']=FactToken(base.text+(', তবে ব্যাংকটির অবস্থা যাচাইয়ের তথ্য কম' if bn else '; there is insufficient information to assess this bank'),base.fact_ids,base.bank_id,base.kind)

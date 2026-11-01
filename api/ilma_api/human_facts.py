@@ -276,6 +276,9 @@ def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=
         plain=[f for f in facts if not NICHE.search(f['values']['product'])] or facts
         # Within the same bank, preserve the general-product selector, not a premium slab.
         chosen=plain[0];chosen['values']['comparison_term']=reference
+        # Balance slabs of the same account: one slab's rate is not the account's rate.
+        slabs=[f['values']['rate'] for f in facts if f['values']['product']==chosen['values']['product'] and f['values'].get('rate') is not None]
+        if product=='savings' and len(set(slabs))>1:chosen['values']['rate_range']=(min(slabs),max(slabs))
         chosen['values']['term_assumed']=tenor is None and reference is not None
         card=get_institution_report_card(db,bank.id) or {};status=card.get('status') or {}
         chosen['values']['status']=status.get('code','no_data');chosen['values']['status_bn']=status.get('label_bn','অবস্থা যাচাই হয়নি');chosen['values']['status_en']=status.get('label_en','Condition unverified')
