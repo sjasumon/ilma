@@ -90,7 +90,8 @@ async def finish(result,user,id,memory,db,started,pending=None):
     return result
 
 async def repeat_turn(c,id,memory,db,trace,started):
-    result=copy.deepcopy(memory['last_result']);result.update(speech_text=result['speech'],speech_parts=[result['speech']],trace={'steps':trace,'total_ms':round((time.monotonic()-started)*1000),'status_rule_notice':'Repeated checked reply.'})
+    from ilma_api.reviewed_answers import refresh_repeat
+    result=refresh_repeat(memory['last_result']);result.update(speech_text=result['speech'],speech_parts=[result['speech']],trace={'steps':trace,'total_ms':round((time.monotonic()-started)*1000),'status_rule_notice':'Repeated checked reply.'})
     result['intent']='repeat'
     result['conversation']['turn']=min(20,c.turn+1)
     if memory.get('pending_reply'):result['_all_facts']=memory.get('pending_facts',result['facts'])

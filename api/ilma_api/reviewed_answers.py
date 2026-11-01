@@ -33,7 +33,7 @@ def apply(result,user,context,memory):
         matches=list(re.finditer(r'[^।.!?]*\?\s*$',text));question=matches[-1].group().strip() if matches else ''
         body=text[:matches[-1].start()].rstrip() if matches else text
         result=copy.deepcopy(result)
-        result.update(text=text,speech=text,speech_text=text,speech_tts=tts,speech_parts=[text],reviewed_answer_key=item['key'],reviewed_audio_url='/static/audio/answers/'+file+'?v='+item['audio_sha256'][:16],expects_reply=bool(question))
+        result.update(text=text,speech=text,speech_text=text,speech_tts=tts,speech_parts=[text],reviewed_answer_key=item['key'],reviewed_source_sha256=context['source_sha256'],reviewed_audio_url='/static/audio/answers/'+file+'?v='+item['audio_sha256'][:16],expects_reply=bool(question))
         result['next']['question']=question
         if re.search(r'সার্ভিস|সেবা|another service',question,re.I) and not re.search(r' না | or ',question,re.I):
             result['next'].update(affirmative_action='services',negative_action='stop')
@@ -50,3 +50,25 @@ def apply(result,user,context,memory):
         memory['reviewed_answer_key']=item['key']
         return result
     except (OSError,ValueError,KeyError,TypeError):return original
+
+
+def refresh_repeat(result):
+    """Refresh a stored answer's recording after a release; never replay a stale URL."""
+    result=copy.deepcopy(result)
+    key=result.get('reviewed_answer_key')
+    if not key:return result
+    try:
+        data=json.loads((ROOT/'static/audio/answers/manifest.json').read_text());item=data['clips'][key]
+        if not data.get('batch_complete') or len(data['clips'])!=186:raise ValueError('Incomplete release')
+        if item['text']!=result['speech'] or hashlib.sha256(item['text'].encode()).hexdigest()!=item['text_sha256']:raise ValueError('Changed display text')
+        cached_source=result.get('reviewed_source_sha256') or fingerprint({f['fact_id']:f for f in result.get('facts',[])})
+        if cached_source!=item['source_sha256'] or item['slots'].get('bank_id')!=result['conversation'].get('institution_id'):raise ValueError('Changed source or bank')
+        tts=item.get('tts_text',item['text'])
+        if 'tts_text' in item and (not isinstance(tts,str) or not tts.strip() or hashlib.sha256(tts.encode()).hexdigest()!=item.get('tts_sha256')):raise ValueError('Changed spoken script')
+        if not re.fullmatch(r'(?:bn|en)/q\d{3}\.mp3',item['file']):raise ValueError('Invalid recording path')
+        path=ROOT/'static/audio/answers'/item['file']
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=item['audio_sha256']:raise ValueError('Changed audio')
+        result['reviewed_audio_url']='/static/audio/answers/'+item['file']+'?v='+item['audio_sha256'][:16];result['speech_tts']=tts
+    except (OSError,KeyError,ValueError,TypeError):
+        result.pop('reviewed_audio_url',None);result.pop('reviewed_answer_key',None)
+    return result

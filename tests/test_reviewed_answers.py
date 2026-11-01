@@ -90,3 +90,18 @@ def test_display_and_spoken_script_have_separate_checked_hashes(tmp_path,monkeyp
     p.write_text(json.dumps(m));out=reviewed.apply(r,'প্রশ্ন',c,{})
     assert out['speech']=='পরীক্ষার উত্তর।' and out['speech_tts']=='পরীক্ষার কথ্য উত্তর।'
     assert out['reviewed_audio_url']
+
+
+def test_repeat_refreshes_previous_release_audio_url(tmp_path,monkeypatch):
+    r,c,m,p=fixture(tmp_path,monkeypatch);m['clips']['bn:q001']['source_sha256']=reviewed.fingerprint({});p.write_text(json.dumps(m))
+    r.update(reviewed_answer_key='bn:q001',reviewed_audio_url='/static/audio/answers/bn/q001.mp3?v=old',speech=m['clips']['bn:q001']['text'],facts=[],conversation={'institution_id':1})
+    out=reviewed.refresh_repeat(r)
+    assert out['reviewed_audio_url'].endswith(m['clips']['bn:q001']['audio_sha256'][:16])
+    assert r['reviewed_audio_url'].endswith('old'),'Stored input must not be mutated'
+
+@pytest.mark.parametrize('problem',['source','missing'])
+def test_repeat_discards_stale_recording_when_it_cannot_be_revalidated(tmp_path,monkeypatch,problem):
+    r,c,m,p=fixture(tmp_path,monkeypatch);r.update(reviewed_answer_key='bn:q001',reviewed_audio_url='/static/audio/answers/bn/q001.mp3?v=old',speech=m['clips']['bn:q001']['text'],facts=[],conversation={'institution_id':1})
+    if problem=='missing':p.unlink()
+    out=reviewed.refresh_repeat(r)
+    assert 'reviewed_audio_url' not in out
