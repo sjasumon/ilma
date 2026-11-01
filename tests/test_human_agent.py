@@ -137,3 +137,12 @@ def test_account_fee_facts_can_be_saved_in_conversation_memory(monkeypatch):
     monkeypatch.setattr(account_voice,'banks',lambda db:[dict(id=1,name_bn='পরীক্ষা ব্যাংক',name_en='Test Bank',debit_main=row,debit_replacement=None)])
     _,facts=account_voice.answer(None,1,True,'en')
     json.dumps(facts)
+
+
+def test_redaction_keeps_ordinary_account_words_but_hides_numbers():
+    from ilma_api.human_memory import redact_user
+    for said in ('can you tell me uh Black Bank account details','BRAC Bank account fees','What is the PIN for a debit card?'):
+        assert redact_user(said)==said,said
+    for said,secret in (('my account 12345678','12345678'),('account no: 0123-4567','0123-4567'),('my pin is 1234','1234'),('PIN: 4321','4321'),('password hunter2','hunter2'),('otp 556677','556677'),('আমার পিন ১২৩৪','১২৩৪'),('পিন হলো ৯৮৭৬','৯৮৭৬'),('অ্যাকাউন্ট নম্বর ১২৩৪৫','১২৩৪৫')):
+        out=redact_user(said)
+        assert secret not in out and '[identifier omitted]' in out,(said,out)
