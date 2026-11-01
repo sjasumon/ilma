@@ -638,7 +638,8 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     facts_started=time.monotonic();conversation_bank_before=c.institution_id
     r,c,packs,comparisons,registry,facts=await call(db,lambda owned:prepare(owned,safe,c,banks,forced,resolved))
     from ilma_api.reviewed_sources import context as reviewed_context
-    heard=redact_user(context.raw_text or text)
+    # Saved-answer keys are hashes made with the frozen filter (redact_for_key), so hash the words as said; only the hash is kept.
+    heard=context.raw_text or text
     memory['_reviewed_context']=await call(db,lambda owned:reviewed_context(owned,heard,r,facts,c.language,conversation_bank_before))
     trace.append(dict(stage='FACTS',model='database',ms=round((time.monotonic()-facts_started)*1000),status='ok'))
     if r.intent=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
