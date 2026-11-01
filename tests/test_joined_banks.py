@@ -95,3 +95,14 @@ def test_other_banks_is_not_a_bank_name():
     for said in ('compare with other banks','অন্য ব্যাংকের সাথে মিলিয়ে দেখুন'):
         r=resolve(said,c,BANKS)
         assert r.intent=='compare' and not r.candidates and r.bank_id==2,said
+
+
+def test_compare_starts_with_the_bank_said_first():
+    from ilma_api.human_resolver import resolve
+    assert resolve('compare EBL and BRAC Bank DPS',Conversation(language='en'),BANKS).bank_id==2
+    assert resolve('compare BRAC Bank and EBL DPS',Conversation(language='en'),BANKS).bank_id==1
+
+def test_month_rates_take_the_best_general_scheme_at_a_term():
+    from ilma_api.human_answers import month_rates
+    row=lambda id,name,rate:dict(fact_id=id,values=dict(product=name,rate=rate,tenor_options=[36,60]))
+    assert month_rates([row('l','Lakhopati Deposit Scheme',6),row('k','Kotipoti DPS',9),row('w','DPS for Women',10)])[60]==(9,'k')

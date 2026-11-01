@@ -219,5 +219,5 @@ def resolve(text,c,banks):
     fee='late_fee' if re.search(r'লেট|দেরিতে|বিলম্ব|\blate\b',text,re.I) else 'annual_fee'
     # Where a question names two banks, keep them in the order it said them.
     compare.sort(key=lambda id:next((s[0] for s in sorted(spans) if s[2]==id),99))
-    if joined and intent=='compare' and compare:bank=compare[0]
+    if intent=='compare' and len(named)>=2 and compare and not confirm_pair:bank=compare[0]
     return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric,fee,bool(match),follow or bool(FOLLOW.match(text)),confirm_pair,account_overview)
