@@ -243,7 +243,7 @@ def service_inventory(db,id):
 
 
 # Accounts for one group of savers; a general question compares the general account.
-NICHE=re.compile(r'\b(?:50|fifty)\b|senior|women|child|kid|junior|teen|student|salary|payroll|pension|probashi|\bnrb\b|premium',re.I)
+NICHE=re.compile(r'\b(?:50|fifty)\b|insurance|senior|women|child|kid|junior|teen|student|salary|payroll|pension|probashi|\bnrb\b|premium',re.I)
 def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=(),network=None,tier=None):
     ids=list(dict.fromkeys([anchor,*bank_ids])) if anchor else list(bank_ids)
     bank_rows=demo_banks(db,True);by_id={bank.id:bank for bank in bank_rows};selected=[]

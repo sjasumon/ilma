@@ -251,7 +251,7 @@ def scheme_name(v,bn):
 def month_rates(rows):
     rates={}
     # General schemes before niche ones; at one term the bank's best general rate (same rule as comparison_facts).
-    for f in sorted(rows,key=lambda f:(bool(re.search(r'women|child|senior|premium',f['values'].get('product',''),re.I)),-(f['values'].get('rate') or 0))):
+    for f in sorted(rows,key=lambda f:(bool(re.search(r'women|child|senior|premium|insurance',f['values'].get('product',''),re.I)),-(f['values'].get('rate') or 0))):
         for m in months_of(f['values']):rates.setdefault(m,(f['values']['rate'],f['fact_id']))
     return rates
 
