@@ -605,7 +605,11 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         result=render(a,c,[],trace,'code');result['audio_truncated']=True
         return await finish(result,safe,id,memory,db,started)
     forced={'detail':'bank_reasons','figures':'bank_figures','history':'bank_history','services':'services_list','compare':'compare','insurance':'insurance'}.get(selected)
-    if selected in {'fdr','dps','card','home_loan'}:
+    if selected in {'account_fees','debit'}:
+        c=c.model_copy(update={'product':'account_fee','tenor':None,'network':None,'tier':None});forced='service_detail'
+        memory['account_view']=selected
+    if selected in {'savings','fdr','dps','card','home_loan'}:
+        memory.pop('account_view',None)
         c=c.model_copy(update={'product':selected,'tenor':None if selected!=c.product else c.tenor,'network':c.network if selected=='card' else None,'tier':c.tier if selected=='card' else None});forced='service_detail'
     if selected and selected.startswith('bank_'):
         peers=memory.get('clarify_candidates') or c.compare_bank_ids;index=int(selected[-1])-1
@@ -614,6 +618,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if selected=='listen':forced='unclear'
     resolve_started=time.monotonic()
     resolved=resolve(safe,c,banks)
+    if memory.get('account_scope') and resolved.product in {'savings','account_fee'} and resolved.requested_field!='debit' and re.search(r'ফি(?=$|[\s।?!,]|র(?:\s|$))|চার্জ|\bfees?\b|\bcharges?\b',safe,re.I):resolved=replace(resolved,product='account_fee',intent='service_detail',requested_field='account_fees',account_overview=False)
+    if selected in {'account_fees','debit'}:resolved=replace(resolved,product='account_fee',intent='service_detail',requested_field=selected,account_overview=False)
+    elif selected=='savings':resolved=replace(resolved,product='savings',intent='service_detail',tenor=None,account_overview=False)
+    elif resolved.product=='account_fee' and not resolved.account_overview and memory.get('account_view')=='debit' and not re.search(r'অ্যাকাউন্ট|একাউন্ট|হিসাব|\baccount|রক্ষণাবেক্ষণ|এসএমএস|maintenance|sms',safe,re.I):resolved=replace(resolved,requested_field='debit')
     if confirmed_pair:
         resolved=replace(resolved,bank_id=confirmed_pair['ids'][0],compare_bank_ids=confirmed_pair['ids'],product=confirmed_pair['product'],tenor=confirmed_pair['tenor'],intent='compare',confirm_ids=[],confirm_pair=False)
         forced='compare'
@@ -653,6 +661,26 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if r.bank_id is None and (selected=='ask_bank' or r.intent in {'bank_overview','bank_condition','bank_reasons','bank_figures','bank_profile','bank_history','bank_awards','services_list','service_detail'}):
         question='কোন ব্যাংকের কথা জানতে চান?' if c.language=='bn' else 'Which bank would you like to know about?'
         result=render(controls('unclear',c,'',question,['listen','end']),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
+    if r.account_overview:
+        memory['account_scope']=True
+        memory.pop('pending_reply',None);memory.pop('pending_facts',None);memory.pop('account_view',None)
+        c=c.model_copy(update={'misses':0})
+        bank=registry.get('bank:'+str(c.institution_id));name=bank.text if bank else ''
+        question=('আপনি সঞ্চয়ী হিসাবের সুদ জানতে চান, নাকি ফি ও চার্জ বা ডেবিট কার্ডের তথ্য?' if c.language=='bn' else 'Would you like savings interest, account fees and charges, or debit-card information?')
+        result=render(controls('services_list',c,'',question),c,[],trace,'code')
+        from ilma_api.human_contract import LABELS
+        result['next']={'question':question,'options':[{'value':value,'label':LABELS[value][0 if c.language=='bn' else 1]} for value in ['savings','account_fees','debit']]}
+        result['topic']=(name+' · ' if name else '')+('হিসাবের তথ্য' if c.language=='bn' else 'Account information')
+        return await finish(result,safe,id,memory,db,started)
+    if r.product=='account_fee' and r.intent=='service_detail':
+        memory['account_scope']=True;memory['account_view']='debit' if r.requested_field=='debit' else 'account_fees'
+        from ilma_api.account_voice import answer as account_answer
+        body,account_facts=await call(db,lambda owned:account_answer(owned,c.institution_id,r.requested_field=='debit',c.language))
+        a=controls('service_detail',c,body).model_copy(update={'used_fact_ids':[f['fact_id'] for f in account_facts]})
+        result=render(a,c,account_facts,trace,'code')
+        bank=registry.get('bank:'+str(c.institution_id));name=bank.text if bank else ''
+        result['topic']=(name+' · ' if name else '')+(('ডেবিট কার্ড' if r.requested_field=='debit' else 'ফি ও চার্জ') if c.language=='bn' else ('Debit card' if r.requested_field=='debit' else 'Fees and charges'))
         return await finish(result,safe,id,memory,db,started)
     if r.intent=='bank_awards' and not selected:
         # Awards are answered by code from sourced rows; the model never names them.

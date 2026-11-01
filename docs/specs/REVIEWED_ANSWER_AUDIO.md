@@ -61,3 +61,11 @@ again. A new question clears stale pair confirmation. A conjunction inside an
 exact full bank name is not split into separate institutions. Bangla overview
 wording includes “সম্বন্ধে বলবেন”. These rules do not add ASR aliases or relax
 financial-answer confidence thresholds.
+
+An explicit account-information request clears an inherited DPS product and term.
+It asks whether the user wants savings interest, account fees or debit-card
+information, with matching spoken and tappable choices. Short follow-up replies
+retain the bank. A visible topic label shows the selected account scope and is
+cleared on unrelated answers. Fee responses use the existing sourced account
+catalog, explicitly label the fixed one-lakh example and leave unavailable fees
+unknown. Approved recordings and transcription remain unchanged.

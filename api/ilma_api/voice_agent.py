@@ -18,7 +18,7 @@ from ilma_api.voice_answers import numbers
 
 Product = Literal['fdr','dps','savings','card','home_loan','auto_loan','personal_loan','loan_against_fdr','account_fee']
 Tool = Literal['bank_summary','bank_reasons','bank_figures','bank_history','services_overview','service_detail','service_compare','insurance','open_proof','watch_bank','end']
-Choice = Literal['detail','services','figures','history','fdr','dps','card','home_loan','compare','next','bank','ask_bank','end','repeat','more','confirm_bank','reject_bank','stop','report','proof','watch','yes','no','listen','insurance','bank_1','bank_2','bank_3']
+Choice = Literal['savings','account_fees','debit','detail','services','figures','history','fdr','dps','card','home_loan','compare','next','bank','ask_bank','end','repeat','more','confirm_bank','reject_bank','stop','report','proof','watch','yes','no','listen','insurance','bank_1','bank_2','bank_3']
 
 class Conversation(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)

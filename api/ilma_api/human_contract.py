@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field
 
 Intent=Literal['bank_overview','bank_condition','bank_reasons','bank_figures','bank_history','bank_profile','bank_awards','services_list','service_detail','compare','insurance','explain_term','advice_request','best_bank','repeat','correction','smalltalk','stop','out_of_scope','unclear']
-Button=Literal['detail','services','figures','history','fdr','dps','card','home_loan','compare','ask_bank','end','repeat','more','yes','no','confirm_bank','reject_bank','bank_1','bank_2','bank_3','listen']
+Button=Literal['savings','account_fees','debit','detail','services','figures','history','fdr','dps','card','home_loan','compare','ask_bank','end','repeat','more','yes','no','confirm_bank','reject_bank','bank_1','bank_2','bank_3','listen']
 class BankResolution(BaseModel):
     model_config=ConfigDict(extra='forbid')
     id:int|None
@@ -29,6 +29,7 @@ class HumanReply(BaseModel):
 
 STATE={'bank_awards':'DETAIL','bank_overview':'BANK','bank_condition':'BANK','bank_reasons':'DETAIL','bank_figures':'FIGURES','bank_history':'HISTORY','bank_profile':'DETAIL','services_list':'SERVICES','service_detail':'SERVICE','compare':'COMPARE','insurance':'NEXT','explain_term':'DETAIL','advice_request':'SERVICES','best_bank':'SERVICES','smalltalk':'ASK_BANK','stop':'NEXT','out_of_scope':'ASK_BANK','unclear':'ASK_BANK','correction':'BANK','repeat':'BANK'}
 LABELS={
+ 'savings':('সঞ্চয়ী হিসাবের সুদ','Savings interest'),'account_fees':('ফি ও চার্জ','Fees and charges'),'debit':('ডেবিট কার্ড','Debit card'),
  'listen':('আবার বলুন','Ask again'),
  'detail':('আরও বিস্তারিত','More details'),'services':('ব্যাংকের সেবা','Bank services'),'figures':('আর্থিক হিসাব','Financial figures'),'history':('আগের ঘটনা','Past events'),
  'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'card':('কার্ড','Card'),'home_loan':('গৃহঋণ','Home loan'),

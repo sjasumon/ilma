@@ -75,6 +75,17 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
 async def finish(result,user,id,memory,db,started,pending=None):
     from ilma_api.reviewed_answers import apply as apply_reviewed
     result=apply_reviewed(result,user,memory.pop('_reviewed_context',None),memory)
+    if not result.get('topic') and result['conversation'].get('product') in {'savings','account_fee'} and result.get('intent')=='service_detail':
+        from ilma_api.db import Institution
+        from ilma_api.human_tokens import spoken_name
+        def account_topic(owned):
+            bank=owned.get(Institution,result['conversation'].get('institution_id'))
+            name=spoken_name(bank.name_bn if result['language']=='bn' else bank.name_en) if bank else ''
+            label=('সঞ্চয়ী হিসাবের সুদ' if result['language']=='bn' else 'Savings interest') if result['conversation']['product']=='savings' else ('হিসাবের তথ্য' if result['language']=='bn' else 'Account information')
+            return (name+' · ' if name else '')+label
+        result['topic']=await call(db,account_topic)
+    if memory.get('account_scope') and result.get('intent')=='service_detail' and result['conversation'].get('product') in {'savings','account_fee'} and not result.get('reviewed_answer_key'):
+        result['next']['options']=[{'value':value,'label':LABELS[value][0 if result['language']=='bn' else 1]} for value in ['savings','account_fees','debit']]
     if result.get('reviewed_answer_key'):pending=None
     if result.get('checked')!='template' and result.get('intent') in STATE and result['intent'] not in {'unclear','out_of_scope','repeat','stop'}:
         result['conversation']['misses']=0;result['offer_typing']=False

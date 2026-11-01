@@ -18,10 +18,12 @@ console.log('Reviewed answer audio: BN/EN playback allowlist accepts versioned c
  const settle=async()=>{for(let i=0;i<20;i++)await Promise.resolve()};
  for(let turn=1;turn<=10;turn++){
   const token='synthetic-token-'+turn;
-  const result={type:'agent_turn',intent:'bank_overview',language:'en',speech:'Synthetic answer',speech_format:'paragraph',audio_pending:true,expects_reply:turn%2===0,conversation:{state:'BANK',turn,conversation_token:token,institution_id:1},next:{options:[]},facts:[],sentences:[],trace:{steps:[],status_rule_notice:''}};
+  const result={type:'agent_turn',intent:'bank_overview',language:'en',speech:'Synthetic answer',speech_format:'paragraph',audio_pending:true,topic:turn===1?'Sample Bank · Account information':null,expects_reply:turn%2===0,conversation:{state:'BANK',turn,conversation_token:token,institution_id:1},next:{options:[]},facts:[],sentences:[],trace:{steps:[],status_rule_notice:''}};
   await app.run(`handleVoiceEvent('result',${JSON.stringify(result)},playbackRequest)`);
   await app.run(`handleVoiceEvent('speech',{audio_url:'/static/audio/answers/en/q001.mp3?v=aaaaaaaaaaaaaaaa'},playbackRequest)`);
   await settle();assert.equal(plays,turn,'Conversation player must play saved answer URL');
+  assert.equal(app.node('agent-topic').hidden,turn!==1,'Topic is visible when understood and cleared on the next unrelated answer');
+  if(turn===1)assert.equal(app.node('agent-topic').textContent,'Sample Bank · Account information');
   assert.equal(app.run('isListening'),false,'Never record over the answer');
   app.fire('ilma-player','ended');await settle();
   assert.equal(app.run('isListening'),true,'Actual app adapter automatically records after every answer');

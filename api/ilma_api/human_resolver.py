@@ -76,6 +76,7 @@ class ResolvedTurn:
     term_asked:bool=False
     follow:bool=False
     confirm_pair:bool=False
+    account_overview:bool=False
 
 
 def resolve(text,c,banks):
@@ -127,6 +128,17 @@ def resolve(text,c,banks):
     if correction and not [b for b in strong if b['id'] not in excluded] and excluded:
         bank=c.institution_id if c.institution_id not in excluded else None
     product=next((p for p,pattern in [('fdr',r'এফডিআর|এফ ডি আর|\bfdr\b|fixed deposit|ফিক্সড ডিপোজিট|স্থায়ী আমানত'),('dps',r'ডিপিএস|ডি পি এস|\bdps\b|monthly savings|মাসিক সঞ্চয়|কনফিডেন্স|কোটিপতি|লাখপতি'),('savings',r'সঞ্চয়ী|সেভিংস|\bsavings?\b'),('card',r'কার্ড|\bcards?\b|visa|mastercard'),('home_loan',r'গৃহঋণ|home loan'),('personal_loan',r'personal loan|ব্যক্তিগত ঋণ'),('auto_loan',r'গাড়ি|car loan|auto loan')] if re.search(pattern,text,re.I)),None)
+    account_word=bool(re.search(r'অ্যাকাউন্টস?|একাউন্টস?|একাউণ্ট|হিসাব|\baccounts?\b',text,re.I))
+    debit_requested=bool(re.search(r'ডেবিট|\bdebit\b',text,re.I))
+    fee_requested=bool(re.search(r'ফি(?=$|[\s।?!,]|র(?:\s|$))|চার্জ|\bfees?\b|\bcharges?\b',text,re.I))
+    interest_requested=bool(re.search(r'সুদ|সুদের হার|\binterest\b|\brate\b',text,re.I))
+    account_overview=account_word and product is None and not re.search(r'মূলধন|মুনাফা|খেলাপি|ব্যালেন্স|নম্বর|পিন|ঋণ|লোন|বীমা|বিমা|সুরক্ষা|\b(?:capital|profit|balance|number|pin|loan|insurance|protection)\b',text,re.I)
+    if debit_requested:product='account_fee';account_overview=False
+    elif account_overview:
+        product='savings' if interest_requested else 'account_fee'
+        account_overview=not fee_requested and not interest_requested
+    elif fee_requested and product is None and c.product=='account_fee':product='account_fee'
+    elif interest_requested and product is None and c.product in {'account_fee','savings'}:product='savings'
     changed=bank!=c.institution_id
     follow=bool(FOLLOW.match(text)) and product is None and bool(c.product) and bool(named) and len(text.split())<=6
     retained=correction or not changed or follow
@@ -191,6 +203,8 @@ def resolve(text,c,banks):
         if any(row['confidence']<1 for row in declared_pair) or not all(id in named for id in pair_ids):
             confirm_pair=True;confirm=pair_ids;compare=pair_ids;bank=c.institution_id;intent='compare'
             if product is None:selected=None;tenor=None
+    if account_overview:intent='services_list';selected='account_fee';tenor=None;network=tier=None;metric=None;wanted=None
+    elif product=='account_fee':intent='service_detail';wanted='debit' if debit_requested else 'account_fees';tenor=None;network=tier=None
     if is_interest_profit_question(text):intent='explain_term';selected=None;metric=None;compare=[]
     best=best_rate_product(text)
     if best:
@@ -198,4 +212,4 @@ def resolve(text,c,banks):
     fee='late_fee' if re.search(r'লেট|দেরিতে|বিলম্ব|\blate\b',text,re.I) else 'annual_fee'
     # Where a question names two banks, keep them in the order it said them.
     compare.sort(key=lambda id:next((s[0] for s in sorted(spans) if s[2]==id),99))
-    return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric,fee,bool(match),follow or bool(FOLLOW.match(text)),confirm_pair)
+    return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric,fee,bool(match),follow or bool(FOLLOW.match(text)),confirm_pair,account_overview)

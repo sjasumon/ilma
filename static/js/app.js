@@ -2716,6 +2716,7 @@ function setupAgentPanel() {
       document.getElementById('tab-home').classList.add('agent-open');
       document.getElementById('agent-panel').hidden = false;
       document.getElementById('agent-heard').textContent = lastAgentChoice ? (bn ? 'আপনি বেছেছেন: ' : 'You chose: ')+lastAgentChoice : lastVoiceTranscript ? (bn ? 'আপনি বলেছেন: ' : 'You said: ')+lastVoiceTranscript : '';
+      const topic=document.getElementById('agent-topic');topic.hidden=!result.topic;topic.textContent=result.topic||'';
       document.getElementById('agent-answer').textContent=result.speech||result.text;
       document.getElementById('agent-card-label').textContent=bn?'সঠিক অঙ্ক ও সূত্র দেখুন':'See exact figures and sources';
       document.getElementById('agent-card').open=false;
