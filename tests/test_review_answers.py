@@ -481,5 +481,4 @@ def test_english_fdr_keeps_standard_and_extra_value_apart_like_bangla():
     rows=[rate('a','Fixed Deposit 3 Months',3,6.35,kind='fdr'),rate('b','Fixed Deposit 12 Months',12,6.5,kind='fdr'),rate('c','Extra Value Fixed Deposit 3 Months',3,8,kind='fdr'),rate('d','Extra Value Fixed Deposit 12 Months',12,8,kind='fdr')]
     from ilma_api.human_turn import grouped_rates
     out=grouped_rates(rows,'Eastern Bank',"Eastern Bank's ",False,'fdr')
-    assert len(out)==2 and 'Extra Value FDR' in out[1][0] and 'an FDR' in out[0][0]
-    assert {'c','d'}==set(out[1][1])
+    assert out==[("Eastern Bank's standard FDR pays 6.35% to 6.5%, and its Extra Value FDR pays 8%, depending on the term.",['a','b','c','d'])]

@@ -366,6 +366,14 @@ def grouped_rates(rows,name,whose,bn,kind,lead=False):
             return [(f"{'' if lead else whose}{a}ে {said}, আর {b}ে {rate(y[0])}।",ids)]
         one=lambda l,f:f"{'The ' if lead else whose if l==a else 'its '}{l} pays {rate(f)}"
         return [(f'{one(a,x[0])}, and {"the " if lead else ""}{one(b,y[0]).removeprefix("The ")}.',ids)]
+    if not bn and len(labels)>=2 and any(len(v)>1 for v in labels.values()):
+        # English numbers are long when spoken: give each scheme's range so no scheme drops to a "hear more" page.
+        parts=[]
+        for label,items in labels.items():
+            values=sorted({f['values']['rate'] for f in items});low,high=number_text(values[0]),number_text(values[-1])
+            pays=f'{low}%' if low==high else f'{low}% to {high}%'
+            parts.append(f"{'its standard '+plain if not label else 'its '+label} pays {pays}")
+        return [(f"{whose if not lead else ''}{parts[0][4:] if not lead else 'The '+parts[0][4:]}"+''.join(', and '+p for p in parts[1:])+', depending on the term.',[f['fact_id'] for items in labels.values() for f in items])]
     for index,(label,items) in enumerate(labels.items()):
         ids=[f['fact_id'] for f in items];said=answers.rate_list(items,bn)
         if bn:text=f'{whose if not index else ""}{label}ে {said}।'
