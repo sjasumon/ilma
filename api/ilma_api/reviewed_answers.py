@@ -37,9 +37,16 @@ def apply(result,user,context,memory):
         if 'conversation_bank_id' in context:result['conversation']['institution_id']=context['conversation_bank_id']
         result.update(text=text,speech=text,speech_text=text,speech_tts=tts,speech_parts=[text],reviewed_answer_key=item['key'],reviewed_source_sha256=context['source_sha256'],reviewed_audio_url='/static/audio/answers/'+file+'?v='+item['audio_sha256'][:16],expects_reply=bool(question))
         result['next']['question']=question
-        if re.search(r'সার্ভিস|সেবা|another service',question,re.I) and not re.search(r' না | or ',question,re.I):
-            result['next'].update(affirmative_action='services',negative_action='stop')
-        result['next']['options']=[{'value':'services','label':'ব্যাংকের সেবা' if result['language']=='bn' else 'Bank services'},{'value':'ask_bank','label':'অন্য ব্যাংক' if result['language']=='bn' else 'Another bank'}]
+        result['next'].pop('affirmative_action',None);result['next'].pop('negative_action',None)
+        service_offer=bool(re.search(r'সার্ভিস|সেবা|\bservices?\b',question,re.I))
+        compare_offer=bool(re.search(r'মিলিয়ে|তুলনা|compare',question,re.I))
+        detail_offer=bool(re.search(r'আরও.*(?:শুন|জানার)|আর কিছু শুন|hear more|hear anything else|know more|anything else.*(?:know|hear)',question,re.I))
+        alternatives=bool(re.search(r' না | or ',question,re.I))
+        if not alternatives and (service_offer or compare_offer or detail_offer):
+            result['next'].update(affirmative_action='compare' if compare_offer else 'services' if service_offer else 'detail',negative_action='stop')
+        values=['compare','services'] if compare_offer and service_offer else ['compare','ask_bank'] if compare_offer else ['services','ask_bank']
+        from ilma_api.human_contract import LABELS
+        result['next']['options']=[{'value':value,'label':LABELS[value][0 if result['language']=='bn' else 1]} for value in values]
         if context.get('facts'):
             from ilma_api.human_tokens import card_text
             public=context['facts'];result['facts']=public;result['sources']=[f['source'] for f in public if f.get('source')];result['speech_fact_ids']=[f['fact_id'] for f in public];result['conversation']['fact_ids']=result['speech_fact_ids']

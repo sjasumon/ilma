@@ -68,3 +68,10 @@ def test_explicit_extension_requires_both_languages_and_all_ids(tmp_path):
     assert len(builder.approved(p))==4
     data['clips'].pop();p.write_text(json.dumps(data))
     with pytest.raises(ValueError):builder.approved(p)
+
+
+def test_declared_reference_master_cannot_be_replaced_by_a_proposal(tmp_path):
+    p,data=fixture(tmp_path);data['master_section']='Current/reference full answer — Bangla';p.write_text(json.dumps(data))
+    assert all(row['master_section']==data['master_section'] for row in builder.approved(p))
+    data['master_section']='Proposed full spoken answer — Bangla';p.write_text(json.dumps(data))
+    with pytest.raises(ValueError):builder.approved(p)

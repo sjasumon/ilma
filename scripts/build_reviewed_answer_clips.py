@@ -5,6 +5,8 @@ from pathlib import Path
 def approved(path):
     data=json.loads(Path(path).read_text());rows=data['clips'];items=[]
     if data.get('approved') is not True:raise ValueError('Text review must be complete')
+    section=data.get('master_section')
+    if section is not None and section!='Current/reference full answer — Bangla':raise ValueError('Unexpected master section')
     first,last=data.get('question_start',1),data.get('question_end',93)
     if type(first) is not int or type(last) is not int or not 1<=first<=last<=999:raise ValueError('Invalid question range')
     expected={f'{lang}:q{n:03d}' for lang in ('bn','en') for n in range(first,last+1)}
@@ -15,7 +17,7 @@ def approved(path):
         if digest!=row['text_sha256'] or len(text)!=row['chars']:raise ValueError('Reviewed text changed')
         file=language+'/'+key.split(':')[1]+'.mp3'
         if row['file']!=file:raise ValueError('Invalid recording path')
-        items.append(dict(key=key,language=language,text=text,file=file,text_sha256=digest,approved_exact_text=True,review_sha256=data['review_sha256']))
+        items.append(dict(key=key,language=language,text=text,file=file,text_sha256=digest,approved_exact_text=True,review_sha256=data['review_sha256'],**({'master_section':section} if section else {})))
     if len(items)!=len(expected) or {i['key'] for i in items}!=expected:raise ValueError('All requested answers in both languages are required')
     if sum(len(i['text']) for i in items)!=data['total_chars']:raise ValueError('Character total mismatch')
     return items

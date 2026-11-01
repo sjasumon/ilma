@@ -19,3 +19,15 @@ are part of this hash. Exact reviewed general questions can use saved recordings
 without a wording request, including when no bank is appropriate to the question.
 The review page derives its count and question-number limit from the complete
 manifest. This does not expand speech recognition or promise paraphrase coverage.
+
+## Reference master selection
+
+When the owner selects **Current/reference full answer — Bangla**, retain that
+section for every question, including its closing question. Do not choose the
+proposed section for any remaining IDs. The reference selector rejects missing,
+empty or duplicate sections instead of falling back to a proposal. The owner's
+explicit legacy FDR/DPS closing removal is the only automatic wording exception.
+English must follow the selected Bangla meaning; stale English reference endings
+must not override edits to the Bangla master. Display text remains separate from
+the exact spoken-number script. Record the selected master section and review
+hash in the activated manifest, and reuse only matching text/script/audio hashes.

@@ -167,3 +167,15 @@ def test_extension_uses_language_specific_slots_and_preserves_source_bank(tmp_pa
     path.write_text(json.dumps(manifest))
     assert reviewed_sources.context(None,'Synthetic question',prior,{},'en',2)['conversation_bank_id']==2
     assert reviewed_sources.context(None,'Synthetic question',prior,{},'en',None)['conversation_bank_id'] is None
+
+
+@pytest.mark.parametrize('question,expected,affirmative',[('Compare or another service?',['compare','services'],None),('Would you like to compare?',['compare','ask_bank'],'compare'),('Would you like another service?',['services','ask_bank'],'services'),("Would you like this bank's services?",['services','ask_bank'],'services'),('Would you like to hear more?',['services','ask_bank'],'detail')])
+def test_reviewed_closing_controls_match_the_recorded_offer(tmp_path,monkeypatch,question,expected,affirmative):
+    result,context,manifest,path=fixture(tmp_path,monkeypatch)
+    clip=manifest['clips']['bn:q001'];clip['text']='Synthetic body. '+question;clip['text_sha256']=hashlib.sha256(clip['text'].encode()).hexdigest();path.write_text(json.dumps(manifest))
+    result['next'].update(affirmative_action='detail',negative_action='old')
+    out=reviewed.apply(result,'প্রশ্ন',context,{})
+    assert out['next']['question']==question
+    assert [option['value'] for option in out['next']['options']]==expected
+    assert out['next'].get('affirmative_action')==affirmative
+    assert out['next'].get('negative_action')==('stop' if affirmative else None)
