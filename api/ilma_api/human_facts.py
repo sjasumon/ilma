@@ -242,6 +242,8 @@ def service_inventory(db,id):
     return item('inventory:'+str(id),id,'inventory','প্রকাশিত সেবার ধরন '+', '.join(inventory_labels(products)),'Published product types include '+', '.join(PRODUCTS.get(p,(p,p))[1] for p in products),dict(kind='computed',source_url=urls[0],source_title='Published product inventory',quote='Derived from visible published product rows',inputs=[dict(source_url=u) for u in urls]),product_types=products,card_networks=networks,card_tiers=tiers)
 
 
+# Accounts for one group of savers; a general question compares the general account.
+NICHE=re.compile(r'\b(?:50|fifty)\b|senior|women|child|kid|junior|teen|student|salary|payroll|pension|probashi|\bnrb\b|premium',re.I)
 def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=(),network=None,tier=None):
     ids=list(dict.fromkeys([anchor,*bank_ids])) if anchor else list(bank_ids)
     bank_rows=demo_banks(db,True);by_id={bank.id:bank for bank in bank_rows};selected=[]
@@ -271,7 +273,7 @@ def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=
             facts=sorted(all_terms,key=distance)[:1]
             for f in facts:f['values'].update(nearest=True,asked_tenor=reference)
         if not facts:continue
-        plain=[f for f in facts if not any(w in f['values']['product'].lower() for w in ('women','child','senior','premium'))] or facts
+        plain=[f for f in facts if not NICHE.search(f['values']['product'])] or facts
         # Within the same bank, preserve the general-product selector, not a premium slab.
         chosen=plain[0];chosen['values']['comparison_term']=reference
         chosen['values']['term_assumed']=tenor is None and reference is not None

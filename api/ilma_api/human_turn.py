@@ -178,6 +178,12 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
                 # A stored range is said beside the other bank's rate, not "no data".
                 facts.update((n['fact_id'],n) for n in ranges)
                 registry['gap:compare:'+str(bank_id)]=note_tokens(ranges,r.product,bank_id,c.language=='bn')['note:product']
+                if r.tenor:
+                    # A term rate beside a range of terms is not like for like: say so.
+                    from ilma_api.human_tokens import term
+                    when=term({},c.language=='bn',r.tenor);low,high=ranges[0]['values']['value_text'].split('-')
+                    text=f'{label[0]}ের {when} মেয়াদের হার আমাদের কাছে নেই; মেয়াদভেদে সুদ {low}% থেকে {high}%' if c.language=='bn' else f'{when} {label[1]} rate is not in our data; across terms it publishes {low}% to {high}%'
+                    registry['gap:compare:'+str(bank_id)]=FactToken(text,registry['gap:compare:'+str(bank_id)].fact_ids,bank_id,'service_note')
                 registry['meta:range']=FactToken('')
                 continue
             fid='coverage:compare:'+str(bank_id)+':'+r.product
@@ -466,7 +472,10 @@ def recommended(intent,c,registry,facts,key):
     if intent=='compare':
         if 'cmp:0' in registry:return [name for name in registry if name.startswith('cmp:')]
         if 'gap:term' in registry:return ['gap:term']+recommended('service_detail',c,registry,facts,key)[1:3]
-        return ['row:'+str(i)+'.offer' for i in range(4) if 'row:'+str(i)+'.offer' in registry]+[name for name in registry if name.startswith('gap:compare:')]
+        keys=['row:'+str(i)+'.offer' for i in range(4) if 'row:'+str(i)+'.offer' in registry]+[name for name in registry if name.startswith('gap:compare:')]
+        # The first bank the question named (the anchor) is answered first.
+        order=[c.institution_id] if c.institution_id else []
+        return sorted(keys,key=lambda name:order.index(registry[name].bank_id) if registry[name].bank_id in order else len(order))
     if intent=='insurance':return available([f for f in current or list(facts.values()) if f['kind']=='insurance'])[:1]
     if intent=='services_list':return available([f for f in current if f['kind']=='inventory'])[:1]
     if intent=='explain_term':return available([f for f in facts.values() if f['kind']=='term'])[:1]
