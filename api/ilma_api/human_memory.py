@@ -14,6 +14,15 @@ def redact_user(text):
     return text[:1500]
 
 
+def redact_for_key(text):
+    """Frozen copy of the older filter. Saved-answer question keys were made with it; never change it."""
+    text=re.sub(r'(?:আমার নাম|my name is|my name\s*[:=])\s*[^।.!?\n]+','[name omitted]',text,flags=re.I)
+    text=re.sub(r'(?:[0-9০-৯][0-9০-৯,.]*|এক|দুই|তিন|চার|পাঁচ|দশ|one|two|three|five|ten)\s*(?:লাখ|লক্ষ|কোটি|হাজার|টাকা|lakh|crore|thousand|taka|BDT)(?:\s*(?:টাকা|taka))?','[personal amount omitted]',text,flags=re.I)
+    text=re.sub(r'\b(?:account|pin|password|otp)\b\s*[:#-]?\s*\S+|(?:পিন|অ্যাকাউন্ট নম্বর|পাসওয়ার্ড|ওটিপি)\s*[:#-]?\s*\S+','[identifier omitted]',text,flags=re.I)
+    text=re.sub(r'[0-9০-৯][0-9০-৯ -]{6,}[0-9০-৯]','[identifier omitted]',text)
+    return text[:1500]
+
+
 def sign(id):return hmac.new(settings.VOICE_LOG_SALT.encode(),('conversation:'+id).encode(),hashlib.sha256).hexdigest()[:32]
 def token(id):return id+'.'+sign(id)
 def verified_id(value):

@@ -146,3 +146,11 @@ def test_redaction_keeps_ordinary_account_words_but_hides_numbers():
     for said,secret in (('my account 12345678','12345678'),('account no: 0123-4567','0123-4567'),('my pin is 1234','1234'),('PIN: 4321','4321'),('password hunter2','hunter2'),('otp 556677','556677'),('আমার পিন ১২৩৪','১২৩৪'),('পিন হলো ৯৮৭৬','৯৮৭৬'),('অ্যাকাউন্ট নম্বর ১২৩৪৫','১২৩৪৫')):
         out=redact_user(said)
         assert secret not in out and '[identifier omitted]' in out,(said,out)
+
+
+def test_saved_answer_keys_still_use_the_frozen_filter():
+    from ilma_api.reviewed_answers import question_key
+    import hashlib
+    from ilma_api.voice_text import normalize_alias
+    said='Can you tell me BRAC Bank account details?'
+    assert question_key(said)==hashlib.sha256(normalize_alias('Can you tell me BRAC Bank [identifier omitted]').encode()).hexdigest()

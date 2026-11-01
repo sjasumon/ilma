@@ -11,8 +11,8 @@ def slots(r):
 
 def question_key(text):
     from ilma_api.voice_text import normalize_alias
-    from ilma_api.human_memory import redact_user
-    return hashlib.sha256(normalize_alias(redact_user(text)).encode()).hexdigest()
+    from ilma_api.human_memory import redact_for_key
+    return hashlib.sha256(normalize_alias(redact_for_key(text)).encode()).hexdigest()
 
 def question_keys(text):
     """A spoken question usually has no closing mark, and the stored question may."""

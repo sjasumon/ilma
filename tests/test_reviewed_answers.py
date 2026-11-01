@@ -58,7 +58,7 @@ def test_complete_answers_do_not_offer_the_legacy_rates_question():
 
 
 def test_question_lookup_uses_privacy_redaction_not_a_disclosed_amount():
-    from ilma_api.human_memory import redact_user
+    from ilma_api.human_memory import redact_for_key as redact_user
     for question in ['আমার ৫ লাখ টাকা কোথায় বিনিয়োগ করব?','My account number is 12345678, what is my balance?']:
         assert reviewed.question_key(question)==reviewed.question_key(redact_user(question))
 
