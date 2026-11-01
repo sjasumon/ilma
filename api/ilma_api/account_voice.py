@@ -1,4 +1,5 @@
 """Short, source-bound account fee answers; never reuse credit/DPS facts."""
+import json
 from ilma_api.account_catalog import banks,calculate
 from ilma_api.human_tokens import spoken_name
 
@@ -13,7 +14,7 @@ def answer(db,bank_id,debit,language):
         maximum=('সর্বোচ্চ ' if bn else 'up to ') if row.get('rate_is_maximum') else ''
         text=(f'{label_bn} {period_bn}{maximum}{value} টাকা' if bn else f'{label_en} is {maximum}{value} taka{period_en}')+vat+('।' if bn else '.')
         parts.append(text)
-        facts.append(dict(fact_id=row['offer_id'],institution_id=bank_id,kind='account_fee',values=row,text_bn=text if bn else '',text_en=text if not bn else '',source=dict(source_url=row['source_url'],source_title=row.get('source_title') or row['product'],quote=row['quote'],page=row.get('page'),published_at=str(row['doc_date']),condition=row['condition'])))
+        facts.append(dict(fact_id=row['offer_id'],institution_id=bank_id,kind='account_fee',values=json.loads(json.dumps(row,default=str)),text_bn=text if bn else '',text_en=text if not bn else '',source=dict(source_url=row['source_url'],source_title=row.get('source_title') or row['product'],quote=row['quote'],page=row.get('page'),published_at=str(row['doc_date']),condition=row['condition'])))
     if debit:
         add(bank['debit_main'],'সাধারণ ডেবিট কার্ডের মূল বার্ষিক ফি','The standard debit card’s base annual fee')
         add(bank['debit_replacement'],'ওই কার্ডের বদলি ফি','Its replacement fee')

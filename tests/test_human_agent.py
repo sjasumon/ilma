@@ -128,3 +128,12 @@ def test_unrelated_short_names_do_not_look_like_a_bank():
     from ilma_api.voice_text import different_start
     assert different_start('sbac','black') and different_start('brac','zebra')
     assert not different_start('city','sitty') and not different_start('brac','bragg')
+
+
+def test_account_fee_facts_can_be_saved_in_conversation_memory(monkeypatch):
+    from datetime import date
+    from ilma_api import account_voice
+    row=dict(offer_id='synthetic',value_num=300,unit='bdt_card',vat_included=False,vat_percent=15,rate_is_maximum=False,doc_date=date(2026,1,1),source_url='https://example.test',quote='Synthetic',source_title='Synthetic',condition='Synthetic',page=1,product='Synthetic card')
+    monkeypatch.setattr(account_voice,'banks',lambda db:[dict(id=1,name_bn='পরীক্ষা ব্যাংক',name_en='Test Bank',debit_main=row,debit_replacement=None)])
+    _,facts=account_voice.answer(None,1,True,'en')
+    json.dumps(facts)
