@@ -14,6 +14,56 @@ def question_key(text):
     from ilma_api.human_memory import redact_user
     return hashlib.sha256(normalize_alias(redact_user(text)).encode()).hexdigest()
 
+def numbers(text):
+    """Stated numbers without calendar years; 2.50 and 2.5 are the same figure."""
+    found=re.findall(r'\d+(?:[.,]\d+)*',str(text).translate(str.maketrans('০১২৩৪৫৬৭৮৯','0123456789')))
+    values={format(float(n.replace(',','')),'g') if len(n)<16 else n for n in found}
+    return {n for n in values if not re.fullmatch(r'(?:19|20)\d\d',n)}
+
+def stated_numbers(f):
+    """The number a fact asserts, not every number in its label or its source quote."""
+    from ilma_api.human_tokens import card_text
+    v=f.get('values') or {}
+    if f.get('kind')=='service':return numbers(v.get('rate',''))
+    if f.get('kind')=='reviewed_evidence':
+        raw=v.get('value_num') or v.get('value') or ''
+        try:return {format(float(raw),'g'),format(round(float(raw)*100,6),'g')}
+        except ValueError:return numbers(raw)
+    try:text=card_text(f,'en')
+    except (KeyError,TypeError,ValueError):return set()
+    return set(sorted(numbers(text),key=text.find)[:1])
+
+STATUS_WORDS=re.compile(r'অবস্থা|ঝুঁকি|condition|\brisk\b',re.I)
+AWARD_WORDS=re.compile(r'পুরস্কার|স্বীকৃতি|সেরা|\bnamed\b|\bawards?\b',re.I)
+AWARD_CAVEAT=re.compile(r'প্রমাণ নয়|\bnot proof\b',re.I)
+UNSPOKEN={'history','coverage','peer','inventory'}
+
+def spoken_lines(body,language,facts,cited,intent):
+    """One card line per spoken sentence, carrying only the facts that sentence states."""
+    pool={f['fact_id']:f for f in [*facts,*cited]}.values()
+    # Incidents reach the card only when the question was about them.
+    pool=[f for f in pool if f.get('kind') not in UNSPOKEN or intent=='bank_history' and f.get('kind')=='history' and f in cited]
+    declared=[f for f in pool if f.get('kind')=='reviewed_evidence']
+    lines=[];kept={}
+    for sentence in re.split(r'(?<=[।?!])\s+|(?<=\.)\s+',body.strip()):
+        if not sentence.strip():continue
+        said=numbers(sentence);own=[f for f in pool if stated_numbers(f)&said]
+        named=[f for f in own if f.get('kind')=='service' and str((f.get('values') or {}).get('product','')).casefold().split(' ')[-1] in sentence.casefold()]
+        own=[f for f in own if f.get('kind')!='service']+(named or [f for f in own if f.get('kind')=='service'])[:2]
+        own+=[f for f in pool if f.get('kind')=='status' and STATUS_WORDS.search(sentence) or f.get('kind')=='award' and AWARD_WORDS.search(sentence) and not AWARD_CAVEAT.search(sentence) or f.get('kind')=='history' and f in pool]
+        own=list({f['fact_id']:f for f in own}.values())
+        if not own:continue
+        kept.update({f['fact_id']:f for f in own})
+        lines.append(dict(text=sentence.strip(),fact_ids=[f['fact_id'] for f in own],source=own[0].get('source',{})))
+    # A term or declared source backs the answer as a whole when no sentence quotes its number.
+    whole=[f for f in pool if f['fact_id'] not in kept and (f.get('kind')=='term' and f in cited or f in declared and not kept)]
+    if whole:
+        first=re.split(r'(?<=[।?!])\s+|(?<=\.)\s+',body.strip())[0].strip()
+        if lines and lines[0]['text']==first:lines[0]['fact_ids']+=[f['fact_id'] for f in whole]
+        elif first:lines.insert(0,dict(text=first,fact_ids=[f['fact_id'] for f in whole],source=whole[0].get('source',{})))
+        kept.update({f['fact_id']:f for f in whole})
+    return lines,list(kept.values())
+
 def apply(result,user,context,memory):
     if not context:return result
     original=result
@@ -49,9 +99,10 @@ def apply(result,user,context,memory):
         from ilma_api.human_contract import LABELS
         result['next']['options']=[{'value':value,'label':LABELS[value][0 if result['language']=='bn' else 1]} for value in values]
         if context.get('facts'):
-            from ilma_api.human_tokens import card_text
-            public=context['facts'];result['facts']=public;result['sources']=[f['source'] for f in public if f.get('source')];result['speech_fact_ids']=[f['fact_id'] for f in public];result['conversation']['fact_ids']=result['speech_fact_ids']
-            result['sentences']=[dict(text=card_text(f,result['language']),fact_ids=[f['fact_id']],source=f.get('source',{})) for f in public]
+            cited=[f for f in original.get('facts',[]) if f.get('fact_id') in set(original.get('speech_fact_ids',[]))]
+            lines,public=spoken_lines(body,result['language'],context['facts'],cited,context['slots'].get('intent'))
+            result['facts']=public;result['sources']=[f['source'] for f in public if f.get('source')];result['speech_fact_ids']=[f['fact_id'] for f in public];result['conversation']['fact_ids']=result['speech_fact_ids']
+            result['sentences']=lines
             result['conversation']['last_spoken_fact_ids']=result['speech_fact_ids']
         resolved_intent=context['slots'].get('intent')
         if resolved_intent:

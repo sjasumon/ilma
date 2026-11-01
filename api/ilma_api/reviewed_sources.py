@@ -26,6 +26,12 @@ def evidence(db,refs):
 
 def context(db,user,r,facts,language=None,previous_bank=None):
     base={'source_sha256':reviewed.fingerprint(facts),'slots':reviewed.slots(r),'facts':list(facts.values())}
+    # The award an overview opens with is sourced from its own tables, outside the fingerprint.
+    if r.intent in {'bank_overview','bank_condition'} and r.bank_id:
+        from ilma_api.awards import intro_award,fact
+        try:found=intro_award(db,r.bank_id)
+        except Exception:found=None  # The awards tables may not be loaded yet.
+        if found:base['facts'].append(fact(*found,language))
     try:
         data=json.loads((reviewed.ROOT/'static/audio/answers/manifest.json').read_text())
         if not complete(data):return base

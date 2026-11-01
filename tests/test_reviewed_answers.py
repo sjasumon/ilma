@@ -187,3 +187,53 @@ def test_verified_saved_answer_exits_stale_typing_recovery(tmp_path,monkeypatch)
     out=reviewed.apply(result,'প্রশ্ন',context,{})
     assert out['reviewed_answer_key']=='bn:q001'
     assert out['conversation']['misses']==0 and out['offer_typing'] is False
+
+
+def card_fact(id,kind,text,**values):
+    return dict(fact_id=id,kind=kind,institution_id=1,values=values,text_en=text,text_bn=text,source=dict(source_url='https://example.test/'+id))
+
+def test_card_holds_only_the_facts_each_sentence_states():
+    capital=card_fact('capital','figure','Capital ratio 15.49% · minimum 12.5% · 2025')
+    loans=card_fact('loans','figure','Bad loans 2.24%, which is low (2025).')
+    status=card_fact('status','status','Synthetic Bank: Low risk')
+    incident=card_fact('incident','history','Synthetic incident headline 15.49')
+    rates=[card_fact(f'rate-{n}','service','',rate=2,product=f'Synthetic {n}',unit='pct_year') for n in range(60)]
+    body='Synthetic Bank has an award. An award is not proof that a bank is safe. Its bad loans are 2.24%, as of 2025. It is in good condition: its capital ratio is 15.49%, against a 12.5% minimum.'
+    lines,public=reviewed.spoken_lines(body,'en',[capital,loans,status,incident,*rates],[status],'bank_overview')
+    assert [line['text'] for line in lines]==['Its bad loans are 2.24%, as of 2025.','It is in good condition: its capital ratio is 15.49%, against a 12.5% minimum.']
+    assert {f['fact_id'] for f in public}=={'capital','loans','status'}
+    assert len(lines)<=4
+
+def test_card_keeps_a_cited_incident_only_for_a_history_question():
+    incident=card_fact('incident','history','Synthetic incident headline')
+    assert reviewed.spoken_lines('A synthetic event happened.','en',[incident],[incident],'bank_overview')==([],[])
+    lines,public=reviewed.spoken_lines('A synthetic event happened.','en',[incident],[incident],'bank_history')
+    assert [f['fact_id'] for f in public]==['incident'] and len(lines)==1
+
+def test_card_names_the_account_a_sentence_states_among_equal_rates():
+    rates=[card_fact(id,'service','',rate=2,product=name,unit='pct_year') for id,name in [('a','Synthetic Campus Account'),('b','Synthetic Women Savings'),('c','Synthetic Junior Plan')]]
+    lines,public=reviewed.spoken_lines('The Women Savings pays 2%.','en',rates,[],'service_detail')
+    assert [f['fact_id'] for f in public]==['b'] and len(lines)==1
+
+def test_declared_evidence_backs_an_answer_with_no_quoted_number():
+    row=card_fact('reviewed:profile:1','reviewed_evidence','Synthetic quote')
+    lines,public=reviewed.spoken_lines('A plain reviewed sentence. Another one.','en',[row],[],None)
+    assert len(lines)==1 and [f['fact_id'] for f in public]==['reviewed:profile:1']
+
+def test_bangla_digits_match_the_stored_figure():
+    loans=card_fact('loans','figure','Bad loans 2.24%, which is low (2025).')
+    lines,_=reviewed.spoken_lines('খেলাপি ঋণ ২.২৪%।','bn',[loans],[],'bank_overview')
+    assert lines[0]['fact_ids']==['loans']
+
+def test_award_and_status_sentences_keep_their_sources_without_being_cited():
+    award=card_fact('award','award','Synthetic award')
+    status=card_fact('status','status','Synthetic Bank: Low risk')
+    lines,public=reviewed.spoken_lines('Synthetic Bank was named best bank. It is in good condition.','en',[award,status],[],'bank_overview')
+    assert [line['fact_ids'] for line in lines]==[['award'],['status']] and len(public)==2
+
+def test_award_caveat_is_not_cited_as_the_award():
+    award=card_fact('award','award','Synthetic award')
+    lines,_=reviewed.spoken_lines('Synthetic Bank was named best bank. An award is not proof that a bank is safe.','en',[award],[],'bank_overview')
+    assert [line['text'] for line in lines]==['Synthetic Bank was named best bank.']
+    lines,_=reviewed.spoken_lines('পরীক্ষা ব্যাংককে সেরা ব্যাংক বলেছে। তবে পুরস্কার ব্যাংকের নিরাপত্তার প্রমাণ নয়।','bn',[award],[],'bank_overview')
+    assert [line['text'] for line in lines]==['পরীক্ষা ব্যাংককে সেরা ব্যাংক বলেছে।']

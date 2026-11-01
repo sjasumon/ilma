@@ -2724,9 +2724,11 @@ function setupAgentPanel() {
       for (const sentence of result.sentences) {
         const article = document.createElement('article'),text = document.createElement('p');
         text.textContent = sentence.text; article.appendChild(text);
+        const shownSources=new Set();
         for (const id of sentence.fact_ids) {
           const fact = result.facts.find(f => f.fact_id === id);
           if (fact?.status) { const chip = document.createElement('span'); chip.className = 'agent-chip';chip.textContent = fact.status[bn ? 'label_bn' : 'label_en'] || (bn ? 'অবস্থা যাচাই হয়নি' : 'Condition unverified');article.appendChild(chip); }
+          const sourceKey=(fact?.source||sentence.source||{}).source_url||id;if(shownSources.has(sourceKey))continue;shownSources.add(sourceKey);
           const button = document.createElement('button'); button.type = 'button';button.className = 'agent-source';button.textContent = bn ? 'সূত্র ›' : 'Source ›';
           button.addEventListener('click',() => showAgentSource(fact?.source || sentence.source || {})); article.appendChild(button);
         }
