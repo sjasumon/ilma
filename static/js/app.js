@@ -2732,8 +2732,8 @@ function setupAgentPanel() {
         }
         sentences.appendChild(article);
       }
-      // Hide the sources link when no sentence cites a fact.
-      document.getElementById('agent-card').hidden=!(result.sentences||[]).some(s=>(s.fact_ids||[]).length);
+      // Hide the sources link when no sentence cites a fact (a "no data" note is not one).
+      document.getElementById('agent-card').hidden=!(result.sentences||[]).some(s=>(s.fact_ids||[]).some(id=>(result.facts||[]).find(f=>f.fact_id===id)?.kind!=='coverage'));
       document.getElementById('agent-check-label').textContent = result.checked === 'model' ? (bn ? 'সূত্র মিলিয়ে যাচাই করা হয়েছে' : 'Claims checked against cited facts') : (bn ? 'সূত্রের তথ্য সহজ করে বোঝানো হয়েছে' : 'Explained using sourced facts');
       document.getElementById('agent-question').textContent = bn?'ট্যাপ করে উত্তর দিন':'Tap to reply';
       document.getElementById('agent-state').textContent = result.audio_pending || /^data:audio\//.test(result.speech||'') ? '' : (bn ? 'অডিও পাওয়া যাচ্ছে না। বিকল্প বেছে নিন।' : 'Audio unavailable. Choose an option.');
