@@ -313,7 +313,7 @@ def service_lines(text,lines,c,r,registry,facts):
         word=next((facts[i] for row in terms for i in row[1]),None) or next((f for f in facts.values() if f.get('kind')=='term' and f['fact_id'].split(':',1)[-1].casefold() in {label[1].casefold(),label[0]}),None)
         if word:
             meaning=word['text_bn' if bn else 'text_en'].rstrip('।.')
-            many=len({product_name(f['values'],bn) for f in rows})
+            many=len({product_name(f['values'],True) for f in rows})  # Bangla names are the scheme key in both languages
             if many in COUNTS:
                 # Two to four schemes: say how many (a longer count is usually terms stored as products), then what the word means after the rates.
                 short=re.sub(r'জমানোর স্কিম$','জমানো',meaning) if bn else re.sub(r'^A scheme for ','',meaning)
@@ -322,7 +322,7 @@ def service_lines(text,lines,c,r,registry,facts):
                 closing=[((f'{label[0]} মানে {short}।' if bn else f'{label[1]} means {short[:1].lower()+short[1:]}.'),[word['fact_id']])]
             else:lead.append(((f'{label[0]} মানে {meaning}।' if bn else f'{label[1]} means {meaning[:1].lower()+meaning[1:]}.'),[word['fact_id']]))
     if not lead and not opinion and not late and not r.follow and not r.tenor and len(rows)>1 and len(amounts)>1 and (deposit or card):
-        schemes=len({product_name(f['values'],bn) for f in rows})>1
+        schemes=len({product_name(f['values'],True) for f in rows})>1
         profit=v.get('basis')=='islamic'
         if card:frame=[(f'{whose}কার্ডের বার্ষিক ফি কার্ডের ধরন অনুযায়ী আলাদা।' if bn else f'{whose}annual fees vary by card.',[])]
         elif schemes:
@@ -353,7 +353,11 @@ def grouped_rates(rows,name,whose,bn,kind,lead=False):
     labels={}
     for f in rows:
         label=answers.scheme_name(f['values'],bn)
-        labels.setdefault('' if not bn and GENERIC.search(label) else label,[]).append(f)
+        if not bn:
+            # Group as the Bangla answer does: terms of one scheme are one group, a plain FDR/DPS has no name.
+            key=product_name(f['values'],True)
+            label='' if key==PRODUCT_LABEL[kind][0] else re.sub(r'\bFixed Deposit\b','FDR',re.sub(r'\s*\d+(?:\s*&\s*\d+)?\s*(?:months?|years?|days?)(?:\s*\(\d+\s*days\))?$','',label,flags=re.I)).strip()
+        labels.setdefault(label,[]).append(f)
     plain=PRODUCT_LABEL[kind][1];out=[]
     if len(labels)==2 and all(len(v)==1 for v in labels.values()) and '' not in labels:
         (a,x),(b,y)=labels.items();ids=[x[0]['fact_id'],y[0]['fact_id']];rate=lambda f:answers.rate_list([f],bn)

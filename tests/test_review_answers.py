@@ -468,9 +468,18 @@ def test_rate_questions_are_not_mistaken_for_definitions(text):
 
 @pytest.mark.parametrize('language,many,said',[('en',5,'DPS means'),('en',12,'DPS means'),('en',3,'has three DPS schemes')])
 def test_five_or_more_schemes_are_counted_not_crashed(language,many,said):
-    rows=[rate(f's{i}',f'Scheme {i}',12*(i+1),7) for i in range(many)]
+    named=['General DPS','Confidence DPS','Kotipoti DPS']
+    rows=[rate(f's{i}',named[i] if many==3 else f'Scheme {i}',12*(i+1),7) for i in range(many)]
     term_fact=dict(fact_id='term:dps',kind='term',text_en='A scheme for saving a fixed amount each month.',text_bn='প্রতি মাসে নির্দিষ্ট টাকা জমানোর স্কিম।')
     facts={r['fact_id']:r for r in rows};facts['term:dps']=term_fact
     name={'bank:1':FactToken('Test Bank' if language=='en' else 'টেস্ট ব্যাংক',(),1,'bank')}
     out=service_lines('tell me about Test Bank DPS' if language=='en' else 'ডিপিএস সম্পর্কে বলুন',[line(r) for r in rows],context(language),SimpleNamespace(product='dps',tenor=None,follow=False),name,facts)
     said_all=' '.join(x for x,_ in out);assert said in said_all and 'has 5' not in said_all and 'has 12' not in said_all
+
+
+def test_english_fdr_keeps_standard_and_extra_value_apart_like_bangla():
+    rows=[rate('a','Fixed Deposit 3 Months',3,6.35,kind='fdr'),rate('b','Fixed Deposit 12 Months',12,6.5,kind='fdr'),rate('c','Extra Value Fixed Deposit 3 Months',3,8,kind='fdr'),rate('d','Extra Value Fixed Deposit 12 Months',12,8,kind='fdr')]
+    from ilma_api.human_turn import grouped_rates
+    out=grouped_rates(rows,'Eastern Bank',"Eastern Bank's ",False,'fdr')
+    assert len(out)==2 and 'Extra Value FDR' in out[1][0] and 'an FDR' in out[0][0]
+    assert {'c','d'}==set(out[1][1])
