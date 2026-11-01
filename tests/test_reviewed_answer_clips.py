@@ -58,3 +58,13 @@ def test_failed_replacement_never_marks_stale_clip_batch_complete(tmp_path,monke
     monkeypatch.setattr(elevenlabs,'synthesize',AsyncMock(side_effect=ValueError('synthetic failure')))
     with pytest.raises(ValueError):asyncio.run(generate([item],tmp_path,None,120))
     saved=json.loads((tmp_path/'manifest.json').read_text());assert saved['batch_complete'] is False and saved['remaining_clips']==1
+
+
+def test_explicit_extension_requires_both_languages_and_all_ids(tmp_path):
+    p,data=fixture(tmp_path)
+    data.update(question_start=94,question_end=95)
+    data['clips']=[{**r,'key':r['key'].replace('q001','q094').replace('q002','q095'),'file':r['file'].replace('q001','q094').replace('q002','q095')} for r in data['clips'] if r['key'].endswith(('q001','q002'))]
+    data['total_chars']=sum(r['chars'] for r in data['clips']);p.write_text(json.dumps(data))
+    assert len(builder.approved(p))==4
+    data['clips'].pop();p.write_text(json.dumps(data))
+    with pytest.raises(ValueError):builder.approved(p)

@@ -19,7 +19,8 @@ def apply(result,user,context,memory):
     original=result
     try:
         data=json.loads((ROOT/'static/audio/answers/manifest.json').read_text())
-        if not data.get('batch_complete') or data.get('expected_clips')!=186 or len(data.get('clips',{}))!=186:return result
+        from ilma_api.reviewed_sources import complete
+        if not complete(data):return result
         candidates=[v for v in data['clips'].values() if v.get('language')==result['language'] and question_key(user) in v.get('question_keys',[]) and v.get('source_sha256')==context['source_sha256'] and v.get('slots')==context['slots']]
         if not candidates:return result
         previous=memory.get('reviewed_answer_key');item=next((v for v in candidates if v['key']!=previous),candidates[0]);text=item['text']
@@ -33,6 +34,7 @@ def apply(result,user,context,memory):
         matches=list(re.finditer(r'[^।.!?]*\?\s*$',text));question=matches[-1].group().strip() if matches else ''
         body=text[:matches[-1].start()].rstrip() if matches else text
         result=copy.deepcopy(result)
+        if 'conversation_bank_id' in context:result['conversation']['institution_id']=context['conversation_bank_id']
         result.update(text=text,speech=text,speech_text=text,speech_tts=tts,speech_parts=[text],reviewed_answer_key=item['key'],reviewed_source_sha256=context['source_sha256'],reviewed_audio_url='/static/audio/answers/'+file+'?v='+item['audio_sha256'][:16],expects_reply=bool(question))
         result['next']['question']=question
         if re.search(r'সার্ভিস|সেবা|another service',question,re.I) and not re.search(r' না | or ',question,re.I):
@@ -59,10 +61,11 @@ def refresh_repeat(result):
     if not key:return result
     try:
         data=json.loads((ROOT/'static/audio/answers/manifest.json').read_text());item=data['clips'][key]
-        if not data.get('batch_complete') or len(data['clips'])!=186:raise ValueError('Incomplete release')
+        from ilma_api.reviewed_sources import complete
+        if not complete(data):raise ValueError('Incomplete release')
         if item['text']!=result['speech'] or hashlib.sha256(item['text'].encode()).hexdigest()!=item['text_sha256']:raise ValueError('Changed display text')
         cached_source=result.get('reviewed_source_sha256') or fingerprint({f['fact_id']:f for f in result.get('facts',[])})
-        if cached_source!=item['source_sha256'] or item['slots'].get('bank_id')!=result['conversation'].get('institution_id'):raise ValueError('Changed source or bank')
+        if cached_source!=item['source_sha256'] or (not item.get('context_independent') and item['slots'].get('bank_id')!=result['conversation'].get('institution_id')):raise ValueError('Changed source or bank')
         tts=item.get('tts_text',item['text'])
         if 'tts_text' in item and (not isinstance(tts,str) or not tts.strip() or hashlib.sha256(tts.encode()).hexdigest()!=item.get('tts_sha256')):raise ValueError('Changed spoken script')
         if not re.fullmatch(r'(?:bn|en)/q\d{3}\.mp3',item['file']):raise ValueError('Invalid recording path')

@@ -593,10 +593,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     resolve_started=time.monotonic()
     resolved=resolve(safe,c,banks)
     trace.append(dict(stage='RESOLVER',model='code',ms=round((time.monotonic()-resolve_started)*1000),status='ok'))
-    facts_started=time.monotonic()
+    facts_started=time.monotonic();conversation_bank_before=c.institution_id
     r,c,packs,comparisons,registry,facts=await call(db,lambda owned:prepare(owned,safe,c,banks,forced,resolved))
-    from ilma_api.reviewed_answers import fingerprint as reviewed_fingerprint,slots as reviewed_slots
-    memory['_reviewed_context']={'source_sha256':reviewed_fingerprint(facts),'slots':reviewed_slots(r),'facts':list(facts.values())}
+    from ilma_api.reviewed_sources import context as reviewed_context
+    memory['_reviewed_context']=await call(db,lambda owned:reviewed_context(owned,safe,r,facts,c.language,conversation_bank_before))
     trace.append(dict(stage='FACTS',model='database',ms=round((time.monotonic()-facts_started)*1000),status='ok'))
     if r.intent=='repeat' and memory.get('last_result'):return await repeat_turn(c,id,memory,db,trace,started)
     blocked=None if selected else answers.refusal(text,c.language=='bn',any(b['confidence']>=.9 for b in r.candidates))
@@ -640,9 +640,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     # Exact reviewed questions use their fact-bound saved answer without a wording request.
     from ilma_api.reviewed_answers import apply as apply_reviewed
     probe=apply_reviewed({'language':c.language,'next':{},'conversation':{}},safe,memory.get('_reviewed_context'),dict(memory))
-    if probe.get('reviewed_audio_url') and r.intent:
+    if probe.get('reviewed_audio_url'):
         if not selected:await call(db,lambda owned:consume_question(owned,watch_identity or device_hash or 'human-anonymous'))
-        result=render(controls(r.intent,c,''),c,[],trace,'code')
+        result=render(controls(r.intent or 'smalltalk',c,''),c,[],trace,'code')
         trace.append(dict(stage='CHECK',model='code',ms=0,status='ok',reason='reviewed_source_bound_answer'))
         return await finish(result,safe,id,memory,db,started)
     model=None;fallback_reason=None;repaired=[]

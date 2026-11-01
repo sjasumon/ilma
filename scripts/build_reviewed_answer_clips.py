@@ -5,7 +5,9 @@ from pathlib import Path
 def approved(path):
     data=json.loads(Path(path).read_text());rows=data['clips'];items=[]
     if data.get('approved') is not True:raise ValueError('Text review must be complete')
-    expected={f'{lang}:q{n:03d}' for lang in ('bn','en') for n in range(1,94)}
+    first,last=data.get('question_start',1),data.get('question_end',93)
+    if type(first) is not int or type(last) is not int or not 1<=first<=last<=999:raise ValueError('Invalid question range')
+    expected={f'{lang}:q{n:03d}' for lang in ('bn','en') for n in range(first,last+1)}
     for row in rows:
         key=row['key'];text=row['text'];language=row['language']
         if key not in expected or language!=key.split(':')[0] or not isinstance(text,str) or not text.strip():raise ValueError('Invalid answer key, language or text')
@@ -14,7 +16,7 @@ def approved(path):
         file=language+'/'+key.split(':')[1]+'.mp3'
         if row['file']!=file:raise ValueError('Invalid recording path')
         items.append(dict(key=key,language=language,text=text,file=file,text_sha256=digest,approved_exact_text=True,review_sha256=data['review_sha256']))
-    if len(items)!=186 or {i['key'] for i in items}!=expected:raise ValueError('All 93 answers in both languages are required')
+    if len(items)!=len(expected) or {i['key'] for i in items}!=expected:raise ValueError('All requested answers in both languages are required')
     if sum(len(i['text']) for i in items)!=data['total_chars']:raise ValueError('Character total mismatch')
     return items
 
@@ -37,7 +39,7 @@ async def generate(items,directory,client):
             dest=directory/row['file'];dest.parent.mkdir(parents=True,exist_ok=True)
             dest.write_bytes((directory/original['file']).read_bytes())
             manifest['clips'][row['key']]={**original,**row,'reused_from':original['key']}
-    manifest.update(expected_clips=186,remaining_clips=0,batch_complete=True,unique_scripts=len(canonical))
+    manifest.update(expected_clips=len(items),remaining_clips=0,batch_complete=True,unique_scripts=len(canonical))
     temp=directory/'manifest.tmp';temp.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n');temp.replace(directory/'manifest.json')
     return manifest
 
@@ -47,7 +49,7 @@ def main():
     from ilma_api.exact_speech_numbers import prepare
     unique={(i['language'],i['text_sha256']):i for i in items}
     speech_chars=sum(len(prepare(i['text'],i['language'])[0]) for i in unique.values())
-    print(f"186 mapped recordings; {len(unique)} unique scripts; {sum(len(i['text']) for i in items)} mapped characters; {speech_chars} spoken-script characters before reuse",flush=True)
+    print(f"{len(items)} mapped recordings; {len(unique)} unique scripts; {sum(len(i['text']) for i in items)} mapped characters; {speech_chars} spoken-script characters before reuse",flush=True)
     if not a.generate:return
     if a.env_file:
         from dotenv import load_dotenv

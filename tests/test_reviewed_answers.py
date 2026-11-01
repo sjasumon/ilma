@@ -105,3 +105,65 @@ def test_repeat_discards_stale_recording_when_it_cannot_be_revalidated(tmp_path,
     if problem=='missing':p.unlink()
     out=reviewed.refresh_repeat(r)
     assert 'reviewed_audio_url' not in out
+
+
+def test_extended_complete_corpus_preserves_old_answers(tmp_path,monkeypatch):
+    from ilma_api.reviewed_sources import complete
+    result,context,manifest,path=fixture(tmp_path,monkeypatch)
+    original=manifest['clips']['bn:q001']
+    for language in ('bn','en'):
+        for n in range(94,151):
+            key=f'{language}:q{n:03d}'
+            manifest['clips'][key]={**original,'key':key,'language':language,'question_keys':[]}
+    manifest.update(question_count=150,expected_clips=300)
+    assert complete(manifest)
+    path.write_text(json.dumps(manifest))
+    assert reviewed.apply(result,'প্রশ্ন',context,{})['speech']=='পরীক্ষার উত্তর।'
+    manifest['clips']['en:q151']=manifest['clips'].pop('en:q150')
+    assert not complete(manifest)
+
+
+def test_extension_evidence_changes_invalidate_audio(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from ilma_api import reviewed_sources
+    result,context,manifest,path=fixture(tmp_path,monkeypatch)
+    item=manifest['clips']['bn:q001'];item['source_refs']=[{'kind':'service','id':'synthetic-rate'}]
+    r=SimpleNamespace(**{k:None for k in ('bank_id','product','tenor','basis','network','tier','intent','compare_bank_ids','requested_field','requested_metric')})
+    item['slots']=reviewed.slots(r)
+    evidence=[dict(kind='service',id='synthetic-rate',values={'value_num':'3','quote':'Synthetic rate with eligibility'},source={})]
+    monkeypatch.setattr(reviewed_sources,'evidence',lambda db,refs:evidence)
+    from ilma_api.human_facts import threshold_config
+    item['source_sha256']=reviewed.fingerprint({'reviewed_evidence':evidence,'thresholds':threshold_config()})
+    path.write_text(json.dumps(manifest))
+    context=reviewed_sources.context(None,'প্রশ্ন',r,{})
+    assert reviewed.apply(result,'প্রশ্ন',context,{})['reviewed_answer_key']=='bn:q001'
+    evidence[0]['values']['value_num']='4'
+    changed=reviewed_sources.context(None,'প্রশ্ন',r,{})
+    assert 'reviewed_audio_url' not in reviewed.apply(result,'প্রশ্ন',changed,{})
+    def missing(db,refs):raise ValueError('Missing source')
+    monkeypatch.setattr(reviewed_sources,'evidence',missing)
+    assert 'reviewed_audio_url' not in reviewed.apply(result,'প্রশ্ন',reviewed_sources.context(None,'প্রশ্ন',r,{}),{})
+
+
+def test_extension_uses_language_specific_slots_and_preserves_source_bank(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from ilma_api import reviewed_sources
+    from ilma_api.human_facts import threshold_config
+    result,old_context,manifest,path=fixture(tmp_path,monkeypatch)
+    fields={k:None for k in ('bank_id','product','tenor','basis','network','tier','intent','compare_bank_ids','requested_field','requested_metric')}
+    rows=[dict(kind='service',id='synthetic',values={'institution_id':'1','quote':'Synthetic condition'},source={})]
+    digest=reviewed.fingerprint({'reviewed_evidence':rows,'thresholds':threshold_config()})
+    for lang,intent in [('bn','bank_condition'),('en','bank_overview')]:
+        item=manifest['clips'][lang+':q001'];item.update(question_keys=[reviewed.question_key('Synthetic question')],source_refs=[dict(kind='service',id='synthetic')],slots={**fields,'bank_id':1,'intent':intent},source_sha256=digest,conversation_bank_id=1)
+    path.write_text(json.dumps(manifest))
+    monkeypatch.setattr(reviewed_sources,'evidence',lambda db,refs:rows)
+    prior=SimpleNamespace(**{**fields,'bank_id':2,'intent':'service_detail'})
+    context=reviewed_sources.context(None,'Synthetic question',prior,{},'en')
+    assert context['slots']['intent']=='bank_overview'
+    assert context['slots']['bank_id']==1 and context['conversation_bank_id']==1
+    assert context['source_sha256']==digest
+    # An example bank in a general answer must not replace the user's bank.
+    for lang in ('bn','en'):manifest['clips'][lang+':q001'].pop('conversation_bank_id')
+    path.write_text(json.dumps(manifest))
+    assert reviewed_sources.context(None,'Synthetic question',prior,{},'en',2)['conversation_bank_id']==2
+    assert reviewed_sources.context(None,'Synthetic question',prior,{},'en',None)['conversation_bank_id'] is None
