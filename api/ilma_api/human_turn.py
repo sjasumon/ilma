@@ -79,7 +79,7 @@ def interim_line(d,bn):
 def prepare(db,text,c,banks,forced=None,resolved=None):
     r=resolved or resolve(text,c,banks)
     if forced:r=replace(r,intent=forced,direct_protection=forced=='insurance')
-    if r.intent=='compare' and r.product is None:r=replace(r,product='fdr')
+    if r.intent=='compare' and r.product is None and len(r.compare_bank_ids)<2:r=replace(r,product='fdr')
     # A deposit comparison defaults to one year, not the shortest published term.
     if r.intent=='compare' and r.tenor is None and r.product in {'fdr','dps'}:r=replace(r,tenor=12)
     if r.bank_id is not None and not any(b['id']==r.bank_id for b in banks):r=replace(r,bank_id=None)
@@ -91,7 +91,7 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
         p['facts']=[f for f in p['facts'] if f['kind']!='service']+service_facts(db,id,None,None,r.basis,include_all=True)
         p['facts'].extend(term_facts(text));packs.append(p)
     if not packs:packs=[{'bank':None,'facts':term_facts(text),'status':None}]
-    comparisons=comparison_facts(db,r.bank_id,r.product or 'fdr',r.tenor,r.basis,r.compare_bank_ids,r.network,r.tier) if r.intent=='compare' else []
+    comparisons=comparison_facts(db,r.bank_id,r.product or 'fdr',r.tenor,r.basis,r.compare_bank_ids,r.network,r.tier) if r.intent=='compare' and r.product else []
     if comparisons and r.tenor is None:
         reference=comparisons[0]['values'].get('comparison_term')
         if reference:c=c.model_copy(update={'tenor':reference});r=replace(r,tenor=reference)
@@ -141,6 +141,22 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
             facts[fid]={'fact_id':fid,'institution_id':r.bank_id,'kind':'coverage','text_bn':phrase if c.language=='bn' else 'এই সেবার তথ্য আমাদের সংগ্রহে নেই','text_en':phrase if c.language=='en' else 'This service is absent from the imported collection','values':{'product_type':r.product},'source':{**proof['source'],'quote':'Derived coverage of imported product rows, not a claim that the bank does not offer this service'}}
             registry['gap:product']=FactToken(phrase,(fid,),r.bank_id,'gap')
     if r.intent=='service_detail' and r.product=='card' and r.fee=='late_fee':registry['meta:late']=FactToken('')
+    if r.intent=='compare' and r.product is None and len(r.compare_bank_ids)>=2:
+        bn=c.language=='bn'
+        for index,bank in enumerate(r.compare_bank_ids):
+            name=registry.get('bank:'+str(bank))
+            status=next((f for f in facts.values() if f['kind']=='status' and f.get('institution_id')==bank),None)
+            if not name or not status:continue
+            code=bank_status(facts,bank)
+            condition={'strong':('অবস্থা ভালো','is in good condition'),'watch':('কিছু সতর্কতার লক্ষণ আছে','has some warning signs'),'high':('ঝুঁকি বেশি','is high risk'),'no_data':('অবস্থা যাচাইয়ের তথ্য কম','has insufficient information for an assessment')}.get(code,('অবস্থা যাচাইয়ের তথ্য কম','has insufficient information for an assessment'))
+            text=f'{name.text}ের {condition[0]}।' if bn else f'{name.text} {condition[1]}.'
+            ids=[status['fact_id']]
+            loans=answers.figure(facts,bank,'npl_ratio')
+            if loans:
+                value=answers.percent(loans['values']['value']);year=loans['values']['period_end'][:4]
+                text+=(f' {year} সালের হিসাবে খেলাপি ঋণ {value}%।' if bn else f' Its bad loans were {value}% in {year}.')
+                ids.append(loans['fact_id'])
+            registry['cmp:'+str(index)]=FactToken(text,tuple(ids),bank,'comparison')
     if r.intent=='compare' and not r.term_asked and not r.correction and r.product in {'fdr','dps'} and len(r.compare_bank_ids)==2:
         pair=[]
         for id in r.compare_bank_ids:
@@ -648,7 +664,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     model=None;fallback_reason=None;repaired=[]
     # Every sentence of these answers is a stored value, so code writes them: each
     # rephrasing of a question then gets the same facts in the same order.
-    code_owned=bool(r.product) and (forced or r.intent)=='service_detail' or (forced or r.intent)=='bank_figures' and 'asked:figure' in registry or (forced or r.intent)=='bank_profile' and 'asked:founded' in registry or (forced or r.intent) in {'bank_overview','bank_condition'} and not r.requested_metric or (forced or r.intent)=='bank_history' and any(f['kind']=='history' and f['institution_id']==c.institution_id for f in facts.values()) or (forced or r.intent)=='compare' and 'cmp:0' in registry
+    code_owned=r.intent=='advice_request' or r.intent=='explain_term' and 'term:interest_profit_difference' in facts or bool(r.product) and (forced or r.intent)=='service_detail' or (forced or r.intent)=='bank_figures' and 'asked:figure' in registry or (forced or r.intent)=='bank_profile' and 'asked:founded' in registry or (forced or r.intent) in {'bank_overview','bank_condition'} and not r.requested_metric or (forced or r.intent)=='bank_history' and any(f['kind']=='history' and f['institution_id']==c.institution_id for f in facts.values()) or (forced or r.intent)=='compare' and 'cmp:0' in registry
     # Written by code or by the model, an answered question counts the same.
     if not selected and code_owned:await call(db,lambda owned:consume_question(owned,watch_identity or device_hash or 'human-anonymous'))
     if not selected and not code_owned:

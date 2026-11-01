@@ -34,6 +34,7 @@ def apply(result,user,context,memory):
         matches=list(re.finditer(r'[^।.!?]*\?\s*$',text));question=matches[-1].group().strip() if matches else ''
         body=text[:matches[-1].start()].rstrip() if matches else text
         result=copy.deepcopy(result)
+        result['offer_typing']=False;result['conversation']['misses']=0
         if 'conversation_bank_id' in context:result['conversation']['institution_id']=context['conversation_bank_id']
         result.update(text=text,speech=text,speech_text=text,speech_tts=tts,speech_parts=[text],reviewed_answer_key=item['key'],reviewed_source_sha256=context['source_sha256'],reviewed_audio_url='/static/audio/answers/'+file+'?v='+item['audio_sha256'][:16],expects_reply=bool(question))
         result['next']['question']=question

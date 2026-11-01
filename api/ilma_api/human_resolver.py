@@ -22,6 +22,9 @@ def is_banglish(text):
     """Bangla typed in Latin letters: bank words alone are not enough, so it needs a Bangla word."""
     return not re.search(r'[\u0980-\u09ff]',text) and bool(re.search(r'\b(?:er|koto|kemon|achhe|ache|kothay|sud|bolun|bolen)\b',text,re.I))
 
+def is_interest_profit_question(text):
+    return bool(not re.search(r'নিট|\bnet profit\b|\boperating profit\b',text,re.I) and re.search(r'সুদ|ইন্টারেস্ট|\binterest\b',text,re.I) and re.search(r'মুনাফা|লাভ|প্রফিট|\bprofit\b',text,re.I) and re.search(r'পার্থক্য|তফাত|ফারাক|difference|differ',text,re.I))
+
 FOLLOW=re.compile(r'^(?:and\b|what about\b|how about\b|আর\s|ওই|এবার\s)',re.I)
 HISTORY=re.compile(r'ঝামেলা|জালিয়াতি|কেলেঙ্কারি|অনিয়ম|আগে কোনো|\bscandals?\b|\bfraud\b|\bpast (?:events|incidents)\b',re.I)
 def metric_named(text):
@@ -137,6 +140,8 @@ def resolve(text,c,banks):
         if product is None:selected=c.product
         if match is None:tenor=c.tenor
         if selected=='card':network=network or c.network;tier=tier or c.tier
+    if intent=='compare' and not named and c.last_intent=='compare' and c.compare_bank_ids:
+        compare=list(dict.fromkeys(([c.institution_id] if c.institution_id else [])+c.compare_bank_ids))
     if intent!='compare':compare=[]
     confirm=[b['id'] for b in candidates if .7<=b['confidence']<.9][:2] if not named else []
     # One close name with a clear topic is that bank; two close names still ask.
@@ -157,6 +162,7 @@ def resolve(text,c,banks):
         if re.search(r'সেরা|(?:সবচেয়ে|সবার চেয়ে).*(?:ভালো|ভাল|নিরাপদ|ভরসা)|এক নম্বর ব্যাংক|\b(?:best|safest|most reliable|number (?:one|1))\b',text,re.I):intent='best_bank'
         elif re.search(r'টাকা.*(?:রাখব|রাখা উচিত|তুলে|সরাব)|কোথায়.*রাখ|কোন ব্যাংকে.*সঞ্চয়|বেছে|সিদ্ধান্ত.*(?:নিন|নেব|নিতে)|পরামর্শ চাই|আমার হয়ে|\brecommend\b|\bshould (?:i|we)\b|\b(?:i|we) should\b|(?:which|what) bank should|decide.*(?:keep|savings)|choose.*bank|where.*(?:keep|invest|deposit)',text,re.I):intent='advice_request'
     if intent is None and re.search(r'সেবা|পণ্য|services|products',text,re.I):intent='services_list'
+    if intent is None and re.search(r'where (?:(?:can|could) (?:i|we)|(?:i|we) (?:can|could)) (?:save|keep|deposit)|পেনশন.*(?:কোথায়|কোথায়)',text,re.I):intent='advice_request'
     if intent is None:
         if re.search(r'বর্তমান অবস্থা|ঝুঁকি|সতর্কতার|নিরাপদ|current condition|warning signs|\bsafe\b|\brisk\b',text,re.I):intent='bank_condition'
         elif re.search(r'কেমন আছে|কেমন চলছে|কেমন ব্যাংক|সম্পর্কে বল|নিয়ে বল|একটা ধারণা|ব্যাংকটা কেমন|how is .*doing|tell me about|what can you tell|general introduction',text,re.I):intent='bank_overview'
@@ -166,6 +172,9 @@ def resolve(text,c,banks):
     elif changed:
         named_bank=next((b for b in banks if b['id']==bank),{})
         basis='islamic' if named_bank.get('islamic') else 'conventional'
+    if len(named)>=2 and intent in {'bank_overview','bank_condition'}:
+        intent='compare';compare=named;selected=None;tenor=None
+    if is_interest_profit_question(text):intent='explain_term';selected=None;metric=None;compare=[]
     best=best_rate_product(text)
     if best:
         bank=None;selected=best;tenor=60 if best=='dps' else 12;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]

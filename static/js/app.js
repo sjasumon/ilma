@@ -583,7 +583,12 @@ function setWaveformState(state) {
 }
 
 function setVoiceState(text) {
-  if (agentPanel?.active) document.getElementById("agent-state").textContent = text;
+  if (agentPanel?.active) {
+    document.getElementById('agent-state').textContent=text;
+    const bn=currentLang==='bn';
+    document.getElementById('agent-question').textContent=isListening?(bn?'শুনছি — এখন বলুন':'Listening — speak now'):recognitionStarting?(bn?'মাইক্রোফোন চালু হচ্ছে…':'Starting microphone…'):isSearching?(bn?'উত্তর খুঁজছি…':'Preparing your answer…'):(bn?'ট্যাপ করে উত্তর দিন':'Tap to reply');
+    document.getElementById('agent-tap').setAttribute('aria-label',isListening?(bn?'রেকর্ডিং চলছে। থামাতে দুইবার ট্যাপ করুন।':'Recording. Double-tap to stop.'):(bn?'ট্যাপ করে উত্তর দিন':'Tap to reply'));
+  }
   document.getElementById("home-idle-view").hidden = true;
   document.getElementById("home-listening-view").hidden = false;
   document.getElementById("listening-state-text").textContent = text;
@@ -771,6 +776,10 @@ function showVoiceFallback(code = "unmatched") {
 }
 
 function stopListening() {
+  if(agentPanel?.active){
+    document.getElementById('agent-question').textContent=currentLang==='bn'?'ট্যাপ করে উত্তর দিন':'Tap to reply';
+    document.getElementById('agent-tap').setAttribute('aria-label',currentLang==='bn'?'ট্যাপ করে উত্তর দিন':'Tap to reply');
+  }
   setWaveformState("idle");
   voiceRequest++;
   audioRecorder?.cancel();
@@ -849,8 +858,17 @@ function answerAudioUrl(url) {
   return window.IlmaMicrophone?.closesForPlayback?.() && /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || '') ? url+'?lead=1' : url;
 }
 
+function isVoiceAudioUrl(url) {
+  if(typeof url!=='string')return false;
+  return url.startsWith('data:audio/mpeg;base64,') ||
+    /^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url) ||
+    /^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url) ||
+    /^\/static\/audio\/(?:bank|loans|deposits|accounts|news|answers)\/(?:bn|en)\/[a-z0-9_-]+\.mp3(?:\?v=[a-f0-9]{16})?$/.test(url) ||
+    /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url);
+}
+
 function playVoiceAudio(url, request = playbackRequest, manual = false, onError = null) {
-  if (request !== playbackRequest || (!manual && !appSettings.speak) || !(url?.startsWith("data:audio/mpeg;base64,") || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || "") || (/^\/static\/audio\/services\/bn\/(?:card-|deposit_|loan_)[a-z0-9_-]+\.mp3\?v=[a-f0-9]{16}$/.test(url || "") || /^\/static\/audio\/(?:bank|loans|deposits|accounts|news|answers)\/(?:bn|en)\/[a-z0-9_-]+\.mp3(?:\?v=[a-f0-9]{16})?$/.test(url || "")) || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || "")))) return false;
+  if (request !== playbackRequest || (!manual && !appSettings.speak) || !isVoiceAudioUrl(url)) return false;
   const player = document.getElementById("ilma-player");
   const settle = prepareAnswerAudio();
   player.src = answerAudioUrl(url);
@@ -2422,7 +2440,7 @@ async function playGuidedSpeech(kind, prompt = null, bankId = currentBankId, aud
         url = (await response.json()).audio_url;
       }
       if (controller.signal.aborted) return;
-      if (!(url?.startsWith('data:audio/mpeg;base64,') || (/^\/static\/audio\/fixed\/[a-zA-Z0-9_-]+\.(?:opus|mp3)$/.test(url || '') || /^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url || '')))) throw Error('speech_unavailable');
+      if (!isVoiceAudioUrl(url)) throw Error('speech_unavailable');
       if(/^\/v1\/audio\/[A-Za-z0-9_-]{32}\.mp3$/.test(url)){
         const until=Date.now()+45000;
         while(!controller.signal.aborted){

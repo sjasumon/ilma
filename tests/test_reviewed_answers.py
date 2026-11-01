@@ -179,3 +179,11 @@ def test_reviewed_closing_controls_match_the_recorded_offer(tmp_path,monkeypatch
     assert [option['value'] for option in out['next']['options']]==expected
     assert out['next'].get('affirmative_action')==affirmative
     assert out['next'].get('negative_action')==('stop' if affirmative else None)
+
+
+def test_verified_saved_answer_exits_stale_typing_recovery(tmp_path,monkeypatch):
+    result,context,manifest,path=fixture(tmp_path,monkeypatch)
+    result.update(offer_typing=True,conversation={'misses':2,'institution_id':1})
+    out=reviewed.apply(result,'প্রশ্ন',context,{})
+    assert out['reviewed_answer_key']=='bn:q001'
+    assert out['conversation']['misses']==0 and out['offer_typing'] is False

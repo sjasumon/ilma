@@ -110,5 +110,12 @@ function createRecorder({ permissionError = null, stopStalls = false, permission
   assert.equal(closes('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)','MacIntel',5),true,'iPad in desktop mode closes the mic');
   assert.equal(closes('Mozilla/5.0 (Linux; Android 14; Pixel 8)','Linux armv8l',5),false,'Android keeps the mic behaviour');
   assert.equal(closes('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)','MacIntel',0),false,'A Mac keeps the mic behaviour');
+  const iosMode=createRecorder();const order=[];
+  iosMode.context.navigator.userAgent='iPhone';
+  const shared=new iosMode.context.window.AudioContext();shared.resume=()=>{order.push('resume');return Promise.resolve()};
+  iosMode.context.window.IlmaAudioSession={forRecording(){order.push('recording-mode')},getContext(){return shared}};
+  await iosMode.recorder.start({onComplete(){},onError(){}});
+  assert.equal(order[0],'recording-mode','iOS must select recording mode before resuming its context');
+  iosMode.recorder.cancel();
   console.log('Audio recorder passed: raw compressed recording, configurable silence detection, 15-second timer, no-speech, one microphone grant per visit, track/timer cleanup and permission denial');
 })().catch(error => { console.error(error); process.exitCode = 1; });

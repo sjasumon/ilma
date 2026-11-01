@@ -43,6 +43,11 @@ def term_facts(text):
     from ilma_api.voice_glossary import TERMS
     from ilma_api.voice_text import normalize_alias
     query=normalize_alias(text);rows=[]
+    from ilma_api.human_resolver import is_interest_profit_question
+    if is_interest_profit_question(text):
+        bn='সাধারণ ব্যাংকে পূর্বনির্ধারিত হারে আয়কে সুদ বলা হয়। ইসলামী ব্যাংকিংয়ে মুনাফা বলতে ব্যাংকের ব্যবসার লাভের ভাগ বোঝায়। এটি সাধারণ ব্যাখ্যা; নির্দিষ্ট পণ্যের নিয়ম আলাদা হতে পারে।'
+        en='Interest generally means earnings at a rate agreed in advance in conventional banking. Profit in Islamic banking means a share of business profits. This is a general explanation; individual product rules can differ.'
+        return [item('term:interest_profit_difference',None,'term',bn,en,dict(source_title='ILMA authored glossary',source_url='https://github.com/sjasumon/ilma/blob/feature/voice-agent/api/ilma_api/human_facts.py',quote=bn))]
     for aliases,bn,en,*_ in TERMS:
         if any(normalize_alias(alias) in query for alias in aliases):
             rows.append(item('term:'+aliases[0],None,'term',bn,en,dict(source_title='ILMA authored glossary',source_url='https://github.com/sjasumon/ilma/blob/feature/voice-agent/api/ilma_api/voice_glossary.py',quote=bn)))

@@ -31,3 +31,23 @@ English must follow the selected Bangla meaning; stale English reference endings
 must not override edits to the Bangla master. Display text remains separate from
 the exact spoken-number script. Record the selected master section and review
 hash in the activated manifest, and reuse only matching text/script/audio hashes.
+
+## Conversation playback and recovery
+
+Saved-answer URLs use the same strict audio allowlist in the ordinary player
+and the conversation player. A successful spoken answer resumes recording even
+when its text has no closing question. First-use permission still requires user
+action; Finish, Stop, navigation, typing recovery and playback failures suspend
+automatic recording. An idle microphone is not an invitation to repeat a generic
+question after a completed answer. iOS selects recording mode before resuming
+the audio context after playback.
+
+A verified saved answer clears earlier recognition misses and exits typing
+recovery. Successfully resolved early replies do likewise; provider failures
+retain the previous miss count instead of treating network errors as user misses.
+Two-bank overview requests include both named banks. A two-bank comparison with
+no product compares sourced condition, not an invented default FDR request.
+An explicit product comparison continues to use the published product facts.
+Interest-versus-profit definitions are general glossary explanations, independent
+of the previous bank or product. These changes do not alter transcription models,
+provider audio input, financial source values or the approved recordings.

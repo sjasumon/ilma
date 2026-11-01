@@ -76,6 +76,8 @@ async def finish(result,user,id,memory,db,started,pending=None):
     from ilma_api.reviewed_answers import apply as apply_reviewed
     result=apply_reviewed(result,user,memory.pop('_reviewed_context',None),memory)
     if result.get('reviewed_answer_key'):pending=None
+    if result.get('checked')!='template' and result.get('intent') in STATE and result['intent'] not in {'unclear','out_of_scope','repeat','stop'}:
+        result['conversation']['misses']=0;result['offer_typing']=False
     result['conversation']['conversation_token']=token(id);result['trace']['total_ms']=round((time.monotonic()-started)*1000)
     pending_facts=result.pop('_all_facts',result['facts']) if pending else []
     # Resolved slots and checked replies retain context without saving names or

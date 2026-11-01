@@ -23,6 +23,7 @@ function createApp({ autoStart = true, reducedMotion = false, animationThrows = 
       removeAttribute(name) { delete this.attributes[name]; },
       pause() {}, play() { return Promise.resolve(); },
       addEventListener(name, callback) { if (!this.handlers.has(name)) this.handlers.set(name, []); this.handlers.get(name).push(callback); },
+      removeEventListener(name, callback) { this.handlers.set(name,(this.handlers.get(name)||[]).filter(fn=>fn!==callback)); },
       showModal() { this.open = true; },
       close() { this.open = false; for (const callback of this.handlers.get('close') || []) callback(); },
       querySelectorAll: () => [],
@@ -47,7 +48,7 @@ function createApp({ autoStart = true, reducedMotion = false, animationThrows = 
     TextDecoder, Uint8Array,
     fetch: async () => ({ ok: false }),
     document, window: { IlmaVoiceRecorder: Recorder, PointerEvent: pointerEvents ? function () {} : undefined, localStorage: { getItem: key => { if (storageBlocked) throw Error("Blocked"); return stored.get(key); }, setItem: (key, value) => { if (storageBlocked) throw Error("Blocked"); stored.set(key, value); } }, scrollTo() {}, addEventListener() {}, matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }) },
-    navigator: {}, console, setTimeout: () => 0, clearTimeout() {},
+    performance: {now:()=>0}, navigator: {}, console, setTimeout: () => 0, clearTimeout() {},
     setInterval(callback, delay) { const id = ++timerId; intervals.set(id, { callback, delay }); return id; },
     clearInterval(id) { intervals.delete(id); }
   });

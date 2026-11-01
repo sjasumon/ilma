@@ -24,6 +24,7 @@
     }
     async start({ stream: providedStream, onComplete, onError, onLevel = () => {}, onNoise = () => {}, silenceMs = 1500, maxMs = 15000, noSpeechMs = 6000 }) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if(micClosesForPlayback())window.IlmaAudioSession?.forRecording?.();
       this.context = sharedContext();
       // Resume during the user's tap, before waiting for the permission prompt.
       const resume = this.context.resume();
