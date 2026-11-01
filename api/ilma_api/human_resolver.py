@@ -1,7 +1,7 @@
 """Code-owned bank and service slots, resolved before paid wording requests."""
 from dataclasses import dataclass,field
 import re,unicodedata
-from ilma_api.voice_text import join_acronyms,match_candidates
+from ilma_api.voice_text import join_acronyms,match_candidates,normalize_alias
 from ilma_api.voice_numbers import normalize_numbers
 
 ACRONYMS={'sbacbank':('SBAC','এসবিএসি','South Bangla Bank','South Bangla','সাউথ বাংলা ব্যাংক','সাউথ বাংলা'),'nbl':('National Bank','ন্যাশনাল ব্যাংক'),'islamibank':('Islami Bank','ইসলামী ব্যাংক'),'ebl':('EBL','ইবিএল'),'mtb':('MTB','এমটিবি'),
@@ -75,6 +75,7 @@ class ResolvedTurn:
     fee:str='annual_fee'
     term_asked:bool=False
     follow:bool=False
+    confirm_pair:bool=False
 
 
 def resolve(text,c,banks):
@@ -84,9 +85,19 @@ def resolve(text,c,banks):
     # A possessive ending on any Bangla bank name ("ব্যাংক এশিয়ার") still names that bank.
     for alias in sorted({unicodedata.normalize('NFC',a) for b in indexed for a in [b.get('name_bn') or '',*b['aliases']] if re.search(r'[ঀ-৿]$',a)},key=len,reverse=True):
         matched_text=re.sub(re.escape(alias)+r'(?:ের|র)(?=$|[\s,।.!?])',alias,matched_text)
+    # Joined names are independent mentions, not alternative spellings.
+    # Fuzzy pairs only propose a joint confirmation; they never authorize facts.
+    declared_pair=[]
+    parts=re.split(r'\s+(?:এবং|ও|and|&)\s+',matched_text,flags=re.I)
+    full_name_connector=any(re.search(r'(?<!\S)(?:and|এবং|ও)(?!\S)',normalize_alias(alias)) and (' '+normalize_alias(alias)+' ') in (' '+normalize_alias(matched_text)+' ') for b in indexed for alias in [b['name_bn'],b['name_en'],*b['aliases']]) if len(parts)==2 else False
+    if len(parts)==2 and not full_name_connector:
+        for part in parts:
+            options=match_candidates(part,indexed)
+            if not options or options[0]['confidence']<.8 or (len(options)>1 and options[0]['confidence']-options[1]['confidence']<.05) or (options[0]['confidence']<1 and not re.search(r'ব্যাংক|\bbank\b',part,re.I)):break
+            declared_pair.append(options[0])
+    if len(declared_pair)!=2 or declared_pair[0]['id']==declared_pair[1]['id']:declared_pair=[]
     correction=bool(CORRECTION.search(text))
     candidates=match_candidates(matched_text,indexed)
-    from ilma_api.voice_text import normalize_alias
     clear_context=correction or bool(re.search(r'বলেছি|কথা|ধরুন|আগের প্রশ্ন|সংশোধন|সম্পর্কে|জানতে|ব্যাংক|asking|previous question|\bmean\b|\bbank\b',text,re.I))
     strong=[b for b in candidates if b['confidence']>=.9 and (not b.get('confirm') or b['confidence']==1 and (clear_context or normalize_alias(matched_text)==normalize_alias(b['alias'])))]
     normalized_text=normalize_alias(matched_text)
@@ -165,15 +176,21 @@ def resolve(text,c,banks):
     if intent is None and re.search(r'where (?:(?:can|could) (?:i|we)|(?:i|we) (?:can|could)) (?:save|keep|deposit)|পেনশন.*(?:কোথায়|কোথায়)',text,re.I):intent='advice_request'
     if intent is None:
         if re.search(r'বর্তমান অবস্থা|ঝুঁকি|সতর্কতার|নিরাপদ|current condition|warning signs|\bsafe\b|\brisk\b',text,re.I):intent='bank_condition'
-        elif re.search(r'কেমন আছে|কেমন চলছে|কেমন ব্যাংক|সম্পর্কে বল|নিয়ে বল|একটা ধারণা|ব্যাংকটা কেমন|how is .*doing|tell me about|what can you tell|general introduction',text,re.I):intent='bank_overview'
+        elif re.search(r'কেমন আছে|কেমন চলছে|কেমন ব্যাংক|সম্পর্কে বল|সম্বন্ধে.*বল|নিয়ে বল|একটা ধারণা|ব্যাংকটা কেমন|how is .*doing|tell me about|what can you tell|general introduction',text,re.I):intent='bank_overview'
     basis=c.basis or 'conventional'
     if re.search(r'ইসলামি|ইসলামী|শরিয়াহ|islamic|sharia',text,re.I):basis='islamic'
     elif re.search(r'প্রচলিত|conventional',text,re.I):basis='conventional'
     elif changed:
         named_bank=next((b for b in banks if b['id']==bank),{})
         basis='islamic' if named_bank.get('islamic') else 'conventional'
-    if len(named)>=2 and intent in {'bank_overview','bank_condition'}:
+    if len(named)>=2 and (intent in {'bank_overview','bank_condition'} or intent is None and not wanted and not metric):
         intent='compare';compare=named;selected=None;tenor=None
+    confirm_pair=False
+    if declared_pair and intent in {None,'bank_overview','bank_condition','compare','service_detail'}:
+        pair_ids=[row['id'] for row in declared_pair]
+        if any(row['confidence']<1 for row in declared_pair) or not all(id in named for id in pair_ids):
+            confirm_pair=True;confirm=pair_ids;compare=pair_ids;bank=c.institution_id;intent='compare'
+            if product is None:selected=None;tenor=None
     if is_interest_profit_question(text):intent='explain_term';selected=None;metric=None;compare=[]
     best=best_rate_product(text)
     if best:
@@ -181,4 +198,4 @@ def resolve(text,c,banks):
     fee='late_fee' if re.search(r'লেট|দেরিতে|বিলম্ব|\blate\b',text,re.I) else 'annual_fee'
     # Where a question names two banks, keep them in the order it said them.
     compare.sort(key=lambda id:next((s[0] for s in sorted(spans) if s[2]==id),99))
-    return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric,fee,bool(match),follow or bool(FOLLOW.match(text)))
+    return ResolvedTurn(text,bank,selected,tenor,basis,network,tier,intent,correction,direct,compare,candidates,confirm,wanted,metric,fee,bool(match),follow or bool(FOLLOW.match(text)),confirm_pair)

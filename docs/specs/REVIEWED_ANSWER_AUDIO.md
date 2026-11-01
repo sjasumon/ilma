@@ -51,3 +51,13 @@ An explicit product comparison continues to use the published product facts.
 Interest-versus-profit definitions are general glossary explanations, independent
 of the previous bank or product. These changes do not alter transcription models,
 provider audio input, financial source values or the approved recordings.
+
+An explicit conjunction such as “এবং” or “and” preserves two separate bank
+mentions even when one ASR spelling has lower confidence than the other.
+Uncertain pairs are proposed together for exact yes/no confirmation; they are
+never presented as an either/or bank choice. Only acceptance enables the pair's
+financial response. Rejection keeps the previous bank and requests both names
+again. A new question clears stale pair confirmation. A conjunction inside an
+exact full bank name is not split into separate institutions. Bangla overview
+wording includes “সম্বন্ধে বলবেন”. These rules do not add ASR aliases or relax
+financial-answer confidence thresholds.

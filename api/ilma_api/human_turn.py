@@ -573,6 +573,12 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     memory['protocol']=2
     memory.pop('_reviewed_context',None)
     safe=redact_user(text);selected=exact_choice(safe,c,memory,choice)
+    confirmed_pair=memory.pop('clarify_pair',None) if selected=='confirm_bank' else None
+    rejected_pair=memory.pop('clarify_pair',None) if selected=='reject_bank' else None
+    if selected not in {'repeat','confirm_bank','reject_bank'}:memory.pop('clarify_pair',None)
+    if rejected_pair:
+        result=render(controls('unclear',c,'ঠিক আছে।' if c.language=='bn' else 'All right.','দুটি ব্যাংকের নাম আবার বলবেন?' if c.language=='bn' else 'Could you say both bank names again?',['listen','ask_bank']),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
     if memory.get('pending_reply') and re.fullmatch(r'হ্যাঁ|জি|yes|yeah',safe.strip(' .!?।'),re.I):selected='more'
     if selected=='yes' and memory.get('pending_reply'):selected='more'
     # "হ্যাঁ" answers a "did you mean" question with the bank it offered first.
@@ -608,6 +614,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if selected=='listen':forced='unclear'
     resolve_started=time.monotonic()
     resolved=resolve(safe,c,banks)
+    if confirmed_pair:
+        resolved=replace(resolved,bank_id=confirmed_pair['ids'][0],compare_bank_ids=confirmed_pair['ids'],product=confirmed_pair['product'],tenor=confirmed_pair['tenor'],intent='compare',confirm_ids=[],confirm_pair=False)
+        forced='compare'
     trace.append(dict(stage='RESOLVER',model='code',ms=round((time.monotonic()-resolve_started)*1000),status='ok'))
     facts_started=time.monotonic();conversation_bank_before=c.institution_id
     r,c,packs,comparisons,registry,facts=await call(db,lambda owned:prepare(owned,safe,c,banks,forced,resolved))
@@ -624,6 +633,16 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     unknown=find_other_bank(safe)
     if unknown:
         result=render(controls('unclear',c,'এই ব্যাংকের তথ্য এখনো যোগ হয়নি।' if c.language=='bn' else 'Information for this bank has not been added yet.',*next_steps('unclear',c,id)),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
+    if r.confirm_pair:
+        memory.pop('clarify_candidates',None);memory.pop('pending_reply',None);memory.pop('pending_facts',None)
+        memory['clarify_pair']={'ids':r.confirm_ids,'product':r.product,'tenor':r.tenor}
+        names=[next(b['name_bn' if c.language=='bn' else 'name_en'] for b in banks if b['id']==id) for id in r.confirm_ids]
+        question=('আপনি '+ ' এবং '.join(names)+'—দুটি ব্যাংকের তথ্য চান, ঠিক বুঝেছি?' if c.language=='bn' else 'You want information about both '+' and '.join(names)+', is that right?')
+        c=c.model_copy(update={'misses':0})
+        result=render(controls('unclear',c,question),c,[],trace,'code')
+        result['expects_reply']=True
+        result['next']={'question':question,'affirmative_action':'confirm_bank','negative_action':'reject_bank','options':[{'value':'confirm_bank','label':'হ্যাঁ' if c.language=='bn' else 'Yes'},{'value':'reject_bank','label':'না' if c.language=='bn' else 'No'}]}
         return await finish(result,safe,id,memory,db,started)
     if r.confirm_ids:
         memory['clarify_candidates']=r.confirm_ids
