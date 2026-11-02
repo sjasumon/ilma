@@ -323,3 +323,13 @@ def test_model_script_option_cannot_select_an_unmatched_bank(db):
         result=call(db,'interpret this disclosure please',Conversation(state='BANK',institution_id=1),client=client)
     assert result['conversation']['institution_id']==1 and result['conversation']['misses']==1
     assert all(f['fact_id'].startswith('script:') for f in result['facts'])
+
+def test_every_offered_button_is_an_accepted_choice():
+    # A button the server offers must pass request validation when tapped.
+    from typing import get_args
+    from ilma_api.human_contract import Button
+    from ilma_api.voice_agent import Choice
+    assert set(get_args(Button))<=set(get_args(Choice))
+    c=Conversation(state='SERVICE',institution_id=1,product='card').model_dump()
+    _,_,_,ctx=parse_request('application/json',json.dumps({'choice':'card_fees','context':{'conversation':c}}).encode(),'text')
+    assert ctx.choice=='card_fees'
