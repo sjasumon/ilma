@@ -130,6 +130,7 @@ def prepare(db,text,c,banks,forced=None,resolved=None):
     if r.product and not offers and r.bank_id and not notes and not any(f['kind']=='inventory' and f['institution_id']==r.bank_id for f in facts.values()):
         label=PRODUCT_LABEL.get(r.product,('এই সেবা','this service'))
         word=('মুনাফার হার','profit rate') if r.basis=='islamic' else ('সুদের হার','rate')
+        if r.product=='card':word=('তথ্য','information')  # cards have fees, not a rate
         registry['gap:product']=FactToken(f'{label[0]}ের {word[0]} আমাদের কাছে এখনো নেই, তাই অনুমান করে কিছু বলছি না' if c.language=='bn' else f'{label[1]} {word[1]} is not in our collection yet, so I will not guess',(),r.bank_id,'gap')
     elif r.product and not offers and r.bank_id and not notes:
         proof=next((f for f in facts.values() if f['kind']=='inventory' and f['institution_id']==r.bank_id),None)
@@ -641,6 +642,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if selected in {'account_fees','debit'}:
         c=c.model_copy(update={'product':'account_fee','tenor':None,'network':None,'tier':None});forced='service_detail'
         memory['account_view']=selected
+    if selected=='card_fees':
+        # The "Annual fees" button answers the card overview's question.
+        safe='বার্ষিক ফি' if c.language=='bn' else 'annual fees';selected='card'
     if selected in {'savings','fdr','dps','card','home_loan'}:
         memory.pop('account_view',None)
         c=c.model_copy(update={'product':selected,'tenor':None if selected!=c.product else c.tenor,'network':c.network if selected=='card' else None,'tier':c.tier if selected=='card' else None});forced='service_detail'
@@ -923,6 +927,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     lines=[(polish(re.sub(r'([।.?])\1+',r'\1',s),registry,bn),ids) for s,ids in lines]
     if intent=='service_detail':
         lines=service_lines(safe,lines,c,r,registry,facts)
+        if r.product=='card' and lines and lines[-1][0].endswith(('or something else?','নাকি অন্য কিছু?')):question,buttons='',['card_fees','ask_bank']
         if ASKS_OPINION.search(safe) and r.product in {'fdr','dps'}:question='শুনবেন?' if bn else 'Shall I?'
     if intent=='services_list' and registry.get('bank:'+str(c.institution_id)):
         groups=group_line(details(facts,c.institution_id),registry['bank:'+str(c.institution_id)].text,bn)

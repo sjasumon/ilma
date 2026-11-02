@@ -185,3 +185,20 @@ def test_general_card_question_names_the_cards_then_offers_fees(db):
     bn=turn(db,'ব্র্যাক ব্যাংকের কার্ড সম্পর্কে বলুন','bn')
     print(bn['text'])
     assert 'বার্ষিক ফি জানতে' in bn['text']
+
+def test_card_overview_offers_an_annual_fees_button(db):
+    from datetime import date
+    from ilma_api.db import ServiceOffer
+    for n,(name,network,tier,fee) in enumerate([('Visa Classic Card','visa','classic',1500),('Visa Gold Card','visa','gold',3000)]):
+        db.add(ServiceOffer(offer_id=f'test-button-{n}',institution_id=1,category='card',product=name,product_type='card',network=network,tier=tier,tenor_months=None,attribute='annual_fee',value_num=fee,value_text=str(fee),unit='bdt',condition='',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/cards.pdf',page=1,quote=f'Synthetic fee {fee}',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='test-fixture',checked_on=date(2026,10,1)))
+    db.commit()
+    about=turn(db,'tell me about BRAC Bank cards','en')
+    assert [o['value'] for o in about['next']['options']]==['card_fees','ask_bank']
+    async def tap():
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=AssertionError('no model'))):
+            return await run('Annual fees',VoiceContext(agent=True,ui_lang='en',speak=False,conversation=Conversation.model_validate(about['conversation'])),BANKS3,db,choice='card_fees')
+    assert '1500' in asyncio.run(tap())['text'].replace(',','')
+
+def test_bank_without_cards_is_not_said_to_lack_a_card_rate(db):
+    text=turn(db,'tell me about EBL cards','en')['text']
+    assert 'rate' not in text.lower()

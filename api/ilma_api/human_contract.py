@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field
 
 Intent=Literal['bank_overview','bank_condition','bank_reasons','bank_figures','bank_history','bank_profile','bank_awards','services_list','service_detail','compare','insurance','explain_term','advice_request','best_bank','repeat','correction','smalltalk','stop','out_of_scope','unclear']
-Button=Literal['savings','account_fees','debit','detail','services','figures','history','fdr','dps','card','home_loan','compare','ask_bank','end','repeat','more','yes','no','confirm_bank','reject_bank','bank_1','bank_2','bank_3','listen']
+Button=Literal['savings','account_fees','debit','detail','services','figures','history','fdr','dps','card','card_fees','home_loan','compare','ask_bank','end','repeat','more','yes','no','confirm_bank','reject_bank','bank_1','bank_2','bank_3','listen']
 class BankResolution(BaseModel):
     model_config=ConfigDict(extra='forbid')
     id:int|None
@@ -32,10 +32,10 @@ LABELS={
  'savings':('সঞ্চয়ী হিসাবের সুদ','Savings interest'),'account_fees':('ফি ও চার্জ','Fees and charges'),'debit':('ডেবিট কার্ড','Debit card'),
  'listen':('আবার বলুন','Ask again'),
  'detail':('আরও বিস্তারিত','More details'),'services':('ব্যাংকের সেবা','Bank services'),'figures':('আর্থিক হিসাব','Financial figures'),'history':('আগের ঘটনা','Past events'),
- 'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'card':('কার্ড','Card'),'home_loan':('গৃহঋণ','Home loan'),
+ 'fdr':('এফডিআর','FDR'),'dps':('ডিপিএস','DPS'),'card':('কার্ড','Card'),'card_fees':('বার্ষিক ফি','Annual fees'),'home_loan':('গৃহঋণ','Home loan'),
  'compare':('মিলিয়ে দেখুন','Compare'),'ask_bank':('অন্য ব্যাংক','Another bank'),'end':('শেষ','Finish'),'repeat':('আবার শুনুন','Listen again'),'more':('আরও শুনুন','Hear more'),
  'yes':('হ্যাঁ','Yes'),'no':('না','No'),'confirm_bank':('হ্যাঁ','Yes'),'reject_bank':('না','No')}
 ALLOWED={
  'BANK':{'detail','services','history','figures','ask_bank','fdr','dps'},'DETAIL':{'figures','history','services','ask_bank','fdr','dps'},'FIGURES':{'services','history','ask_bank','fdr','dps'},
- 'HISTORY':{'services','detail','ask_bank','fdr','dps'},'SERVICES':{'fdr','dps','card','home_loan','ask_bank'},'SERVICE':{'compare','services','ask_bank'},
+ 'HISTORY':{'services','detail','ask_bank','fdr','dps'},'SERVICES':{'fdr','dps','card','home_loan','ask_bank'},'SERVICE':{'compare','services','ask_bank','card_fees'},
  'COMPARE':{'bank_1','bank_2','bank_3','services','ask_bank'},'NEXT':{'services','ask_bank','end'},'ASK_BANK':{'ask_bank','end','fdr','dps','listen'},'WATCH_CONFIRM':{'yes','no'}}
