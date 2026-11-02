@@ -935,6 +935,10 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     closing=answers.closing(intent,safe,bank_status(facts,c.institution_id),bn,award_open,'cmp:0' in registry,not c.institution_id)
     if closing is not None:question=closing
     if 'meta:range' in registry:question=''
+    if getattr(r,'missing_second',False) and intent=='compare' and lines:
+        # The second bank's name was lost in speech: say so, show this bank against others, ask for the name.
+        lines=[(('দ্বিতীয় ব্যাংকের নামটা বুঝতে পারিনি, তাই অন্য ব্যাংকগুলোর সাথে মিলিয়ে বলছি।' if bn else "I didn't catch the second bank's name, so here it is against other banks."),[]),*lines]
+        question='কোন ব্যাংকের সাথে মিলিয়ে দেখতে চান?' if bn else 'Which bank would you like to compare it with?'
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))

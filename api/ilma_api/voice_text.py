@@ -97,9 +97,33 @@ def different_start(alias, heard):
     return len(alias)<=5 and alias.isascii() and heard.isascii() and not same(alias[0],heard[0])
 
 
+# Sound keys: a rough consonant skeleton so "Black", "Bragg", "ব্রেক" and "BRAC" sound alike.
+BN_SOUNDS=str.maketrans({'ক':'k','খ':'k','গ':'k','ঘ':'k','চ':'c','ছ':'c','জ':'c','ঝ':'c','য':'c','ট':'t','ঠ':'t','ত':'t','থ':'t','ৎ':'t','ড':'t','ঢ':'t','দ':'t','ধ':'t','ন':'n','ণ':'n','প':'b','ফ':'f','ব':'b','ভ':'b','ম':'m','র':'r','ল':'r','শ':'s','ষ':'s','স':'s','হ':'','ং':'n','ঞ':'n','ঙ':'n',
+ 'অ':'a','আ':'a','ই':'a','ঈ':'a','উ':'a','ঊ':'a','এ':'a','ঐ':'a','ও':'a','ঔ':'a','ঋ':'a'})
+COMMON_WORDS={'the','this','that','any','my','your','our','which','what','other','another','same','best','good','big','all','one','a','an','and','or','of','for','to','is','in','on','at','তার','এই','ওই','কোন','কোনো','সেই','আমার','আপনার','অন্য','ভালো','সব'}
+
+def sound_key(word):
+    """Consonant skeleton of one word; a leading vowel is kept as 'a'."""
+    w=unicodedata.normalize('NFC',word.lower())
+    if re.search(r'[\u0980-\u09ff]',w):
+        w=w.replace('ঙ্গ','ং').replace('\u09cdয','').replace('ড\u09bc','র').replace('ঢ\u09bc','র').replace('য\u09bc','')
+        w=''.join(ch for ch in w.translate(BN_SOUNDS) if ch.isascii());w=w[:1]+w[1:].replace('a','')
+    else:
+        if not w.isascii():return ''
+        w=re.sub(r'ph','f',w);w=re.sub(r'ti(?=[aeiou])','s',w);w=re.sub(r'ng','n',w);w=re.sub(r'(?:ck|q)','k',w);w=re.sub(r'sh','s',w);w=re.sub(r'c(?=[eiy])','s',w);w=w.replace('c','k').replace('x','ks').replace('z','s')
+        w=w.translate(str.maketrans({'g':'k','d':'t','p':'b','v':'b','l':'r','j':'c'}))
+        lead='a' if w[:1] in 'aeiou' else ''
+        w=lead+re.sub(r'[aeiouwhy]','',w)
+    w=re.sub(r'(.)\1+',r'\1',re.sub(r'[^a-z]','',w))
+    return w
+
+
 def match_candidates(text, banks, scorer=None):
     query = normalize_alias(text)
     tokens = query.split()
+    # The same words with "bank" kept, so a sound match can check the next word.
+    raw_words=' '.join(''.join(c if c.isalnum() or unicodedata.category(c).startswith('M') else ' ' for c in fold_bengali_vowels(join_acronyms(text)).lower()).split()).split()
+    raw_words=[w for w in raw_words if w not in {'plc','ltd','limited','পিএলসি','লিমিটেড'}]
     candidates = []
     matched_windows={}
     excluded=related_parent_ids(text,banks)
@@ -135,6 +159,19 @@ def match_candidates(text, banks, scorer=None):
                         score = 85
                 if score > best:
                     best, best_alias, best_window = score, alias, (start,start+width)
+        if best < 90:
+            # A name that sounds the same, said right before "bank"/"ব্যাংক", is that bank ("Bragg Bank" is BRAC).
+            for alias in [bank['name_bn'], bank['name_en'], *bank.get('aliases', [])]:
+                normalized,width = indexed_alias(alias)
+                if len(normalized)<4 or (normalized.isascii() and re.fullmatch(r'[a-z]{2,4}',normalized) and alias.strip().replace(' ','').isupper()):continue
+                keys=[sound_key(w) for w in normalized.split()]
+                if not all(len(k)>=2 for k in keys) or sum(map(len,keys))<3:continue
+                for start in range(len(tokens)-width+1):
+                    window=tokens[start:start+width]
+                    if any(w in COMMON_WORDS for w in window) or [sound_key(w) for w in window]!=keys:continue
+                    after=raw_words[start+width] if start+width<len(raw_words) else ''
+                    if re.fullmatch(r'bank|ব্যাংক(?:ের|ে|টি|টা)?',after,re.I) and 90>best:
+                        best,best_alias,best_window=90,alias,(start,start+width)
         if best >= 75:
             matched_windows[bank['id']]=best_window
             single = len(normalize_alias(best_alias).split()) == 1

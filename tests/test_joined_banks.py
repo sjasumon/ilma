@@ -106,3 +106,20 @@ def test_month_rates_take_the_best_general_scheme_at_a_term():
     from ilma_api.human_answers import month_rates
     row=lambda id,name,rate:dict(fact_id=id,values=dict(product=name,rate=rate,tenor_options=[36,60]))
     assert month_rates([row('l','Lakhopati Deposit Scheme',6),row('k','Kotipoti DPS',9),row('w','DPS for Women',10)])[60]==(9,'k')
+
+
+def test_sound_alike_names_beside_bank_find_the_bank():
+    from ilma_api.voice_text import sound_key,match_candidates
+    assert {sound_key(w) for w in ('brac','black','bragg','break','brick','ব্র্যাক','ব্ল্যাক','ব্রেক')}=={'brk'}
+    assert sound_key('eastern')==sound_key('ইস্টার্ন')
+    banks=[dict(id=1,slug='bracbank',name_en='BRAC Bank PLC',name_bn='ব্র্যাক ব্যাংক পিএলসি',type='bank',coverage='full',aliases=['BRAC Bank']),dict(id=2,slug='ebl',name_en='Eastern Bank PLC',name_bn='ইস্টার্ন ব্যাংক পিএলসি',type='bank',coverage='full',aliases=['EBL'])]
+    for said,bank in (('tell me about Brick Bank DPS',1),('Breck bank FDR',1),('ব্রেক ব্যাংকের এফডিআর',1),('Eastren Bank FDR',2)):
+        assert match_candidates(said,banks)[0]['id']==bank,said
+    for said in ('the best bank','my bank account','a good bank','any bank','brick wall'):
+        assert match_candidates(said,banks)==[],said
+
+def test_lost_second_bank_name_is_flagged():
+    from ilma_api.human_resolver import resolve
+    r=resolve('compare EBL and Bank DPS',Conversation(language='en'),BANKS)
+    assert r.missing_second and r.compare_bank_ids==[]
+    assert not resolve('compare EBL DPS',Conversation(language='en'),BANKS).missing_second
