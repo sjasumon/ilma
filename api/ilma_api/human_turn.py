@@ -661,12 +661,19 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         result=render(controls('out_of_scope',c,blocked[0],blocked[1],['ask_bank','end'] if blocked[1] else []),c,[],trace,'code')
         return await finish(result,safe,id,memory,db,started)
     from ilma_api.other_banks import find_other_bank,is_central_bank
+    if re.search(r'^\s*(?:what(?:’s|\'s| is| are)\s+(?:an?\s+)?islamic bank(?:s|ing)?|(?:ইসলামী|ইসলামি|ইসলামিক) ব্যাংকিং (?:কী|কি))[\s?।.!]*$',safe,re.I):
+        line=('ইসলামী ব্যাংক সুদের বদলে মুনাফা ভাগাভাগির নিয়মে চলে, তাই আমানতের হার আগে থেকে নিশ্চিত থাকে না। কোন ব্যাংকের তথ্য শুনবেন?' if c.language=='bn' else 'An Islamic bank works on profit sharing instead of interest, so its deposit returns are not fixed in advance. Which bank would you like to hear about?')
+        c=c.model_copy(update={'institution_id':None,'product':None,'compare_bank_ids':[]})
+        result=render(controls('unclear',c,line,*next_steps('unclear',c,id)),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
     if is_central_bank(safe) and not any(b['confidence']>=.9 for b in r.candidates):
         line=('বাংলাদেশ ব্যাংক দেশের কেন্দ্রীয় ব্যাংক। এটি অন্য ব্যাংকগুলো তদারকি করে, সাধারণ মানুষের কাছ থেকে আমানত নেয় না।' if c.language=='bn' else 'Bangladesh Bank is the central bank. It supervises the other banks and does not take deposits from the public.')
         result=render(controls('unclear',c,line,*next_steps('unclear',c,id)),c,[],trace,'code')
         return await finish(result,safe,id,memory,db,started)
     unknown=find_other_bank(safe)
     if unknown:
+        # Forget the bank this turn resolved to, so "what is the FDR rate?" next cannot land on it.
+        c=c.model_copy(update={'institution_id':None,'product':None,'compare_bank_ids':[]})
         result=render(controls('unclear',c,'এই ব্যাংকের তথ্য এখনো যোগ হয়নি।' if c.language=='bn' else 'Information for this bank has not been added yet.',*next_steps('unclear',c,id)),c,[],trace,'code')
         return await finish(result,safe,id,memory,db,started)
     if r.confirm_pair:

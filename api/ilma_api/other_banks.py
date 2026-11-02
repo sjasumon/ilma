@@ -46,12 +46,30 @@ CENTRAL=re.compile(r'(?<!ইসলামী )(?<!ইসলামি )বাং�
 NOT_AFTER={'trust bank':r'mutual\s+','ট্রাস্ট ব্যাংক':r'মিউচুয়াল\s+'}
 
 
+# Words before "Islami/Islamic Bank" that name a different bank, matched by sound so new spellings still count.
+OTHER_ISLAMIC=['shahjalal','arafah','arafa','social','first security','security','global','icb','union','exim','export import','standard','ছোশ্যাল']
+FILLER={'the','about','me','tell','of','is','an','a','my','which','what','compare','and','vs','with','to','how','its','in','on','for','or','আমার','এই','ওই','কি','কী','ও','আর','বলুন','বলেন','সম্পর্কে','তুলনা','করুন','নিয়ে','এবং','আচ্ছা','তো','যে','কোন','কোনো'}
+ISLAMIC_BANK=re.compile(r'(?:islami|islamic|ইসলামী|ইসলামি|ইসলামিক)\s+(?:bank|ব্যাংক)',re.I)
+
+
+def other_islamic_bank(text):
+    """A different bank's name before "Islami Bank" (Shah Jalal, Al Arafa, Social, ICB...): not our Islami Bank."""
+    from ilma_api.voice_text import sound_key
+    keys={sound_key(n.replace(' ','')) for n in OTHER_ISLAMIC}
+    for m in ISLAMIC_BANK.finditer(text):
+        before=[w for w in re.split(r'[\s\-–—,.।?!]+',text[:m.start()].lower()) if w]
+        if not before or before[-1] in FILLER:continue
+        if before[-1]=='al' or sound_key(before[-1]) in keys or (len(before)>1 and sound_key(before[-2]+before[-1]) in keys) or (len(before)>1 and before[-2] in {'al','আল'}):return True
+    return False
+
+
 def is_central_bank(text):
     return bool(CENTRAL.search(text))
 
 
 def find_other_bank(text):
     """Return (name_bn, name_en) when the text names a listed non-demo bank."""
+    if other_islamic_bank(text):return ('অন্য একটি ইসলামী ব্যাংক','another Islamic bank')
     tokens = normalize_alias(text).split()
     for name_bn, name_en, aliases in NAMES:
         for alias in aliases:

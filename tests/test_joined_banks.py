@@ -133,3 +133,11 @@ def test_banks_whose_names_contain_ours_are_not_ours():
         assert not find_other_bank(said) and not is_central_bank(said),said
     for said in ('Tell me about Bangladesh Bank','what is the central bank','বাংলাদেশ ব্যাংক কী'):
         assert is_central_bank(said),said
+
+
+def test_other_islamic_banks_by_sound_not_islami_bank():
+    from ilma_api.other_banks import find_other_bank
+    for said in ('আল আরাফা ইসলামী ব্যাংক','আল-আরাফা ইসলামী ব্যাংকের অবস্থা','শাহ জালাল ইসলামী ব্যাংক','Social Islamic Bank','ICB Islamic Bank','Shah Jalal Islami Bank','Shajalal Islami bank'):
+        assert find_other_bank(said),said
+    for said in ('Islami Bank DPS','check Islami Bank DPS','ঢাকার ইসলামী ব্যাংক শাখা','compare EBL and Islami Bank','ইবিএল আর ইসলামী ব্যাংক','আমার ইসলামী ব্যাংকে টাকা আছে'):
+        assert not find_other_bank(said),said
