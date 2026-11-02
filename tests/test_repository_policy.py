@@ -27,3 +27,11 @@ def test_identity_transition_preserves_only_existing_history():
     assert not policy.identity_allowed('new',policy.LEGACY_AUTHOR,policy.AUTHOR,{'old'})
     assert not policy.identity_allowed('new',policy.AUTHOR,policy.LEGACY_AUTHOR,{'old'})
     assert not policy.identity_allowed('old','sjasumon <unknown@example.test>',policy.AUTHOR,{'old'})
+
+
+def test_short_noreply_identity_only_for_the_listed_published_commits():
+    listed=next(iter(policy.LEGACY_NOREPLY_COMMITS))
+    assert len(policy.LEGACY_NOREPLY_COMMITS)==15
+    assert policy.identity_allowed(listed,policy.LEGACY_NOREPLY_AUTHOR,policy.LEGACY_NOREPLY_AUTHOR,set())
+    assert not policy.identity_allowed('0'*40,policy.LEGACY_NOREPLY_AUTHOR,policy.LEGACY_NOREPLY_AUTHOR,set())
+    assert not policy.identity_allowed(listed,policy.LEGACY_AUTHOR,policy.LEGACY_AUTHOR,set())

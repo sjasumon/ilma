@@ -17,6 +17,26 @@ LEGACY_IDENTITY_TIPS = (
     '4da1ab26851ac4f28e12a51c57b1af51537cea3b',
     '4a524feab585b3c7d2f6a229c216e85d24693bfa',
 )
+# 15 published commits (1-2 Nov 2026) made with GitHub's short noreply address, before the
+# numeric one was used again. Exact hashes only: no ancestor or descendant gets this identity.
+LEGACY_NOREPLY_AUTHOR = 'sjasumon <sjasumon@users.noreply.github.com>'
+LEGACY_NOREPLY_COMMITS = frozenset((
+    '2df6f1351b29888abe61c3b0058cad20be15c178',
+    '5cedb41e0fc81653799ee8c10fb4768e04fe8b7e',
+    '5f165bb6cdddf81e948de12e7bc46da669d694aa',
+    '6af4607460e4a0178aa5073dc8be24b5d4fca481',
+    '75c1efd80b509302a159c22aa512e254dbc4528a',
+    '790a0308b4d3843bd3a3dfd7abb6a569cd7d138e',
+    '7e4e3a996acb03cca3f53eaf271ff707d5aa4cc6',
+    '7f0ff5a78c5f3081ecb9fb511f575a0e39f01e91',
+    '9c7957e0255316803db3d44d5749873009cc6e7c',
+    '9cff8c5d7cb9965f8544afb53eabf786ac6eae06',
+    'bf15d8e96438040ddc5d56cdb4e832a4c6934b03',
+    'c323a2398a82f2ff34b0763b84464eec8389c295',
+    'c613de2b420eb684c49a48e6de695842917d456f',
+    'e12d7aeba9723f21afe7bef46f633f87c04f1d3f',
+    'edd73527871218cfbdbe977e47501785edfdccdd',
+))
 PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
 # Split the definitions so this self-scanning policy does not match its own text.
 UNAPPROVED_BRANDS = ('cl' + 'aude', 'anth' + 'ropic')
@@ -36,6 +56,8 @@ def identity_allowed(commit, author, committer, legacy_commits):
     allowed = {AUTHOR}
     if commit in legacy_commits:
         allowed.add(LEGACY_AUTHOR)
+    if commit in LEGACY_NOREPLY_COMMITS:
+        allowed.add(LEGACY_NOREPLY_AUTHOR)
     return author in allowed and committer in allowed
 
 
