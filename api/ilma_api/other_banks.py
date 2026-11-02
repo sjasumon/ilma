@@ -24,7 +24,30 @@ NAMES = [
     ('স্ট্যান্ডার্ড চার্টার্ড', 'Standard Chartered', ['স্ট্যান্ডার্ড চার্টার্ড', 'standard chartered']),
     ('আইএফআইসি ব্যাংক', 'IFIC Bank', ['আইএফআইসি', 'ific']),
     ('বাংলাদেশ কৃষি ব্যাংক', 'Bangladesh Krishi Bank', ['কৃষি ব্যাংক', 'krishi bank', 'বিকেবি', 'bkb']),
+    # Real banks whose names contain one of ours: never answer them with our bank's figures.
+    ('শাহজালাল ইসলামী ব্যাংক', 'Shahjalal Islami Bank', ['শাহজালাল', 'shahjalal', 'sjibl']),
+    ('আল-আরাফাহ ইসলামী ব্যাংক', 'Al-Arafah Islami Bank', ['আল আরাফাহ', 'আল-আরাফাহ', 'আরাফাহ', 'al arafah', 'al-arafah', 'arafah', 'aibl']),
+    ('সোশ্যাল ইসলামী ব্যাংক', 'Social Islami Bank', ['সোশ্যাল ইসলামী', 'সোশ্যাল ইসলামি', 'social islami', 'sibl']),
+    ('ফার্স্ট সিকিউরিটি ইসলামী ব্যাংক', 'First Security Islami Bank', ['ফার্স্ট সিকিউরিটি', 'first security', 'fsibl']),
+    ('গ্লোবাল ইসলামী ব্যাংক', 'Global Islami Bank', ['গ্লোবাল ইসলামী', 'global islami']),
+    ('ইউনিয়ন ব্যাংক', 'Union Bank', ['ইউনিয়ন ব্যাংক', 'union bank']),
+    ('স্ট্যান্ডার্ড ব্যাংক', 'Standard Bank', ['স্ট্যান্ডার্ড ব্যাংক', 'standard bank']),
+    ('প্রিমিয়ার ব্যাংক', 'Premier Bank', ['প্রিমিয়ার', 'premier']),
+    ('ট্রাস্ট ব্যাংক', 'Trust Bank', ['ট্রাস্ট ব্যাংক', 'trust bank']),
+    ('ব্যাংক আলফালাহ', 'Bank Alfalah', ['আলফালাহ', 'alfalah']),
+    ('কমিউনিটি ব্যাংক', 'Community Bank', ['কমিউনিটি ব্যাংক', 'community bank']),
+    ('মেঘনা ব্যাংক', 'Meghna Bank', ['মেঘনা', 'meghna']),
+    ('মধুমতি ব্যাংক', 'Modhumoti Bank', ['মধুমতি', 'modhumoti']),
+    ('এনআরবি ব্যাংক', 'NRB Bank', ['এনআরবি ব্যাংক', 'nrb bank', 'এনআরবিসি', 'nrbc']),
+    ('বেসিক ব্যাংক', 'BASIC Bank', ['বেসিক ব্যাংক', 'basic bank']),
 ]
+CENTRAL=re.compile(r'(?<!ইসলামী )(?<!ইসলামি )বাংলাদেশ ব্যাংক(?!\s*(?:পিএলসি|লিমিটেড))|(?<!islami )\bbangladesh bank\b(?!\s*(?:plc|ltd|limited))|কেন্দ্রীয় ব্যাংক|\bcentral bank\b',re.I)
+# "Trust Bank" is not "Mutual Trust Bank"; "Union Bank" is not inside another name.
+NOT_AFTER={'trust bank':r'mutual\s+','ট্রাস্ট ব্যাংক':r'মিউচুয়াল\s+'}
+
+
+def is_central_bank(text):
+    return bool(CENTRAL.search(text))
 
 
 def find_other_bank(text):
@@ -36,7 +59,8 @@ def find_other_bank(text):
             # "ঢাকা ব্যাংক"/"one bank" normalize to one ordinary word, so "Dhaka"
             # or "one" alone never match: require "bank" directly after the name.
             if len(words) == 1 and len(alias.split()) > 1:
-                if re.search(re.escape(alias.split()[0]) + r'\s*(?:ব্যাংক|bank)', text, re.I):
+                before=NOT_AFTER.get(alias.lower())
+                if re.search((r'(?<!\S)' if not before else '')+re.escape(alias.split()[0]) + r'\s*(?:ব্যাংক|bank)', text, re.I) and not (before and re.search(before+re.escape(alias.split()[0]),text,re.I)):
                     return name_bn, name_en
                 continue
             if any(tokens[start:start + len(words)] == words for start in range(len(tokens))):

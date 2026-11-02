@@ -660,7 +660,11 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         memory.pop('clarify_candidates',None)
         result=render(controls('out_of_scope',c,blocked[0],blocked[1],['ask_bank','end'] if blocked[1] else []),c,[],trace,'code')
         return await finish(result,safe,id,memory,db,started)
-    from ilma_api.other_banks import find_other_bank
+    from ilma_api.other_banks import find_other_bank,is_central_bank
+    if is_central_bank(safe) and not any(b['confidence']>=.9 for b in r.candidates):
+        line=('বাংলাদেশ ব্যাংক দেশের কেন্দ্রীয় ব্যাংক। এটি অন্য ব্যাংকগুলো তদারকি করে, সাধারণ মানুষের কাছ থেকে আমানত নেয় না।' if c.language=='bn' else 'Bangladesh Bank is the central bank. It supervises the other banks and does not take deposits from the public.')
+        result=render(controls('unclear',c,line,*next_steps('unclear',c,id)),c,[],trace,'code')
+        return await finish(result,safe,id,memory,db,started)
     unknown=find_other_bank(safe)
     if unknown:
         result=render(controls('unclear',c,'এই ব্যাংকের তথ্য এখনো যোগ হয়নি।' if c.language=='bn' else 'Information for this bank has not been added yet.',*next_steps('unclear',c,id)),c,[],trace,'code')
@@ -937,10 +941,11 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if 'meta:range' in registry:question=''
     if getattr(r,'missing_second',False) and intent=='compare' and lines:
         # The second bank's name was lost in speech: say so, show this bank against others, ask for the name.
-        lines=[(('দ্বিতীয় ব্যাংকের নামটা বুঝতে পারিনি, তাই অন্য ব্যাংকগুলোর সাথে মিলিয়ে বলছি।' if bn else "I didn't catch the second bank's name, so here it is against other banks."),[]),*lines]
-        question='কোন ব্যাংকের সাথে মিলিয়ে দেখতে চান?' if bn else 'Which bank would you like to compare it with?'
+        lines=[(('দ্বিতীয় ব্যাংকের নামটা বুঝতে পারিনি।' if bn else "I missed the second bank's name."),[]),*lines]
+        question='কোন ব্যাংকের সাথে মিলিয়ে দেখবেন?' if bn else 'Which bank should I compare it with?'
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)
+    if pending and getattr(r,'missing_second',False) and intent=='compare':question='কোন ব্যাংকের সাথে মিলিয়ে দেখবেন?' if bn else 'Which bank should I compare it with?'
     used=list(dict.fromkeys(fid for _,ids in chosen for fid in ids))
     a=controls(intent,c,' '.join(s for s,_ in chosen),question,buttons).model_copy(update={'used_fact_ids':used,'sentence_fact_ids':[ids for _,ids in chosen]})
     if intent=='unclear' and model and not model.error:c=c.model_copy(update={'misses':min(2,c.misses+1)})

@@ -123,3 +123,13 @@ def test_lost_second_bank_name_is_flagged():
     r=resolve('compare EBL and Bank DPS',Conversation(language='en'),BANKS)
     assert r.missing_second and r.compare_bank_ids==[]
     assert not resolve('compare EBL DPS',Conversation(language='en'),BANKS).missing_second
+
+
+def test_banks_whose_names_contain_ours_are_not_ours():
+    from ilma_api.other_banks import find_other_bank,is_central_bank
+    for said in ('Tell me about Shahjalal Islami Bank','Al-Arafah Islami Bank','Social Islami Bank FDR rate','Trust Bank DPS','Premier Bank','শাহজালাল ইসলামী ব্যাংক'):
+        assert find_other_bank(said),said
+    for said in ('Islami Bank DPS','Islami Bank Bangladesh PLC','Mutual Trust Bank DPS','Prime Bank','ইসলামী ব্যাংক বাংলাদেশ'):
+        assert not find_other_bank(said) and not is_central_bank(said),said
+    for said in ('Tell me about Bangladesh Bank','what is the central bank','বাংলাদেশ ব্যাংক কী'):
+        assert is_central_bank(said),said

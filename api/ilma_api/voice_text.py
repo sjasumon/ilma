@@ -130,7 +130,7 @@ def match_candidates(text, banks, scorer=None):
     for bank in banks:
         if bank['id'] in excluded:
             continue
-        best, best_alias, best_window = 0, '', None
+        best, best_alias, best_window, sounded = 0, '', None, False
         for alias in [bank['name_bn'], bank['name_en'], *bank.get('aliases', [])]:
             normalized,width = indexed_alias(alias)
             if len(normalized) < 2 or normalized in {'bank', 'ব্যাংক', 'plc'}:
@@ -158,7 +158,7 @@ def match_candidates(text, banks, scorer=None):
                     if score == 100 and len(window) != len(normalized):
                         score = 85
                 if score > best:
-                    best, best_alias, best_window = score, alias, (start,start+width)
+                    best, best_alias, best_window, sounded = score, alias, (start,start+width), False
         if best < 90:
             # A name that sounds the same, said right before "bank"/"ব্যাংক", is that bank ("Bragg Bank" is BRAC).
             for alias in [bank['name_bn'], bank['name_en'], *bank.get('aliases', [])]:
@@ -171,12 +171,12 @@ def match_candidates(text, banks, scorer=None):
                     if any(w in COMMON_WORDS for w in window) or [sound_key(w) for w in window]!=keys:continue
                     after=raw_words[start+width] if start+width<len(raw_words) else ''
                     if re.fullmatch(r'bank|ব্যাংক(?:ের|ে|টি|টা)?',after,re.I) and 90>best:
-                        best,best_alias,best_window=90,alias,(start,start+width)
+                        best,best_alias,best_window,sounded=90,alias,(start,start+width),True
         if best >= 75:
             matched_windows[bank['id']]=best_window
             single = len(normalize_alias(best_alias).split()) == 1
             short_name = normalize_alias(best_alias) in {'prime', 'city', 'ncc', 'dhaka', 'national', 'break', 'black', 'brack', 'bragg', 'brak', 'ব্ল্যাক', 'ব্রাক', 'ন্যাশনাল', 'প্রাইম', 'সিটি', 'এনসিসি', 'ঢাকা'}
-            follows = bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', fold_bengali_vowels(text), re.I))
+            follows = sounded or bool(re.search(re.escape(normalize_alias(best_alias)) + r'\s*(?:ব্যাংক|bank)', fold_bengali_vowels(text), re.I))
             candidates.append({**{k: bank[k] for k in ('id', 'slug', 'name_bn', 'name_en', 'type', 'coverage')},
                                'licensed': bank.get('licensed', True), 'confidence': round(best / 100, 3), 'alias': best_alias,
                                'confirm': bool(short_name and single and not follows)})
