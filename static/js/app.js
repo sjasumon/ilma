@@ -680,6 +680,7 @@ async function startListening(providedStream = null) {
     document.getElementById("btn-stop-listening").setAttribute("aria-label", currentLang === "bn" ? "রেকর্ডিং থামিয়ে খুঁজুন" : "Stop recording and search");
     const miniStop = document.getElementById("mini-voice-stop");
     if (miniStop) miniStop.textContent = currentLang === "bn" ? "থামুন ও খুঁজুন" : "Stop and search";
+    setAgentDone(!!agentPanel?.active);
     document.getElementById("sr-announcer").textContent = T[currentLang].listeningText;
     playTone(660, 0.08);
     if ("vibrate" in navigator) navigator.vibrate(30);
@@ -695,6 +696,7 @@ async function finishRecording() {
   const recorder = audioRecorder, request = voiceRequest;
   isListening = false;
   isSearching = true;
+  setAgentDone(false);
   setWaveformState("thinking");
   setVoiceState(T[currentLang].checkingText);
   document.getElementById("btn-stop-listening").textContent = currentLang === "bn" ? "বাতিল করুন" : "Cancel";
@@ -789,7 +791,16 @@ function showVoiceFallback(code = "unmatched") {
   startExampleCycle();
 }
 
+// A visible way to finish speaking, so nobody has to wait out a noisy room or know about the double tap.
+function setAgentDone(show) {
+  const done = document.getElementById("agent-done");
+  if (!done) return;
+  done.hidden = !show;
+  done.textContent = currentLang === "bn" ? "বলা শেষ" : "Done";
+}
+
 function stopListening() {
+  setAgentDone(false);
   if(agentPanel?.active){
     document.getElementById('agent-question').textContent=currentLang==='bn'?'ট্যাপ করে উত্তর দিন':'Tap to reply';
     document.getElementById('agent-tap').setAttribute('aria-label',currentLang==='bn'?'ট্যাপ করে উত্তর দিন':'Tap to reply');
@@ -2789,6 +2800,7 @@ function setupAgentPanel() {
   document.getElementById('agent-text-form').addEventListener('submit',event=>{event.preventDefault();const input=document.getElementById('agent-text-input');if(!input.value.trim())return;stopAudio();void submitTextQuestion(input.value);});
   document.getElementById('agent-stop-speech').addEventListener('click',()=>agentPanel.suspend());
   document.getElementById('agent-tap').addEventListener('click',event=>agentPanel.tap(event));
+  document.getElementById('agent-done').addEventListener('click',event=>{event.stopPropagation();if(isListening)agentPanel.tap({detail:0});});
   document.getElementById('agent-home').addEventListener('click', goHome);
   setupBackToHome();
   for (const [id,choice] of [['agent-report','report'],['agent-repeat','repeat'],['agent-end','end']]) document.getElementById(id).addEventListener('click',()=>agentPanel.choose(choice));
