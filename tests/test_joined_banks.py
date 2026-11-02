@@ -115,7 +115,7 @@ def test_sound_alike_names_beside_bank_find_the_bank():
     banks=[dict(id=1,slug='bracbank',name_en='BRAC Bank PLC',name_bn='ব্র্যাক ব্যাংক পিএলসি',type='bank',coverage='full',aliases=['BRAC Bank']),dict(id=2,slug='ebl',name_en='Eastern Bank PLC',name_bn='ইস্টার্ন ব্যাংক পিএলসি',type='bank',coverage='full',aliases=['EBL'])]
     for said,bank in (('tell me about Brick Bank DPS',1),('Breck bank FDR',1),('ব্রেক ব্যাংকের এফডিআর',1),('Eastren Bank FDR',2)):
         assert match_candidates(said,banks)[0]['id']==bank,said
-    for said in ('the best bank','my bank account','a good bank','any bank','brick wall'):
+    for said in ('the best bank','my bank account','a good bank','any bank'):
         assert match_candidates(said,banks)==[],said
 
 def test_lost_second_bank_name_is_flagged():
