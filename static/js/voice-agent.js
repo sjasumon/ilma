@@ -7,7 +7,7 @@
     async show(result,guided=false){
       this.clear();this.a.interrupt();this.active=true;this.result=result;this.guided=guided;this.silenceRetries=0;this.captureFailures=0;
       const generation=++this.generation;this.deliveredTickets=new Set();this.a.render(result);if(!this.active||generation!==this.generation)return;this.phase='speaking';this.idle();
-      if(result.audio_pending){this.phase='audio-wait';return;}
+      if(result.audio_pending){this.phase='audio-wait';this.audioWaitAt=this.clock.now?this.clock.now():Date.now();return;}
       const heard=result.speech_format==='paragraph'?false:await this.a.play(result.speech);
       if(!this.active||generation!==this.generation)return;
       if(result.action?.type==='end'){if(heard)return this.reset();this.phase='waiting';this.endTimer=this.clock.setTimeout(()=>{if(this.active&&generation===this.generation)this.reset()},4000);return;}
@@ -47,6 +47,8 @@
     tap(event={}){
       if(!this.active||this.phase==='starting')return;
       if(this.phase==='searching'){this.suspend();return this.a.listen();}
+      // A stray tap just after speaking (e.g. the stop tap landing late) must not cancel the answer before it plays.
+      if(this.phase==='audio-wait'&&((this.clock.now?this.clock.now():Date.now())-(this.audioWaitAt||0))<2000)return;
       this.idle();
       if(this.a.recording()){
         const now=this.clock.now?this.clock.now():Date.now(),delta=now-this.recordingTap;
