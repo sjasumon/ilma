@@ -55,6 +55,8 @@ def is_best_fdr_question(text):
 def best_rate_product(text):
     return 'dps' if is_best_dps_question(text) else 'fdr' if is_best_fdr_question(text) else None
 
+NOT_A_BANK={'the','my','other','others','all','another','any','bank','banks','card','cards','dps','fdr','savings','saving','rate','rates','interest','fee','fees','it','them','that','this','those','loan','loans','account','accounts','each','every','its','their','your','profit','term','terms','deposit','one','two','three','five','ten','year','years','month','months','a','an'}
+
 @dataclass
 class ResolvedTurn:
     text:str
@@ -215,8 +217,13 @@ def resolve(text,c,banks):
     best=best_rate_product(text)
     if best:
         bank=None;selected=best;tenor=60 if best=='dps' else 12;basis='conventional';network=tier=None;intent='compare';compare=[];confirm=[]
+    # "Annual fees" after a card answer is that bank's card fee question.
+    if intent is None and selected=='card' and bank and re.search(r'\bfees?\b|charges?|ফি(?=[\s,।?]|$)|চার্জ',text,re.I):intent='service_detail'
     # One bank in a comparison (the other name was misheard or left out) is compared with every bank, not with itself.
     missing_second=intent=='compare' and len(compare)==1 and not confirm_pair and bool(re.search(r'\b(?:and|&|vs|with)\s+(?:the\s+)?bank\b|(?:আর|ও|এবং|সাথে)\s+ব্যাংক',text,re.I))
+    # "compare BRAC with XYZ cards": a second name was said but not recognised.
+    other=re.search(r'\b(?:and|&|vs|versus|with)\s+(?:the\s+)?([a-z]{2,6})\b',text,re.I)
+    if intent=='compare' and len(compare)==1 and not confirm_pair and other and other.group(1).lower() not in NOT_A_BANK:missing_second=True
     if intent=='compare' and len(compare)==1 and not confirm_pair:compare=[]
     fee='late_fee' if re.search(r'লেট|দেরিতে|বিলম্ব|\blate\b',text,re.I) else 'annual_fee'
     # Where a question names two banks, keep them in the order it said them.

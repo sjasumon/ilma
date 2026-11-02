@@ -253,7 +253,20 @@ def comparison_facts(db,anchor,product,tenor=None,basis='conventional',bank_ids=
     anchor_facts=service_facts(db,anchor,product,None,basis,network,tier) if anchor else []
     if product=='card':
         fees=[f for f in anchor_facts if f['values']['attribute']=='annual_fee' and f['values']['unit']=='bdt']
-        if fees:
+        if fees and not (network or tier) and len(ids)>=2:
+            # Compare like with like: a card type every named bank publishes, the cheapest
+            # at the first bank; else a tier they all share; else the first bank's own first card.
+            def kinds(id):
+                rows=service_facts(db,id,'card',None,basis,None,None)
+                return {(f['values']['network'],f['values']['tier']) for f in rows if f['values']['attribute']=='annual_fee' and f['values']['unit']=='bdt'}
+            others=[kinds(id) for id in ids if id!=anchor]
+            fee=lambda f:f['values'].get('rate') or 0
+            both=[f for f in fees if all((f['values']['network'],f['values']['tier']) in k for k in others)]
+            tiers=[f for f in fees if all(f['values']['tier'] in {t for _,t in k} for k in others)]
+            if both:pick=min(both,key=fee);network,tier=pick['values']['network'],pick['values']['tier']
+            elif tiers:tier=min(tiers,key=fee)['values']['tier']
+            else:network,tier=fees[0]['values']['network'],fees[0]['values']['tier']
+        elif fees:
             network=network or fees[0]['values']['network'];tier=tier or fees[0]['values']['tier']
     if reference is None and product in {'fdr','dps'}:
         available=[f['values']['selected_tenor'] for f in anchor_facts if f['values']['selected_tenor']]

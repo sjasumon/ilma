@@ -308,6 +308,9 @@ def service_lines(text,lines,c,r,registry,facts):
     deposit=r.product in {'fdr','dps'}
     amounts=sorted({f['values']['rate'] for f in rows if f['values'].get('rate') is not None})
     lead=[];frame=[];closing=[];late='meta:late' in registry
+    if card and len(rows)>1 and not late and not getattr(r,'tier',None) and not getattr(r,'network',None) and not ASKS_FIGURE.search(text) and not ASKS_OPINION.search(text):
+        # "Tell me about X's cards" names the cards first; fees are one choice away.
+        return [card_overview(rows,whose,name.text,bn)]
     opinion=bool(ASKS_OPINION.search(text))
     if not opinion and deposit and not r.tenor and not r.follow and not ASKS_FIGURE.search(text):
         word=next((facts[i] for row in terms for i in row[1]),None) or next((f for f in facts.values() if f.get('kind')=='term' and f['fact_id'].split(':',1)[-1].casefold() in {label[1].casefold(),label[0]}),None)
@@ -341,7 +344,7 @@ def service_lines(text,lines,c,r,registry,facts):
     if len(pronounce(said+' '+next_steps('service_detail',c,0)[0],c.language).split())>LIST_WORDS:frame=[]
     if frame and card and len(rows)>1:
         head=lines[0][0];cut=head.index(': ')+2
-        lines=[((head[cut:] if bn else 'They are '+head[cut:]),lines[0][1]),*lines[1:]]
+        lines=[((head[cut:] if bn else 'These include '+head[cut:]),lines[0][1]),*lines[1:]]
     tail=[(('ভালো না খারাপ, সেই সিদ্ধান্ত আপনার। চাইলে অন্য ব্যাংকের হারের সাথে মিলিয়ে দেখতে পারেন।' if bn else "Whether it is good or not is your decision. You can compare it with other banks' rates if you like."),[])] if opinion else []
     return lead+frame+lines+closing+tail
 
@@ -382,6 +385,13 @@ def grouped_rates(rows,name,whose,bn,kind,lead=False):
             text=f"{name if not index else 'It'} pays {said} on {('an '+plain) if generic and plain=='FDR' else ('a '+plain) if generic else 'its '+label}."
         out.append((text,ids))
     return out
+
+def card_overview(rows,whose,name,bn):
+    names=list(dict.fromkeys(product_name(f['values'],True).removesuffix(' কার্ড') if bn else ' '.join(dict.fromkeys(x for x in (f['values'].get('network'),f['values'].get('tier')) if x)) for f in rows))
+    shown=names[:6];joined=(', '.join(shown[:-1])+(' ও ' if bn else ' and ')+shown[-1]) if len(shown)>1 else shown[0]
+    if bn:text=f"{whose}কার্ডের মধ্যে আছে {joined}{' সহ আরও কয়েকটি' if len(names)>6 else ''}। আপনি কি এগুলোর বার্ষিক ফি জানতে চান, নাকি অন্য কিছু?"
+    else:text=f"{name}'s cards include {joined}{', among others' if len(names)>6 else ''}. Would you like their annual fees, or something else?"
+    return (text,[f['fact_id'] for f in rows])
 
 def fee_list(rows,whose,bn,late=False):
     """Card fees as one list. Late fees group equal amounts by tier, annual fees name each card."""
@@ -950,7 +960,7 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
     if 'meta:range' in registry:question=''
     if getattr(r,'missing_second',False) and intent=='compare' and lines:
         # The second bank's name was lost in speech: say so, show this bank against others, ask for the name.
-        lines=[(('দ্বিতীয় ব্যাংকের নামটা বুঝতে পারিনি।' if bn else "I missed the second bank's name."),[]),*lines]
+        lines=[(('অন্য ব্যাংকের নামটা বুঝতে পারিনি।' if bn else "I missed the other bank's name."),[]),*lines]
         question='কোন ব্যাংকের সাথে মিলিয়ে দেখবেন?' if bn else 'Which bank should I compare it with?'
     chosen,pending=paginate(lines,question,c.language,split=intent in {'service_detail','bank_figures','bank_overview','bank_condition','bank_history','insurance'} or 'cmp:0' in registry)
     if pending:question,buttons=next_steps(intent,c,id,more=True)

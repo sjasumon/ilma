@@ -142,9 +142,12 @@ def match_candidates(text, banks, scorer=None):
                 # Partial matches inside much longer words are not bank names.
                 if min(len(window),len(normalized)) < max(len(window),len(normalized)) * .7:
                     continue
-                if window == normalized:
+                # "MTBL" is how people write "MTB Limited": an acronym plus L is that bank.
+                if window == normalized or (window == normalized + 'l' and len(normalized) <= 4 and normalized.isascii() and alias.strip().isupper()):
                     score = 100
-                elif len(normalized) <= 3:  # short acronyms must match exactly
+                elif len(normalized) <= 3 or (' ' not in normalized and len(normalized) > 4 and normalized.endswith(('bank', 'ব্যাংক'))):
+                    # Short acronyms and run-together "SBACBANK" style names must match exactly:
+                    # the shared "bank" makes any "xxxbank" look close ("backbank" is not SBAC).
                     score = 0
                 else:
                     if scorer is None:

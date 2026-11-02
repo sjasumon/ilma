@@ -141,3 +141,47 @@ def test_other_islamic_banks_by_sound_not_islami_bank():
         assert find_other_bank(said),said
     for said in ('Islami Bank DPS','check Islami Bank DPS','ঢাকার ইসলামী ব্যাংক শাখা','compare EBL and Islami Bank','ইবিএল আর ইসলামী ব্যাংক','আমার ইসলামী ব্যাংকে টাকা আছে'):
         assert not find_other_bank(said),said
+
+MTB=dict(id=4,slug='mtb',name_en='MTB Test Bank',name_bn='পরীক্ষা এমটিবি ব্যাংক',type='bank',coverage='full',aliases=['Mutual Trust Bank','MTB'])
+SBAC=dict(id=5,slug='sbacbank',name_en='SBAC Test Bank',name_bn='পরীক্ষা এসবিএসি ব্যাংক',type='bank',coverage='full',aliases=['SBAC','SBACBANK'])
+
+def test_acronym_with_limited_is_that_bank():
+    r=resolve('could you compare BRAC Bank cards with MTBL cards',Conversation(language='en'),[*BANKS3,MTB])
+    assert r.compare_bank_ids==[1,4]
+
+def test_run_together_bank_word_is_not_a_close_match():
+    r=resolve('could you compare backbank cards with MTBL cards',Conversation(language='en'),[*BANKS3,MTB,SBAC])
+    assert r.bank_id!=5 and 5 not in r.compare_bank_ids and r.missing_second
+
+def test_unrecognised_second_name_is_asked_for():
+    assert resolve('compare BRAC Bank with XYZ',Conversation(language='en'),BANKS3).missing_second
+    assert not resolve('compare BRAC Bank with others',Conversation(language='en'),BANKS3).missing_second
+
+def test_card_comparison_uses_a_card_both_banks_publish(db):
+    from datetime import date
+    from ilma_api.db import ServiceOffer
+    from ilma_api.human_facts import comparison_facts
+    rows=[(1,'Diners Club Card','diners','platinum',5000),(1,'Visa Classic Card','visa','classic',1500),(2,'Visa Classic Card','visa','classic',1000),(2,'Visa Gold Card','visa','gold',3000)]
+    for n,(bank,name,network,tier,fee) in enumerate(rows):
+        db.add(ServiceOffer(offer_id=f'test-card-{n}',institution_id=bank,category='card',product=name,product_type='card',network=network,tier=tier,tenor_months=None,attribute='annual_fee',value_num=fee,value_text=str(fee),unit='bdt',condition='',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/cards.pdf',page=1,quote=f'Synthetic fee {fee}',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='test-fixture',checked_on=date(2026,10,1)))
+    db.commit()
+    picked=comparison_facts(db,1,'card',bank_ids=[1,2])
+    assert {(f['institution_id'],f['values']['tier']) for f in picked}=={(1,'classic'),(2,'classic')}
+
+def test_general_card_question_names_the_cards_then_offers_fees(db):
+    from datetime import date
+    from ilma_api.db import ServiceOffer
+    for n,(name,network,tier,fee) in enumerate([('Visa Classic Card','visa','classic',1500),('Visa Gold Card','visa','gold',3000)]):
+        db.add(ServiceOffer(offer_id=f'test-overview-{n}',institution_id=1,category='card',product=name,product_type='card',network=network,tier=tier,tenor_months=None,attribute='annual_fee',value_num=fee,value_text=str(fee),unit='bdt',condition='',basis='conventional',doc_date=date(2026,10,1),stale=False,source_url='https://example.test/cards.pdf',page=1,quote=f'Synthetic fee {fee}',column_header='',variant='main',hidden=False,hidden_reason='',checked_by='test-fixture',checked_on=date(2026,10,1)))
+    db.commit()
+    about=turn(db,'tell me about BRAC Bank cards','en')
+    print(about['text'])
+    assert '1500' not in about['text'] and 'classic' in about['text'].lower() and 'annual fees' in about['text']
+    fees=turn(db,'what are the annual fees of BRAC Bank cards','en')
+    assert '1500' in fees['text'].replace(',','')
+    follow=turn(db,'annual fees',' en'.strip(),Conversation.model_validate(about['conversation']))
+    print(follow['text'])
+    assert '1500' in follow['text'].replace(',','')
+    bn=turn(db,'ব্র্যাক ব্যাংকের কার্ড সম্পর্কে বলুন','bn')
+    print(bn['text'])
+    assert 'বার্ষিক ফি জানতে' in bn['text']
