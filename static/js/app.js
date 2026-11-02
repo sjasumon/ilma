@@ -137,6 +137,19 @@ try {
 let lastAgentChoice = "";
 let stateBeforeAnswer = null;
 let agentConversation = null, agentPanel = null, agentPendingResult = null, bargeMonitor = null;
+// Keep the screen on during a voice conversation, so the phone's screen timeout never needs a tap
+// (a tap while an answer loads would cancel it). Released 3 minutes after the last voice activity.
+let screenWake = null, screenWakeTimer = null;
+function keepScreenAwake() {
+  try {
+    if ('wakeLock' in navigator && !screenWake && document.visibilityState === 'visible') {
+      navigator.wakeLock.request('screen').then((lock) => { screenWake = lock; lock.addEventListener('release', () => { screenWake = null; }); }).catch(() => {});
+    }
+  } catch (_) {}
+  clearTimeout(screenWakeTimer);
+  screenWakeTimer = setTimeout(() => { try { screenWake?.release(); } catch (_) {} screenWake = null; screenWakeTimer = null; }, 180000);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && screenWakeTimer) keepScreenAwake(); });
 let voiceLanguageReturn = null, voiceLanguageOverride = null;
 let ivr = null, ivrPendingResult = null, ivrAudioCancel = null, ivrCandidates = [], ivrCandidateIndex = 0;
 let currentLang = appSettings.language;
@@ -624,6 +637,7 @@ async function startListening(providedStream = null) {
   if (!window.IlmaVoiceRecorder?.supported()) { showVoiceFallback("unsupported"); return; }
   const request = ++voiceRequest;
   recognitionStarting = true;
+  keepScreenAwake();
   setWaveformState("starting");
   pauseGreetingCycle();
   setVoiceState(currentLang === "bn" ? "মাইক্রোফোন চালু হচ্ছে…" : "Starting microphone…");
@@ -1045,6 +1059,7 @@ async function handleVoiceEvent(name, data, audioRequest) {
     return;
   }
   if (name === "transcript") {
+    keepScreenAwake();
     const live=document.getElementById('voice-live-answer');if(live){live.hidden=true;live.textContent='';}
     lastAgentChoice = "";
     lastVoiceTranscript = data.text;
