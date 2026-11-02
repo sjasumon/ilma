@@ -65,3 +65,13 @@ def test_busy_speech_retains_a_retryable_ticket(tmp_path):
             with pytest.raises(HTTPException) as caught:await store.response(token)
             assert caught.value.detail['code']=='speech_busy' and caught.value.headers['Retry-After']=='1'
     asyncio.run(scenario())
+
+
+def test_cut_off_recording_with_a_whole_question_is_answered(db):
+    import asyncio
+    from unittest.mock import patch,AsyncMock
+    async def scenario():
+        with patch('ilma_api.human_turn.generate',AsyncMock(side_effect=AssertionError('no model'))):
+            return await run('Tell me about BRAC Bank',VoiceContext(agent=True,speak=False,ui_lang='en',audio_truncated=True,conversation=Conversation(language='en')),BANKS,db)
+    result=asyncio.run(scenario())
+    assert not result.get('audio_truncated')

@@ -66,7 +66,8 @@
             if(rms>.015)lastSpeech=now;
           }
           if (now-started>=300 && !noiseFloor && noiseCount) { noiseFloor = noiseTotal / noiseCount; if (noiseFloor > .035) onNoise(); }
-          if (rms > Math.max(.015, Math.min(.03, noiseFloor * 1.8))) lastSpeech = now;
+          // In a noisy room (fan, TV) the cut-off follows the measured noise, so silence after speech is still seen.
+          if (rms > Math.max(.015, noiseFloor > .02 ? noiseFloor * 1.6 : Math.min(.03, noiseFloor * 1.8))) lastSpeech = now;
           if (lastSpeech !== null && now - lastSpeech >= silenceMs) this.complete(onComplete);
           else if (lastSpeech === null && now - started >= noSpeechMs) { this.cancel(); onError('no-speech'); }
         }, 100);

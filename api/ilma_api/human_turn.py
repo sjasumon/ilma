@@ -621,7 +621,9 @@ async def run(text,context,banks,db,candidates=(),choice=None,watch_identity=Non
         a=controls('stop',c,'আবার জানতে চাইলে মাইক চাপুন।' if c.language=='bn' else 'Tap the microphone whenever you have another question.')
         result=render(a,c,[],trace,'code');result['action']={'type':'end' if selected=='end' or c.turn>=19 else 'stop'}
         return await finish(result,safe,id,memory,db,started)
-    if context.audio_truncated:
+    # The 15-second cap (usually room noise keeping the mic open) still leaves a whole question when a bank or topic was heard.
+    heard_whole=bool(context.audio_truncated) and (lambda q:bool(q.bank_id or q.product or q.intent in {'compare','insurance','advice_request','best_bank'}))(resolve(safe,Conversation(language=c.language),banks))
+    if context.audio_truncated and not heard_whole:
         a=controls('unclear',c,'শেষ অংশটা শুনতে পাইনি।' if c.language=='bn' else 'I may have missed the ending.','প্রশ্নটি ছোট করে আবার বলবেন?' if c.language=='bn' else 'Could you ask a shorter question?',['listen','ask_bank'])
         result=render(a,c,[],trace,'code');result['audio_truncated']=True
         return await finish(result,safe,id,memory,db,started)
