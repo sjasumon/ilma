@@ -119,9 +119,6 @@ docs/TAP_OR_TALK_FIXES_*.md
 /static/audio/news/en/*
 !/static/audio/news/en/*.mp3
 
-# Private ChatGPT working notes stay on the server, never published.
-docs/chatgpt/
-
 # Final owner-reviewed bilingual conversation recordings only.
 !/static/audio/answers/
 /static/audio/answers/*

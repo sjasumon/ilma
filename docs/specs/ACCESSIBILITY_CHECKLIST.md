@@ -9,7 +9,7 @@ Visual references, in order of authority:
 2. Clay-bank prototype (layout of Start, Listening, Report, Source sheet; it is still navy, so swap in the teal tokens): (private planning reference omitted)
 3. Tokens: [tokens.css](../tokens.css). Mascot: `design/ilma-character/claybank.png` (883×1059, transparent).
 
-**Do not use:** `ILMA_Gemini_Design_Brief.md` Parts 0–2, 4–5 (white theme), FRD §20.1/§20.4–20.6 colours and components, the grandma images (`nani_*.png`), the older prototype HABy7pf9….
+**Do not use:** the older design brief Parts 0–2, 4–5 (white theme), FRD §20.1/§20.4–20.6 colours and components, the grandma images (`nani_*.png`), the older prototype HABy7pf9….
 
 Status key: ✅ ready · ⚠️ ready once Sumon decides (see the end) · 🔧 build from tokens, no mock needed
 
