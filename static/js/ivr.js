@@ -11,13 +11,17 @@
     next: { id: 'next', clip: 'ivr_next', onTap1: 'report', onTap2: 'name', words: {}, onSilence: 'repeat' }
   };
   root.IVR_COPY = {"ivr_open": ["আমি ইলমা। শুরু করতে স্ক্রিনের যেকোনো জায়গায় চাপুন।", "I am Ilma. Tap anywhere to start."], "ivr_mic": ["এখন ফোন মাইক্রোফোনের অনুমতি চাইবে। অনুমতি দিন চাপুন।", "Your phone will ask for microphone permission. Choose Allow."], "ivr_lang": ["বাংলার জন্য একবার চাপুন। For English, tap twice. অথবা বলুন।", "Tap once for Bangla. Tap twice for English. Or say your choice."], "ivr_menu": ["ব্যাংকের অবস্থা জানতে একবার চাপুন। ব্যাংকের সেবা জানতে দুবার চাপুন। অথবা সরাসরি ব্যাংকের নাম বলুন।", "Tap once to check a bank. Tap twice for bank services. Or say a bank name."], "ivr_name": ["ব্যাংকের নাম বলুন।", "Say the bank name."], "ivr_confirm": ["আপনি কি {bank} বললেন? হ্যাঁ হলে একবার, না হলে দুবার চাপুন।", "Did you say {bank}? Tap once for yes, twice for no."], "ivr_next": ["আবার শুনতে একবার, অন্য ব্যাংকের জন্য দুবার চাপুন।", "Tap once to hear it again, twice for another bank."], "ivr_chose_bn": ["আপনি বাংলা বেছেছেন।", "You chose Bangla."], "ivr_chose_en": ["আপনি ইংরেজি বেছেছেন।", "You chose English."], "ivr_chose_bank": ["আপনি ব্যাংকের অবস্থা বেছেছেন।", "You chose bank status."], "ivr_chose_services": ["আপনি ব্যাংকের সেবা বেছেছেন।", "You chose bank services."], "ivr_yes": ["হ্যাঁ।", "Yes."], "ivr_no": ["না।", "No."], "ivr_ready": ["বলুন।", "Speak now."], "ivr_repeat_hint": ["আবার শুনতে আবার বলুন।", "Say again to hear it again."]};
+  // Slower double taps (elderly or blind users) need more than 450 ms.
+  const TAP_WINDOW_MS = 600, SETTLE_MS = 300;
+  const CHOICE_STEPS = ['language', 'menu', 'confirm', 'next'];
   class GuidedVoice {
     constructor(adapter, clock = globalThis) {
       this.a = adapter; this.clock = clock; this.active = false; this.epoch = 0;
     }
+    now() { return this.clock.now ? this.clock.now() : Date.now(); }
     clear() {
       this.clock.clearTimeout(this.tapTimer); this.clock.clearTimeout(this.silenceTimer);
-      this.tapTimer = null; this.recordingTap = null;
+      this.tapTimer = null; this.recordingTap = null; this.queuedTaps = null;
     }
     async enter(id, repeated = false) {
       if (!IVR_STEPS[id]) return;
@@ -32,9 +36,16 @@
       // Browsers require a user gesture for playback/permission. Keep choices
       // operable if autoplay is blocked, rather than recording over an unheard clip.
       if (heard && !['open', 'mic'].includes(id)) {
-        this.phase = 'starting';
+        this.phase = 'starting'; this.queuedTaps = CHOICE_STEPS.includes(id) ? [] : null;
         await this.a.listen(id);
         if (!this.active || epoch !== this.epoch) return;
+        // Taps made while the microphone was opening are choices, not lost input.
+        const queued = this.queuedTaps; this.queuedTaps = null;
+        if (queued && queued.length) {
+          this.a.cancel(); this.phase = 'waiting';
+          if (queued.length >= 2) return this.choose(2);
+          return this.tap({ detail: queued[0].detail, queued: true });
+        }
         if (this.a.recording()) this.phase = 'listening';
       }
       if (this.phase === 'waiting') this.wait();
@@ -50,15 +61,25 @@
     silent() { if (this.active) this.wait(); }
     tap(event = {}) {
       if (!this.active) return;
+      const now = this.now();
+      // The late second tap of a pair must not leak into the next question.
+      if (this.choseAt != null && now - this.choseAt >= 0 && now - this.choseAt < SETTLE_MS) return;
+      if (this.phase === 'starting' && this.queuedTaps) {
+        this.queuedTaps.push({ detail: event.detail ?? 1, at: now }); this.a.feedback?.(); return;
+      }
       if (this.phase === 'searching' || this.phase === 'starting' || this.phase === 'transition') return;
       if (this.a.recording()) {
-        // While the mic is open the pair only stops recording, never chooses 2.
-        const now = this.clock.now ? this.clock.now() : Date.now();
-        if (event.detail === 0 || (this.recordingTap != null && now - this.recordingTap >= 0 && now - this.recordingTap <= 450)) {
-          this.recordingTap = null; this.phase = 'searching'; this.a.finish();
-        } else this.recordingTap = now;
-        return;
+        if (!CHOICE_STEPS.includes(this.id)) {
+          // Saying a bank name: a quick pair only stops recording, never chooses 2.
+          if (event.detail === 0 || (this.recordingTap != null && now - this.recordingTap >= 0 && now - this.recordingTap <= TAP_WINDOW_MS)) {
+            this.recordingTap = null; this.phase = 'searching'; this.a.finish();
+          } else { this.recordingTap = now; this.a.feedback?.(); }
+          return;
+        }
+        // On a choice step a tap is a choice: close the mic and count taps.
+        this.a.cancel();
       }
+      if (!event.queued) this.a.feedback?.();
       const wasReport = this.id === 'report';
       this.a.interrupt(); ++this.epoch; this.clock.clearTimeout(this.silenceTimer);
       this.phase = 'waiting';
@@ -70,11 +91,11 @@
       if (this.tapTimer != null) {
         this.clock.clearTimeout(this.tapTimer); this.tapTimer = null; return this.choose(2);
       }
-      this.tapTimer = this.clock.setTimeout(() => { this.tapTimer = null; this.choose(1); }, 450);
+      this.tapTimer = this.clock.setTimeout(() => { this.tapTimer = null; this.choose(1); }, TAP_WINDOW_MS);
     }
     async choose(n) {
       if (!this.active) return;
-      this.clear(); this.a.cancel(); ++this.epoch; this.phase = 'transition';
+      this.clear(); this.a.cancel(); ++this.epoch; this.phase = 'transition'; this.choseAt = this.now();
       const epoch = this.epoch; await this.a.echo(n, this.id);
       if (!this.active || epoch !== this.epoch) return;
       return this.a.action(IVR_STEPS[this.id][n === 2 ? 'onTap2' : 'onTap1']);
@@ -92,6 +113,6 @@
       this.active = false; ++this.epoch; this.clear(); this.a.cancel(); this.a.interrupt(); this.a.exit();
     }
   }
-  root.IlmaGuidedVoice = GuidedVoice; root.IVR_STEPS = IVR_STEPS;
-  if (typeof module !== 'undefined') module.exports = { GuidedVoice, IVR_STEPS };
+  root.IlmaGuidedVoice = GuidedVoice; root.IVR_STEPS = IVR_STEPS; root.IVR_TAP_WINDOW_MS = TAP_WINDOW_MS;
+  if (typeof module !== 'undefined') module.exports = { GuidedVoice, IVR_STEPS, TAP_WINDOW_MS, SETTLE_MS, CHOICE_STEPS };
 })(typeof window !== 'undefined' ? window : globalThis);

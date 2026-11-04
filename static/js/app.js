@@ -2556,6 +2556,8 @@ function setupGuidedVoice() {
     interrupt: stopAudio,
     recording: () => isListening,
     assistive: () => appSettings.screenreader,
+    // One short buzz per counted tap, so users know it registered.
+    feedback() { navigator.vibrate?.(20); },
     finish: finishRecording,
     render(id) {
       document.getElementById('ivr-overlay').hidden = false;
