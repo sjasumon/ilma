@@ -37,6 +37,8 @@ LEGACY_NOREPLY_COMMITS = frozenset((
     'e12d7aeba9723f21afe7bef46f633f87c04f1d3f',
     'edd73527871218cfbdbe977e47501785edfdccdd',
 ))
+# Built from parts so this file does not match itself.
+HOST_MARKERS = ('/home/' + 'ubuntu', 'sudo ' + 'systemctl', '/etc/' + 'systemd')
 PUBLISHED_ANCHOR = 'b76ec330ca1dd1bda8d35c5e41020a75f0e1b82e'
 # Split the definitions so this self-scanning policy does not match its own text.
 UNAPPROVED_BRANDS = ('cl' + 'aude', 'anth' + 'ropic')
@@ -68,12 +70,15 @@ def tree_errors(files):
         path = Path(name)
         if (name.startswith(PRIVATE_PREFIXES) or name.startswith(('ilma_incidents_input_','ilma_seed_input_','ilma_extra_input_','docs/FIX_','docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_')) or name in DEBUG_ASSETS or
             path.name.startswith(('REPO_REVIEW_', 'WEBSITE_REVIEW_', 'CODE_REVIEW_', 'WEBSITE_FULL_TEST_', 'TAP_OR_TALK_FIXES_')) or name in {'docs/review_muse.md','docs/APP_SPEC_07_voice_agent.md','docs/APP_SPEC_08_speed.md', 'docs/FIX_09_language_and_loop.md', 'docs/FIX_10_answer_wording.md', 'docs/FIX_11_speech_wording_and_pronunciation.md', 'docs/AGENT_INSTRUCTIONS_HUMAN_VOICE_AGENT.md'} or (path.name.startswith('.env') and path.name != '.env.example') or
-            name.endswith(('.sql', '.sql.gz'))):
+            name.endswith(('.sql', '.sql.gz')) or name in {'AGENTS.md', 'ops/RUNBOOK.md'} or
+            (name.startswith('ops/') and name.endswith(('.service', '.timer')))):
             errors.append(f'Private/unwanted path tracked: {name}')
         try:
             source = content.decode('utf-8')
         except UnicodeDecodeError:
             continue
+        if any(marker in source for marker in HOST_MARKERS):
+            errors.append(f'Host-specific server detail: {name}')
         if any(word in source.casefold() for word in UNAPPROVED_BRANDS):
             errors.append(f'Non-neutral review terminology: {name}')
         if name.startswith('tests/fixtures/') and name.endswith('.csv'):

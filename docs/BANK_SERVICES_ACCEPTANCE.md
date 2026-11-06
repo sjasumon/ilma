@@ -67,14 +67,14 @@ See [seed/TO_CHECK.md](../seed/TO_CHECK.md). Imported rows are agent-labelled,
 not personally checked by Sumon. Unknown publication dates are not invented.
 87 service rows are withheld (mandatory hide rules plus unreadable/unproven
 quotes). The website review added the official bank-insurance rule; v6 incident
-history still needs approved input. See `WEBSITE_FIXES_2026-10-27.md`.
+history still needed approved input at that point.
 
 Screenshots: [Bank tab](../design/reviews/bank-tab/) and
 [Bank services](../design/reviews/bank-services/). Reproduce with:
 
 ```sh
-PYTHONPATH=api /home/ubuntu/venv/bin/python -m pytest -q
-/home/ubuntu/venv/bin/python tests/check_catalog_browser.py --base-url https://app.sumon.me
+PYTHONPATH=api python -m pytest -q
+python tests/check_catalog_browser.py --base-url https://app.sumon.me
 ```
 
 Install `requirements-dev.txt` and Playwright Chromium to run browser checks on

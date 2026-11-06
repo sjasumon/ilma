@@ -265,12 +265,12 @@ access. Dependencies are installed in the existing venv. For subsequent host set
 or readiness checks:
 
 ```sh
-# Set this to the existing venv; this workspace uses /home/ubuntu/venv.
-export ILMA_VENV_PATH=/home/ubuntu/venv
+# Set this to your existing venv.
+export ILMA_VENV_PATH=/path/to/your/venv
 bash ops/bootstrap_voice.sh
 export PYTHONPATH="$PWD/api"
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.voice_doctor --live
-"$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 0.0.0.0 --port 8001
+"$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 127.0.0.1 --port 8000
 ```
 
 Use HTTPS for phone microphones. Bootstrap reuses the active/existing venv; it never creates another one. It installs requirements and runs the
@@ -279,9 +279,7 @@ never keys/passwords. An incomplete readiness report exits nonzero. Confirm that
 all nine demo banks exist in the verified bank data. Do not run the legacy
 hard-coded seed loader against production to satisfy this check.
 
-For daily retention, adjust /opt/ilma and the service account in
-`ops/ilma-voice-cleanup.service`, then install/enable its accompanying systemd
-timer. Cleanup removes logs older than 30 days and expired counters.
+For daily retention, schedule `python -m ilma_api.voice_maintenance` once a day. Cleanup removes logs older than 30 days and expired counters.
 
 ## Fixed audio and native review
 
@@ -374,8 +372,7 @@ Earlier results using `project_db` are historical, not valid data acceptance.
 
 
 Historical pipeline follow-up, before the database clarification: see [VOICE_PIPELINE_AUDIT.md](VOICE_PIPELINE_AUDIT.md).
-The host service's wrong database selection is corrected using the systemd
-override in `ops/ilma-database.conf`; public bank lookup and a typed report-card
+The host service's wrong database selection is corrected in the host configuration; public bank lookup and a typed report-card
 request now work. Forty-eight Python checks and five Node suites pass. Three
 saved-recording replays produced a report, a clarification and a script rejection,
 without database errors. Dataset completeness, real speech accuracy and physical
@@ -391,7 +388,7 @@ cover production blocking, explicit opt-in and paired sample persistence.
 
 Activation update: the user subsequently explicitly requested capture for the
 current diagnostic test. Enabled the two private switches, created the MySQL
-diagnostic table and restarted `ilma-app.service` on 2026-10-27. This instance is
+diagnostic table and restarted the app service on 2026-10-27. This instance is
 temporarily operating in development diagnostics; restore production/disabled
 switches after testing. No private configuration or samples are committed.
 
@@ -416,7 +413,7 @@ Updated 2026-10-27 after the workspace access change:
 - All 39 Python checks passed again after migration. All five Node suites passed
   previously; they were not rerun for the migration-only change.
 - RapidFuzz is installed. Actual ffmpeg WAV conversion and Opus/MP3 normalization
-  passed using the existing `/home/ubuntu/venv`.
+  passed using the existing venv.
 - Live MySQL connectivity and voice-table readiness passed. Migration added the
   alias source column, three voice tables, 15 aliases and 94 authored glossary
   entries. A MySQL collation duplicate-alias issue was fixed before completion;
@@ -446,9 +443,9 @@ verify reverse-proxy routing before retesting speech. Updating static assets
 alone cannot activate Python routes. The frontend now identifies missing voice
 routes explicitly; it does not claim the deployment has been repaired.
 
-Resolved later on 2026-10-27: the existing `ilma-app.service` was already enabled
+Resolved later on 2026-10-27: the existing app service was already enabled
 at boot with `Restart=always`, but its process predated the voice implementation.
-Restarted that service. Both localhost:8001 and `https://app.sumon.me` now return
+Restarted that service. Both the local server and `https://app.sumon.me` now return
 200 for `/v1/voice/config`, and both OpenAPI documents contain all four voice
 routes. Service is active/running. This resolves the missing-route incident;
 physical microphone transcription still needs a fresh phone test.

@@ -90,8 +90,7 @@ not been deleted as part of this correction.
 
 ## Host configuration
 
-The host-specific drop-in is installed at
-`/etc/systemd/system/ilma-app.service.d/database.conf`. For a new host, review
+The database setting is a host-specific service override. For a new host, review
 the database name before installing the template. Reload systemd and restart
 the service after changing it. Run migrations/diagnostic commands in the same
 host/database context as the service; an agent-context connection alone is not

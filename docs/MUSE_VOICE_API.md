@@ -49,7 +49,7 @@ last-three-exchange context remain device-side as APP_SPEC_02 specifies.
 ## Install and migrate
 
 ```sh
-export ILMA_VENV_PATH=/home/ubuntu/venv  # use your existing venv path
+export ILMA_VENV_PATH=/path/to/your/venv
 "$ILMA_VENV_PATH/bin/python" -m pip install -r requirements.txt
 PYTHONPATH=api "$ILMA_VENV_PATH/bin/python" -m ilma_api.migrate_voice
 PYTHONPATH=api "$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 0.0.0.0 --port 8001

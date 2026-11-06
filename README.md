@@ -1,33 +1,54 @@
 # ILMA · ইলমা
-**Bilingual Voice-First Banking & Financial Intelligence Platform for Bangladesh**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
-[![Status: Preview](https://img.shields.io/badge/Deployment-preview.sumon.me-gold.svg)](https://preview.sumon.me)
+[![Live: app.sumon.me](https://img.shields.io/badge/Live-app.sumon.me-gold.svg)](https://app.sumon.me)
+[![Checks](https://github.com/sjasumon/ilma/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/sjasumon/ilma/actions/workflows/checks.yml)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![Tests: Passing](https://img.shields.io/badge/Tests-15%20Suites%20Passing-success.svg)](tests/)
 
----
+Say a bank's name in Bangla or English to see how that bank is doing, whether
+deposits there are protected, and up to three sourced reasons. Then compare
+banking services or ask a follow-up question. ILMA never asks for a PIN, account
+number or amount. It gives information, not financial advice or a guarantee that
+a bank is safe.
 
-## 1. Executive Summary
+Bangla/English voice and text input, large controls, a teal-and-gold interface and
+screen-reader support make banking information easier to reach, including for
+blind and low-vision users.
 
-**ILMA (ইলমা)** is a bilingual (Bangla & English) accessible financial intelligence and banking comparison platform built for everyday Bangladeshi citizens.
+**[Live app](https://app.sumon.me) · [Demo video](https://youtu.be/TTHuUcMNdYU)**
 
-### Core Mission
-Most consumers in Bangladesh find banking regulations, capital adequacy disclosures, loan terms, and hidden card fees intimidating or opaque. ILMA bridges this divide with:
-- **Zero-barrier voice queries in natural spoken Bangla & English**.
-- **Audited bank health report cards** derived directly from official annual reports and Bangladesh Bank audited metrics.
-- **Side-by-side like-for-like retail product comparisons** (FDR/DPS, Credit/Debit cards, Home/Personal loans, Accounts).
-- **Curated Bangladesh Bank regulatory circulars & warnings** with permanent bilingual audio summaries.
-- **Inclusive, high-accessibility UI/UX**: Large readable typography, high-contrast dark teal & gold palette, screen-reader semantics, and full keyboard/touch accessibility.
+## Hackathon
 
-> [!IMPORTANT]
-> **Strict Non-Negotiable Principle: ZERO Hallucination / ZERO Invented Data**
-> ILMA never invents, estimates, or hallucinates financial figures, risk classifications, or interest rates. Every single number displayed or spoken must originate strictly from audited annual reports, verified Bangladesh Bank circulars, or validated seed CSV records. Where figures are unavailable (such as unrated institutions), the UI strictly displays **"অপ্রকাশিত / Not published"**.
+Built for the **Meta AI hackathon, Indie track, 27 October to 4 November 2026**
+(problem statement: Build for Your World).
 
----
+- **Muse Voice Transcribe** (`muse-voice-transcribe-1.0`) turns spoken Bangla and
+  English into text in [voice.py](api/ilma_api/voice.py).
+- **Muse Spark** (`muse-spark-1.3`) understands each question in the context of the
+  conversation and routes it in [voice_pipeline.py](api/ilma_api/voice_pipeline.py).
+- A rules engine, not the model, decides each bank's status from published figures
+  ([report_card.py](api/ilma_api/report_card.py)), and numbers are checked against
+  stored facts before ILMA speaks.
+- **ElevenLabs** generates spoken playback; speech synthesis is a separate provider.
 
-## 2. System Architecture & Tech Stack
+Submitted version: tag
+[`hackathon-submission-2026-11-04`](https://github.com/sjasumon/ilma/tree/hackathon-submission-2026-11-04)
+(commit `387b100`). Later commits only tidy documentation.
+
+## Screenshots
+
+| Bank report | Service comparison | Source evidence |
+| --- | --- | --- |
+| <img src="design/reviews/bank-tab/B2-EBL.png" width="240" alt="ILMA bank report with financial status and sourced reasons"> | <img src="design/reviews/bank-services/S2-Visa-Signature.png" width="240" alt="Visa Signature annual-fee comparison across banks"> | <img src="design/reviews/bank-services/source-sheet.png" width="240" alt="Source sheet with the original quote and document details"> |
+
+## Where the data comes from
+
+Every number shown or spoken comes from banks' published annual reports, credit
+rating releases, Bangladesh Bank press releases and circulars, news, or the
+reviewed seed CSVs in `seed/`. When a figure is not published, the app says
+**"অপ্রকাশিত / Not published"** instead of estimating it.
+
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -71,7 +92,7 @@ flowchart TD
     SeedData -.->|Load via seed_loader| MySQL
 ```
 
-### Architecture Highlights
+### Highlights
 1. **Frontend (Zero-Build Philosophy)**:
    - Written in standard HTML5, CSS3, and modern Vanilla ES6+ JavaScript.
    - **No build step required**: No Node.js build pipeline, Webpack, or Vite bundling needed for deployment.
@@ -79,7 +100,7 @@ flowchart TD
    - Full PWA support with service worker (`static/sw.js`) providing offline shell caching.
 2. **Backend**:
    - Python 3.10+ with FastAPI running under Uvicorn ASGI.
-   - Database access via SQLAlchemy ORM with PyMySQL backend (MySQL for preview/production, SQLite for isolated unit tests).
+   - Database access via SQLAlchemy ORM with PyMySQL backend (MySQL for the app, SQLite for isolated unit tests).
    - High-performance fuzzy entity matching powered by `RapidFuzz`.
 3. **Voice & iOS Audio Architecture**:
    - **STT**: Muse Voice Transcribe (`muse-voice-transcribe-1.0`) handles colloquial Bangla and English speech transcription.
@@ -87,9 +108,7 @@ flowchart TD
    - **TTS**: ElevenLabs generates high-fidelity Bangla and English speech.
    - **iOS WebKit Audio Session**: iOS Safari blocks detached programmatic audio playback. ILMA utilizes a persistent DOM `<audio id="ilma-player">` unlocked on first user touch via `window.IlmaAudioSession.unlock(player)`. The microphone stream is explicitly released before playback to prevent iOS from locking into call-audio mode with volume suppression.
 
----
-
-## 3. Application Modules & User Journeys
+## What the app does
 
 The interface is organized into 4 primary views accessible via the bottom dock:
 
@@ -102,7 +121,6 @@ The interface is organized into 4 primary views accessible via the bottom dock:
   - *"ব্র্যাক ব্যাংকের ক্রেডিট কার্ডের চার্জ কত?"* (What are BRAC Bank's credit card charges?)
 
 ### 2. Banks Tab (`#tab-detail`)
-Upgraded to an institutional fintech look & feel (Bloomberg/Morningstar style):
 - **Sector Overview Bar (`.bank-sector-overview`)**:
   - Displays dynamic, real-time aggregate statistics from the live bank catalog:
     - Total banks monitored (11)
@@ -141,12 +159,10 @@ Side-by-side like-for-like retail comparisons across 11 banks:
 - **Orthogonal Filtering**: Filter by category and bank independently without cross-bank contamination.
 - **Per-Card Bilingual Audio Summaries**: Users can tap "Listen to News Summary" (সংবাদ সারাংশ শুনুন) on any card in Bangla or English without leaving the feed.
 
----
-
-## 4. Directory Structure
+## Project layout
 
 ```text
-preview.sumon.me/
+ilma/
 ├── api/                           # Backend FastAPI application
 │   └── ilma_api/
 │       ├── main.py                # Primary FastAPI app routes & middleware
@@ -187,8 +203,7 @@ preview.sumon.me/
 │   └── incidents/                 # Approved historical incidents
 ├── ops/                           # Operational scripts & hygiene tools
 │   ├── version_assets.py          # SHA-256 asset hasher for HTML/SW cache busting
-│   ├── check_repo.py              # Repository policy check & secret scanner
-│   └── RUNBOOK.md                 # Deployment & server maintenance runbook
+│   └── check_repo.py              # Repository policy check & secret scanner
 ├── tests/                         # Node.js regression test suites & Python checks
 │   ├── test_banks_upgrade.cjs     # Banks tab upgrade verification
 │   ├── test_news_synchronization.cjs # News filtering & audio summary tests
@@ -200,164 +215,107 @@ preview.sumon.me/
 └── docs/                          # Specifications, audits, and design documents
 ```
 
----
+## Run it locally
 
-## 5. Development & Contribution Rules for Agents
+Requirements: Python 3.10+, MySQL, provider credentials and HTTPS for phone
+microphones. Node.js 20+ is needed for the frontend tests. ffmpeg can come from
+the system or `imageio-ffmpeg`.
 
-When an AI agent or engineer works on this codebase, the following rules are **strictly enforced**:
-
-### Rule 1: Zero Hallucination Policy
-Never invent or estimate numbers, ratios, or quotes.
-- If a figure is in `data.figures` or `data.insurance`, display it.
-- If a figure is missing or `null`, render `"অপ্রকাশিত"` in Bangla or `"Not published"` in English.
-
-### Rule 2: Preserve Critical DOM IDs & Test Invariants
-Automated test suites rely on exact DOM IDs and attributes. Never remove or rename:
-- `#bank-list-search` (Search input)
-- `#bank-list-mic` (Voice search button; must contain `<svg>`)
-- `#bank-list-rows` (Container for bank cards)
-- `[data-bank="<id>"]` (Bank row button attribute)
-- `#card-bank-name` (Bank title)
-- `#card-status-word` (Risk status word)
-- `#card-status-mark` (Risk mark check/cross)
-- `#bank-kpi-summary` (3-KPI financial card container)
-- `#card-insurance-line` (**Must contain `'2 lakh'` and an `<a>` link in English mode**)
-- `#btn-watch-bank` (Watch button; must maintain `aria-pressed`)
-- `#btn-listen-report` (Audio playback button)
-- `[data-bank-detail="<key>"]` (Quick-action section navigation buttons)
-
-> [!CAUTION]
-> **English Mode Invariant (`tests/check_website_review.py`)**:
-> In English mode (`currentLang === 'en'`), `[data-bank="19"]` must **NEVER** contain any `<small>` tag! Secondary titles (`<small lang="en">`) are only rendered in Bangla mode.
-
-### Rule 3: Always Run Asset Versioning
-Whenever any file in `static/` (CSS or JS) is edited, you **MUST** run:
 ```sh
-python3 ops/version_assets.py
-```
-This updates the SHA-256 content hashes in `static/index.html` and `static/sw.js`. If you omit this step, client browsers and service workers will serve stale cached code.
-
-### Rule 4: Mandatory Repository Policy Checks
-Before committing or pushing, verify repository compliance:
-```sh
-python3 ops/check_repo.py
-```
-This checks:
-- No unapproved brand terminology.
-- No committed private secrets or unredacted keys.
-- Git author identity strictly matches the approved project identity:
-  `sjasumon <5217484+sjasumon@users.noreply.github.com>`
-
-### Rule 5: Run Node.js Test Suites
-Run all regression suites before publishing changes:
-```sh
-for f in tests/*.cjs; do echo "=== $f ==="; node "$f" || exit 1; done
-```
-
-### Rule 6: Workspace Separation
-- **Preview Environment**: `/home/ubuntu/shared/all_projects/preview.sumon.me` (Port 8018, service `ilma-preview.service`).
-- **Production Environment**: `/home/ubuntu/shared/all_projects/ilma` (Port 8001, service `ilma.service`).
-- *Never edit or push to the production repository while working on the preview branch.*
-
----
-
-## 6. Setup, Local Run & Testing
-
-### 1. Environment Setup
-```sh
-cd /home/ubuntu/shared/all_projects/preview.sumon.me
-python3 -m venv /home/ubuntu/venv
-source /home/ubuntu/venv/bin/activate
+git clone https://github.com/sjasumon/ilma.git
+cd ilma
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
-cp .env.example .env
+cp .env.example .env    # then add your own credentials
 chmod 600 .env
 ```
 
-### 2. Configure Credentials in `.env`
-```dotenv
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=ilma
-DB_USERNAME=your_db_user
-DB_PASSWORD='your_db_password'
-META_MODEL_API_KEY=your_meta_muse_key
-ELEVENLABS_API_KEY=your_elevenlabs_key
-ELEVENLABS_VOICE_ID=your_voice_id
-VOICE_LOG_SALT=your_private_salt
-```
+`.env` needs the database fields (`DB_HOST`, `DB_PORT`, `DB_NAME=ilma`,
+`DB_USERNAME`, `DB_PASSWORD`), `META_MODEL_API_KEY`, `ELEVENLABS_API_KEY`,
+`ELEVENLABS_VOICE_ID` and `VOICE_LOG_SALT`. See
+[Meta configuration](docs/MUSE_VOICE_API.md).
 
-### 3. Database Seeding
 ```sh
 export PYTHONPATH="$PWD/api"
 python -m ilma_api.seed_loader seed
 python -m ilma_api.incident_loader seed/incidents
 python -m ilma_api.migrate_voice
+uvicorn ilma_api.main:app --host 127.0.0.1 --port 8000
 ```
 
-### 4. Running the Development Server
-```sh
-export PYTHONPATH="$PWD/api"
-uvicorn ilma_api.main:app --host 127.0.0.1 --port 8018 --workers 2
-```
+Open `http://127.0.0.1:8000`. See [seed notes](seed/README.md).
 
-### 5. Running Tests
-```sh
-# Run all Node.js regression suites
-for f in tests/*.cjs; do node "$f"; done
-
-# Run Python API & logic unit tests
-PYTHONPATH=api pytest tests/test_bank_screen.py tests/test_api.py
-
-# Run Playwright browser journey checks
-python3 tests/check_website_review.py --base-url http://127.0.0.1:8018
-```
-
----
-
-## 7. Operational Runbook & Server Commands
-
-On the server host, the preview service is managed by systemd:
+## Tests
 
 ```sh
-# Check preview service status
-sudo systemctl status ilma-preview.service
-
-# Restart preview service after backend changes
-sudo systemctl restart ilma-preview.service
-
-# View live systemd logs
-sudo journalctl -u ilma-preview.service -f -n 50
-
-# Verify local endpoint health
-curl -s http://127.0.0.1:8018/v1/health
-
-# Verify live preview deployment
-curl -s https://preview.sumon.me/v1/health
+PYTHONPATH=api python -m pytest -q
+for f in tests/test_*.cjs; do node "$f" || exit 1; done
+python ops/check_repo.py
 ```
 
----
+The same checks, plus browser smoke tests on Android, iPhone and desktop profiles,
+run in [GitHub Actions](.github/workflows/checks.yml). Repository publishing
+checks are described in [REPOSITORY_POLICY.md](docs/REPOSITORY_POLICY.md).
 
-## 8. API Quick Reference
+## API
 
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/health` | Service health, database connectivity, and release metadata |
-| `GET` | `/v1/institutions?list=demo` | 11 monitored banks with live computed risk status |
-| `GET` | `/v1/institutions/{id}/report-card` | Bank report card with CRAR, NPL, net profit, insurance, and audited reasons |
-| `GET` | `/v1/institutions/{id}/figures` | Multi-year historical audited ratios and balance sheet figures |
-| `GET` | `/v1/institutions/{id}/ratings` | Credit agency ratings (CRISL, CRAB) with outlook and validity |
-| `GET` | `/v1/institutions/{id}/services` | Complete schedule of deposit, card, and loan products for a bank |
-| `GET` | `/v1/services/compare?category={cat}` | Cross-bank comparative tables (FDR, DPS, Cards, Loans) |
-| `GET` | `/v1/news` | Bangladesh Bank circulars, regulatory notices, and press releases |
-| `POST` | `/v1/voice` | Multipart audio upload for STT transcription, NLU intent resolution & streaming reply |
-| `POST` | `/v1/ask` | Text-based natural language query endpoint |
-| `POST` | `/v1/institutions/{id}/watch` | Anonymous device-bound watch list toggle (`X-ILMA-Device` header) |
+| :
 
----
+The public site sits behind Cloudflare bot protection, which may block scripted
+clients. Use a browser, or run the API locally.
 
-## 9. Contacts & Ownership
+## Privacy
 
-- **Author & Maintainer**: `sjasumon <5217484+sjasumon@users.noreply.github.com>`
-- **Live Preview URL**: [https://preview.sumon.me](https://preview.sumon.me)
-- **Primary Git Branch**: `feature/voice-agent`
-- **Release Branches**: `preview/live-2026-10-31`, `preview/merged-2026-10-31`
+Credentials stay server-side in the ignored `.env`. Normal audio processing
+happens in memory, and operational logs leave out question text and audio.
+Optional development diagnostics can keep recordings and transcripts privately
+for a limited time, only when explicitly switched on. Never speak PINs, OTPs or
+account numbers.
+
+## Data provenance / prior work
+
+Sumon performed the initial source collection **before the event** with a
+separate tool that is not part of this repository. Later supplied v5.4/v6.2
+exports are documented as data updates; import dates do not establish when the
+collection tool was built. Only normalized seed CSVs in `seed/`
+are used by the app; raw source exports and collection metadata stay outside the
+current public tree. The small handwritten test fixtures are explicitly synthetic.
+An earlier commit included public source-export fixtures; their removal is a new
+commit, preserving the event's history rather than rewriting it.
+
+The application code in `api/`, `static/`, `ops/` and `tests/` was developed for
+this event, with the work recorded in the repository's event-dated commits. The
+[FRD](docs/FRD.md) was written **before the event** and is retained as the design
+document. Planning documents are not claims of completed implementation.
+
+Imported financial/service rows keep their import version labels (v4, v5.4, v6.2);
+remaining manual checks are listed in [TO_CHECK.md](seed/TO_CHECK.md). They are not described as
+personally verified by Sumon. Only his completed reviews receive a checked badge.
+Full newspaper articles are not published; single-source headlines are not
+promoted into status-changing incidents. The official bank-insurance rule was
+verified separately during the event; exclusions and payment stages are qualified.
+Local theme-font copies are third-party assets under their bundled SIL Open Font
+Licenses in `static/fonts/`, not newly authored font designs.
+
+## Project documents
+
+[FRD](docs/FRD.md) · [Build roadmap](docs/BUILD_PLAN.md) ·
+[Specifications](docs/specs/) · [Design tokens](docs/tokens.css) ·
+[Home reference](design/S01-Home.html) · [Voice acceptance](docs/VOICE_ACCEPTANCE.md)
+
+Bank services v5.4 import and review notes: [implementation](docs/BANK_SERVICES_V54.md).
+
+Extra source publications and watched-bank announcements: [v5.4 notes](docs/EXTRA_DATA_V54.md).
+
+Optional guided Voice only mode: [tap-or-talk behavior and pending device acceptance](docs/TAP_OR_TALK.md).
+
+Home voice-agent tools, privacy and acceptance: [VOICE_AGENT.md](docs/VOICE_AGENT.md).
+
+## Licence and credits
+
+Code is released under the [MIT License](LICENSE). Bundled fonts (Noto Sans,
+Noto Sans Bengali, Tiro Bangla) are under the SIL Open Font License; see
+`static/fonts/`. Source documents remain the property of their publishers.
+
+Author: [@sjasumon](https://github.com/sjasumon)

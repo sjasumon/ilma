@@ -73,4 +73,4 @@ branch integration and rollback rehearsal remain pending. Existing production
 API documentation is still public. Physical Android/iPhone testing, diverse
 consented recordings, TalkBack/VoiceOver, native clip review, two-person listening
 and source approval are separate human gates. See `docs/VOICE_ACCEPTANCE.md` for
-measured evidence and `ops/RUNBOOK.md` for operational commands.
+measured evidence.

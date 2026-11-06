@@ -1,8 +1,7 @@
 # Release hardening progress
 
-Latest website/insurance changes and live browser evidence are recorded in
-[WEBSITE_FIXES_2026-10-27.md](WEBSITE_FIXES_2026-10-27.md). Historical missing-
-insurance-source statements below are superseded by that sourced rule.
+Historical missing-insurance-source statements below are superseded by the
+sourced deposit-insurance rule added on 27 October.
 
 ## Stage 1 — deployed 27 October 2026
 
@@ -33,8 +32,8 @@ uploads, denied origins and idle expiry with capture disabled. Live health remai
 healthy and a disallowed-origin POST returns 403. No provider calls are made by
 the rejection tests.
 
-See `PRODUCTION_READINESS.md` for original findings. Its missing-admission and
-missing-timer findings are superseded by this stage; other launch gates remain.
+The original readiness audit's missing-admission and missing-timer findings are
+superseded by this stage; other launch gates remain.
 
 ## Stage 2 — deployed voice correction
 

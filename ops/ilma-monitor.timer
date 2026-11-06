@@ -1,9 +1,0 @@
-[Unit]
-Description=Check ILMA readiness every two minutes
-
-[Timer]
-OnBootSec=2min
-OnUnitActiveSec=2min
-
-[Install]
-WantedBy=timers.target

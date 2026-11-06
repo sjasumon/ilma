@@ -1,7 +1,0 @@
-[Unit]
-Description=Local operations failure signal for %i
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/logger -p daemon.err -t ilma-ops "ILMA unit %i failed; inspect systemctl status and journalctl."
-NoNewPrivileges=true

@@ -80,7 +80,7 @@ cache state, input method, actual MP3 duration and whether first bytes or actual
 browser playback were measured. Do not describe typed or synthetic voice checks
 as real microphone, native accessibility or mobile-network acceptance.
 
-See [measured results](../VOICE_SPEED.md) and [deployment](../../ops/RUNBOOK.md).
+See [measured results](../VOICE_SPEED.md).
 
 Muse Spark reasoning consumes the same output-token budget as visible JSON.
 A live minimal-effort probe at 300 tokens spent 298 on reasoning and returned

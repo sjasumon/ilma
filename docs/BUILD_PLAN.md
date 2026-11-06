@@ -30,4 +30,4 @@ before the event is separate prior work and is not part of this app repository.
 | Demo submission | Record video and replace its README placeholder before submission. |
 
 The event window is 27 October–4 November 2026. Do not represent planned features
-as delivered. See `RELEASE_HARDENING.md` and `PRODUCTION_READINESS.md` for evidence.
+as delivered. See `RELEASE_HARDENING.md` for evidence.

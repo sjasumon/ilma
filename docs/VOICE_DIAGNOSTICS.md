@@ -5,7 +5,7 @@ This optional mode pairs original browser audio with the raw Meta transcript
 MySQL's `voice_diagnostic` table. It has no public playback/download endpoint.
 It is disabled by default. At the user's explicit request, the current
 `app.sumon.me` instance was temporarily switched to development diagnostics on
-2026-10-27, its diagnostic table created, and `ilma-app.service` restarted.
+2026-10-27, its diagnostic table created, and the app service restarted.
 New voice requests on that instance are now retained for this diagnostic test.
 Verified capture through the public `/v1/voice` endpoint using synthetic silence;
 the host-side diagnostic list confirmed a saved `no_speech` sample. No human
@@ -25,7 +25,7 @@ export ILMA_ENV=development
 export VOICE_DIAGNOSTICS_ENABLED=true
 export PYTHONPATH="$PWD/api"
 export DB_NAME=ilma  # ILMA's database; do not use other projects' databases
-export ILMA_VENV_PATH=/home/ubuntu/venv
+export ILMA_VENV_PATH=/path/to/your/venv
 "$ILMA_VENV_PATH/bin/python" -m ilma_api.voice_diagnostics setup
 "$ILMA_VENV_PATH/bin/uvicorn" ilma_api.main:app --host 127.0.0.1 --port 8002
 ```
@@ -58,5 +58,5 @@ secrets in diagnostic questions. Turn the switch off and restart the development
 process when finished.
 
 To end the current diagnostic session, set `VOICE_DIAGNOSTICS_ENABLED=false` and
-`ILMA_ENV=production` in the private `.env`, then restart `ilma-app.service`.
+`ILMA_ENV=production` in the private `.env`, then restart the app service.
 Disabling capture does not delete existing samples; prune/delete them separately.

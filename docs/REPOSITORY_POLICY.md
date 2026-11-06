@@ -1,8 +1,7 @@
 # Repository publishing safeguards
 
 Sumon's 27 October review is retained privately on the shared workspace. Public
-corrections use new commits; existing commits and dates are preserved. Persistent
-instructions are in the root `AGENTS.md`.
+corrections use new commits; existing commits and dates are preserved.
 
 ## Install the checks in a full clone
 
@@ -46,6 +45,6 @@ README disclosure address the review without replacing event evidence.
 ## Before the demo submission
 
 Confirm the README's live/video links, license choice, source review and planned
-feature list. Keep deployment internals in `ops/RUNBOOK.md`. Re-run the full
+feature list. Keep deployment internals out of the public tree. Re-run the full
 checks from a fresh clone and retain their results. If the approved incident
 archive is unavailable, track the gap; never invent a high-risk example.

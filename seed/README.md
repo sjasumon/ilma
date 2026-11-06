@@ -6,10 +6,10 @@ uses blank `short_code` values, so the adapter explicitly falls back to `dse_cod
 Bank names are the manual names specified in APP_SPEC_03.
 
 ```sh
-/home/ubuntu/venv/bin/python seed/convert_v4_export.py /path/to/private/export
-/home/ubuntu/venv/bin/python seed/convert_services.py /path/to/private/export
-DB_NAME=ilma PYTHONPATH=api /home/ubuntu/venv/bin/python -m ilma_api.seed_loader seed
-DB_NAME=ilma PYTHONPATH=api /home/ubuntu/venv/bin/python -m ilma_api.migrate_voice
+python seed/convert_v4_export.py /path/to/private/export
+python seed/convert_services.py /path/to/private/export
+DB_NAME=ilma PYTHONPATH=api python -m ilma_api.seed_loader seed
+DB_NAME=ilma PYTHONPATH=api python -m ilma_api.migrate_voice
 ```
 
 Run the commands on the same host as the service, using its credentials. The
